@@ -10,11 +10,12 @@ Butanol_AC_X1 = []
 Butanol_AC_X2 = []
 Butanol_AC_X3 = []
 
+
 def monte_karlo(n):
     for reaction in range(n):
         composition.clear()
         print(reaction)
-        for compound in range(100):
+        for butanol in range(100):
             composition.append("Butanol")
         for epi in range(60):
             reactant = random.choice(composition)
@@ -22,8 +23,23 @@ def monte_karlo(n):
                 composition.remove(reactant)
                 composition.append("Butanol AC")
             elif reactant == "Butanol AC":
-                composition.remove(reactant)
-                composition.append("Butanol AC X+1")
+                reactant = random.choice(composition)
+                if reactant == "Butanol AC":
+                    reactant = random.choice(composition)
+                    if reactant == "Butanol AC":
+                        reactant = random.choice(composition)
+                        if reactant == "Butanol AC":
+                            composition.remove(reactant)
+                            composition.append("Butanol AC X+1")
+                        else:
+                            composition.remove(reactant)
+                            composition.append("Butanol AC")
+                    else:
+                        composition.remove(reactant)
+                        composition.append("Butanol AC")
+                else:
+                    composition.remove(reactant)
+                    composition.append("Butanol AC")
             elif reactant == "Butanol AC X+1":
                 composition.remove(reactant)
                 composition.append("Butanol AC X+2")
@@ -46,6 +62,7 @@ def monte_karlo(n):
         d = Counter(composition)
         Butanol_AC_X3.append(d[x])
 
+
 monte_karlo(10000)
 average_Butanol = sum(Butanol) / len(Butanol)
 average_ButanolAC = sum(Butanol_AC) / len(Butanol_AC)
@@ -61,17 +78,16 @@ wt_average_butanolACX3 = average_ButanolACX3 * 444.2
 
 total = wt_average_butanol + wt_average_butanolAC + wt_average_butanolACX1 + wt_average_butanolACX2 + wt_average_butanolACX3
 
-print(wt_average_butanol / total*100)
-print(wt_average_butanolAC / total*100)
-print(wt_average_butanolACX1 / total*100)
-print(wt_average_butanolACX2 / total*100)
-print(wt_average_butanolACX3 / total*100)
+print(round(wt_average_butanol / total * 100, 2))
+print(round(wt_average_butanolAC / total * 100, 2))
+print(round(wt_average_butanolACX1 / total * 100, 2))
+print(round(wt_average_butanolACX2 / total * 100, 2))
+print(round(wt_average_butanolACX3 / total * 100, 2))
 
 fig = plt.figure()
-ax = fig.add_axes([0,0,1,1])
+ax = fig.add_axes([0, 0, 1, 1])
 Species = ['Butanol', 'AC', 'X1', 'X2', 'X3']
-Count = [wt_average_butanolAC, wt_average_butanolAC, wt_average_butanolACX1, wt_average_butanolACX2, wt_average_butanolACX3]
+Count = [wt_average_butanolAC, wt_average_butanolAC, wt_average_butanolACX1, wt_average_butanolACX2,
+         wt_average_butanolACX3]
 ax.bar(Species, Count)
-plt.show()
-
-
+# plt.show()
