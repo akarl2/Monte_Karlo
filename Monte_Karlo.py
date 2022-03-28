@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter
 
-composition = []
+# composition = []
 Butanol = []
 Butanol_AC = []
 Butanol_AC_X1 = []
