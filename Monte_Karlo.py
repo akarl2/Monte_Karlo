@@ -29,8 +29,13 @@ def monte_karlo(n):
                     if reactant == "Butanol AC":
                         reactant = random.choice(composition)
                         if reactant == "Butanol AC":
-                            composition.remove(reactant)
-                            composition.append("Butanol AC X+1")
+                            reactant = random.choice(composition)
+                            if reactant == "Butanol AC":
+                                composition.remove(reactant)
+                                composition.append("Butanol AC X+1")
+                            else:
+                                composition.remove(reactant)
+                                composition.append("Butanol AC")
                         else:
                             composition.remove(reactant)
                             composition.append("Butanol AC")
@@ -44,15 +49,25 @@ def monte_karlo(n):
             elif reactant == "Butanol AC X+1":
                 reactant = random.choice(composition)
                 if reactant == "Butanol AC X+1":
-                    reactant = random.choice(composition)
                     composition.remove(reactant)
                     composition.append("Butanol AC X+2")
                 else:
                     composition.remove(reactant)
                     composition.append("Butanol AC X+1")
+
+
             else:
-                composition.remove(reactant)
-                composition.append("Butanol AC X+3")
+                if reactant == "Butanol AC X+2":
+                    reactant = random.choice(composition)
+                    if reactant == "Butanol AC X+2":
+                        composition.remove(reactant)
+                        composition.append("Butanol AC X+3")
+                    else:
+                        composition.remove(reactant)
+                        composition.append("Butanol AC X+2")
+                else:
+                    composition.remove(reactant)
+                    composition.append("Butanol AC X+2")
         x = "Butanol"
         d = Counter(composition)
         Butanol.append(d[x])
