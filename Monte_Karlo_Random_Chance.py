@@ -1,5 +1,4 @@
 import random
-import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter
 
@@ -23,51 +22,14 @@ def monte_karlo(n):
                 composition.remove(reactant)
                 composition.append("Butanol AC")
             elif reactant == "Butanol AC":
-                reactant = random.choice(composition)
-                if reactant == "Butanol AC":
-                    reactant = random.choice(composition)
-                    if reactant == "Butanol AC":
-                        reactant = random.choice(composition)
-                        if reactant == "Butanol AC":
-                            reactant = random.choice(composition)
-                            if reactant == "Butanol AC":
-                                composition.remove(reactant)
-                                composition.append("Butanol AC X+1")
-                            else:
-                                composition.remove(reactant)
-                                composition.append("Butanol AC")
-                        else:
-                            composition.remove(reactant)
-                            composition.append("Butanol AC")
-                    else:
-                        composition.remove(reactant)
-                        composition.append("Butanol AC")
-                else:
-                    composition.remove(reactant)
-                    composition.append("Butanol AC")
-
+                composition.remove(reactant)
+                composition.append("Butanol AC X+1")
             elif reactant == "Butanol AC X+1":
-                reactant = random.choice(composition)
-                if reactant == "Butanol AC X+1":
-                    composition.remove(reactant)
-                    composition.append("Butanol AC X+2")
-                else:
-                    composition.remove(reactant)
-                    composition.append("Butanol AC X+1")
-
-
+                composition.remove(reactant)
+                composition.append("Butanol AC X+2")
             else:
-                if reactant == "Butanol AC X+2":
-                    reactant = random.choice(composition)
-                    if reactant == "Butanol AC X+2":
-                        composition.remove(reactant)
-                        composition.append("Butanol AC X+3")
-                    else:
-                        composition.remove(reactant)
-                        composition.append("Butanol AC X+2")
-                else:
-                    composition.remove(reactant)
-                    composition.append("Butanol AC X+2")
+                composition.remove(reactant)
+                composition.append("Butanol AC X+3")
         x = "Butanol"
         d = Counter(composition)
         Butanol.append(d[x])
@@ -98,7 +60,8 @@ wt_average_butanolACX1 = average_ButanolACX1 * 259.16
 wt_average_butanolACX2 = average_ButanolACX2 * 351.68
 wt_average_butanolACX3 = average_ButanolACX3 * 444.2
 
-total = wt_average_butanol + wt_average_butanolAC + wt_average_butanolACX1 + wt_average_butanolACX2 + wt_average_butanolACX3
+total = wt_average_butanol + wt_average_butanolAC + wt_average_butanolACX1 + wt_average_butanolACX2 + \
+        wt_average_butanolACX3
 
 print(f"Butanol: {round(wt_average_butanol / total * 100, 2)}")
 print(f"Butanol AC: {round(wt_average_butanolAC / total * 100, 2)}")
