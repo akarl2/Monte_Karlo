@@ -3,13 +3,30 @@ import matplotlib.pyplot as plt
 from scipy import integrate
 from ChemData import ChemData
 
+gA = 15
+gB = 15
+gC = 0
+gD = 5
+
+molesA = gA / ChemData["Glacial Acetic Acid"]["MW"]
+molesB = gB / ChemData["70% H2O2"]["MW"]
+molesC = gC / ChemData["Peracetic Acid"]["MW"]
+molesD = gD / ChemData["Water"]["MW"]
+
+volume = (gA * ChemData["Glacial Acetic Acid"]["DEN"] + gB * ChemData["70% H2O2"]["DEN"] + gC * ChemData["Peracetic Acid"]["DEN"] + gD * ChemData["Water"]["DEN"]) / 1000
+
+MA = molesA / volume
+MB = molesB / volume
+MC = molesC / volume
+MD = molesD / volume
+
 minutes = 300
-s_conA = 20
-s_conB = 3
-s_conC = 0
-s_conD = 5
+s_conA = MA
+s_conB = MB
+s_conC = MC
+s_conD = MD
 cat_con = .314
-temperature = 320
+temperature = 330
 k1 = (6.83*10**8)*(math.sqrt(s_conA*(1.75*10**-5)) + cat_con + math.sqrt(cat_con*(1.3*10**-2)))*(math.exp((-57846.15)/(8.134*temperature)))
 k2 = (6.73*10**8)*(math.sqrt(s_conA*(1.75*10**-5)) + cat_con + math.sqrt(cat_con*(1.3*10**-2)))*(math.exp((-60407.78)/(8.134*temperature)))
 conA = s_conA
