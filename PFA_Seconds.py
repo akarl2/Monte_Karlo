@@ -5,7 +5,7 @@ from ChemData import ChemData
 gA = 100
 gB = 200
 gC = 0
-gD = 20
+gD = 0
 
 ngA = gA
 ngB = gB * .7
@@ -32,7 +32,7 @@ s_conB = MB
 s_conC = MC
 s_conD = MD
 cat_con = 0
-temperature = 313
+temperature = 315
 k1 = (1.20 * 10 ** -3) * math.exp((-55304/8.314)*(1/temperature - 1/323))
 print(k1)
 k2 = (1.60 * 10 ** -4) * math.exp((-105073/8.314)*(1/temperature - 1/323))
@@ -75,6 +75,7 @@ while seconds < minutes * 60:
 
 
 def plot_conc():
+    plt.figure("Concentration")
     plt.xlabel("Time (seconds)")
     plt.ylabel("Concentration (mol/L)")
     plt.xlim(0, minutes * 60), plt.ylim(0, 8)
