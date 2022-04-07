@@ -2,15 +2,15 @@ import math
 import matplotlib.pyplot as plt
 from ChemData import ChemData
 
-gA = 100
-gB = 200
+gA = 25000
+gB = 25000
 gC = 0
-gD = 0
+gD = 200
 
 ngA = gA
 ngB = gB * .7
 ngC = 0
-ngD = gD + (gB*.3)
+ngD = gD + (gB * .3)
 
 molesA = ngA / ChemData["Formic Acid"]["MW"]
 molesB = ngB / ChemData["70% H2O2"]["MW"]
@@ -32,11 +32,11 @@ s_conB = MB
 s_conC = MC
 s_conD = MD
 cat_con = 0
-temperature = 315
-k1 = (1.20 * 10 ** -3) * math.exp((-55304/8.314)*(1/temperature - 1/323))
+temperature = 325
+k1 = (1.20 * 10 ** -3) * math.exp((-55304 / 8.314) * (1 / temperature - 1 / 323))
 print(k1)
-k2 = (1.60 * 10 ** -4) * math.exp((-105073/8.314)*(1/temperature - 1/323))
-Ke = 1.60 * math.exp((-10000/8.314)*(1/298 - 1/temperature))
+k2 = (1.60 * 10 ** -4) * math.exp((-105073 / 8.314) * (1 / temperature - 1 / 323))
+Ke = 1.60 * math.exp((-10000 / 8.314) * (1 / 298 - 1 / temperature))
 
 conA = s_conA
 conB = s_conB
@@ -54,10 +54,10 @@ H_concentration = math.sqrt(s_conA * (1.8 * 10 ** -4))
 decomp_enthalpy = -100000
 std_enthalpy = -4840
 rxn_enthalpy = std_enthalpy + (((ChemData["Peracetic Acid"]["Cp"] + ChemData["Water"]["Cp"]) - (
-        ChemData["70% H2O2"]["Cp"]+ ChemData["Glacial Acetic Acid"]["Cp"])) * (temperature - 298.15))
+        ChemData["70% H2O2"]["Cp"] + ChemData["Glacial Acetic Acid"]["Cp"])) * (temperature - 298.15))
 
 while seconds < minutes * 60:
-    rate1 = (k1 * conA * conB * H_concentration) * (1-(((conC * conD) / (conA * conB))*(1/Ke)))
+    rate1 = (k1 * conA * conB * H_concentration) * (1 - (((conC * conD) / (conA * conB)) * (1 / Ke)))
     rate2 = (k2 * conC)
     conA = conA - rate1
     conB = conB - rate1
@@ -92,4 +92,4 @@ def plot_watts():
     plt.show()
 
 
-plot_conc(), plot_watts()
+plot_conc()

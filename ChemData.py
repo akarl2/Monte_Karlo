@@ -7,5 +7,9 @@ ChemData = {
     "Peracetic Acid": {"MW": 76.05, "DEN": 1.04, "Cp": 82.76},
     "Peraformic Acid": {"MW": 62.02, "DEN": 1.3, "Cp": 99.04},
     "Formic Acid": {"MW": 46.03, "DEN": 1.22, "Cp": 101.3},
+    "Butanol AC": {"MW": 166.66, "DEN": 1.22, "Cp": 101.3},
+    "Butanol AC2": {"MW": 259.18, "DEN": 1.22, "Cp": 101.3},
+    "Butanol AC3": {"MW": 351.7, "DEN": 1.22, "Cp": 101.3},
+    "Butanol AC4": {"MW": 442.22, "DEN": 1.22, "Cp": 101.3},
 }
 
