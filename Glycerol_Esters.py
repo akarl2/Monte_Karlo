@@ -1,17 +1,20 @@
 import matplotlib.pyplot as plt
 from ChemData import ChemData
 
-Alcohol = 100
-Oleic_acid = 50
-species = 4
-rxn_mass_dict = {"A1_O" + str(i): 0 for i in range(1, species + 1)}
+Alcohol = "Glycerol"
+COOH = "Oleic Acid"
+
+Alcoholg = 100
+COOHg = 50
+species = 3
+rxn_mass_dict = {"Gly1_Ole" + str(i): 0 for i in range(1, species + 1)}
 
 
-molesA = Alcohol / ChemData["Glycerol"]["MW"]
-molesB = Oleic_acid / ChemData["Oleic Acid"]["MW"]
-rxn_moles_dict = {"A1_0" + str(i): 0 for i in range(1, species + 1)}
-rxn_molar_mass = {"A1_0" + str(i): ChemData["Glycerol"]["MW"] + i * ChemData["Oleic Acid"]["MW"] - 18.01 for i in range(1, species + 1)}
-p_mass_dict = {"A1_0" + str(i): [] for i in range(1, species + 1)}
+molesA = Alcoholg / ChemData[Alcohol]["MW"]
+molesB = COOHg / ChemData[COOH]["MW"]
+rxn_moles_dict = {"Gly1_0le" + str(i): 0 for i in range(1, species + 1)}
+rxn_molar_mass = {"Gly1_0le" + str(i): ChemData[Alcohol]["MW"] + i * ChemData[COOH]["MW"] - (i*18.01) for i in range(1, species + 1)}
+p_mass_dict = {"Gly1_0le" + str(i): [] for i in range(1, species + 1)}
 
 print(rxn_mass_dict)
 print(rxn_moles_dict)
