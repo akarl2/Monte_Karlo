@@ -12,8 +12,8 @@ ChemData = {
     "Butanol AC2": {"MW": 259.18, "DEN": 1.22, "Cp": 101.3},
     "Butanol AC3": {"MW": 351.7, "DEN": 1.22, "Cp": 101.3},
     "Butanol AC4": {"MW": 442.22, "DEN": 1.22, "Cp": 101.3},
-    "Glycerol": {"MW": 92.09, "DEN": 1.26, "Cp": 150},
-    "Oleic Acid": {"MW": 282.47, "DEN": 0.895, "Cp": 150},
+    "Glycerol": {"MW": 92.09, "DEN": 1.26, "Cp": 150, "OHp": 2, "OHs": 1},
+    "Oleic Acid": {"MW": 282.47, "DEN": 0.895, "Cp": 150, "RG": 1},
     
 }
 
