@@ -18,21 +18,24 @@ p_mass_dict = {"Gly1_0le" + str(i): [] for i in range(1, species + 1)}
 rxn_moles_dict[Alcohol] = [round(molesA, 4)]
 rxn_moles_dict[COOH] = [round(molesB, 4)]
 
-k1 = .0001
+k1 = .001
 k2 = k1 / 2
 
-while molesB >= 0.001:
-    rate1 = k1 * molesA * molesB
-    rate2 = k2 * molesA * molesB
+while rxn_moles_dict[COOH][-1] >= 0.1:
+    rate1 = k1 * rxn_moles_dict[Alcohol][-1] * rxn_moles_dict[COOH][-1]
+    rate2 = k2 * rxn_moles_dict[Alcohol][-1] * rxn_moles_dict[COOH][-1]
 
     for key in rxn_moles_dict:
-        if key != Alcohol or COOH:
-            update = rxn_moles_dict[key][-1] + rate1
-            rxn_moles_dict[key].append(round(update, 4))
-        else:
+        if key == Alcohol or key == COOH:
             update = rxn_moles_dict[key][-1] - rate1
-            rxn_moles_dict[key].append(round(update, 4))
+            rxn_moles_dict[key].append(round(update, 6))
+        else:
+            update = rxn_moles_dict[key][-1] + rate1
+            rxn_moles_dict[key].append(round(update, 6))
     print(rxn_moles_dict)
+
+
+
 
 
 
