@@ -13,6 +13,7 @@ species = 3
 rxn_mass_dict = {"Gly1_Ole" + str(i): 0 for i in range(1, species + 1)}
 final_products = {"Gly1_Ole" + str(i): [0] for i in range(1, species + 1)}
 final_products.update({"Alcohol": [0], "COOH": [0]})
+print(final_products)
 
 molesA = Alcoholg / ChemData[Alcohol]["MW"]
 molesB = COOHg / ChemData[COOH]["MW"]
@@ -27,7 +28,7 @@ rxn_species_dict["COOH"] = [rxn_moles_dict[COOH][-1] * ChemData[COOH]["RG"]]
 print(rxn_species_dict)
 
 #Reaction constants
-k1 = .001
+k1 = .01
 k2 = k1 / 2
 
 #Deterimine concentrations of each species
@@ -52,13 +53,55 @@ rxn = ["PrimaryE" for i in range(int(finished_rxn["PrimaryE"][-1] * 10000))]
 rxn += ["SecondaryE" for i in range(int(finished_rxn["SecondaryE"][-1] * 10000))]
 rxn += ["Primary" for i in range(int(finished_rxn["Primary"][-1] * 10000))]
 rxn += ["Secondary" for i in range(int(finished_rxn["Secondary"][-1] * 10000))]
-rxn += ["COOH" for i in range(int(finished_rxn["COOH"][-1] * 10000))]
+#rxn += ["COOH" for i in range(int(finished_rxn["COOH"][-1] * 10000))]
 print(finished_rxn)
 
-#Randomly distribute elements among final_products
 def monte_karlo():
-    element = random.choice(rxn)
-    if element == "PrimaryE":
+    while len(rxn) > 100 :
+        a = random.choice(rxn)
+        b = random.choice(rxn)
+        c = random.choice(rxn)
+        chemical = [a, b, c]
+        if chemical == ["Primary", "Secondary", "Primary"]:
+            rxn.remove(a)
+            rxn.remove(b)
+            rxn.remove(c)
+            final_products["Alcohol"].append(1)
+        elif chemical == ["PrimaryE", "Secondary", "Primary"]:
+            rxn.remove(a)
+            rxn.remove(b)
+            rxn.remove(c)
+            final_products["Gly1_Ole1"].append(1)
+        elif chemical == ["PrimaryE", "Secondary", "PrimaryE"]:
+            rxn.remove(a)
+            rxn.remove(b)
+            rxn.remove(c)
+            final_products["Gly1_Ole2"].append(1)
+        elif chemical == ["PrimaryE", "SecondaryE", "PrimaryE"]:
+            rxn.remove(a)
+            rxn.remove(b)
+            rxn.remove(c)
+            final_products["Gly1_Ole3"].append(1)
+        elif chemical == ["PrimaryE", "SecondaryE", "Primary"]:
+            rxn.remove(a)
+            rxn.remove(b)
+            rxn.remove(c)
+            final_products["Gly1_Ole2"].append(1)
+        elif chemical == ["Primary", "SecondaryE", "Primary"]:
+            rxn.remove(a)
+            rxn.remove(b)
+            rxn.remove(c)
+            final_products["Gly1_Ole1"].append(1)
+        else:
+            pass
+        print(len(rxn))
+monte_karlo()
+print(len(final_products["Alcohol"]))
+print(len(final_products["Gly1_Ole1"]))
+print(len(final_products["Gly1_Ole2"]))
+print(len(final_products["Gly1_Ole3"]))
+
+
 
 
 
