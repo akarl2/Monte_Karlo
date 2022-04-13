@@ -1,34 +1,38 @@
 from ChemData import ChemData
 import random
+from Database import *
+from Reactions import *
 
-#Starting material names
-Alcohol = "Glycerol"
-COOH = "Oleic Acid"
+#specify reaction chemicals and reaction type
+a = Glycerol()
+b = C181()
+rt = Esterification()
 
-#Starting material masses
-Alcoholg = 92.09
-COOHg = 564.94
+#Starting material mass and moles
+a_mass = 92.09
+b_mass = 564.94
+mol_a = round(a_mass / a.mw, 3)
+mol_b = round(b_mass / b.mw, 3)
+species = a.tg
 
-species = 3
-rxn_mass_dict = {"Gly1_Ole" + str(i): 0 for i in range(1, species + 1)}
-final_products = {"Gly1_Ole" + str(i): [0] for i in range(1, species + 1)}
-final_products.update({"Alcohol": [0], "COOH": [0]})
-print(final_products)
+#Creates final product name(s) from starting material name(s)
+final_product_names = {f"{a.sn}({1})_{b.sn}({str(i)})" for i in range(1, species + 1)}
+final_product_names.update({a.sn, b.sn})
 
-molesA = Alcoholg / ChemData[Alcohol]["MW"]
-molesB = COOHg / ChemData[COOH]["MW"]
-rxn_moles_dict = {Alcohol: [round(molesA, 6)], COOH: [round(molesB, 6)]}
-rxn_species_dict = {"PrimaryE": [0], "SecondaryE": [0]}
-rxn_molar_mass = {"Gly1_0le" + str(i): ChemData[Alcohol]["MW"] + i * ChemData[COOH]["MW"] - (i*18.01) for i in range(1, species + 1)}
-p_mass_dict = {"Gly1_0le" + str(i): [] for i in range(1, species + 1)}
+#Creates final product molar masses from final product name(s)
+final_product_masses = {f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + i * b.mw - i * rt.wl, 1) for i in range(1, species + 1)}
+final_product_masses.update({a.sn: round(a.mw, 1), b.sn: round(b.mw, 1)})
 
-rxn_species_dict["Primary"] = [rxn_moles_dict[Alcohol][-1] * ChemData[Alcohol]["OHp"]]
-rxn_species_dict["Secondary"] = [rxn_moles_dict[Alcohol][-1] * ChemData[Alcohol]["OHs"]]
-rxn_species_dict["COOH"] = [rxn_moles_dict[COOH][-1] * ChemData[COOH]["RG"]]
-print(rxn_species_dict)
+#Creates starting molar amounts from final product names
+starting_molar_amounts = {f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in range(1, species + 1)}
+starting_molar_amounts.update({a.sn: [mol_a], b.sn: [mol_b]})
 
-#Reaction constants
-k1 = .01
+print(final_product_names)
+print(final_product_masses)
+print(starting_molar_amounts)
+
+#Specifty rate constants
+k1 = 1
 k2 = k1 / 2
 
 #Deterimine concentrations of each species
@@ -54,7 +58,7 @@ rxn += ["SecondaryE" for i in range(int(finished_rxn["SecondaryE"][-1] * 10000))
 rxn += ["Primary" for i in range(int(finished_rxn["Primary"][-1] * 10000))]
 rxn += ["Secondary" for i in range(int(finished_rxn["Secondary"][-1] * 10000))]
 #rxn += ["COOH" for i in range(int(finished_rxn["COOH"][-1] * 10000))]
-print(finished_rxn)
+
 
 def monte_karlo():
     while len(rxn) > 100 :
@@ -94,7 +98,7 @@ def monte_karlo():
             final_products["Gly1_Ole1"].append(1)
         else:
             pass
-        print(len(rxn))
+
 monte_karlo()
 print(len(final_products["Alcohol"]))
 print(len(final_products["Gly1_Ole1"]))
