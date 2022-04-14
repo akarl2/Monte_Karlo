@@ -6,7 +6,8 @@ class Epichlorohydrin:
         self.mw = 92.52
         self.density = 1.18
         self.prg = 1
-        self.tg = 1
+        self.srg = 1
+        self.tg = self.prg + self.srg
 
 class Butanol:
     def __init__(self):
@@ -16,7 +17,8 @@ class Butanol:
         self.mw = 74.121
         self.density = 0.810
         self.prg = 1
-        self.tg = 1
+        self.srg = 0
+        self.tg = self.prg + self.srg
 
 class Glycerol:
     def __init__(self):
@@ -25,9 +27,12 @@ class Glycerol:
         self.formula = "C3H8O"
         self.mw = 92.09382
         self.density = 1.26
-        self.prg = 2
-        self.srg = 1
+        self.prg = "1-Hydroxyl"
+        self.srg = "2-Hydroxyl"
+        self.pct = 2
+        self.sct = 1
         self.tg = 3
+        self.comp = (self.prg, self.srg, self.prg)
 
 class C181:
     def __init__(self):
@@ -37,7 +42,8 @@ class C181:
         self.mw = 282.47
         self.density = 0.895
         self.prg = 1
-        self.tg = 1
+        self.srg = 0
+        self.tg = self.prg + self.srg
 
 class Water:
     def __init__(self):
@@ -47,7 +53,8 @@ class Water:
         self.mw = 18.015
         self.density = 1.000
         self.prg = 1
-        self.tg = 1
+        self.srg = 0
+        self.tg = self.prg + self.srg
 
 class Ethanol:
     def __init__(self):
@@ -57,7 +64,8 @@ class Ethanol:
         self.mw = 46.0688
         self.density = 0.789
         self.prg = 1
-        self.tg = 1
+        self.srg = 0
+        self.tg = self.prg + self.srg
 
 class Methanol:
     def __init__(self):
@@ -67,7 +75,8 @@ class Methanol:
         self.mw = 30.0469
         self.density = 0.789
         self.prg = 1
-        self.tg = 1
+        self.srg = 0
+        self.tg = self.prg + self.srg
 
 class Acetone:
     def __init__(self):
@@ -77,7 +86,8 @@ class Acetone:
         self.mw = 42.0367
         self.density = 0.789
         self.prg = 0
-        self.tg = 0
+        self.srg = 0
+        self.tg = self.prg + self.srg
 
 class AceticAcid:
     def __init__(self):
@@ -87,7 +97,8 @@ class AceticAcid:
         self.mw = 60.052
         self.density = 1.05
         self.prg = 1
-        self.tg = 1
+        self.srg = 0
+        self.tg = self.prg + self.srg
 
 class FormicAcid:
     def __init__(self):
@@ -97,7 +108,8 @@ class FormicAcid:
         self.mw = 46.03
         self.density = 1.22
         self.prg = 1
-        self.tg = 1
+        self.srg = 0
+        self.tg = self.prg + self.srg
 
 class PAA:
     def __init__(self):
@@ -107,7 +119,8 @@ class PAA:
         self.mw = 76.0514
         self.density = 104
         self.prg = 1
-        self.tg = 1
+        self.srg = 0
+        self.tg = self.prg + self.srg
 
 class DETA:
     def __init__(self):
@@ -116,7 +129,10 @@ class DETA:
         self.formula = "C4H13N3"
         self.mw = 103.169
         self.density = 0.955
-        self.prg = 1
-        self.tg = 1
+        self.prg = 2
+        self.srg = 1
+        self.tg = self.prg + self.srg
+
+
 
 
