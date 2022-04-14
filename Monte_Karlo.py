@@ -13,19 +13,23 @@ a_mass = 92.09
 b_mass = 564.94
 mol_a = round(a_mass / a.mw, 3)
 mol_b = round(b_mass / b.mw, 3)
-species = a.tg
+
+if a.tg >= b.tg:
+    species = a.tg
+else:
+    species = b.tg
 
 #Creates final product name(s) from starting material name(s)
-final_product_names = {f"{a.sn}({1})_{b.sn}({str(i)})" for i in range(1, species + 1)}
-final_product_names.update({a.sn, b.sn})
+final_product_names = [a.sn, b.sn]
+final_product_names.extend([f"{a.sn}({1})_{b.sn}({str(i)})" for i in range(1, species + 1)])
 
 #Creates final product molar masses from final product name(s)
-final_product_masses = {f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + i * b.mw - i * rt.wl, 1) for i in range(1, species + 1)}
-final_product_masses.update({a.sn: round(a.mw, 1), b.sn: round(b.mw, 1)})
+final_product_masses = ({a.sn: round(a.mw, 1), b.sn: round(b.mw, 1)})
+final_product_masses.update({f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + i * b.mw - i * rt.wl, 1) for i in range(1, species + 1)})
 
 #Creates starting molar amounts from final product names
-starting_molar_amounts = {f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in range(1, species + 1)}
-starting_molar_amounts.update({a.sn: [mol_a], b.sn: [mol_b]})
+starting_molar_amounts = ({a.sn: [mol_a], b.sn: [mol_b]})
+starting_molar_amounts.update({f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in range(1, species + 1)})
 
 print(final_product_names)
 print(final_product_masses)
@@ -34,6 +38,10 @@ print(starting_molar_amounts)
 #Specifty rate constants
 k1 = 1
 k2 = k1 / 2
+
+#randomly select value from final product molar masses
+reactant_mw = random.choice(list(final_product_masses.values()))
+print(reactant_mw)
 
 #Deterimine concentrations of each species
 while rxn_species_dict["COOH"][-1] >= .01:

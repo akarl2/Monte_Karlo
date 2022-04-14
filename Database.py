@@ -8,7 +8,6 @@ class Epichlorohydrin:
         self.prg = 1
         self.tg = 1
 
-
 class Butanol:
     def __init__(self):
         self.name = "Butanol"
@@ -110,10 +109,14 @@ class PAA:
         self.prg = 1
         self.tg = 1
 
+class DETA:
+    def __init__(self):
+        self.name = "DETA"
+        self.sn = "DETA"
+        self.formula = "C4H13N3"
+        self.mw = 103.169
+        self.density = 0.955
+        self.prg = 1
+        self.tg = 1
 
-
-
-
-
-print(C181().mw)
 

@@ -1,6 +1,8 @@
+from Database import *
+
 class Esterification:
     def __init__(self):
-        self.wl = 18.02
+        self.wl = Water().mw
 
 class Etherification:
     def __init__(self, reactants, products, rate):

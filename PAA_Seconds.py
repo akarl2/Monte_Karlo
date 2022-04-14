@@ -1,6 +1,6 @@
 import math
 import matplotlib.pyplot as plt
-from scipy import integrate
+
 from ChemData import ChemData
 
 gA = 500
