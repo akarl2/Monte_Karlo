@@ -9,4 +9,4 @@ class Etherification:
         self.reactants = reactants
         self.products = products
         self.rate = rate
-        self.wl = 0
+

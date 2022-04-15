@@ -8,6 +8,7 @@ class Epichlorohydrin:
         self.prg = 1
         self.srg = 1
         self.tg = self.prg + self.srg
+        self.cg = S_Hydroxyl
 
 class Butanol:
     def __init__(self):
@@ -27,12 +28,10 @@ class Glycerol:
         self.formula = "C3H8O"
         self.mw = 92.09382
         self.density = 1.26
-        self.prg = "1-Hydroxyl"
-        self.srg = "2-Hydroxyl"
-        self.pct = 2
-        self.sct = 1
-        self.tg = 3
+        self.prg = P_Hydroxyl
+        self.srg = S_Hydroxyl
         self.comp = (self.prg, self.srg, self.prg)
+        self.mass = self.mw
 
 class C181:
     def __init__(self):
@@ -41,9 +40,9 @@ class C181:
         self.formula = "C18H34O2"
         self.mw = 282.47
         self.density = 0.895
-        self.prg = 1
-        self.srg = 0
-        self.tg = self.prg + self.srg
+        self.prg = Carboxyl
+        self.mass = self.mw
+        self.comp = self.prg
 
 class Water:
     def __init__(self):
@@ -133,6 +132,35 @@ class DETA:
         self.srg = 1
         self.tg = self.prg + self.srg
 
+class P_Hydroxyl:
+    def __init__(self):
+        self.name = "P-Hydroxyl"
+        self.rxn = (Carboxyl, Epoxide, self)
+
+class S_Hydroxyl:
+    def __init__(self):
+        self.name = "P-Hydroxyl"
+        self.rxn = (Carboxyl, Epoxide)
+
+class Carboxyl:
+    def __init__(self):
+        self.name = "Carbonyl"
+        self.rxn = (P_Hydroxyl, S_Hydroxyl, Epoxide, P_Amine)
+
+class P_Amine:
+    def __init__(self):
+        self.name = "Carbonyl"
+        self.rxn = (Epoxide, Carboxyl)
+
+class S_Amine:
+    def __init__(self):
+        self.name = "Carbonyl"
+        self.rxn = (Epichlorohydrin, Carboxyl)
+
+class Epoxide:
+    def __init__(self):
+        self.name = "Epoxide"
+        self.rxn = (P_Hydroxyl, S_Hydroxyl, P_Amine, S_Amine, Carboxyl)
 
 
 
