@@ -135,16 +135,21 @@ class DETA:
 class P_Hydroxyl:
     def __init__(self):
         self.name = "P-Hydroxyl"
+        self.OH = 1
+        self.wt = 17.007
         self.rxn = (Carboxyl, Epoxide, self)
 
 class S_Hydroxyl:
     def __init__(self):
         self.name = "P-Hydroxyl"
+        self.OH = 1
+        self.wt = 17.007
         self.rxn = (Carboxyl, Epoxide)
 
 class Carboxyl:
     def __init__(self):
         self.name = "Carbonyl"
+        self.COOH = 1
         self.rxn = (P_Hydroxyl, S_Hydroxyl, Epoxide, P_Amine)
 
 class P_Amine:
@@ -162,5 +167,14 @@ class Epoxide:
         self.name = "Epoxide"
         self.rxn = (P_Hydroxyl, S_Hydroxyl, P_Amine, S_Amine, Carboxyl)
 
+class P_Ester:
+    def __init__(self):
+        self.name = "P_Ester"
+        self.rxn = P_Amine
+
+class S_Ester:
+    def __init__(self):
+        self.name = "S_Ester"
+        self.rxn = P_Amine
 
 
