@@ -44,23 +44,26 @@ starting_molar_amounts.update({f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in ran
 k1 = 1
 k2 = .5
 
-A=0
-B=0
+P_Hydroxyl = 0
+S_Hydroxyl = 0
 
 #randomly select mass from final product molar masses
 reactant_mw = random.choice(list(final_product_masses.values()))
 print(reactant_mw)
 
-for i in range(1, int(mol_b) + 1 * 1000):
+for i in range(1, int(mol_b) + 1 * 100000):
     choice = random.choices(a.comp, weights=[k1, k2, k1], k=1)[0].__name__
-    print(choice)
     if choice == a.prg.__name__:
-        A += 1
+        P_Hydroxyl += 1
     elif choice == a.srg.__name__:
-        B += 1
-    print(str_to_class(choice).__name__)
-print(A, B)
-print(P_Hydroxyl().wt)
+        S_Hydroxyl += 1
+    #print(str_to_class(choice).__name__)
+print(f"P_Hydroxyl: {P_Hydroxyl}, S_hydroxyl: {S_Hydroxyl}")
+print(P_Hydroxyl / S_Hydroxyl)
+
+
+for i in range(0, len(a.comp):
+    print(i.__name__)
 
 
 def monte_karlo():

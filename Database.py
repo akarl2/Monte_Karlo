@@ -25,7 +25,7 @@ class Glycerol:
     def __init__(self):
         self.name = "Glycerol"
         self.sn = "Gly"
-        self.formula = "C3H8O"
+        self.formula = "C3H6O3"
         self.mw = 92.09382
         self.density = 1.26
         self.prg = P_Hydroxyl
