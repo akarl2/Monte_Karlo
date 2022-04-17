@@ -2,6 +2,7 @@ import random
 from Database import *
 from Reactions import *
 import sys
+import itertools
 
 #Converts string name to class name
 def str_to_class(classname):
@@ -15,8 +16,8 @@ rt = Esterification()
 #Starting material mass and moles
 a.mass = 92.1
 b.mass = 282.5
-a.mol = round(a.mass / a.mw, 3) * 1000
-b.mol = round(b.mass / b.mw, 3) * 2500
+a.mol = round(a.mass / a.mw, 3) * 3
+b.mol = round(b.mass / b.mw, 3) * 3
 
 try:
     if len(a.comp) >= len(b.comp):
@@ -36,9 +37,40 @@ final_product_masses.update({f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + i * b
 starting_molar_amounts = ({a.sn: [a.mol], b.sn: [b.mol]})
 starting_molar_amounts.update({f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in range(1, species + 1)})
 
+final_molar_amounts = ({a.sn: [0], b.sn: [0]})
+final_molar_amounts.update({f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in range(1, species + 1)})
+
+
 #Specifty rate constants
 k1 = 1
 k2 = .5
+
+#Creats starting composition list
+composition = []
+for i in range(0, int(a.mol)):
+    composition.extend(group.__name__ for group in a.comp)
+
+#Reacts away b.mol until gone.  Still need to add different rate constants
+while b.mol != 0:
+    MC = random.choices(list(enumerate(composition)), weights=[1 for rg in range(len(composition))], k=1)[0]
+    if MC[1] != rt.rp.__name__:
+        composition[MC[0]] = rt.rp.__name__
+        b.mol -= 1
+    else:
+        pass
+    print(b.mol)
+
+composition = [composition[x:x+3] for x in range(0, len(composition), 3)]
+print(composition)
+
+for chemical in composition:
+    if chemical == [a.comp[i].__name__ for i in range(0, len(a.comp))]:
+        final_molar_amounts[a.sn][0] += 1
+    else:
+        pass
+print(final_molar_amounts)
+
+
 
 
 
@@ -51,26 +83,6 @@ k2 = .5
 #     #print(str_to_class(choice).__name__)
 # print(f"P_Hydroxyl: {P_Hydroxyl}, S_hydroxyl: {S_Hydroxyl}")
 # print(P_Hydroxyl / S_Hydroxyl)
-
-composition = []
-for i in range(0, int(a.mol)):
-    composition.extend(group.__name__ for group in a.comp)
-
-while b.mol != 0:
-    MC = random.choices(list(enumerate(composition)), weights=[1 for rg in range(len(composition))], k=1)[0]
-    if MC[1] != rt.rp.__name__:
-        composition[MC[0]] = rt.rp.__name__
-        b.mol -= 1
-    else:
-        pass
-    print(b.mol)
-print(composition.count(rt.rp.__name__))
-print(composition.count(a.prg.__name__))
-print(composition.count(a.srg.__name__))
-
-
-#
-
 
 
 # def monte_karlo():
