@@ -15,8 +15,8 @@ rt = Esterification()
 #Starting material mass and moles
 a.mass = 92.1
 b.mass = 282.5
-a.mol = round(a.mass / a.mw, 3) * 4000
-b.mol = round(b.mass / b.mw, 3)
+a.mol = round(a.mass / a.mw, 3) * 4
+b.mol = round(b.mass / b.mw, 3) * 2
 
 try:
     if len(a.comp) >= len(b.comp):
@@ -47,29 +47,31 @@ k2 = .5
 P_Hydroxyl = 0
 S_Hydroxyl = 0
 
-#randomly select mass from final product molar masses
-reactant_mw = random.choice(list(final_product_masses.values()))
-print(reactant_mw)
 
-for i in range(1, int(b.mol) + 1 * 100000):
-    choice = random.choices(a.comp, weights=[k1, k2, k1], k=1)[0].__name__
-    if choice == a.prg.__name__:
-        P_Hydroxyl += 1
-    elif choice == a.srg.__name__:
-        S_Hydroxyl += 1
-    #print(str_to_class(choice).__name__)
-print(f"P_Hydroxyl: {P_Hydroxyl}, S_hydroxyl: {S_Hydroxyl}")
-print(P_Hydroxyl / S_Hydroxyl)
+# for i in range(1, int(b.mol) + 1 * 100000):
+#     choice = random.choices(a.comp, weights=[k1, k2, k1], k=1)[0].__name__
+#     if choice == a.prg.__name__:
+#         P_Hydroxyl += 1
+#     elif choice == a.srg.__name__:
+#         S_Hydroxyl += 1
+#     #print(str_to_class(choice).__name__)
+# print(f"P_Hydroxyl: {P_Hydroxyl}, S_hydroxyl: {S_Hydroxyl}")
+# print(P_Hydroxyl / S_Hydroxyl)
 
 composition = []
 for i in range(0, int(a.mol)):
     composition.extend(group.__name__ for group in a.comp)
 print(composition)
 
+for i in range(0, int(b.mol)):
+    MC = random.choices(list(enumerate(composition)), weights=[1 for rg in range(len(composition))], k=1)[0]
+    if MC != rt.rp.__name__:
+        composition[MC[0]] = rt.rp.__name__
+    else:
+        pass
+print(composition)
 
-MC = random.choices(composition, weights=[1 for i in range(len(composition))], k=1)[0]
-MCindex = random.randrange(len(composition))
-print(MC, MCindex)
+print(composition.count(rt.rp.__name__))
 
 
 #get the indext of MC from the composition list

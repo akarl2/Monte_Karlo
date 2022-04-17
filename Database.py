@@ -167,14 +167,11 @@ class Epoxide:
         self.name = "Epoxide"
         self.rxn = (P_Hydroxyl, S_Hydroxyl, P_Amine, S_Amine, Carboxyl)
 
-class P_Ester:
+class Ester:
     def __init__(self):
-        self.name = "P_Ester"
+        self.name = "Ester"
         self.rxn = P_Amine
 
-class S_Ester:
-    def __init__(self):
-        self.name = "S_Ester"
-        self.rxn = P_Amine
+
 
 
