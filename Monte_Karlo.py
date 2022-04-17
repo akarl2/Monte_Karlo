@@ -15,8 +15,8 @@ rt = Esterification()
 #Starting material mass and moles
 a.mass = 92.1
 b.mass = 282.5
-a.mol = round(a.mass / a.mw, 3) * 4
-b.mol = round(b.mass / b.mw, 3) * 2
+a.mol = round(a.mass / a.mw, 3) * 1000
+b.mol = round(b.mass / b.mw, 3) * 2500
 
 try:
     if len(a.comp) >= len(b.comp):
@@ -36,16 +36,10 @@ final_product_masses.update({f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + i * b
 starting_molar_amounts = ({a.sn: [a.mol], b.sn: [b.mol]})
 starting_molar_amounts.update({f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in range(1, species + 1)})
 
-# print(final_product_names)
-# print(final_product_masses)
-# print(starting_molar_amounts)
-
 #Specifty rate constants
 k1 = 1
 k2 = .5
 
-P_Hydroxyl = 0
-S_Hydroxyl = 0
 
 
 # for i in range(1, int(b.mol) + 1 * 100000):
@@ -61,28 +55,21 @@ S_Hydroxyl = 0
 composition = []
 for i in range(0, int(a.mol)):
     composition.extend(group.__name__ for group in a.comp)
-print(composition)
 
-for i in range(0, int(b.mol)):
+while b.mol != 0:
     MC = random.choices(list(enumerate(composition)), weights=[1 for rg in range(len(composition))], k=1)[0]
-    if MC != rt.rp.__name__:
+    if MC[1] != rt.rp.__name__:
         composition[MC[0]] = rt.rp.__name__
+        b.mol -= 1
     else:
         pass
-print(composition)
-
+    print(b.mol)
 print(composition.count(rt.rp.__name__))
+print(composition.count(a.prg.__name__))
+print(composition.count(a.srg.__name__))
 
 
-#get the indext of MC from the composition list
-
-
-
-
-
-
-
-# print(random.choice(composition)[random.randint(0, 2)])
+#
 
 
 
