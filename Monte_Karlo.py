@@ -9,16 +9,17 @@ def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
 #specify reaction chemicals and reaction type
-a = Glycerol()
+a = DETA()
 b = C181()
-rt = Esterification()
+rt = Amidation()
 EOR = 1
 
 #Starting material mass and moles
-a.mass = 92.1
-b.mass = 564.94
-a.mol = round(a.mass / a.mw, 3) * 10000
-b.mol = round(b.mass / b.mw, 3) * 10000
+a.mass = 103.17
+b.mass = 282.47
+a.mol = round(a.mass / a.mw, 3) * 1000
+b.mol = round(b.mass / b.mw, 3) * 1000
+bms = b.mol
 
 #Define limiting reagent
 try:
@@ -45,20 +46,21 @@ final_molar_amounts.update({f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in range(
 
 #Specifty rate constants
 k1 = 1
-k2 = .5
+k2 = 0
 
 #Creats starting composition list
 composition = []
 for i in range(0, int(a.mol)):
     composition.extend(group.__name__ for group in a.comp)
 
+
 #Creates weights from starting commposition list
 weights = []
 for group in composition:
     if group == a.prg.__name__:
-        weights.append(1)
+        weights.append(k1)
     else:
-        weights.append(0.5)
+        weights.append(k2)
 
 #Reacts away b.mol until gone.  Still need to add different rate constants(weights)
 while b.mol != 0:
@@ -68,12 +70,11 @@ while b.mol != 0:
         b.mol -= 1
     else:
         pass
-    print(b.mol)
+    print(round(100-(b.mol/bms*100), 2))
 
 #Seperates composition into compounds
 composition = [composition[x:x+len(a.comp)] for x in range(0, len(composition), len(a.comp))]
 composition_tuple = [tuple(l) for l in composition]
-
 
 #tabulates results from reacion
 rxn_summary = collections.Counter(composition_tuple)

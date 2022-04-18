@@ -33,6 +33,17 @@ class Glycerol:
         self.comp = (self.prg, self.srg, self.prg)
         self.mass = self.mw
 
+class Pentaerythritol:
+    def __init__(self):
+        self.name = "Pentaerythritol"
+        self.sn = "Pen"
+        self.formula = "C5H12O4"
+        self.mw = 136.15
+        self.density = 1.40
+        self.prg = P_Hydroxyl
+        self.comp = (self.prg, self.prg, self.prg, self.prg)
+        self.mass = self.mw
+
 class C181:
     def __init__(self):
         self.name = "C181"
@@ -128,9 +139,9 @@ class DETA:
         self.formula = "C4H13N3"
         self.mw = 103.169
         self.density = 0.955
-        self.prg = 2
-        self.srg = 1
-        self.tg = self.prg + self.srg
+        self.prg = P_Amine
+        self.srg = S_Amine
+        self.comp = (P_Amine, S_Amine, P_Amine)
 
 class P_Hydroxyl:
     def __init__(self):
@@ -171,6 +182,11 @@ class Ester:
     def __init__(self):
         self.name = "Ester"
         self.rxn = P_Amine
+
+class Amide:
+    def __init__(self):
+        self.name = "Amide"
+
 
 
 
