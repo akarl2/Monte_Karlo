@@ -1,3 +1,4 @@
+import collections
 import random
 from Database import *
 from Reactions import *
@@ -15,9 +16,9 @@ EOR = 1
 
 #Starting material mass and moles
 a.mass = 92.1
-b.mass = 282.47
-a.mol = round(a.mass / a.mw, 3) * 3
-b.mol = round(b.mass / b.mw, 3) * 3
+b.mass = 564.94
+a.mol = round(a.mass / a.mw, 3) * 10000
+b.mol = round(b.mass / b.mw, 3) * 10000
 
 #Define limiting reagent
 try:
@@ -51,9 +52,17 @@ composition = []
 for i in range(0, int(a.mol)):
     composition.extend(group.__name__ for group in a.comp)
 
+#Creates weights from starting commposition list
+weights = []
+for group in composition:
+    if group == a.prg.__name__:
+        weights.append(1)
+    else:
+        weights.append(0.5)
+
 #Reacts away b.mol until gone.  Still need to add different rate constants(weights)
 while b.mol != 0:
-    MC = random.choices(list(enumerate(composition)), weights=[1 for rg in range(len(composition))], k=1)[0]
+    MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
     if MC[1] != rt.rp.__name__:
         composition[MC[0]] = rt.rp.__name__
         b.mol -= 1
@@ -63,20 +72,16 @@ while b.mol != 0:
 
 #Seperates composition into compounds
 composition = [composition[x:x+len(a.comp)] for x in range(0, len(composition), len(a.comp))]
+composition_tuple = [tuple(l) for l in composition]
 
-for chemical in composition:
-    if chemical == [a.comp[i].__name__ for i in range(0, len(a.comp))]:
-        final_molar_amounts[a.sn][0] += 1
-    else:
-        pass
-print(final_molar_amounts)
-print(composition)
 
-for chemical in composition:
-    if rt.rp.__name__ in chemical:
-        final_molar_amounts[a.sn][0] += 1
-    else:
-        pass
+#tabulates results from reacion
+rxn_summary = collections.Counter(composition_tuple)
+
+
+print(rxn_summary)
+
+
 
 
 # for i in range(1, int(b.mol) + 1 * 100000):
