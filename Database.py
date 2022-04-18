@@ -5,9 +5,8 @@ class Epichlorohydrin:
         self.formula = "C3H5ClO"
         self.mw = 92.52
         self.density = 1.18
-        self.prg = 1
-        self.srg = 1
-        self.tg = self.prg + self.srg
+        self.prg = Epoxide
+        self.comp = (self.prg)
         self.cg = S_Hydroxyl
 
 class Butanol:

@@ -3,23 +3,28 @@ import random
 from Database import *
 from Reactions import *
 import sys
+import tkinter as tk
+import pandas
 
 #Converts string name to class name
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
 #specify reaction chemicals and reaction type
-a = DETA()
+a = Glycerol()
 b = C181()
-rt = Amidation()
+rt = Esterification()
 EOR = 1
 
 #Starting material mass and moles
-a.mass = 103.17
+a.mass = 92.09
 b.mass = 282.47
-a.mol = round(a.mass / a.mw, 3) * 1000
-b.mol = round(b.mass / b.mw, 3) * 1000
+a.mol = round(a.mass / a.mw, 3) * 10000
+b.mol = round(b.mass / b.mw, 3) * 10000
+unreacted = b.mol - (EOR * b.mol)
+b.mol = EOR * b.mol
 bms = b.mol
+
 
 #Define limiting reagent
 try:
@@ -68,6 +73,7 @@ while b.mol != 0:
     if MC[1] != rt.rp.__name__:
         composition[MC[0]] = rt.rp.__name__
         b.mol -= 1
+        weights[MC[0]] = 0
     else:
         pass
     print(round(100-(b.mol/bms*100), 2))
@@ -79,38 +85,9 @@ composition_tuple = [tuple(l) for l in composition]
 #tabulates results from reacion
 rxn_summary = collections.Counter(composition_tuple)
 
-
-print(rxn_summary)
-
-
-
-
-# for i in range(1, int(b.mol) + 1 * 100000):
-#     choice = random.choices(a.comp, weights=[k1, k2, k1], k=1)[0].__name__
-#     if choice == a.prg.__name__:
-#         P_Hydroxyl += 1
-#     elif choice == a.srg.__name__:
-#         S_Hydroxyl += 1
-#     #print(str_to_class(choice).__name__)
-# print(f"P_Hydroxyl: {P_Hydroxyl}, S_hydroxyl: {S_Hydroxyl}")
-# print(P_Hydroxyl / S_Hydroxyl)
+#Convert rxn_summary to dataframe
+rxn_summary_df = pandas.DataFrame.from_dict(rxn_summary, orient='index')
+rxn_summary_df.loc[f"{b.sn}"] = [unreacted]
 
 
-# def monte_karlo():
-#     random_dist = []
-#     for i in range(0, a.comp.count(a.prg)):
-#         mc = random.randint(0, int(1/k1))
-#         if mc == 1:
-#             random_dist.append(1)
-#         else:
-#             random_dist.append(0)
-#     for i in range(0, a.comp.count(a.srg)):
-#         mc = random.randint(0, int(1/k2))
-#         if mc == int(1/k2):
-#             random_dist.append(1)
-#         else:
-#             random_dist.append(0)
-#     print(random_dist)
-#
-#
-# monte_karlo()
+print(rxn_summary_df)
