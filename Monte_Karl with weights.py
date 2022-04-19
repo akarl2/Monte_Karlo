@@ -40,6 +40,7 @@ final_product_names.extend([f"{a.sn}({1})_{b.sn}({str(i)})" for i in range(1, sp
 #Creates final product molar masses from final product name(s)
 final_product_masses = ({a.sn: round(a.mw, 1), b.sn: round(b.mw, 1)})
 final_product_masses.update({f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + i * b.mw - i * rt.wl, 1) for i in range(1, species + 1)})
+print(final_product_masses)
 
 #Creates starting molar amounts from final product names
 starting_molar_amounts = ({a.sn: [a.mol], b.sn: [b.mol]})
@@ -56,13 +57,12 @@ k2 = .5
 #Creats starting composition list
 composition = []
 for i in range(0, int(a.mol)):
-    composition.extend(group.__name__ for group in a.comp)
-
+    composition.extend(group for group in a.compmw)
 
 #Creates weights from starting commposition list
 weights = []
 for group in composition:
-    if group == a.prg.__name__:
+    if group == a.prgmw:
         weights.append(k1)
     else:
         weights.append(k2)
@@ -70,8 +70,8 @@ for group in composition:
 #Reacts away b.mol until gone.  Still need to add different rate constants(weights)
 while b.mol >= 0:
     MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
-    if MC[1] != rt.rp.__name__:
-        composition[MC[0]] = rt.rp.__name__
+    if MC[1] != a.prgmw or MC[1] != a.srgmw:
+        composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
         b.mol -= 1
         weights[MC[0]] = 0
     else:
@@ -82,23 +82,41 @@ while b.mol >= 0:
 composition = [composition[x:x+len(a.comp)] for x in range(0, len(composition), len(a.comp))]
 composition_tuple = [tuple(l) for l in composition]
 
-#tabulates results from reacion
+#Tabulates final composition
 rxn_summary = collections.Counter(composition_tuple)
+print(rxn_summary)
+
+RS = []
+for key in rxn_summary:
+    MS = round(sum(key),1)
+    for item in final_product_masses:
+        #if MS == item then add key and its value to RS
+        if MS == final_product_masses[item]:
+            RS.append((item, rxn_summary[key]))
+# Convert RS to dictionary
+RS_dict = {}
+for item in RS:
+    RS_dict[item[0]] = item[1]
+
+rxn_summary_df = pandas.DataFrame.from_dict(rxn_summary, orient='index', columns=['Moles'])
+print(rxn_summary_df)
 
 #Convert rxn_summary to dataframe
-rxn_summary_df = pandas.DataFrame.from_dict(rxn_summary, orient='index')
+rxn_summary_df = pandas.DataFrame.from_dict(RS_dict, orient='index', columns=['Moles'])
 rxn_summary_df.loc[f"{b.sn}"] = [unreacted]
 
 #Multiple datafrome rows by final product molar masses and add to new column
 rxn_summary_df['Final Product Mass'] = rxn_summary_df.index.map(final_product_masses.get)
-
-
-
-
-
+#multiply the values in each row
+rxn_summary_df['Final Product Mass Amount'] = rxn_summary_df['Final Product Mass'] * rxn_summary_df['Moles']
+#divide final product mass amount bu sum of final product mass amount
+rxn_summary_df['Final Product Percent'] = rxn_summary_df['Final Product Mass Amount'] / rxn_summary_df['Final Product Mass Amount'].sum() * 100
 
 
 print(rxn_summary_df)
+
+
+
 
 
 #---------------------------------------------------User-Interface----------------------------------------------#

@@ -6,7 +6,7 @@ class Epichlorohydrin:
         self.mw = 92.52
         self.density = 1.18
         self.prg = Epoxide
-        self.comp = (self.prg)
+        self.comp = self.prg
         self.cg = S_Hydroxyl
 
 class Butanol:
@@ -28,8 +28,35 @@ class Glycerol:
         self.mw = 92.09382
         self.density = 1.26
         self.prg = P_Hydroxyl
+        self.prgmw = 31.03392
+        self.srgmw = 30.02598
         self.srg = S_Hydroxyl
         self.comp = (self.prg, self.srg, self.prg)
+        self.compmw = (self.prgmw, self.srgmw, self.prgmw)
+        self.mass = self.mw
+
+class Sorbitol:
+    def __init__(self):
+        self.name = "Sorbitol"
+        self.sn = "Sor"
+        self.formula = "C6H14O6"
+        self.mw = 182.17
+        self.density = 1.49
+        self.prg = P_Hydroxyl
+        self.srg = S_Hydroxyl
+        self.comp = (self.prg, self.srg, self.srg,self.srg, self.srg, self.prg)
+        self.mass = self.mw
+
+class Propylene_Glycol:
+    def __init__(self):
+        self.name = "Propylene_Glycol"
+        self.sn = "PG"
+        self.formula = "C3H8O2"
+        self.mw = 76.095
+        self.density = 1.04
+        self.prg = P_Hydroxyl
+        self.srg = S_Hydroxyl
+        self.comp = (self.prg,self.srg)
         self.mass = self.mw
 
 class Pentaerythritol:
