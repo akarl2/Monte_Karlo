@@ -43,6 +43,21 @@ class Sorbitol:
         self.mw = 182.17
         self.density = 1.49
         self.prg = P_Hydroxyl
+        self.prgmw = 31.03392
+        self.srgmw = 30.02598
+        self.srg = S_Hydroxyl
+        self.comp = (self.prg, self.srg, self.prg)
+        self.compmw = (self.prgmw, self.srgmw, self.prgmw)
+        self.mass = self.mw
+
+class Sorbitol:
+    def __init__(self):
+        self.name = "Sorbitol"
+        self.sn = "Sor"
+        self.formula = "C6H14O6"
+        self.mw = 182.17
+        self.density = 1.49
+        self.prg = P_Hydroxyl
         self.srg = S_Hydroxyl
         self.comp = (self.prg, self.srg, self.srg,self.srg, self.srg, self.prg)
         self.mass = self.mw
@@ -166,8 +181,12 @@ class DETA:
         self.mw = 103.169
         self.density = 0.955
         self.prg = P_Amine
+        self.prgmw = 30.05
         self.srg = S_Amine
-        self.comp = (P_Amine, S_Amine, P_Amine)
+        self.srgmw = 43.07
+        self.comp = (self.prg, self.srg, self.prg)
+        self.compmw = (self.prgmw, self.srgmw, self.prgmw)
+        self.mass = self.mw
 
 class P_Hydroxyl:
     def __init__(self):

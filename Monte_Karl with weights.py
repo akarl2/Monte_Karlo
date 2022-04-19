@@ -5,6 +5,8 @@ from Reactions import *
 import sys
 import tkinter
 import pandas
+pandas.set_option('display.max_columns', None)
+pandas.set_option('display.width', 100)
 
 #Converts string name to class name
 def str_to_class(classname):
@@ -14,11 +16,13 @@ def str_to_class(classname):
 a = Glycerol()
 b = C181()
 rt = Esterification()
-EOR = 1
+
+#Specify extend of reaction (EOR)
+EOR = .9
 
 #Starting material mass and moles
-a.mass = 92.09382
-b.mass = 564.94
+a.mass = 103.169
+b.mass = 282.47
 a.mol = round(a.mass / a.mw, 3) * 1000
 b.mol = round(b.mass / b.mw, 3) * 1000
 unreacted = b.mol - (EOR * b.mol)
@@ -52,7 +56,7 @@ final_molar_amounts.update({f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in range(
 
 #Specifty rate constants
 k1 = 1
-k2 = .5
+k2 = 1
 
 #Creats starting composition list
 composition = []
@@ -82,35 +86,24 @@ while b.mol >= 0:
 composition = [composition[x:x+len(a.comp)] for x in range(0, len(composition), len(a.comp))]
 composition_tuple = [tuple(l) for l in composition]
 
-#Tabulates final composition
+#Tabulates final composition and converts to dataframe
 rxn_summary = collections.Counter(composition_tuple)
-print(rxn_summary)
-
 RS = []
 for key in rxn_summary:
-    MS = round(sum(key),1)
+    MS = round(sum(key), 1)
     for item in final_product_masses:
-        #if MS == item then add key and its value to RS
         if MS == final_product_masses[item]:
             RS.append((item, rxn_summary[key]))
-# Convert RS to dictionary
-RS_dict = {}
-for item in RS:
-    RS_dict[item[0]] = item[1]
-
-rxn_summary_df = pandas.DataFrame.from_dict(rxn_summary, orient='index', columns=['Moles'])
-print(rxn_summary_df)
-
-#Convert rxn_summary to dataframe
-rxn_summary_df = pandas.DataFrame.from_dict(RS_dict, orient='index', columns=['Moles'])
+rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count'])
+rxn_summary_df.set_index('Product', inplace=True)
 rxn_summary_df.loc[f"{b.sn}"] = [unreacted]
 
-#Multiple datafrome rows by final product molar masses and add to new column
-rxn_summary_df['Final Product Mass'] = rxn_summary_df.index.map(final_product_masses.get)
-#multiply the values in each row
-rxn_summary_df['Final Product Mass Amount'] = rxn_summary_df['Final Product Mass'] * rxn_summary_df['Moles']
-#divide final product mass amount bu sum of final product mass amount
-rxn_summary_df['Final Product Percent'] = rxn_summary_df['Final Product Mass Amount'] / rxn_summary_df['Final Product Mass Amount'].sum() * 100
+#Add colums to dataframe
+rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get)
+rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
+rxn_summary_df['Mass'] = rxn_summary_df['Molar Mass'] * rxn_summary_df['Count']
+rxn_summary_df['(%)'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
+
 
 
 print(rxn_summary_df)
