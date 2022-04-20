@@ -14,9 +14,9 @@ def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
 #specify reaction chemicals and reaction type
-a = Butanol()
-b = Epichlorohydrin()
-rt = Etherification()
+a = Glycerol()
+b = C181()
+rt = Esterification()
 
 #Specify extend of reaction (EOR)
 EOR = 1
@@ -32,25 +32,16 @@ bms = b.mol
 
 #Creates final product name(s) from starting material name(s)
 final_product_names = [a.sn, b.sn]
-final_product_names.extend([f"{a.sn}({1})_{b.sn}({str(i)})" for i in range(1, 1000 + 1)])
+final_product_names.extend([f"{a.sn}({1})_{b.sn}({str(i)})" for i in range(1, 1001)])
 
 #Creates final product molar masses from final product name(s)
 final_product_masses = ({a.sn: round(a.mw, 1), b.sn: round(b.mw, 1)})
-final_product_masses.update({f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + i * b.mw - i * rt.wl, 1) for i in range(1, 1000 + 1)})
-print(final_product_masses)
-
-#Creates starting molar amounts from final product names
-starting_molar_amounts = ({a.sn: [a.mol], b.sn: [b.mol]})
-starting_molar_amounts.update({f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in range(1, 1000 + 1)})
-
-#Creates finish molar amounts from final product names
-final_molar_amounts = ({a.sn: [0], b.sn: [0]})
-final_molar_amounts.update({f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in range(1, 1000 + 1)})
+final_product_masses.update({f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + i * b.mw - i * rt.wl, 1) for i in range(1, 1001)})
 
 #Specifty rate constants
 prgK = 1
 srgK = 1
-cgK = .06
+cgK = .0
 
 #Creats starting composition list
 composition = []
@@ -60,8 +51,6 @@ try:
 except TypeError:
     for i in range(0, int(a.mol)):
         composition.append(a.mw)
-
-print(composition)
 
 #Create weights from starting composition list
 weights = []
@@ -92,6 +81,7 @@ except TypeError:
 
 #Tabulates final composition and converts to dataframe
 rxn_summary = collections.Counter(composition_tuple)
+print(rxn_summary)
 RS = []
 for key in rxn_summary:
     MS = round(sum(key), 1)
