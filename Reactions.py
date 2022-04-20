@@ -10,10 +10,8 @@ class Esterification:
 
 
 class Etherification:
-    def __init__(self, reactants, products, rate):
-        self.reactants = reactants
-        self.products = products
-        self.rate = rate
+    def __init__(self):
+        self.wl = 0
 
 class Amidation:
     def __init__(self):

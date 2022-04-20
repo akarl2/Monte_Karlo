@@ -6,6 +6,7 @@ import sys
 import tkinter
 import pandas
 pandas.set_option('display.max_columns', None)
+pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 #Converts string name to class name
@@ -13,16 +14,16 @@ def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
 #specify reaction chemicals and reaction type
-a = Glycerol()
-b = C181()
+a = Butanol()
+b = Epichlorohydrin()
 rt = Esterification()
 
 #Specify extend of reaction (EOR)
-EOR = .9
+EOR = 1
 
 #Starting material mass and moles
-a.mass = 103.169
-b.mass = 282.47
+a.mass = 285.52
+b.mass = 359.39
 a.mol = round(a.mass / a.mw, 3) * 1000
 b.mol = round(b.mass / b.mw, 3) * 1000
 unreacted = b.mol - (EOR * b.mol)
@@ -35,7 +36,7 @@ try:
     if len(a.comp) >= len(b.comp):
         species = len(a.comp)
 except TypeError:
-    species = len(a.comp)
+    species = 4
 
 #Creates final product name(s) from starting material name(s)
 final_product_names = [a.sn, b.sn]
@@ -55,21 +56,28 @@ final_molar_amounts = ({a.sn: [0], b.sn: [0]})
 final_molar_amounts.update({f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in range(1, species + 1)})
 
 #Specifty rate constants
-k1 = 1
-k2 = 1
+prgK = 1
+srgK = 1
+cgK = .06
 
 #Creats starting composition list
 composition = []
-for i in range(0, int(a.mol)):
-    composition.extend(group for group in a.compmw)
+try:
+    for i in range(0, int(a.mol)):
+        composition.extend(group for group in a.compmw)
+except TypeError:
+    for i in range(0, int(a.mol)):
+        composition.append(a.mw)
 
-#Creates weights from starting commposition list
+print(composition)
+
+#Create weights from starting composition list
 weights = []
 for group in composition:
     if group == a.prgmw:
-        weights.append(k1)
+        weights.append(prgK)
     else:
-        weights.append(k2)
+        weights.append(srgK)
 
 #Reacts away b.mol until gone.  Still need to add different rate constants(weights)
 while b.mol >= 0:
@@ -77,14 +85,18 @@ while b.mol >= 0:
     if MC[1] != a.prgmw or MC[1] != a.srgmw:
         composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
         b.mol -= 1
-        weights[MC[0]] = 0
+        weights[MC[0]] = cgK
     else:
         pass
     print(round(100-(b.mol/bms*100), 2))
 
 #Seperates composition into compounds
-composition = [composition[x:x+len(a.comp)] for x in range(0, len(composition), len(a.comp))]
-composition_tuple = [tuple(l) for l in composition]
+try:
+    composition = [composition[x:x+len(a.comp)] for x in range(0, len(composition), len(a.comp))]
+    composition_tuple = [tuple(l) for l in composition]
+except TypeError:
+    composition = [composition[x:x+1] for x in range(0, len(composition), 1)]
+    composition_tuple = [tuple(l) for l in composition]
 
 #Tabulates final composition and converts to dataframe
 rxn_summary = collections.Counter(composition_tuple)

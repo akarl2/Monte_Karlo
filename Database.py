@@ -7,7 +7,9 @@ class Epichlorohydrin:
         self.density = 1.18
         self.prg = Epoxide
         self.comp = self.prg
+        self.compmw = self.mw
         self.cg = S_Hydroxyl
+
 
 class Butanol:
     def __init__(self):
@@ -18,7 +20,11 @@ class Butanol:
         self.density = 0.810
         self.prg = 1
         self.srg = 0
+        self.prgmw = self.mw
+        self.srgmw = 0
         self.tg = self.prg + self.srg
+        self.compmw = self.mw
+        self.comp = 1
 
 class Glycerol:
     def __init__(self):
@@ -58,8 +64,11 @@ class Sorbitol:
         self.mw = 182.17
         self.density = 1.49
         self.prg = P_Hydroxyl
+        self.prgmw = 31.03392
         self.srg = S_Hydroxyl
+        self.srgmw = 30.02598
         self.comp = (self.prg, self.srg, self.srg,self.srg, self.srg, self.prg)
+        self.compmw = (self.prgmw, self.srgmw, self.srgmw, self.srgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
 
 class Propylene_Glycol:
