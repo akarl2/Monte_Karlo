@@ -16,7 +16,7 @@ def str_to_class(classname):
 #specify reaction chemicals and reaction type
 a = Butanol()
 b = Epichlorohydrin()
-rt = Esterification()
+rt = Etherification()
 
 #Specify extend of reaction (EOR)
 EOR = 1
@@ -30,30 +30,22 @@ unreacted = b.mol - (EOR * b.mol)
 b.mol = EOR * b.mol
 bms = b.mol
 
-
-#Define limiting reagent
-try:
-    if len(a.comp) >= len(b.comp):
-        species = len(a.comp)
-except TypeError:
-    species = 4
-
 #Creates final product name(s) from starting material name(s)
 final_product_names = [a.sn, b.sn]
-final_product_names.extend([f"{a.sn}({1})_{b.sn}({str(i)})" for i in range(1, species + 1)])
+final_product_names.extend([f"{a.sn}({1})_{b.sn}({str(i)})" for i in range(1, 1000 + 1)])
 
 #Creates final product molar masses from final product name(s)
 final_product_masses = ({a.sn: round(a.mw, 1), b.sn: round(b.mw, 1)})
-final_product_masses.update({f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + i * b.mw - i * rt.wl, 1) for i in range(1, species + 1)})
+final_product_masses.update({f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + i * b.mw - i * rt.wl, 1) for i in range(1, 1000 + 1)})
 print(final_product_masses)
 
 #Creates starting molar amounts from final product names
 starting_molar_amounts = ({a.sn: [a.mol], b.sn: [b.mol]})
-starting_molar_amounts.update({f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in range(1, species + 1)})
+starting_molar_amounts.update({f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in range(1, 1000 + 1)})
 
 #Creates finish molar amounts from final product names
 final_molar_amounts = ({a.sn: [0], b.sn: [0]})
-final_molar_amounts.update({f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in range(1, species + 1)})
+final_molar_amounts.update({f"{a.sn}({1})_{b.sn}({str(i)})": [0] for i in range(1, 1000 + 1)})
 
 #Specifty rate constants
 prgK = 1
