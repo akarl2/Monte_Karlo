@@ -6,6 +6,8 @@ class Epichlorohydrin:
         self.mw = 92.52
         self.density = 1.18
         self.prg = Epoxide
+        self.prgmw = 92.52
+        self.srgmw = 0
         self.comp = self.prg
         self.compmw = self.mw
         self.cg = S_Hydroxyl
@@ -18,13 +20,10 @@ class Butanol:
         self.formula = "C4H10O"
         self.mw = 74.121
         self.density = 0.810
-        self.prg = 1
-        self.srg = 0
         self.prgmw = self.mw
         self.srgmw = 0
-        self.tg = self.prg + self.srg
-        self.compmw = self.mw
-        self.comp = 1
+        self.comp = self.mw
+        self.mass = self.mw
 
 class Glycerol:
     def __init__(self):
@@ -33,12 +32,9 @@ class Glycerol:
         self.formula = "C3H6O3"
         self.mw = 92.09382
         self.density = 1.26
-        self.prg = P_Hydroxyl
         self.prgmw = 31.03392
         self.srgmw = 30.02598
-        self.srg = S_Hydroxyl
-        self.comp = (self.prg, self.srg, self.prg)
-        self.compmw = (self.prgmw, self.srgmw, self.prgmw)
+        self.comp = (self.prgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
 
 class Sorbitol:
@@ -189,12 +185,21 @@ class DETA:
         self.formula = "C4H13N3"
         self.mw = 103.169
         self.density = 0.955
-        self.prg = P_Amine
         self.prgmw = 30.05
-        self.srg = S_Amine
         self.srgmw = 43.07
-        self.comp = (self.prg, self.srg, self.prg)
-        self.compmw = (self.prgmw, self.srgmw, self.prgmw)
+        self.comp = (self.prgmw, self.srgmw, self.prgmw)
+        self.mass = self.mw
+
+class Adipic_Acid:
+    def __init__(self):
+        self.name = "Adipic Acid"
+        self.sn = "AA"
+        self.formula = "C6H10O4"
+        self.mw = 146.14
+        self.density = 1.36
+        self.prgmw = 73.07
+        self.srgmw = 0
+        self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
 
 class P_Hydroxyl:
