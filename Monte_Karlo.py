@@ -16,14 +16,15 @@ def str_to_class(classname):
 #specify reaction chemicals and reaction type
 a = DETA()
 b = Adipic_Acid()
-rt = PolyEsterification()
+rt = PolyCondensation()
+
 Samples = 1000
 #Specify extend of reaction (EOR)
 EOR = 1
 
 #Starting material mass and moles
 a.mass = 85.33
-b.mass = 250
+b.mass = 65
 a.mol = round(a.mass / a.mw, 3) * Samples
 b.mol = round(b.mass / b.mw, 3) * Samples
 unreacted = b.mol - (EOR * b.mol)
@@ -36,17 +37,17 @@ final_product_names.extend([f"{a.sn}({1})_{b.sn}({str(i)})" for i in range(1, 10
 
 #Creates final product molar masses from final product name(s)
 final_product_masses = ({a.sn: round(a.mw, 1), b.sn: round(b.mw, 1)})
-if rt != PolyEsterification():
+if rt.name != PolyCondensation:
     final_product_masses.update({f"{a.sn}({i})_{b.sn}({str(i)})": round(a.mw + i * b.mw - i * rt.wl, 1) for i in range(1, 1001)})
-elif rt == PolyEsterification():
-    final_product_masses.update({f"{a.sn}({i})_{b.sn}({str(i)})": round(i * a.mw + i * b.mw - i * rt.wl, 1) for i in range(1, 1001)})
-    final_product_masses.update({f"{a.sn}({i-1})_{b.sn}({str(i)})": round(i-1 * a.mw + i * b.mw - i * rt.wl, 1) for i in range(2, 1001)})
+elif rt.name == PolyCondensation:
+    final_product_masses.update({f"{a.sn}({i})_{b.sn}({str(i)})": round(i*a.mw + i * b.mw - i * rt.wl, 1) for i in range(1, 1001)})
+    final_product_masses.update({f"{a.sn}({i-1})_{b.sn}({str(i)})": round((i-1) * a.mw + i * b.mw - i * rt.wl, 1) for i in range(2, 1001)})
+    final_product_masses.update({f"{a.sn}({i})_{b.sn}({str(i-1)})": round(i * a.mw + (i-1) * b.mw - i * rt.wl, 1) for i in range(2, 1001)})
 print(final_product_masses)
-
 #Specifty rate constants
 prgK = 1
 srgK = 0
-cgK = 1
+cgK = .06
 
 #Creats starting composition list
 composition = []
@@ -56,7 +57,7 @@ try:
 except TypeError:
     for i in range(0, int(a.mol)):
         composition.append(a.mw)
-print(composition)
+
 
 #Create weights from starting composition list
 weights = []
@@ -65,9 +66,9 @@ for group in composition:
         weights.append(prgK)
     else:
         weights.append(srgK)
-print(weights)
+
 #Reacts away b.mol until gone.  Still need to add different rate constants(weights)
-if rt != PolyEsterification():
+if rt.name != PolyCondensation:
     while b.mol >= 0:
         MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
         if MC[1] == a.prgmw or MC[1] == a.srgmw:
@@ -78,7 +79,7 @@ if rt != PolyEsterification():
             composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
             b.mol -= 1
         print(round(100-(b.mol/bms*100), 2))
-elif rt == PolyEsterification():
+elif rt.name == PolyCondensation:
     while b.mol >= 0:
         MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
         if MC[1] == a.prgmw or MC[1] == a.srgmw:
