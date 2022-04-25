@@ -19,14 +19,14 @@ def str_to_class(classname):
 a = DETA()
 b = Adipic_Acid()
 rt = PolyCondensation()
-Samples = 100
+Samples = 1000
 
 #Specify extend of reaction (EOR)
 EOR = 1
 
 #Starting material mass and moles
 a.mass = 85.33
-b.mass = 65
+b.mass = 200
 a.mol = round(a.mass / a.mw, 3) * Samples
 b.mol = round(b.mass / b.mw, 3) * Samples
 unreacted = b.mol - (EOR * b.mol)
@@ -84,13 +84,21 @@ if rt.name != PolyCondensation:
 elif rt.name == PolyCondensation:
     while b.mol >= 0:
         MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
+        print(MC)
         if MC[1] == a.prgmw or MC[1] == a.srgmw:
             composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
             b.mol -= 1
             weights[MC[0]] = cgK
-        else:
+        elif MC[1] + a.mw < MC[1] + b.mw:
+            composition[MC[0]] = round(MC[1] + a.mw - rt.wl, 4)
+            b.mol -= 1
+            weights[MC[0]] = cgK
+        elif MC[1] + a.mw > MC[1] + b.mw:
             composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
             b.mol -= 1
+            weights[MC[0]] = cgK
+        else:
+            pass
         #print(round(100-(b.mol/bms*100), 2))
 
 #Seperates composition into compounds
