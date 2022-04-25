@@ -5,6 +5,8 @@ import tkinter
 import pandas
 from Database import *
 from Reactions import *
+
+#Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
 pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
@@ -13,12 +15,12 @@ pandas.set_option('display.width', 100)
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
-#specify reaction chemicals and reaction type
+#specify reaction chemicals, reaction type and # of samples
 a = DETA()
 b = Adipic_Acid()
 rt = PolyCondensation()
+Samples = 100
 
-Samples = 1000
 #Specify extend of reaction (EOR)
 EOR = 1
 
@@ -40,14 +42,15 @@ final_product_masses = ({a.sn: round(a.mw, 1), b.sn: round(b.mw, 1)})
 if rt.name != PolyCondensation:
     final_product_masses.update({f"{a.sn}({i})_{b.sn}({str(i)})": round(a.mw + i * b.mw - i * rt.wl, 1) for i in range(1, 1001)})
 elif rt.name == PolyCondensation:
-    final_product_masses.update({f"{a.sn}({i})_{b.sn}({str(i)})": round(i*a.mw + i * b.mw - i * rt.wl, 1) for i in range(1, 1001)})
-    final_product_masses.update({f"{a.sn}({i-1})_{b.sn}({str(i)})": round((i-1) * a.mw + i * b.mw - i * rt.wl, 1) for i in range(2, 1001)})
-    final_product_masses.update({f"{a.sn}({i})_{b.sn}({str(i-1)})": round(i * a.mw + (i-1) * b.mw - i * rt.wl, 1) for i in range(2, 1001)})
+    final_product_masses.update({f"{a.sn}({i})_{b.sn}({str(i)})": round(i * a.mw + i * b.mw - (i+i-1) * rt.wl, 1) for i in range(1, 1001)})
+    final_product_masses.update({f"{a.sn}({i-1})_{b.sn}({str(i)})": round((i-1) * a.mw + i * b.mw - (i+i-2) * rt.wl, 1) for i in range(2, 1001)})
+    final_product_masses.update({f"{a.sn}({i})_{b.sn}({str(i-1)})": round(i * a.mw + (i-1) * b.mw - (i+i-2) * rt.wl, 1) for i in range(2, 1001)})
 print(final_product_masses)
+
 #Specifty rate constants
 prgK = 1
 srgK = 0
-cgK = .06
+cgK = 1
 
 #Creats starting composition list
 composition = []
@@ -57,7 +60,6 @@ try:
 except TypeError:
     for i in range(0, int(a.mol)):
         composition.append(a.mw)
-
 
 #Create weights from starting composition list
 weights = []
@@ -89,7 +91,7 @@ elif rt.name == PolyCondensation:
         else:
             composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
             b.mol -= 1
-        print(round(100-(b.mol/bms*100), 2))
+        #print(round(100-(b.mol/bms*100), 2))
 
 #Seperates composition into compounds
 try:
@@ -98,7 +100,7 @@ try:
 except TypeError:
     composition = [composition[x:x+1] for x in range(0, len(composition), 1)]
     composition_tuple = [tuple(l) for l in composition]
-
+print(composition_tuple)
 #Tabulates final composition and converts to dataframe
 rxn_summary = collections.Counter(composition_tuple)
 RS = []
@@ -110,7 +112,7 @@ for key in rxn_summary:
 rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count'])
 rxn_summary_df.set_index('Product', inplace=True)
 rxn_summary_df.loc[f"{b.sn}"] = [unreacted]
-
+print(rxn_summary)
 
 #Add colums to dataframe
 rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get)
