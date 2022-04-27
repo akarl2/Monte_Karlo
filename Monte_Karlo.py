@@ -5,6 +5,7 @@ import tkinter
 import pandas
 from Database import *
 from Reactions import *
+import itertools
 
 #Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
@@ -19,20 +20,19 @@ def str_to_class(classname):
 a = DETA()
 b = Adipic_Acid()
 rt = PolyCondensation()
-Samples = 1000
+Samples = 100
 
 #Specify extend of reaction (EOR)
 EOR = 1
 
 #Starting material mass and moles
-a.mass = 85.33
-b.mass = 200
+a.mass = 103.17
+b.mass = 146.14 * .5
 a.mol = round(a.mass / a.mw, 3) * Samples
 b.mol = round(b.mass / b.mw, 3) * Samples
 unreacted = b.mol - (EOR * b.mol)
 b.mol = EOR * b.mol
 bms = b.mol
-
 #Creates final product name(s) from starting material name(s)
 final_product_names = [a.sn, b.sn]
 final_product_names.extend([f"{a.sn}({1})_{b.sn}({str(i)})" for i in range(1, 1001)])
@@ -61,6 +61,13 @@ except TypeError:
     for i in range(0, int(a.mol)):
         composition.append(a.mw)
 
+# Find a.comp in composition and delete it from composition
+for i in range(0, int(a.mol)):
+    for j in range(0, len(composition)):
+        if composition[j] == a.mw:
+            del composition[j]
+            break
+
 #Create weights from starting composition list
 weights = []
 for group in composition:
@@ -85,20 +92,37 @@ elif rt.name == PolyCondensation:
     while b.mol >= 0:
         MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
         print(MC)
+        print(MC[1] + a.nw)
         if MC[1] == a.prgmw or MC[1] == a.srgmw:
             composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
             b.mol -= 1
             weights[MC[0]] = cgK
         elif MC[1] + a.mw < MC[1] + b.mw:
             composition[MC[0]] = round(MC[1] + a.mw - rt.wl, 4)
-            b.mol -= 1
-            weights[MC[0]] = cgK
+            try:
+                composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
+                composition_tuple = [tuple(l) for l in composition]
+            except TypeError:
+                composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
+                composition_tuple = [tuple(l) for l in composition]
+            index = composition_tuple.index(a.comp)
+            del composition_tuple[index]
+            composition = list(itertools.chain(*composition_tuple))
+            try:
+                weights = [weights[x:x + len(a.comp)] for x in range(0, len(weights), len(a.comp))]
+                weights_tuple = [tuple(l) for l in weights]
+            except TypeError:
+                weights = [weights[x:x + 1] for x in range(0, len(weights), 1)]
+                weights_tuple = [tuple(l) for l in weights]
+            del weights_tuple[index]
+            weights = list(itertools.chain(*weights_tuple))
         elif MC[1] + a.mw > MC[1] + b.mw:
             composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
             b.mol -= 1
             weights[MC[0]] = cgK
         else:
             pass
+        print(composition[MC[0]])
         #print(round(100-(b.mol/bms*100), 2))
 
 #Seperates composition into compounds
@@ -108,7 +132,7 @@ try:
 except TypeError:
     composition = [composition[x:x+1] for x in range(0, len(composition), 1)]
     composition_tuple = [tuple(l) for l in composition]
-print(composition_tuple)
+
 #Tabulates final composition and converts to dataframe
 rxn_summary = collections.Counter(composition_tuple)
 RS = []
