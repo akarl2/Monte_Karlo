@@ -106,7 +106,7 @@ class Water:
         self.name = "Water"
         self.sn = "H2O"
         self.formula = "H2O"
-        self.mw = 18.015
+        self.mw = 18.01528
         self.density = 1.000
         self.prg = 1
         self.srg = 0

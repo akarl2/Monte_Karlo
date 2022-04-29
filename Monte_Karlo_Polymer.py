@@ -7,52 +7,60 @@ from Database import *
 from Reactions import *
 import itertools
 
-#Set pandas dataframe display
+# Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
 pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
-#Converts string name to class name
+
+# Converts string name to class name
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
-#specify reaction chemicals, reaction type and # of samples
+
+# specify reaction chemicals, reaction type and # of samples
 a = DETA()
 b = Adipic_Acid()
 rt = PolyCondensation()
 Samples = 100
 
-#Specify extend of reaction (EOR)
+# Specify extend of reaction (EOR)
 EOR = 1
 
-#Starting material mass and moles
+# Starting material mass and moles
 a.mass = 103.17
-b.mass = 146.14 * .5
+b.mass = 146.14 * .8
 a.mol = round(a.mass / a.mw, 3) * Samples
 b.mol = round(b.mass / b.mw, 3) * Samples
 unreacted = b.mol - (EOR * b.mol)
 b.mol = EOR * b.mol
 bms = b.mol
-#Creates final product naRme(s) from starting material name(s)
+# Creates final product naRme(s) from starting material name(s)
 final_product_names = [a.sn, b.sn]
 final_product_names.extend([f"{a.sn}({1})_{b.sn}({str(i)})" for i in range(1, 1001)])
 
-#Creates final product molar masses from final product name(s)
+# Creates final product molar masses from final product name(s)
 final_product_masses = ({a.sn: round(a.mw, 1), b.sn: round(b.mw, 1)})
 if rt.name != PolyCondensation:
-    final_product_masses.update({f"{a.sn}({i})_{b.sn}({str(i)})": round(a.mw + i * b.mw - i * rt.wl, 1) for i in range(1, 1001)})
+    final_product_masses.update(
+        {f"{a.sn}({i})_{b.sn}({str(i)})": round(a.mw + i * b.mw - i * rt.wl, 1) for i in range(1, 1001)})
 elif rt.name == PolyCondensation:
-    final_product_masses.update({f"{a.sn}({i})_{b.sn}({str(i)})": round(i * a.mw + i * b.mw - (i+i-1) * rt.wl, 1) for i in range(1, 1001)})
-    final_product_masses.update({f"{a.sn}({i-1})_{b.sn}({str(i)})": round((i-1) * a.mw + i * b.mw - (i+i-2) * rt.wl, 1) for i in range(2, 1001)})
-    final_product_masses.update({f"{a.sn}({i})_{b.sn}({str(i-1)})": round(i * a.mw + (i-1) * b.mw - (i+i-2) * rt.wl, 1) for i in range(2, 1001)})
+    final_product_masses.update(
+        {f"{a.sn}({i})_{b.sn}({str(i)})": round(i * a.mw + i * b.mw - (i + i - 1) * rt.wl, 1) for i in range(1, 1001)})
+    final_product_masses.update(
+        {f"{a.sn}({i - 1})_{b.sn}({str(i)})": round((i - 1) * a.mw + i * b.mw - (i + i - 2) * rt.wl, 1) for i in
+         range(2, 1001)})
+    final_product_masses.update(
+        {f"{a.sn}({i})_{b.sn}({str(i - 1)})": round(i * a.mw + (i - 1) * b.mw - (i + i - 2) * rt.wl, 1) for i in
+         range(2, 1001)})
 print(final_product_masses)
 
-#Specifty rate constants
+# Specifty rate constants
 prgK = 1
 srgK = 0
 cgK = 1
 
-#Creats starting composition list
+# Creates starting composition list
 composition = []
 try:
     for i in range(0, int(a.mol)):
@@ -61,14 +69,7 @@ except TypeError:
     for i in range(0, int(a.mol)):
         composition.append(a.mw)
 
-# Find a.comp in composition and delete it from composition
-for i in range(0, int(a.mol)):
-    for j in range(0, len(composition)):
-        if composition[j] == a.mw:
-            del composition[j]
-            break
-
-#Create weights from starting composition list
+# Create weights from starting composition list
 weights = []
 for group in composition:
     if group == a.prgmw:
@@ -76,7 +77,7 @@ for group in composition:
     else:
         weights.append(srgK)
 
-#Reacts away b.mol until gone.  Still need to add different rate constants(weights)
+# Reacts away b.mol until gone.  Still need to add different rate constants(weights)
 if rt.name != PolyCondensation:
     while b.mol >= 0:
         MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
@@ -87,51 +88,38 @@ if rt.name != PolyCondensation:
         else:
             composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
             b.mol -= 1
-        print(round(100-(b.mol/bms*100), 2))
+        print(round(100 - (b.mol / bms * 100), 2))
 elif rt.name == PolyCondensation:
-    while b.mol >= 0:
-        MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
-        if MC[1] == a.prgmw or MC[1] == a.srgmw:
-            composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
-            b.mol -= 1
-            weights[MC[0]] = cgK
-        elif MC[1] + a.mw < MC[1] + b.mw:
-            composition[MC[0]] = round(MC[1] + a.mw - rt.wl, 4)
-            try:
-                composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
-                composition_tuple = [tuple(l) for l in composition]
-            except TypeError:
-                composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
-                composition_tuple = [tuple(l) for l in composition]
-            index = composition_tuple.index(a.comp)
-            del composition_tuple[index]
-            composition = list(itertools.chain(*composition_tuple))
-            try:
-                weights = [weights[x:x + len(a.comp)] for x in range(0, len(weights), len(a.comp))]
-                weights_tuple = [tuple(l) for l in weights]
-            except TypeError:
-                weights = [weights[x:x + 1] for x in range(0, len(weights), 1)]
-                weights_tuple = [tuple(l) for l in weights]
-            del weights_tuple[index]
-            weights = list(itertools.chain(*weights_tuple))
-        elif MC[1] + a.mw > MC[1] + b.mw:
-            composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
-            b.mol -= 1
-            weights[MC[0]] = cgK
+    composition = list(itertools.chain(a.comp))
+    weights = []
+    for group in composition:
+        if group == a.prgmw:
+            weights.append(prgK)
         else:
-            pass
-        print(composition[MC[0]])
-        #print(round(100-(b.mol/bms*100), 2))
+            weights.append(srgK)
+    while b.mol >= 0 or a.mol >= 0:
+        MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
+        if MC[1] != a.prgmw or MC[1] != a.srgmw:
+            composition[MC[0]] = round(MC[1] + b.mw - rt.wl + a.mw - rt.wl, 4)
+            b.mol -= 1
+            a.mol -= 1
+        else:
+            composition.extend(list(itertools.chain(a.comp)))
+            weights.append(1)
+            weights.append(0)
+            weights.append(1)
+            a.mol -= 1
+        print(round(100 - (b.mol / bms * 100), 2))
 
-#Seperates composition into compounds
+# Seperates composition into compounds
 try:
-    composition = [composition[x:x+len(a.comp)] for x in range(0, len(composition), len(a.comp))]
+    composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
     composition_tuple = [tuple(l) for l in composition]
 except TypeError:
-    composition = [composition[x:x+1] for x in range(0, len(composition), 1)]
+    composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
     composition_tuple = [tuple(l) for l in composition]
 
-#Tabulates final composition and converts to dataframe
+# Tabulates final composition and converts to dataframe
 rxn_summary = collections.Counter(composition_tuple)
 RS = []
 for key in rxn_summary:
@@ -144,16 +132,15 @@ rxn_summary_df.set_index('Product', inplace=True)
 rxn_summary_df.loc[f"{b.sn}"] = [unreacted]
 print(rxn_summary)
 
-#Add colums to dataframe
+# Add colums to dataframe
 rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get)
 rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
 rxn_summary_df['Mass'] = rxn_summary_df['Molar Mass'] * rxn_summary_df['Count']
 rxn_summary_df['(%)'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
 
-
 print(rxn_summary_df)
 
-#---------------------------------------------------User-Interface----------------------------------------------#
+# ---------------------------------------------------User-Interface----------------------------------------------#
 # window = tkinter.Tk()
 # window.title("Monte Karlo")
 # window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
