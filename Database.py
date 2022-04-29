@@ -37,6 +37,18 @@ class Glycerol:
         self.comp = (self.prgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
 
+class PPG425:
+    def __init__(self):
+        self.name = "PPG425"
+        self.sn = "PPG425"
+        self.formula = "C3H6O3"
+        self.mw = 425
+        self.density = 1.26
+        self.prgmw = 212.5
+        self.srgmw = 0
+        self.comp = (self.prgmw, self.prgmw)
+        self.mass = self.mw
+
 class Sorbitol:
     def __init__(self):
         self.name = "Sorbitol"
