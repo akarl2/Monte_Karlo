@@ -58,25 +58,9 @@ class Sorbitol:
         self.density = 1.49
         self.prg = P_Hydroxyl
         self.prgmw = 31.03392
-        self.srgmw = 30.02598
-        self.srg = S_Hydroxyl
-        self.comp = (self.prg, self.srg, self.prg)
-        self.compmw = (self.prgmw, self.srgmw, self.prgmw)
-        self.mass = self.mw
-
-class Sorbitol:
-    def __init__(self):
-        self.name = "Sorbitol"
-        self.sn = "Sor"
-        self.formula = "C6H14O6"
-        self.mw = 182.17
-        self.density = 1.49
-        self.prg = P_Hydroxyl
-        self.prgmw = 31.03392
         self.srg = S_Hydroxyl
         self.srgmw = 30.02598
-        self.comp = (self.prg, self.srg, self.srg,self.srg, self.srg, self.prg)
-        self.compmw = (self.prgmw, self.srgmw, self.srgmw, self.srgmw, self.srgmw, self.prgmw)
+        self.comp = (self.prgmw, self.srgmw, self.srgmw, self.srgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
 
 class Propylene_Glycol:

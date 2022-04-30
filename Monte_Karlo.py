@@ -17,7 +17,7 @@ def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
 # specify reaction chemicals, reaction type and # of samples
-a = PPG425()
+a = Butanol()
 b = Epichlorohydrin()
 rt = Etherification()
 Samples = 1000
@@ -45,19 +45,18 @@ if rt.name != PolyCondensation:
         {f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + (i * b.mw - i * rt.wl), 1) for i in range(1, 1001)})
 elif rt.name == PolyCondensation:
     final_product_masses.update(
-        {f"{a.sn}({i})_{b.sn}({str(i)})": round(i * a.mw + i * b.mw - (i + i - 1) * rt.wl, 1) for i in range(1, 1001)})
+        {f"{a.sn}({i})_{b.sn}({str(i)})": round(i * a.mw + i * b.mw - (i + i - 1) * rt.wl, 2) for i in range(1, 1001)})
     final_product_masses.update(
         {f"{a.sn}({i - 1})_{b.sn}({str(i)})": round((i - 1) * a.mw + i * b.mw - (i + i - 2) * rt.wl, 1) for i in
          range(2, 1001)})
     final_product_masses.update(
         {f"{a.sn}({i})_{b.sn}({str(i - 1)})": round(i * a.mw + (i - 1) * b.mw - (i + i - 2) * rt.wl, 1) for i in
          range(2, 1001)})
-print(final_product_masses)
 
 # Specifty rate constants
 prgK = 1
-srgK = 0
-cgK = .1
+srgK = 1
+cgK = .06
 
 # Creats starting composition list
 composition = []
@@ -123,7 +122,7 @@ elif rt.name == PolyCondensation:
         print(composition[MC[0]])
         # print(round(100-(b.mol/bms*100), 2))
 
-# Seperates composition into compounds
+# Separates composition into compounds
 try:
     composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
     composition_tuple = [tuple(l) for l in composition]
@@ -149,18 +148,27 @@ rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get
 rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
 rxn_summary_df['Mass'] = rxn_summary_df['Molar Mass'] * rxn_summary_df['Count']
 rxn_summary_df['(%)'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
+EHC = []
+EHCCount = 0
 
+for i in rxn_summary_df["Mass_Comp"]:
 
-#print each Mass_Comp in rxn_summary_df
-for i in rxn_summary_df['Mass_Comp']:
     try:
-        if i[0] > a.prgmw and i[1] > a.prgmw:
-
+        for chain_weight in i:
+            EHCCount = 0
+            EHCCount += sum(chain_weight > max(a.comp) for chain_weight in i)
+        EHC.append(((EHCCount * 35.453) / sum(i)) * 100)
     except TypeError:
-        rxn_summary_df["% EHC"] = 0
-        pass
-print(rxn_summary_df)
+        try:
+            EHC.append((35.453 / i * 100))
+        except TypeError:
+            EHC.append(35.453 / sum(i) * 100)
+rxn_summary_df['EHC'] = EHC
+rxn_summary_df['% EHC'] = (rxn_summary_df['EHC'] * rxn_summary_df['(%)'] )/ 100
 
+print(rxn_summary_df)
+EHCp = round(rxn_summary_df['% EHC'].sum(), 4)
+print(f'% EHC = {EHCp}')
 
 
 
