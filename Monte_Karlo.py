@@ -20,14 +20,14 @@ def str_to_class(classname):
 a = Butanol()
 b = Epichlorohydrin()
 rt = Etherification()
-Samples = 1000
+Samples = 5000
 
 # Specify extend of reaction (EOR)
 EOR = 1
 
 # Starting material mass and moles
 a.mass = 250
-b.mass = a.mass * 0.60912
+b.mass = a.mass * 0.7493
 a.mol = round(a.mass / a.mw, 3) * Samples
 b.mol = round(b.mass / b.mw, 3) * Samples
 unreacted = b.mol - (EOR * b.mol)
@@ -55,7 +55,7 @@ elif rt.name == PolyCondensation:
 
 # Specifty rate constants
 prgK = 1
-srgK = 1
+srgK = 0
 cgK = .06
 
 # Creats starting composition list
@@ -148,27 +148,32 @@ rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get
 rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
 rxn_summary_df['Mass'] = rxn_summary_df['Molar Mass'] * rxn_summary_df['Count']
 rxn_summary_df['(%)'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
-EHC = []
-EHCCount = 0
 
-for i in rxn_summary_df["Mass_Comp"]:
 
-    try:
-        for chain_weight in i:
-            EHCCount = 0
-            EHCCount += sum(chain_weight > max(a.comp) for chain_weight in i)
-        EHC.append(((EHCCount * 35.453) / sum(i)) * 100)
-    except TypeError:
+#Add EHC to dataframe if rt == Etherification
+if rt.name == Etherification:
+    EHC = []
+    for i in rxn_summary_df["Mass_Comp"]:
         try:
-            EHC.append((35.453 / i * 100))
+            for chain_weight in i:
+                EHCCount = 0
+                EHCCount += sum(chain_weight > max(a.comp) for chain_weight in i)
+            EHC.append(((EHCCount * 35.453) / sum(i)) * 100)
         except TypeError:
-            EHC.append(35.453 / sum(i) * 100)
+            try:
+                EHC.append(35.453 / i * 100)
+            except TypeError:
+                if sum(i) == a.mw:
+                    EHC.append(0)
+                else:
+                    EHC.append(35.453 / sum(i) * 100)
 rxn_summary_df['EHC'] = EHC
-rxn_summary_df['% EHC'] = (rxn_summary_df['EHC'] * rxn_summary_df['(%)'] )/ 100
+rxn_summary_df['% EHC'] = (rxn_summary_df['EHC'] * rxn_summary_df['(%)']) / 100
+EHCp = round(rxn_summary_df['% EHC'].sum(), 4)
 
 print(rxn_summary_df)
-EHCp = round(rxn_summary_df['% EHC'].sum(), 4)
-print(f'% EHC = {EHCp}')
+print(f'% EHC = {round(EHCp, 2) }')
+print(f'Theoretical WPE = {round((3545.3 / EHCp) - 36.4, 2)}')
 
 
 
