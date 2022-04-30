@@ -12,11 +12,9 @@ pandas.set_option('display.max_columns', None)
 pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
-
 # Converts string name to class name
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
-
 
 # specify reaction chemicals, reaction type and # of samples
 a = PPG425()
@@ -140,11 +138,11 @@ for key in rxn_summary:
     MS = round(sum(key), 1)
     for item in final_product_masses:
         if MS == final_product_masses[item]:
-            RS.append((item, rxn_summary[key]))
-rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count'])
+            RS.append((item, rxn_summary[key], key))
+#Convert RS to dataframe
+rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass_Comp'])
 rxn_summary_df.set_index('Product', inplace=True)
-rxn_summary_df.loc[f"{b.sn}"] = [unreacted]
-print(rxn_summary)
+rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
 
 # Add columns to dataframe
 rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get)
@@ -152,7 +150,19 @@ rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
 rxn_summary_df['Mass'] = rxn_summary_df['Molar Mass'] * rxn_summary_df['Count']
 rxn_summary_df['(%)'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
 
+
+#print each Mass_Comp in rxn_summary_df
+for i in rxn_summary_df['Mass_Comp']:
+    try:
+        if i[0] > a.prgmw and i[1] > a.prgmw:
+
+    except TypeError:
+        rxn_summary_df["% EHC"] = 0
+        pass
 print(rxn_summary_df)
+
+
+
 
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
