@@ -216,5 +216,4 @@ tkinter.Label(window, text="Samples: ").grid(row=6, column=0)
 tkinter.Label(window, text="EOR: ").grid(row=7, column=0)
 
 
-
 window.mainloop()
