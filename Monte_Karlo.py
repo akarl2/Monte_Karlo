@@ -165,14 +165,13 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass):
                         EHC.append(0)
                     else:
                         EHC.append(35.453 / sum(i) * 100)
-    rxn_summary_df['EHC'] = EHC
-    rxn_summary_df['% EHC'] = (rxn_summary_df['EHC'] * rxn_summary_df['(%)']) / 100
-    EHCp = round(rxn_summary_df['% EHC'].sum(), 4)
+        rxn_summary_df['EHC'] = EHC
+        rxn_summary_df['% EHC'] = (rxn_summary_df['EHC'] * rxn_summary_df['(%)']) / 100
+        EHCp = round(rxn_summary_df['% EHC'].sum(), 4)
+        print(f'% EHC = {round(EHCp, 2)}')
+        print(f'Theoretical WPE = {round((3545.3 / EHCp) - 36.4, 2)}')
 
     print(rxn_summary_df)
-    print(f'% EHC = {round(EHCp, 2)}')
-    print(f'Theoretical WPE = {round((3545.3 / EHCp) - 36.4, 2)}')
-
     # Export rxn_summary_df to desktop as csv
     desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
     rxn_summary_df.to_csv(desktop + '\\' + 'rxn_summary.csv')
@@ -182,11 +181,14 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass):
 window = tkinter.Tk()
 window.title("Monte Karlo")
 window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
-# add input box to get a.mass
 Mass_of_A = tkinter.Entry(window)
 Mass_of_A.grid(row=1, column=1)
+Moles_of_A = tkinter.Entry(window)
+Moles_of_A.grid(row=1, column=3)
 Mass_of_B = tkinter.Entry(window)
 Mass_of_B.grid(row=2, column=1)
+Moles_of_B = tkinter.Entry(window)
+Moles_of_B.grid(row=2, column=3)
 Reactant_A = tkinter.Entry(window)
 Reactant_A.grid(row=3, column=1)
 Reactant_B = tkinter.Entry(window)
@@ -198,6 +200,7 @@ Samples.grid(row=6, column=1)
 EOR = tkinter.Entry(window)
 EOR.grid(row=7, column=1)
 
+
 def sim_values():
     simulate(a=Reactant_A.get(), b=Reactant_B.get(), rt=Reaction_Type.get(), Samples=Samples.get(), EOR=EOR.get(),
              a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get())
@@ -208,12 +211,14 @@ button.grid(row=8, column=1)
 
 # Add a label for the interactions entry
 tkinter.Label(window, text="Grams of A: ").grid(row=1, column=0)
+tkinter.Label(window, text="Moles of A: ").grid(row=1, column=2, padx=10)
 tkinter.Label(window, text="Grams of B: ").grid(row=2, column=0)
+tkinter.Label(window, text="Moles of B: ").grid(row=2, column=2, padx=10)
 tkinter.Label(window, text="Reactant A: ").grid(row=3, column=0)
 tkinter.Label(window, text="Reactant B: ").grid(row=4, column=0)
 tkinter.Label(window, text="Reaction Type: ").grid(row=5, column=0)
-tkinter.Label(window, text="Samples: ").grid(row=6, column=0)
-tkinter.Label(window, text="EOR: ").grid(row=7, column=0)
+tkinter.Label(window, text="# of Samples: ").grid(row=6, column=0)
+tkinter.Label(window, text="Extent of Reaction (EOR): ").grid(row=7, column=0)
 
 
 window.mainloop()
