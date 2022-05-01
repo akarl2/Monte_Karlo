@@ -86,6 +86,30 @@ class Pentaerythritol:
         self.comp = (self.prg, self.prg, self.prg, self.prg)
         self.mass = self.mw
 
+class Butanediol:
+    def __init__(self):
+        self.name = "1,4-Butanediol"
+        self.sn = "1,4-BDO"
+        self.formula = "C4H10O2"
+        self.mw = 90.122
+        self.density = 1.0171
+        self.prgmw = 45.061
+        self.srgmw = 0
+        self.comp = (self.prgmw, self.prgmw)
+        self.mass = self.mw
+
+class Trimethylolpropane:
+    def __init__(self):
+        self.name = "Trimethylolpropane"
+        self.sn = "TMP"
+        self.formula = "C6H14O3"
+        self.mw = 134.17
+        self.density = 1.08
+        self.prgmw = 44.723
+        self.srgmw = 44.722
+        self.comp = (self.prgmw, self.srgmw, self.prgmw)
+        self.mass = self.mw
+
 class C181:
     def __init__(self):
         self.name = "C181"
@@ -197,6 +221,7 @@ class Adipic_Acid:
         self.srgmw = 0
         self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
+
 
 class P_Hydroxyl:
     def __init__(self):

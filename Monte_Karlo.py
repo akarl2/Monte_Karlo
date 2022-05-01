@@ -6,6 +6,8 @@ import pandas
 from Database import *
 from Reactions import *
 import itertools
+import os
+
 
 # Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
@@ -20,14 +22,14 @@ def str_to_class(classname):
 a = Butanol()
 b = Epichlorohydrin()
 rt = Etherification()
-Samples = 5000
+Samples = 10000
 
 # Specify extend of reaction (EOR)
 EOR = 1
 
 # Starting material mass and moles
 a.mass = 250
-b.mass = a.mass * 0.7493
+b.mass = 200
 a.mol = round(a.mass / a.mw, 3) * Samples
 b.mol = round(b.mass / b.mw, 3) * Samples
 unreacted = b.mol - (EOR * b.mol)
@@ -53,12 +55,12 @@ elif rt.name == PolyCondensation:
         {f"{a.sn}({i})_{b.sn}({str(i - 1)})": round(i * a.mw + (i - 1) * b.mw - (i + i - 2) * rt.wl, 1) for i in
          range(2, 1001)})
 
-# Specifty rate constants
+# Specify rate constants
 prgK = 1
-srgK = 0
+srgK = 1
 cgK = .06
 
-# Creats starting composition list
+# Creates starting composition list
 composition = []
 try:
     for i in range(0, int(a.mol)):
@@ -174,6 +176,13 @@ EHCp = round(rxn_summary_df['% EHC'].sum(), 4)
 print(rxn_summary_df)
 print(f'% EHC = {round(EHCp, 2) }')
 print(f'Theoretical WPE = {round((3545.3 / EHCp) - 36.4, 2)}')
+
+
+#Export rxn_summary_df to desktop as csv
+desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+rxn_summary_df.to_csv(desktop + '\\' + 'rxn_summary.csv')
+
+
 
 
 
