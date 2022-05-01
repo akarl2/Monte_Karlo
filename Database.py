@@ -222,7 +222,6 @@ class Adipic_Acid:
         self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
 
-
 class P_Hydroxyl:
     def __init__(self):
         self.name = "P-Hydroxyl"

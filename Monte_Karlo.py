@@ -7,6 +7,7 @@ from Database import *
 from Reactions import *
 import itertools
 import os
+from pandastable import Table, TableModel
 
 # Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
@@ -17,25 +18,16 @@ pandas.set_option('display.width', 100)
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
-# specify reaction chemicals, reaction type and # of samples
-a = Trimethylolpropane()
-b = Epichlorohydrin()
-rt = Etherification()
-Samples = 1000
-
-# Specify extend of reaction (EOR)
-EOR = 1
-
-# Starting material mass and moles
-a.mass = 250
-b.mass = 200
-
 def simulate(a, b, rt, Samples, EOR, a_mass, b_mass):
-    a = str_to_class(a)
-    b = str_to_class(b)
-    rt = str_to_class(rt)
-    a.mol = round(a_mass / a.mw, 3) * Samples
-    b.mol = round(b_mass / b.mw, 3) * Samples
+    a = str_to_class(a)()
+    b = str_to_class(b)()
+    rt = str_to_class(rt)()
+    Samples = int(Samples)
+    EOR = float(EOR)
+    a.mass = float(a_mass)
+    b.mass = float(b_mass)
+    a.mol = round(a.mass / a.mw, 3) * Samples
+    b.mol = round(b.mass / b.mw, 3) * Samples
     unreacted = b.mol - (EOR * b.mol)
     b.mol = EOR * b.mol
     bms = b.mol
@@ -186,30 +178,43 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass):
     rxn_summary_df.to_csv(desktop + '\\' + 'rxn_summary.csv')
 
 
-simulate(a=Butanol, b=Epichlorohydrin, rt=Etherification, Samples=1000, EOR=1, a_mass=250, b_mass=250)
+# ---------------------------------------------------User-Interface----------------------------------------------#
+window = tkinter.Tk()
+window.title("Monte Karlo")
+window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
+# add input box to get a.mass
+Mass_of_A = tkinter.Entry(window)
+Mass_of_A.grid(row=1, column=1)
+Mass_of_B = tkinter.Entry(window)
+Mass_of_B.grid(row=2, column=1)
+Reactant_A = tkinter.Entry(window)
+Reactant_A.grid(row=3, column=1)
+Reactant_B = tkinter.Entry(window)
+Reactant_B.grid(row=4, column=1)
+Reaction_Type = tkinter.Entry(window)
+Reaction_Type.grid(row=5, column=1)
+Samples = tkinter.Entry(window)
+Samples.grid(row=6, column=1)
+EOR = tkinter.Entry(window)
+EOR.grid(row=7, column=1)
 
-# ---------------------------------------------------User-Interface----------------------------------------------
-# window = tkinter.Tk()
-# window.title("Monte Karlo")
-# window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
-# a.mass = tkinter.Entry(window)
-# a.mass.grid(row=1, column=1)
-# b.mass = tkinter.Entry(window)
-# b.mass.grid(row=2, column=1)
-# a = tkinter.Entry(window)
-# a.grid(row=3, column=1)
-# b = tkinter.Entry(window)
-# b.grid(row=4, column=1)
-#
-# #Add button to tkinter
-# button = tkinter.Button(window, text="Simulate", command=lambda: simulate(a.mass.get(), b.mass.get(), a.get(), b.get()))
-# button.grid(row=5, column=0, padx=10, pady=10)
-#
-# # Add a label for the interactions entry
-# tkinter.Label(window, text="Grams of A: ").grid(row=1, column=0)
-# tkinter.Label(window, text="Grams of B: ").grid(row=2, column=0)
-# tkinter.Label(window, text="Reactant A: ").grid(row=3, column=0)
-# tkinter.Label(window, text="Reactant B: ").grid(row=4, column=0)
-#
-#
-# window.mainloop()
+def sim_values():
+    simulate(a=Reactant_A.get(), b=Reactant_B.get(), rt=Reaction_Type.get(), Samples=Samples.get(), EOR=EOR.get(),
+             a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get())
+
+# add button to simulate
+button = tkinter.Button(window, text="Simulate", command=sim_values)
+button.grid(row=8, column=1)
+
+# Add a label for the interactions entry
+tkinter.Label(window, text="Grams of A: ").grid(row=1, column=0)
+tkinter.Label(window, text="Grams of B: ").grid(row=2, column=0)
+tkinter.Label(window, text="Reactant A: ").grid(row=3, column=0)
+tkinter.Label(window, text="Reactant B: ").grid(row=4, column=0)
+tkinter.Label(window, text="Reaction Type: ").grid(row=5, column=0)
+tkinter.Label(window, text="Samples: ").grid(row=6, column=0)
+tkinter.Label(window, text="EOR: ").grid(row=7, column=0)
+
+
+
+window.mainloop()
