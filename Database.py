@@ -12,7 +12,6 @@ class Epichlorohydrin:
         self.compmw = self.mw
         self.cg = S_Hydroxyl
 
-
 class Butanol:
     def __init__(self):
         self.name = "Butanol"
@@ -221,6 +220,7 @@ class Adipic_Acid:
         self.srgmw = 0
         self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
+
 
 class P_Hydroxyl:
     def __init__(self):

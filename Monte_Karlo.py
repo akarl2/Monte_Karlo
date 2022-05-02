@@ -7,7 +7,7 @@ from Database import *
 from Reactions import *
 import itertools
 import os
-from pandastable import Table, TableModel
+from pandastable import Table, TableModel, config
 
 # Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
@@ -18,7 +18,7 @@ pandas.set_option('display.width', 100)
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
-def simulate(a, b, rt, Samples, EOR, a_mass, b_mass):
+def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     a = str_to_class(a)()
     b = str_to_class(b)()
     rt = str_to_class(rt)()
@@ -53,9 +53,9 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass):
              range(2, 1001)})
 
     # Specify rate constants
-    prgK = 1
-    srgK = 1
-    cgK = .06
+    prgK = float(PRGk)
+    srgK = float(SRGk)
+    cgK = float(CGRk)
 
     # Creates starting composition list
     composition = []
@@ -85,7 +85,9 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass):
             else:
                 composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
                 b.mol -= 1
-            print(round(100 - (b.mol / bms * 100), 2))
+            Sim_status.delete(0, tkinter.END)
+            Sim_status.insert(0, round(100 - (b.mol / bms * 100), 2))
+            print(100 - (b.mol / bms * 100))
     elif rt.name == PolyCondensation:
         while b.mol >= 0:
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
@@ -168,14 +170,10 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass):
         rxn_summary_df['EHC'] = EHC
         rxn_summary_df['% EHC'] = (rxn_summary_df['EHC'] * rxn_summary_df['(%)']) / 100
         EHCp = round(rxn_summary_df['% EHC'].sum(), 4)
-        print(f'% EHC = {round(EHCp, 2)}')
-        print(f'Theoretical WPE = {round((3545.3 / EHCp) - 36.4, 2)}')
+        update_percent_EHC(round(EHCp, 2))
+        update_WPE(round((3545.3 / EHCp) - 36.4, 2))
 
-    print(rxn_summary_df)
-    # Export rxn_summary_df to desktop as csv
-    desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
-    rxn_summary_df.to_csv(desktop + '\\' + 'rxn_summary.csv')
-
+    show_results(rxn_summary_df)
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
@@ -196,18 +194,55 @@ Reactant_B.grid(row=4, column=1)
 Reaction_Type = tkinter.Entry(window)
 Reaction_Type.grid(row=5, column=1)
 Samples = tkinter.Entry(window)
+Samples.insert(0, 1000)
 Samples.grid(row=6, column=1)
 EOR = tkinter.Entry(window)
+EOR.insert(0, 1)
 EOR.grid(row=7, column=1)
+Sim_status = tkinter.Entry(window)
+Sim_status.grid(row=1, column=5)
+Percent_EHC = tkinter.Entry(window)
+Percent_EHC.grid(row=15, column=1)
+Calculated_WPE = tkinter.Entry(window)
+Calculated_WPE.grid(row=16, column=1)
+PRGk = tkinter.Entry(window)
+PRGk.insert(0, 1)
+PRGk.grid(row=8, column=1)
+SRGk = tkinter.Entry(window)
+SRGk.insert(0, 1)
+SRGk.grid(row=9, column=1)
+CGRk = tkinter.Entry(window)
+CGRk.insert(0, 1)
+CGRk.grid(row=10, column=1)
 
+
+def show_results(rxn_summary_df):
+    try:
+        pt.destroy()
+    except:
+        pass
+    frame = tkinter.Frame(window)
+    x = (window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2
+    y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
+    frame.place(x=x, y=y, anchor='center')
+    pt = Table(frame, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True, width=1100, height=700)
+    pt.show()
+
+def update_percent_EHC(Value):
+    Percent_EHC.delete(0, tkinter.END)
+    Percent_EHC.insert(0, Value)
+
+def update_WPE(Value):
+    Calculated_WPE.delete(0, tkinter.END)
+    Calculated_WPE.insert(0, Value)
 
 def sim_values():
     simulate(a=Reactant_A.get(), b=Reactant_B.get(), rt=Reaction_Type.get(), Samples=Samples.get(), EOR=EOR.get(),
-             a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get())
+             a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get(), PRGk=PRGk.get(), SRGk=SRGk.get(), CGRk=CGRk.get())
 
 # add button to simulate
 button = tkinter.Button(window, text="Simulate", command=sim_values)
-button.grid(row=8, column=1)
+button.grid(row=11, column=1)
 
 # Add a label for the interactions entry
 tkinter.Label(window, text="Grams of A: ").grid(row=1, column=0)
@@ -219,6 +254,12 @@ tkinter.Label(window, text="Reactant B: ").grid(row=4, column=0)
 tkinter.Label(window, text="Reaction Type: ").grid(row=5, column=0)
 tkinter.Label(window, text="# of Samples: ").grid(row=6, column=0)
 tkinter.Label(window, text="Extent of Reaction (EOR): ").grid(row=7, column=0)
+tkinter.Label(window, text="Simulation Status: ").grid(row=1, column=4)
+tkinter.Label(window, text="% EHC: ").grid(row=15, column=0)
+tkinter.Label(window, text="Calculated WPE: ").grid(row=16, column=0)
+tkinter.Label(window, text="Primary K: ").grid(row=8, column=0)
+tkinter.Label(window, text="Secondary k: ").grid(row=9, column=0)
+tkinter.Label(window, text="Child k: ").grid(row=10, column=0)
 
 
 window.mainloop()
