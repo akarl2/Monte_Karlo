@@ -87,7 +87,6 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 b.mol -= 1
             Sim_status.delete(0, tkinter.END)
             Sim_status.insert(0, round(100 - (b.mol / bms * 100), 2))
-            print(100 - (b.mol / bms * 100))
     elif rt.name == PolyCondensation:
         while b.mol >= 0:
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
@@ -120,8 +119,6 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 weights[MC[0]] = cgK
             else:
                 pass
-            print(composition[MC[0]])
-            # print(round(100-(b.mol/bms*100), 2))
 
     # Separates composition into compounds
     try:
@@ -215,7 +212,6 @@ CGRk = tkinter.Entry(window)
 CGRk.insert(0, 1)
 CGRk.grid(row=10, column=1)
 
-
 def show_results(rxn_summary_df):
     try:
         pt.destroy()
@@ -225,7 +221,7 @@ def show_results(rxn_summary_df):
     x = (window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2
     y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
     frame.place(x=x, y=y, anchor='center')
-    pt = Table(frame, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True, width=1100, height=700)
+    pt = Table(frame, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True, width=x , height=y)
     pt.show()
 
 def update_percent_EHC(Value):
