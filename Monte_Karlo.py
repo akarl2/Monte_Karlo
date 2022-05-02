@@ -184,9 +184,9 @@ Mass_of_B = tkinter.Entry(window)
 Mass_of_B.grid(row=2, column=1)
 Moles_of_B = tkinter.Entry(window)
 Moles_of_B.grid(row=2, column=3)
-Reactant_A = tkinter.Entry(window)
+Reactant_A = tkinter.OptionMenu(window, tkinter.StringVar(window), *reactants)
 Reactant_A.grid(row=3, column=1)
-Reactant_B = tkinter.Entry(window)
+Reactant_B = tkinter.OptionMenu(window, tkinter.StringVar(window), *reactants)
 Reactant_B.grid(row=4, column=1)
 Reaction_Type = tkinter.Entry(window)
 Reaction_Type.grid(row=5, column=1)
@@ -221,7 +221,7 @@ def show_results(rxn_summary_df):
     x = (window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2
     y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
     frame.place(x=x, y=y, anchor='center')
-    pt = Table(frame, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True, width=x , height=y)
+    pt = Table(frame, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True, width=x, height=y)
     pt.show()
 
 def update_percent_EHC(Value):

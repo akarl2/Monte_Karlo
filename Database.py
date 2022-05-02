@@ -5,11 +5,9 @@ class Epichlorohydrin:
         self.formula = "C3H5ClO"
         self.mw = 92.52
         self.density = 1.18
-        self.prg = Epoxide
         self.prgmw = 92.52
         self.srgmw = 0
-        self.comp = self.prg
-        self.compmw = self.mw
+        self.comp = self.prgmw
         self.cg = S_Hydroxyl
 
 class Butanol:
@@ -221,6 +219,8 @@ class Adipic_Acid:
         self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
 
+#Create a dictionary of all the above classes
+reactants = ["Epichlorohydrin", "Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentyerithritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic Acid"]
 
 class P_Hydroxyl:
     def __init__(self):
