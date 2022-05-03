@@ -162,7 +162,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
         EHCp = round(rxn_summary_df['% EHC'].sum(), 4)
         update_percent_EHC(round(EHCp, 2))
         update_WPE(round((3545.3 / EHCp) - 36.4, 2))
-
+    print(rxn_summary)
     update_results(rxn_summary_df)
 
 # ---------------------------------------------------User-Interface----------------------------------------------#

@@ -220,7 +220,7 @@ class Adipic_Acid:
 
 #Create a dictionary of all the above classes
 reactantsA = ["Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic Acid"]
-reactantsB = ["Epichlorohydrin", "Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic Acid"]
+reactantsB = ["Epichlorohydrin", "Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic_Acid"]
 
 
 class P_Hydroxyl:
