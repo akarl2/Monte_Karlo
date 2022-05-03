@@ -220,7 +220,9 @@ class Adipic_Acid:
         self.mass = self.mw
 
 #Create a dictionary of all the above classes
-reactants = ["Epichlorohydrin", "Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentyerithritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic Acid"]
+reactantsA = ["Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentyerithritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic Acid"]
+reactantsB = ["Epichlorohydrin", "Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentyerithritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic Acid"]
+
 
 class P_Hydroxyl:
     def __init__(self):
