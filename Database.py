@@ -8,7 +8,6 @@ class Epichlorohydrin:
         self.prgmw = 92.52
         self.srgmw = 0
         self.comp = self.prgmw
-        self.cg = S_Hydroxyl
 
 class Butanol:
     def __init__(self):
@@ -53,9 +52,7 @@ class Sorbitol:
         self.formula = "C6H14O6"
         self.mw = 182.17
         self.density = 1.49
-        self.prg = P_Hydroxyl
         self.prgmw = 31.03392
-        self.srg = S_Hydroxyl
         self.srgmw = 30.02598
         self.comp = (self.prgmw, self.srgmw, self.srgmw, self.srgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
@@ -67,9 +64,9 @@ class Propylene_Glycol:
         self.formula = "C3H8O2"
         self.mw = 76.095
         self.density = 1.04
-        self.prg = P_Hydroxyl
-        self.srg = S_Hydroxyl
-        self.comp = (self.prg,self.srg)
+        self.prgmw = self.mw / 2
+        self.srgmw = 0
+        self.comp = (self.prgmw,self.prgmw)
         self.mass = self.mw
 
 class Pentaerythritol:
@@ -78,9 +75,10 @@ class Pentaerythritol:
         self.sn = "Pen"
         self.formula = "C5H12O4"
         self.mw = 136.15
+        self.prgmw = 34.0375
+        self.srgmw = 0
         self.density = 1.40
-        self.prg = P_Hydroxyl
-        self.comp = (self.prg, self.prg, self.prg, self.prg)
+        self.comp = (self.prgmw,self.prgmw,self.prgmw,self.prgmw)
         self.mass = self.mw
 
 class Butanediol:
@@ -147,9 +145,10 @@ class Methanol:
         self.formula = "C2H5O"
         self.mw = 30.0469
         self.density = 0.789
-        self.prg = 1
-        self.srg = 0
-        self.tg = self.prg + self.srg
+        self.prgmw = 30.0469
+        self.srgmw = 0
+        self.comp = self.prgmw
+        self.mass = self.mw
 
 class Acetone:
     def __init__(self):
@@ -220,8 +219,8 @@ class Adipic_Acid:
         self.mass = self.mw
 
 #Create a dictionary of all the above classes
-reactantsA = ["Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentyerithritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic Acid"]
-reactantsB = ["Epichlorohydrin", "Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentyerithritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic Acid"]
+reactantsA = ["Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic Acid"]
+reactantsB = ["Epichlorohydrin", "Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic Acid"]
 
 
 class P_Hydroxyl:

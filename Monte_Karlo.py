@@ -30,10 +30,6 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     b.mol = EOR * b.mol
     bms = b.mol
 
-    # Creates final product naRme(s) from starting material name(s)
-    final_product_names = [a.sn, b.sn]
-    final_product_names.extend([f"{a.sn}({1})_{b.sn}({str(i)})" for i in range(1, 1001)])
-
     # Creates final product molar masses from final product name(s)
     final_product_masses = ({a.sn: round(a.mw, 1), b.sn: round(b.mw, 1)})
     if rt.name != PolyCondensation:
@@ -134,7 +130,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             if MS == final_product_masses[item]:
                 RS.append((item, rxn_summary[key], key))
     # Convert RS to dataframe
-    rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass_Comp'])
+    rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     rxn_summary_df.set_index('Product', inplace=True)
     rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
 
@@ -148,11 +144,10 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     # Add EHC to dataframe if rt == Etherification
     if rt.name == Etherification:
         EHC = []
-        for i in rxn_summary_df["Mass_Comp"]:
+        for i in rxn_summary_df["Mass Distribution"]:
             try:
-                for chain_weight in i:
-                    EHCCount = 0
-                    EHCCount += sum(chain_weight > max(a.comp) for chain_weight in i)
+                EHCCount = 0
+                EHCCount += sum(chain_weight > max(a.comp) for chain_weight in i)
                 EHC.append(((EHCCount * 35.453) / sum(i)) * 100)
             except TypeError:
                 try:
@@ -168,13 +163,14 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
         update_percent_EHC(round(EHCp, 2))
         update_WPE(round((3545.3 / EHCp) - 36.4, 2))
 
-    show_results(rxn_summary_df)
+    update_results(rxn_summary_df)
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
 window.title("Monte Karlo")
 window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
 
+window.configure(background="#00BFFF")
 Mass_of_A = tkinter.Entry(window)
 Mass_of_A.insert(0, "100")
 Mass_of_A.grid(row=2, column=1)
@@ -218,19 +214,26 @@ SRGk.grid(row=9, column=1)
 CGRk = tkinter.Entry(window)
 CGRk.insert(0, 1)
 CGRk.grid(row=10, column=1)
-
+results = tkinter.Text(window, height=20, width=50)
 def show_results(rxn_summary_df):
+    global results
     frame = tkinter.Frame(window)
     x = (window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2
     y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
     frame.place(x=x, y=y, anchor='center')
-    results = Table(frame, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True, width=x, height=y, align='center')
+    results = Table(frame, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True, width=x,
+                    height=y, align='center')
     results.show()
 
-def delete_results():
-    for widget in window.winfo_children():
-        if widget.winfo_class() == 'Table':
-            widget.destroy()
+#Replace results Table with new results
+def update_results(rxn_summary_df):
+    global results
+    try:
+        results.destroy()
+        show_results(rxn_summary_df)
+    except:
+        show_results(rxn_summary_df)
+        pass
 
 def update_moles_A(self):
     a = str_to_class(speciesA.get())()
@@ -265,25 +268,29 @@ def sim_values():
              a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get(), PRGk=PRGk.get(), SRGk=SRGk.get(), CGRk=CGRk.get())
 
 # add button to simulate
-button = tkinter.Button(window, text="Simulate", command = lambda: delete_results() & sim_values())
+button = tkinter.Button(window, text="Simulate", command=sim_values,width=15,bg="red")
 button.grid(row=11, column=1)
 
+
 # Add a label for the interactions entry
-tkinter.Label(window, text="Grams of A: ").grid(row=2, column=0)
-tkinter.Label(window, text="Moles of A: ").grid(row=1, column=2, padx=10)
-tkinter.Label(window, text="Grams of B: ").grid(row=4, column=0)
-tkinter.Label(window, text="Moles of B: ").grid(row=2, column=2, padx=10)
-tkinter.Label(window, text="Reactant A: ").grid(row=1, column=0)
-tkinter.Label(window, text="Reactant B: ").grid(row=3, column=0)
-tkinter.Label(window, text="Reaction Type: ").grid(row=5, column=0)
-tkinter.Label(window, text="# of Samples: ").grid(row=6, column=0)
-tkinter.Label(window, text="Extent of Reaction (EOR): ").grid(row=7, column=0)
-tkinter.Label(window, text="Simulation Status: ").grid(row=1, column=4)
-tkinter.Label(window, text="% EHC: ").grid(row=15, column=0)
-tkinter.Label(window, text="Calculated WPE: ").grid(row=16, column=0)
-tkinter.Label(window, text="Primary K: ").grid(row=8, column=0)
-tkinter.Label(window, text="Secondary k: ").grid(row=9, column=0)
-tkinter.Label(window, text="Child k: ").grid(row=10, column=0)
+bg_color = '#00BFFF'
+tkinter.Label(window, text="Grams of A: ", bg=bg_color).grid(row=2, column=0)
+tkinter.Label(window, text="Moles of A: ", bg=bg_color).grid(row=1, column=2, padx=10)
+tkinter.Label(window, text="Grams of B: ", bg=bg_color).grid(row=4, column=0)
+tkinter.Label(window, text="Moles of B: ", bg=bg_color).grid(row=2, column=2, padx=10)
+tkinter.Label(window, text="Reactant A: ", bg=bg_color).grid(row=1, column=0)
+tkinter.Label(window, text="Reactant B: ", bg=bg_color).grid(row=3, column=0)
+tkinter.Label(window, text="Reaction Type: ", bg=bg_color).grid(row=5, column=0)
+tkinter.Label(window, text="# of Samples: ", bg=bg_color).grid(row=6, column=0)
+tkinter.Label(window, text="Extent of Reaction (EOR): ", bg=bg_color).grid(row=7, column=0)
+tkinter.Label(window, text="Simulation Status: ", bg=bg_color).grid(row=1, column=4)
+tkinter.Label(window, text="% EHC: ", bg=bg_color).grid(row=15, column=0)
+tkinter.Label(window, text="Calculated WPE: ", bg=bg_color).grid(row=16, column=0)
+tkinter.Label(window, text="Primary K: ", bg=bg_color).grid(row=8, column=0)
+tkinter.Label(window, text="Secondary k: ", bg=bg_color).grid(row=9, column=0)
+tkinter.Label(window, text="Child k: ", bg=bg_color).grid(row=10, column=0)
+
+
 
 
 window.mainloop()
