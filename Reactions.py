@@ -15,4 +15,4 @@ class Etherification:
         self.wl = 0
         self.name = Etherification
 
-
+Reactions = ["Condensation", "PolyCondensation", "Etherification"]
