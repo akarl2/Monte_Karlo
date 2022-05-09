@@ -219,7 +219,7 @@ class Adipic_Acid:
         self.mass = self.mw
 
 #Create a dictionary of all the above classes
-reactantsA = ["Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic Acid"]
+reactantsA = ["Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic_Acid"]
 reactantsB = ["Epichlorohydrin", "Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic_Acid"]
 
 

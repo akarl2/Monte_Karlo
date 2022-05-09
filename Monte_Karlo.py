@@ -7,6 +7,8 @@ from Database import *
 from Reactions import *
 import itertools
 from pandastable import Table, TableModel, config
+import statsmodels
+
 
 # Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
@@ -46,6 +48,15 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             {f"{a.sn}({i})_{b.sn}({str(i - 1)})": round(i * a.mw + (i - 1) * b.mw - (i + i - 2) * rt.wl, 1) for i in
              range(2, 1001)})
 
+    #Creates a list with possible chain lengths
+    cw = a.prgmw
+    chain_lengths = [(0, a.prgmw)]
+    for chain_length in range(2, 100, 2):
+        cw = cw + b.mw-rt.wl
+        chain_lengths.append((chain_length - 1, round(cw, 2)))
+        cw = cw + a.mw-rt.wl
+        chain_lengths.append((chain_length, round(cw, 2)))
+
     # Specify rate constants
     prgK = float(PRGk)
     srgK = float(SRGk)
@@ -83,12 +94,8 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     elif rt.name == PolyCondensation:
         while b.mol >= 0:
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
-            if MC[1] == a.prgmw or MC[1] == a.srgmw:
-                composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
-                b.mol -= 1
-                weights[MC[0]] = cgK
-            elif MC[1] + a.mw < MC[1] + b.mw:
-                composition[MC[0]] = round(MC[1] + a.mw - rt.wl, 4)
+            index = next((i for i, v in enumerate(chain_lengths) if round(v[1], 1) == round(MC[1], 1)), None)
+            if chain_lengths[index+1][1] - composition[MC[0]] == (round(a.mw-rt.wl,2)):
                 try:
                     composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
                     composition_tuple = [tuple(l) for l in composition]
@@ -106,14 +113,12 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                     weights_tuple = [tuple(l) for l in weights]
                 del weights_tuple[index]
                 weights = list(itertools.chain(*weights_tuple))
-            elif MC[1] + a.mw > MC[1] + b.mw:
-                composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
+                weights[MC[0]] = cgK
+            elif chain_lengths[index + 1][1] - composition[MC[0]] == (round(b.mw - rt.wl,2)):
                 b.mol -= 1
                 weights[MC[0]] = cgK
-            else:
-                pass
-
-    # Separates composition into compounds
+            print(b.mol)
+            composition[MC[0]] = chain_lengths[index + 1][1]
     try:
         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
         composition_tuple = [tuple(l) for l in composition]
@@ -125,9 +130,9 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     rxn_summary = collections.Counter(composition_tuple)
     RS = []
     for key in rxn_summary:
-        MS = round(sum(key), 1)
+        MS = round(sum(key))
         for item in final_product_masses:
-            if MS == final_product_masses[item]:
+            if MS == round(final_product_masses[item]):
                 RS.append((item, rxn_summary[key], key))
     # Convert RS to dataframe
     rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
@@ -141,28 +146,27 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
     rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
 
-    # Add EHC to dataframe if rt == Etherification
+    # Add ehc to dataframe if rt == Etherification
     if rt.name == Etherification:
-        EHC = []
+        ehc = []
         for i in rxn_summary_df["Mass Distribution"]:
             try:
                 EHCCount = 0
                 EHCCount += sum(chain_weight > max(a.comp) for chain_weight in i)
-                EHC.append(((EHCCount * 35.453) / sum(i)) * 100)
+                ehc.append(((EHCCount * 35.453) / sum(i)) * 100)
             except TypeError:
                 try:
-                    EHC.append(35.453 / i * 100)
+                    ehc.append(35.453 / i * 100)
                 except TypeError:
                     if sum(i) == a.mw:
-                        EHC.append(0)
+                        ehc.append(0)
                     else:
-                        EHC.append(35.453 / sum(i) * 100)
-        rxn_summary_df['EHC'] = EHC
-        rxn_summary_df['% EHC'] = (rxn_summary_df['EHC'] * rxn_summary_df['Wt %']) / 100
-        EHCp = round(rxn_summary_df['% EHC'].sum(), 4)
+                        ehc.append(35.453 / sum(i) * 100)
+        rxn_summary_df['ehc'] = ehc
+        rxn_summary_df['% ehc'] = (rxn_summary_df['ehc'] * rxn_summary_df['Wt %']) / 100
+        EHCp = round(rxn_summary_df['% ehc'].sum(), 4)
         update_percent_EHC(round(EHCp, 2))
         update_WPE(round((3545.3 / EHCp) - 36.4, 2))
-    print(rxn_summary)
     update_results(rxn_summary_df)
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
@@ -203,8 +207,8 @@ Sim_status = tkinter.Entry(window)
 Sim_status.grid(row=1, column=5)
 Percent_EHC = tkinter.Entry(window)
 Percent_EHC.grid(row=15, column=1)
-Calculated_WPE = tkinter.Entry(window)
-Calculated_WPE.grid(row=16, column=1)
+Theoretical_WPE = tkinter.Entry(window)
+Theoretical_WPE.grid(row=16, column=1)
 PRGk = tkinter.Entry(window)
 PRGk.insert(0, 1)
 PRGk.grid(row=8, column=1)
@@ -260,8 +264,8 @@ def sim_status(Value):
     Sim_status.insert(0, Value)
 
 def update_WPE(Value):
-    Calculated_WPE.delete(0, tkinter.END)
-    Calculated_WPE.insert(0, Value)
+    Theoretical_WPE.delete(0, tkinter.END)
+    Theoretical_WPE.insert(0, Value)
 
 def sim_values():
     simulate(a=speciesA.get(), b=speciesB.get(), rt=reaction_type.get(), Samples=Samples.get(), EOR=EOR.get(),
@@ -285,7 +289,7 @@ tkinter.Label(window, text="# of Samples: ", bg=bg_color).grid(row=6, column=0)
 tkinter.Label(window, text="Extent of Reaction (EOR): ", bg=bg_color).grid(row=7, column=0)
 tkinter.Label(window, text="Simulation Status: ", bg=bg_color).grid(row=1, column=4)
 tkinter.Label(window, text="% EHC: ", bg=bg_color).grid(row=15, column=0)
-tkinter.Label(window, text="Calculated WPE: ", bg=bg_color).grid(row=16, column=0)
+tkinter.Label(window, text="Theoretical WPE: ", bg=bg_color).grid(row=16, column=0)
 tkinter.Label(window, text="Primary K: ", bg=bg_color).grid(row=8, column=0)
 tkinter.Label(window, text="Secondary k: ", bg=bg_color).grid(row=9, column=0)
 tkinter.Label(window, text="Child k: ", bg=bg_color).grid(row=10, column=0)
