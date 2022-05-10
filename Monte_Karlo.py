@@ -51,11 +51,12 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     #Creates a list with possible chain lengths
     cw = a.prgmw
     chain_lengths = [(0, a.prgmw)]
-    for chain_length in range(2, 100, 2):
+    for chain_length in range(2, 1000, 2):
         cw = cw + b.mw-rt.wl
         chain_lengths.append((chain_length - 1, round(cw, 2)))
         cw = cw + a.mw-rt.wl
         chain_lengths.append((chain_length, round(cw, 2)))
+    print(chain_lengths)
 
     # Specify rate constants
     prgK = float(PRGk)
@@ -70,19 +71,21 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     except TypeError:
         for i in range(0, int(a.mol)):
             composition.append(a.mw)
-
+    print(composition)
     # Create weights from starting composition list
     weights = []
     for group in composition:
         if group == a.prgmw:
-            weights.append(prgK)
+            weights.append(int(prgK))
         else:
-            weights.append(srgK)
+            weights.append(int(srgK))
+    print(weights)
 
     # Reacts away b.mol until gone.  Still need to add different rate constants(weights)
     if rt.name != PolyCondensation:
         while b.mol >= 0:
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
+            print(MC)
             if MC[1] == a.prgmw or MC[1] == a.srgmw:
                 composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
                 b.mol -= 1
@@ -95,7 +98,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
         while b.mol >= 0:
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
             index = next((i for i, v in enumerate(chain_lengths) if round(v[1], 1) == round(MC[1], 1)), None)
-            if chain_lengths[index+1][1] - composition[MC[0]] == (round(a.mw-rt.wl,2)):
+            if round(chain_lengths[index+1][1] - composition[MC[0]], 1) == (round(a.mw-rt.wl, 1)):
                 try:
                     composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
                     composition_tuple = [tuple(l) for l in composition]
@@ -114,11 +117,11 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 del weights_tuple[index]
                 weights = list(itertools.chain(*weights_tuple))
                 weights[MC[0]] = cgK
-            elif chain_lengths[index + 1][1] - composition[MC[0]] == (round(b.mw - rt.wl,2)):
+                composition[MC[0]] = chain_lengths[index + 1][1]
+            elif round(chain_lengths[index+1][1] - composition[MC[0]], 1) == (round(b.mw - rt.wl,1)):
                 b.mol -= 1
                 weights[MC[0]] = cgK
-            print(b.mol)
-            composition[MC[0]] = chain_lengths[index + 1][1]
+                composition[MC[0]] = chain_lengths[index + 1][1]
     try:
         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
         composition_tuple = [tuple(l) for l in composition]
