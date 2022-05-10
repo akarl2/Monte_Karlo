@@ -8,6 +8,7 @@ from Reactions import *
 import itertools
 from pandastable import Table, TableModel, config
 import statsmodels
+from math import isclose
 
 
 # Set pandas dataframe display
@@ -98,15 +99,17 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
         while b.mol >= 0:
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
             index = next((i for i, v in enumerate(chain_lengths) if round(v[1], 1) == round(MC[1], 1)), None)
-            if round(chain_lengths[index+1][1] - composition[MC[0]], 1) == (round(a.mw-rt.wl, 1)):
+            print(MC, index)
+            print(composition[MC[0]])
+            if isclose(round(chain_lengths[index+1][1] - composition[MC[0]], 1), round(a.mw-rt.wl,1), rel_tol=.5):
                 try:
                     composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
                     composition_tuple = [tuple(l) for l in composition]
                 except TypeError:
                     composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
                     composition_tuple = [tuple(l) for l in composition]
-                index = composition_tuple.index(a.comp)
-                del composition_tuple[index]
+                index2 = composition_tuple.index(a.comp)
+                del composition_tuple[index2]
                 composition = list(itertools.chain(*composition_tuple))
                 try:
                     weights = [weights[x:x + len(a.comp)] for x in range(0, len(weights), len(a.comp))]
@@ -114,11 +117,16 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 except TypeError:
                     weights = [weights[x:x + 1] for x in range(0, len(weights), 1)]
                     weights_tuple = [tuple(l) for l in weights]
-                del weights_tuple[index]
+                del weights_tuple[index2]
                 weights = list(itertools.chain(*weights_tuple))
                 weights[MC[0]] = cgK
+                print(chain_lengths[index+1][1], "New Value")
+                print(composition[MC[0]], "New Value2")
+                print(chain_lengths[index + 1][1] - composition[MC[0]], "Difference")
                 composition[MC[0]] = chain_lengths[index + 1][1]
-            elif round(chain_lengths[index+1][1] - composition[MC[0]], 1) == (round(b.mw - rt.wl,1)):
+
+
+            elif isclose(round(chain_lengths[index+1][1] - composition[MC[0]], 1), round(b.mw-rt.wl, 1), rel_tol=1):
                 b.mol -= 1
                 weights[MC[0]] = cgK
                 composition[MC[0]] = chain_lengths[index + 1][1]
