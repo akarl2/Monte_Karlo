@@ -8,7 +8,7 @@ from Reactions import *
 import itertools
 from pandastable import Table, TableModel, config
 import statsmodels
-from math import isclose
+import math
 
 
 # Set pandas dataframe display
@@ -52,7 +52,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     #Creates a list with possible chain lengths
     cw = a.prgmw
     chain_lengths = [(0, a.prgmw)]
-    for chain_length in range(2, 1000, 2):
+    for chain_length in range(2, 2000, 2):
         cw = cw + b.mw-rt.wl
         chain_lengths.append((chain_length - 1, round(cw, 2)))
         cw = cw + a.mw-rt.wl
@@ -72,7 +72,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     except TypeError:
         for i in range(0, int(a.mol)):
             composition.append(a.mw)
-    print(composition)
+
     # Create weights from starting composition list
     weights = []
     for group in composition:
@@ -80,13 +80,11 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             weights.append(int(prgK))
         else:
             weights.append(int(srgK))
-    print(weights)
 
     # Reacts away b.mol until gone.  Still need to add different rate constants(weights)
     if rt.name != PolyCondensation:
         while b.mol >= 0:
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
-            print(MC)
             if MC[1] == a.prgmw or MC[1] == a.srgmw:
                 composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
                 b.mol -= 1
@@ -99,9 +97,20 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
         while b.mol >= 0:
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
             index = next((i for i, v in enumerate(chain_lengths) if round(v[1], 1) == round(MC[1], 1)), None)
-            print(MC, index)
-            print(composition[MC[0]])
-            if isclose(round(chain_lengths[index+1][1] - composition[MC[0]], 1), round(a.mw-rt.wl,1), rel_tol=.5):
+            print(chain_lengths)
+            print(MC)
+            print(index)
+            print("Hello")
+            print(round(chain_lengths[index+1][1], 1))
+            next_change = round(chain_lengths[index + 1][1],1) - round(composition[MC[0]],1)
+            a_wt_change = round(a.mw - rt.wl, 1)
+            b_wt_change = round(b.mw - rt.wl, 1)
+
+            print(next_change)
+            change_to_a = math.isclose(next_change, a_wt_change, abs_tol=.5)
+            print(a_wt_change, b_wt_change)
+            if change_to_a:
+                print("Fuck A")
                 try:
                     composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
                     composition_tuple = [tuple(l) for l in composition]
@@ -110,7 +119,6 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                     composition_tuple = [tuple(l) for l in composition]
                 index2 = composition_tuple.index(a.comp)
                 del composition_tuple[index2]
-                composition = list(itertools.chain(*composition_tuple))
                 try:
                     weights = [weights[x:x + len(a.comp)] for x in range(0, len(weights), len(a.comp))]
                     weights_tuple = [tuple(l) for l in weights]
@@ -119,17 +127,16 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                     weights_tuple = [tuple(l) for l in weights]
                 del weights_tuple[index2]
                 weights = list(itertools.chain(*weights_tuple))
-                weights[MC[0]] = cgK
-                print(chain_lengths[index+1][1], "New Value")
-                print(composition[MC[0]], "New Value2")
-                print(chain_lengths[index + 1][1] - composition[MC[0]], "Difference")
-                composition[MC[0]] = chain_lengths[index + 1][1]
-
-
-            elif isclose(round(chain_lengths[index+1][1] - composition[MC[0]], 1), round(b.mw-rt.wl, 1), rel_tol=1):
+                composition = list(itertools.chain(*composition_tuple))
+                weights[MC[0]] = int(cgK)
+                change = chain_lengths[index + 1][1] - chain_lengths[index][1]
+                composition[MC[0]] += change
+            elif not change_to_a:
+                print("Fuck B")
                 b.mol -= 1
-                weights[MC[0]] = cgK
-                composition[MC[0]] = chain_lengths[index + 1][1]
+                weights[MC[0]] = int(cgK)
+                change = chain_lengths[index + 1][1] - chain_lengths[index][1]
+                composition[MC[0]] += change
     try:
         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
         composition_tuple = [tuple(l) for l in composition]
@@ -187,12 +194,12 @@ window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_sc
 
 window.configure(background="#00BFFF")
 Mass_of_A = tkinter.Entry(window)
-Mass_of_A.insert(0, "100")
+Mass_of_A.insert(0, "182")
 Mass_of_A.grid(row=2, column=1)
 Moles_of_A = tkinter.Entry(window)
 Moles_of_A.grid(row=1, column=3)
 Mass_of_B = tkinter.Entry(window)
-Mass_of_B.insert(0, "100")
+Mass_of_B.insert(0, "103")
 Mass_of_B.grid(row=4, column=1)
 Moles_of_B = tkinter.Entry(window)
 Moles_of_B.grid(row=2, column=3)
@@ -224,7 +231,7 @@ PRGk = tkinter.Entry(window)
 PRGk.insert(0, 1)
 PRGk.grid(row=8, column=1)
 SRGk = tkinter.Entry(window)
-SRGk.insert(0, 1)
+SRGk.insert(0, 0)
 SRGk.grid(row=9, column=1)
 CGRk = tkinter.Entry(window)
 CGRk.insert(0, 1)
