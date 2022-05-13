@@ -57,7 +57,6 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
         chain_lengths.append((chain_length - 1, round(cw, 2)))
         cw = cw + a.mw-rt.wl
         chain_lengths.append((chain_length, round(cw, 2)))
-    print(chain_lengths)
 
     # Specify rate constants
     prgK = float(PRGk)
@@ -97,17 +96,16 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
         while b.mol >= 0:
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
             index = next((i for i, v in enumerate(chain_lengths) if round(v[1], 1) == round(MC[1], 1)), None)
-            print(chain_lengths)
-            print(MC)
-            print(index)
-            print("Hello")
+            print(MC, index)
             print(round(chain_lengths[index+1][1], 1))
+            print(composition[MC[0]])
             next_change = round(chain_lengths[index + 1][1],1) - round(composition[MC[0]],1)
+            new_value = round(chain_lengths[index+1][1],1)
             a_wt_change = round(a.mw - rt.wl, 1)
             b_wt_change = round(b.mw - rt.wl, 1)
-
             print(next_change)
-            change_to_a = math.isclose(next_change, a_wt_change, abs_tol=.5)
+            change_to_a = math.isclose(next_change, a_wt_change, abs_tol=1)
+            change_to_b = math.isclose(next_change, b_wt_change, abs_tol=1)
             print(a_wt_change, b_wt_change)
             if change_to_a:
                 print("Fuck A")
@@ -129,14 +127,14 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 weights = list(itertools.chain(*weights_tuple))
                 composition = list(itertools.chain(*composition_tuple))
                 weights[MC[0]] = int(cgK)
-                change = chain_lengths[index + 1][1] - chain_lengths[index][1]
-                composition[MC[0]] += change
-            elif not change_to_a:
+                composition[MC[0]] = new_value
+                print(composition[MC[0]])
+            if change_to_b:
                 print("Fuck B")
                 b.mol -= 1
                 weights[MC[0]] = int(cgK)
-                change = chain_lengths[index + 1][1] - chain_lengths[index][1]
-                composition[MC[0]] += change
+                composition[MC[0]] = new_value
+                print(composition[MC[0]])
     try:
         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
         composition_tuple = [tuple(l) for l in composition]
