@@ -58,6 +58,15 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
         cw = cw + a.mw-rt.wl
         chain_lengths.append((chain_length, round(cw, 2)))
 
+    cw = a.prgmw
+    chain_lengths_id = [((0, a.prgmw), a.rg)]
+    for chain_length in range(2, 2000, 2):
+        cw = cw + b.mw - rt.wl
+        chain_lengths_id.append(((chain_length - 1, round(cw, 2)), b.rg))
+        cw = cw + a.mw - rt.wl
+        chain_lengths_id.append(((chain_length, round(cw, 2)), a.rg))
+    print(chain_lengths_id)
+
     # Specify rate constants
     prgK = float(PRGk)
     srgK = float(SRGk)

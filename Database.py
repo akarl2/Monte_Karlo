@@ -205,6 +205,7 @@ class DETA:
         self.srgmw = 43.07
         self.comp = (self.prgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
+        self.rg = "Amine"
 
 class Adipic_Acid:
     def __init__(self):
@@ -217,6 +218,7 @@ class Adipic_Acid:
         self.srgmw = 0
         self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
+        self.rg = "Acid"
 
 #Create a dictionary of all the above classes
 reactantsA = ["Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic_Acid"]
