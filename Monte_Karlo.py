@@ -58,14 +58,14 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
         cw = cw + a.mw-rt.wl
         chain_lengths.append((chain_length, round(cw, 2)))
 
-    cw = a.prgmw
-    chain_lengths_id = [((0, a.prgmw), a.rg)]
-    for chain_length in range(2, 2000, 2):
-        cw = cw + b.mw - rt.wl
-        chain_lengths_id.append(((chain_length - 1, round(cw, 2)), b.rg))
-        cw = cw + a.mw - rt.wl
-        chain_lengths_id.append(((chain_length, round(cw, 2)), a.rg))
-    print(chain_lengths_id)
+    if rt.name == PolyCondensation:
+        cw = a.prgmw
+        chain_lengths_id = [((0, a.prgmw), a.rg)]
+        for chain_length in range(2, 2000, 2):
+            cw = cw + b.mw - rt.wl
+            chain_lengths_id.append(((chain_length - 1, round(cw, 2)), b.rg))
+            cw = cw + a.mw - rt.wl
+            chain_lengths_id.append(((chain_length, round(cw, 2)), a.rg))
 
     # Specify rate constants
     prgK = float(PRGk)
@@ -135,7 +135,6 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 b.mol -= 1
                 weights[MC[0]] = int(cgK)
                 composition[MC[0]] = new_value
-    print(composition)
     try:
         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
         composition_tuple = [tuple(l) for l in composition]
@@ -155,6 +154,30 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     rxn_summary_df.set_index('Product', inplace=True)
     rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
+
+    #Determines ID of species from chain_lengths_id
+    if rt.name == PolyCondensation:
+        ID_List = []
+        for i in range(0, len(composition)):
+            for item in composition[i]:
+                for chain_length in range(0, len(chain_lengths_id)):
+                    if math.isclose(item, chain_lengths_id[chain_length][0][1], abs_tol=1):
+                        ID_List.append(chain_lengths_id[chain_length][1])
+    if rt.name == PolyCondensation:
+    #Converts ID_list to tuple
+        try:
+            ID_List = [ID_List[x:x + len(a.comp)] for x in range(0, len(ID_List), len(a.comp))]
+            ID_tuple = [tuple(l) for l in ID_List]
+        except TypeError:
+            ID_List = [ID_List[x:x + 1] for x in range(0, len(ID_List), 1)]
+            ID_tuple = [tuple(l) for l in ID_List]
+
+    print(ID_tuple)
+    sum_of_mass = []
+    for item in composition_tuple:
+        sum_of_mass.append(round(sum(item), 1))
+    print(sum_of_mass)
+
 
     # Add columns to dataframe
     rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get)
