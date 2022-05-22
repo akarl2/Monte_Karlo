@@ -61,7 +61,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     if rt.name == PolyCondensation:
         cw = a.prgmw
         chain_lengths_id = [((0, a.prgmw), a.rg)]
-        for chain_length in range(2, 2000, 2):
+        for chain_length in range(2, 200, 2):
             cw = cw + b.mw - rt.wl
             chain_lengths_id.append(((chain_length - 1, round(cw, 2)), b.rg))
             cw = cw + a.mw - rt.wl
@@ -154,30 +154,27 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     rxn_summary_df.set_index('Product', inplace=True)
     rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
-
-    #Determines ID of species from chain_lengths_id
-    if rt.name == PolyCondensation:
-        ID_List = []
-        for i in range(0, len(composition)):
-            for item in composition[i]:
-                for chain_length in range(0, len(chain_lengths_id)):
-                    if math.isclose(item, chain_lengths_id[chain_length][0][1], abs_tol=1):
-                        ID_List.append(chain_lengths_id[chain_length][1])
-    if rt.name == PolyCondensation:
-    #Converts ID_list to tuple
-        try:
-            ID_List = [ID_List[x:x + len(a.comp)] for x in range(0, len(ID_List), len(a.comp))]
-            ID_tuple = [tuple(l) for l in ID_List]
-        except TypeError:
-            ID_List = [ID_List[x:x + 1] for x in range(0, len(ID_List), 1)]
-            ID_tuple = [tuple(l) for l in ID_List]
-
-    print(ID_tuple)
-    sum_of_mass = []
-    for item in composition_tuple:
-        sum_of_mass.append(round(sum(item), 1))
-    print(sum_of_mass)
-
+    print(rxn_summary_df)
+    # print each value in each row from Mass Distribution
+    for i in range(len(rxn_summary_df)):
+        for j in range(len(rxn_summary_df.iloc[i]['Mass Distribution'])):
+            amine_ct = 0
+            acid_ct = 0
+            alcohol_ct = 0
+            for chain_length in range(0, len(chain_lengths_id)):
+                if math.isclose(rxn_summary_df.iloc[i]['Mass Distribution'][j], chain_lengths_id[chain_length][0][1], abs_tol=1):
+                    ID = chain_lengths_id[chain_length][1]
+                    if ID == "Amine":
+                        amine_ct += 1
+                    if ID == "Acid":
+                        acid_ct += 1
+                    if ID == "Alcohol":
+                        alcohol_ct += 1
+                    print(acid_ct, amine_ct, alcohol_ct)
+                    amine_value = (amine_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution']))
+                    acid_value = (acid_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution']))
+                    alcohol_value = (alcohol_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution']))
+                    print(round(amine_value, 2), round(acid_value, 2), round(alcohol_value, 2))
 
     # Add columns to dataframe
     rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get)
