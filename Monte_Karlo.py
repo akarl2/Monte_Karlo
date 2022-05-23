@@ -186,6 +186,11 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     rxn_summary_df['Mass'] = rxn_summary_df['Molar Mass'] * rxn_summary_df['Count']
     rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
     rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
+    # Multipy OH value by rxn_summart_df['Wt %'] and then dive by 100.  Replace OH value with new value
+    rxn_summary_df['OH Value'] = round(rxn_summary_df['OH Value'] * rxn_summary_df['Wt %'] / 100, 2)
+    rxn_summary_df['Amine Value'] = round(rxn_summary_df['Amine Value'] * rxn_summary_df['Wt %'] / 100, 2)
+    rxn_summary_df['Acid Value'] = round(rxn_summary_df['Acid Value'] * rxn_summary_df['Wt %'] / 100, 2)
+
 
     # Add ehc to dataframe if rt == Etherification
     if rt.name == Etherification:
@@ -208,7 +213,13 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
         EHCp = round(rxn_summary_df['% ehc'].sum(), 4)
         update_percent_EHC(round(EHCp, 2))
         update_WPE(round((3545.3 / EHCp) - 36.4, 2))
+
     update_results(rxn_summary_df)
+
+    if rt.name == PolyCondensation:
+        update_Acid_Value(round(rxn_summary_df['Acid Value'].sum(), 2))
+        update_Amine_Value(round(rxn_summary_df['Amine Value'].sum(), 2))
+        update_OH_Value(round(rxn_summary_df['OH Value'].sum(), 2))
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
@@ -249,6 +260,12 @@ Percent_EHC = tkinter.Entry(window)
 Percent_EHC.grid(row=15, column=1)
 Theoretical_WPE = tkinter.Entry(window)
 Theoretical_WPE.grid(row=16, column=1)
+Acid_Value = tkinter.Entry(window)
+Acid_Value.grid(row=17, column=1)
+Amine_Value = tkinter.Entry(window)
+Amine_Value.grid(row=18, column=1)
+OH_Value = tkinter.Entry(window)
+OH_Value.grid(row=19, column=1)
 PRGk = tkinter.Entry(window)
 PRGk.insert(0, 1)
 PRGk.grid(row=8, column=1)
@@ -307,6 +324,18 @@ def update_WPE(Value):
     Theoretical_WPE.delete(0, tkinter.END)
     Theoretical_WPE.insert(0, Value)
 
+def update_Acid_Value(Value):
+    Acid_Value.delete(0, tkinter.END)
+    Acid_Value.insert(0, Value)
+
+def update_Amine_Value(Value):
+    Amine_Value.delete(0, tkinter.END)
+    Amine_Value.insert(0, Value)
+
+def update_OH_Value(Value):
+    OH_Value.delete(0, tkinter.END)
+    OH_Value.insert(0, Value)
+
 def sim_values():
     simulate(a=speciesA.get(), b=speciesB.get(), rt=reaction_type.get(), Samples=Samples.get(), EOR=EOR.get(),
              a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get(), PRGk=PRGk.get(), SRGk=SRGk.get(), CGRk=CGRk.get())
@@ -330,6 +359,9 @@ tkinter.Label(window, text="Extent of Reaction (EOR): ", bg=bg_color).grid(row=7
 tkinter.Label(window, text="Simulation Status: ", bg=bg_color).grid(row=1, column=4)
 tkinter.Label(window, text="% EHC: ", bg=bg_color).grid(row=15, column=0)
 tkinter.Label(window, text="Theoretical WPE: ", bg=bg_color).grid(row=16, column=0)
+tkinter.Label(window, text="Acid Value: ", bg=bg_color).grid(row=17, column=0)
+tkinter.Label(window, text="Amine Value: ", bg=bg_color).grid(row=18, column=0)
+tkinter.Label(window, text="OH Value: ", bg=bg_color).grid(row=19, column=0)
 tkinter.Label(window, text="Primary K: ", bg=bg_color).grid(row=8, column=0)
 tkinter.Label(window, text="Secondary k: ", bg=bg_color).grid(row=9, column=0)
 tkinter.Label(window, text="Child k: ", bg=bg_color).grid(row=10, column=0)
