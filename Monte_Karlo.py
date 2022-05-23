@@ -87,7 +87,6 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             weights.append(int(prgK))
         else:
             weights.append(int(srgK))
-
     # Reacts away b.mol until gone.  Still need to add different rate constants(weights)
     if rt.name != PolyCondensation:
         while b.mol >= 0:
@@ -101,7 +100,8 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 b.mol -= 1
             sim_status(round(100 - (b.mol / bms * 100), 2))
     elif rt.name == PolyCondensation:
-        while b.mol >= 0:
+        temp_TAV = 100
+        while temp_TAV >= 1:
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
             index = next((i for i, v in enumerate(chain_lengths) if round(v[1], 1) == round(MC[1], 1)), None)
             next_change = round(chain_lengths[index + 1][1],1) - round(composition[MC[0]],1)
@@ -133,23 +133,23 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 b.mol -= 1
                 weights[MC[0]] = cgK
                 composition[MC[0]] = new_value
-    print(composition)
-    print(sum(composition))
-    Amine = 0
-    Acid = 0
-    Alcohol = 0
-    for chain in composition:
-        for chain_ID in range(0, len(chain_lengths_id)):
-            if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
-                ID = chain_lengths_id[chain_ID][1]
-                if ID == "Amine":
-                    Amine += 1
-                if ID == "Acid":
-                    Acid += 1
-                if ID == "Alcohol":
-                    Alcohol += 1
-    print(Amine * 56100 / sum(composition), Acid * 56100 / sum(composition), Alcohol * 56100 / sum(composition))
-
+            amine_ct = 0
+            acid_ct = 0
+            alcohol_ct = 0
+            for chain in composition:
+                for chain_ID in range(0, len(chain_lengths_id)):
+                    if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
+                        ID = chain_lengths_id[chain_ID][1]
+                        if ID == "Amine":
+                            amine_ct += 1
+                        if ID == "Acid":
+                            acid_ct += 1
+                        if ID == "Alcohol":
+                            alcohol_ct += 1
+            temp_TAV = round((amine_ct * 56100) / (sum(composition)),2)
+            temp_AV = round((acid_ct * 56100) / (sum(composition)),2)
+            tempOH = round((alcohol_ct * 56100) / (sum(composition)),2)
+            print(temp_AV, temp_TAV)
 
     try:
         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
