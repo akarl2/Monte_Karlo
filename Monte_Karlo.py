@@ -154,27 +154,31 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     rxn_summary_df.set_index('Product', inplace=True)
     rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
-    print(rxn_summary_df)
     # print each value in each row from Mass Distribution
     for i in range(len(rxn_summary_df)):
-        for j in range(len(rxn_summary_df.iloc[i]['Mass Distribution'])):
-            amine_ct = 0
-            acid_ct = 0
-            alcohol_ct = 0
-            for chain_length in range(0, len(chain_lengths_id)):
-                if math.isclose(rxn_summary_df.iloc[i]['Mass Distribution'][j], chain_lengths_id[chain_length][0][1], abs_tol=1):
-                    ID = chain_lengths_id[chain_length][1]
-                    if ID == "Amine":
-                        amine_ct += 1
-                    if ID == "Acid":
-                        acid_ct += 1
-                    if ID == "Alcohol":
-                        alcohol_ct += 1
-                    print(acid_ct, amine_ct, alcohol_ct)
-                    amine_value = (amine_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution']))
-                    acid_value = (acid_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution']))
-                    alcohol_value = (alcohol_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution']))
-                    print(round(amine_value, 2), round(acid_value, 2), round(alcohol_value, 2))
+        amine_ct = 0
+        acid_ct = 0
+        alcohol_ct = 0
+        try:
+            for j in range(len(rxn_summary_df.iloc[i]['Mass Distribution'])):
+                for chain_length in range(0, len(chain_lengths_id)):
+                    if math.isclose(rxn_summary_df.iloc[i]['Mass Distribution'][j], chain_lengths_id[chain_length][0][1], abs_tol=1):
+                        ID = chain_lengths_id[chain_length][1]
+                        if ID == "Amine":
+                            amine_ct += 1
+                        if ID == "Acid":
+                            acid_ct += 1
+                        if ID == "Alcohol":
+                            alcohol_ct += 1
+            amine_value = round((amine_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])),2)
+            acid_value = round((acid_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])),2)
+            alcohol_value = round((alcohol_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])),2)
+            rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "Amine Value"] = amine_value
+            rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "Acid Value"] = acid_value
+            rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "OH Value"] = alcohol_value
+        except TypeError:
+            ID = "Amine"
+            amine_ct += 1
 
     # Add columns to dataframe
     rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get)
@@ -210,7 +214,6 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
 window = tkinter.Tk()
 window.title("Monte Karlo")
 window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
-
 window.configure(background="#00BFFF")
 Mass_of_A = tkinter.Entry(window)
 Mass_of_A.insert(0, "182")
