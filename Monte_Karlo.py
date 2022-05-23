@@ -10,7 +10,6 @@ from pandastable import Table, TableModel, config
 import statsmodels
 import math
 
-
 # Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
 pandas.set_option('display.max_rows', None)
@@ -106,35 +105,52 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
             index = next((i for i, v in enumerate(chain_lengths) if round(v[1], 1) == round(MC[1], 1)), None)
             next_change = round(chain_lengths[index + 1][1],1) - round(composition[MC[0]],1)
-            new_value = round(chain_lengths[index+1][1],1)
-            a_wt_change = round(a.mw - rt.wl, 1)
-            b_wt_change = round(b.mw - rt.wl, 1)
-            change_to_a = math.isclose(next_change, a_wt_change, abs_tol=1)
-            change_to_b = math.isclose(next_change, b_wt_change, abs_tol=1)
-            if change_to_a:
+            new_value = round(chain_lengths[index+1][1], 1)
+            if math.isclose(next_change, round(a.mw - rt.wl, 1), abs_tol=1):
                 try:
                     composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
                     composition_tuple = [tuple(l) for l in composition]
                 except TypeError:
                     composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
                     composition_tuple = [tuple(l) for l in composition]
-                index2 = composition_tuple.index(a.comp)
-                del composition_tuple[index2]
                 try:
                     weights = [weights[x:x + len(a.comp)] for x in range(0, len(weights), len(a.comp))]
                     weights_tuple = [tuple(l) for l in weights]
                 except TypeError:
                     weights = [weights[x:x + 1] for x in range(0, len(weights), 1)]
                     weights_tuple = [tuple(l) for l in weights]
-                del weights_tuple[index2]
+                try:
+                    index2 = composition_tuple.index(a.comp)
+                    del composition_tuple[index2]
+                    del weights_tuple[index2]
+                except ValueError:
+                    pass
                 weights = list(itertools.chain(*weights_tuple))
                 composition = list(itertools.chain(*composition_tuple))
-                weights[MC[0]] = int(cgK)
+                weights[MC[0]] = cgK
                 composition[MC[0]] = new_value
-            if change_to_b:
+            if math.isclose(next_change, round(b.mw - rt.wl, 1), abs_tol=1):
                 b.mol -= 1
-                weights[MC[0]] = int(cgK)
+                weights[MC[0]] = cgK
                 composition[MC[0]] = new_value
+    print(composition)
+    print(sum(composition))
+    Amine = 0
+    Acid = 0
+    Alcohol = 0
+    for chain in composition:
+        for chain_ID in range(0, len(chain_lengths_id)):
+            if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
+                ID = chain_lengths_id[chain_ID][1]
+                if ID == "Amine":
+                    Amine += 1
+                if ID == "Acid":
+                    Acid += 1
+                if ID == "Alcohol":
+                    Alcohol += 1
+    print(Amine * 56100 / sum(composition), Acid * 56100 / sum(composition), Alcohol * 56100 / sum(composition))
+
+
     try:
         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
         composition_tuple = [tuple(l) for l in composition]
@@ -163,12 +179,12 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             for j in range(len(rxn_summary_df.iloc[i]['Mass Distribution'])):
                 for chain_length in range(0, len(chain_lengths_id)):
                     if math.isclose(rxn_summary_df.iloc[i]['Mass Distribution'][j], chain_lengths_id[chain_length][0][1], abs_tol=1):
-                        ID = chain_lengths_id[chain_length][1]
-                        if ID == "Amine":
+                        chain_ID = chain_lengths_id[chain_length][1]
+                        if chain_ID == "Amine":
                             amine_ct += 1
-                        if ID == "Acid":
+                        if chain_ID == "Acid":
                             acid_ct += 1
-                        if ID == "Alcohol":
+                        if chain_ID == "Alcohol":
                             alcohol_ct += 1
             amine_value = round((amine_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])),2)
             acid_value = round((acid_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])),2)
@@ -177,7 +193,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "Acid Value"] = acid_value
             rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "OH Value"] = alcohol_value
         except TypeError:
-            ID = "Amine"
+            chain_ID = "Amine"
             amine_ct += 1
 
     # Add columns to dataframe
