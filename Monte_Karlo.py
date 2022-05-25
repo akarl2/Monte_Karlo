@@ -51,7 +51,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     #Creates a list with possible chain lengths
     cw = a.prgmw
     chain_lengths = [(0, a.prgmw)]
-    for chain_length in range(2, 2000, 2):
+    for chain_length in range(2, 200, 2):
         cw = cw + b.mw-rt.wl
         chain_lengths.append((chain_length - 1, round(cw, 2)))
         cw = cw + a.mw-rt.wl
@@ -100,8 +100,8 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 b.mol -= 1
             sim_status(round(100 - (b.mol / bms * 100), 2))
     elif rt.name == PolyCondensation:
-        temp_TAV = 55
-        while temp_TAV >= 0:
+        temp_TAV = 50
+        while temp_TAV < 10:
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
             index = next((i for i, v in enumerate(chain_lengths) if round(v[1], 1) == round(MC[1], 1)), None)
             next_change = round(chain_lengths[index + 1][1],1) - round(composition[MC[0]],1)
@@ -130,7 +130,10 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 weights[MC[0]] = cgK
                 composition[MC[0]] = new_value
             if math.isclose(next_change, round(b.mw - rt.wl, 1), abs_tol=1):
-                b.mol -= 1
+                if b.mol >= 0:
+                    b.mol -= 1
+                else:
+                    pass
                 weights[MC[0]] = cgK
                 composition[MC[0]] = new_value
             amine_ct = 0
@@ -146,10 +149,10 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                             acid_ct += 1
                         if ID == "Alcohol":
                             alcohol_ct += 1
-            temp_TAV = round((amine_ct * 56100) / (sum(composition)),2)
-            temp_AV = round((acid_ct * 56100) / (sum(composition)),2)
-            tempOH = round((alcohol_ct * 56100) / (sum(composition)),2)
-            print(temp_AV, temp_TAV)
+            temp_TAV = round((amine_ct * 56100) / (sum(composition)), 2)
+            temp_AV = round((acid_ct * 56100) / (sum(composition)), 2)
+            tempOH = round((alcohol_ct * 56100) / (sum(composition)), 2)
+
 
     try:
         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
