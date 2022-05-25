@@ -101,7 +101,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             sim_status(round(100 - (b.mol / bms * 100), 2))
     elif rt.name == PolyCondensation:
         temp_AV = 1000
-        while temp_AV > 90:
+        while b.mol >= 0:
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
             index = next((i for i, v in enumerate(chain_lengths) if round(v[1], 1) == round(MC[1], 1)), None)
             next_change = round(chain_lengths[index + 1][1],1) - round(composition[MC[0]],1)
@@ -158,6 +158,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             temp_AV = round((acid_ct * 56100) / (sum(composition)), 2)
             tempOH = round((alcohol_ct * 56100) / (sum(composition)), 2)
             print(temp_TAV, temp_AV, tempOH)
+        print(total_amine_ct, total_acid_ct)
     try:
         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
         composition_tuple = [tuple(l) for l in composition]
