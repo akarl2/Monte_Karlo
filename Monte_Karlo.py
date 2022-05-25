@@ -100,8 +100,8 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 b.mol -= 1
             sim_status(round(100 - (b.mol / bms * 100), 2))
     elif rt.name == PolyCondensation:
-        temp_TAV = 50
-        while temp_TAV < 10:
+        temp_AV = 1000
+        while temp_AV > 90:
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
             index = next((i for i, v in enumerate(chain_lengths) if round(v[1], 1) == round(MC[1], 1)), None)
             next_change = round(chain_lengths[index + 1][1],1) - round(composition[MC[0]],1)
@@ -139,21 +139,25 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             amine_ct = 0
             acid_ct = 0
             alcohol_ct = 0
+            total_amine_ct = 0
+            total_acid_ct = 0
             for chain in composition:
                 for chain_ID in range(0, len(chain_lengths_id)):
                     if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
                         ID = chain_lengths_id[chain_ID][1]
                         if ID == "Amine":
                             amine_ct += 1
+                            total_amine_ct += 1
                         if ID == "Acid":
                             acid_ct += 1
+                            total_acid_ct += 1
                         if ID == "Alcohol":
                             alcohol_ct += 1
+                        break
             temp_TAV = round((amine_ct * 56100) / (sum(composition)), 2)
             temp_AV = round((acid_ct * 56100) / (sum(composition)), 2)
             tempOH = round((alcohol_ct * 56100) / (sum(composition)), 2)
-
-
+            print(temp_TAV, temp_AV, tempOH)
     try:
         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
         composition_tuple = [tuple(l) for l in composition]
@@ -173,6 +177,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     rxn_summary_df.set_index('Product', inplace=True)
     rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
+
     # print each value in each row from Mass Distribution
     for i in range(len(rxn_summary_df)):
         amine_ct = 0
@@ -208,7 +213,6 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     rxn_summary_df['OH Value'] = round(rxn_summary_df['OH Value'] * rxn_summary_df['Wt %'] / 100, 2)
     rxn_summary_df['Amine Value'] = round(rxn_summary_df['Amine Value'] * rxn_summary_df['Wt %'] / 100, 2)
     rxn_summary_df['Acid Value'] = round(rxn_summary_df['Acid Value'] * rxn_summary_df['Wt %'] / 100, 2)
-
 
     # Add ehc to dataframe if rt == Etherification
     if rt.name == Etherification:
