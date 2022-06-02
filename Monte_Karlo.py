@@ -177,19 +177,47 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     print(composition_tuple)
     print(IDLIST_tuple)
 
-    RC = random.choice(list(enumerate(IDLIST_tuple)))
-    RCR = random.choice(RC[1])
-    RCR_index = RC[1].index(RCR)
-    RC2 = random.choice(list(enumerate(IDLIST_tuple)))
-    RCR2 = random.choice(RC2[1])
-    if RCR != RCR2:
-        composition_tuple[RC][0][1][RCR_index] += sum(composition_tuple[RC[0]])
 
-
-    # if RCR != RCR2:
-    #     composition_tuple[IDindex1] = composition_tuple[IDindex1] + IDindex2
-
-
+    if rt.name == PolyCondensation:
+        while temp_TAV > 0:
+            composition_tuple = [list(l) for l in composition_tuple]
+            IDLIST_tuple = [list(l) for l in IDLIST_tuple]
+            RC = random.choice(list(enumerate(IDLIST_tuple)))
+            RCR = random.choice(RC[1])
+            RCR_index = RC[1].index(RCR)
+            RC2 = random.choice(list(enumerate(IDLIST_tuple)))
+            RCR2 = random.choice(RC2[1])
+            if RCR != RCR2:
+                composition_tuple[RC[0]][RCR_index] += sum(composition_tuple[RC2[0]])
+                del composition_tuple[RC2[0]]
+                del IDLIST_tuple[RC2[0]]
+            else:
+                pass
+            composition_tuple_temp = list(itertools.chain(*composition_tuple))
+            amine_ct = 0
+            acid_ct = 0
+            alcohol_ct = 0
+            total_amine_ct = 0
+            total_acid_ct = 0
+            for chain in composition_tuple_temp:
+                for chain_ID in range(0, len(chain_lengths_id)):
+                    if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
+                        ID = chain_lengths_id[chain_ID][1]
+                        IDLIST.append(ID)
+                        if ID == "Amine":
+                            amine_ct += 1
+                            total_amine_ct += 1
+                        if ID == "Acid":
+                            acid_ct += 1
+                            total_acid_ct += 1
+                        if ID == "Alcohol":
+                            alcohol_ct += 1
+                        break
+            temp_TAV = round((amine_ct * 56100) / (sum(composition_tuple_temp)), 2)
+            temp_AV = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
+            tempOH = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
+            print(temp_TAV, temp_AV, tempOH)
+    composition_tuple = [tuple(l) for l in composition_tuple]
     # Tabulates final composition and converts to dataframe
     rxn_summary = collections.Counter(composition_tuple)
     RS = []
