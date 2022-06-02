@@ -56,7 +56,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
         chain_lengths.append((chain_length - 1, round(cw, 2)))
         cw = cw + a.mw-rt.wl
         chain_lengths.append((chain_length, round(cw, 2)))
-
+    #Creates a list with the ID's of the chain lengths
     if rt.name == PolyCondensation:
         cw = a.prgmw
         chain_lengths_id = [((0, a.prgmw), a.rg)]
@@ -87,6 +87,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             weights.append(int(prgK))
         else:
             weights.append(int(srgK))
+
     # Reacts away b.mol until gone.  Still need to add different rate constants(weights)
     if rt.name != PolyCondensation:
         while b.mol >= 0:
@@ -159,12 +160,14 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             tempOH = round((alcohol_ct * 56100) / (sum(composition)), 2)
             print(temp_TAV, temp_AV, tempOH)
         print(total_amine_ct, total_acid_ct)
+        print(composition)
     try:
         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
         composition_tuple = [tuple(l) for l in composition]
     except TypeError:
         composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
         composition_tuple = [tuple(l) for l in composition]
+    print(composition_tuple)
 
     # Tabulates final composition and converts to dataframe
     rxn_summary = collections.Counter(composition_tuple)
@@ -195,6 +198,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                             acid_ct += 1
                         if chain_ID == "Alcohol":
                             alcohol_ct += 1
+                        break
             amine_value = round((amine_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])),2)
             acid_value = round((acid_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])),2)
             alcohol_value = round((alcohol_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])),2)
@@ -236,7 +240,6 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
         EHCp = round(rxn_summary_df['% ehc'].sum(), 4)
         update_percent_EHC(round(EHCp, 2))
         update_WPE(round((3545.3 / EHCp) - 36.4, 2))
-
     update_results(rxn_summary_df)
 
     if rt.name == PolyCondensation:
@@ -250,12 +253,12 @@ window.title("Monte Karlo")
 window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
 window.configure(background="#00BFFF")
 Mass_of_A = tkinter.Entry(window)
-Mass_of_A.insert(0, "182")
+Mass_of_A.insert(0, "250")
 Mass_of_A.grid(row=2, column=1)
 Moles_of_A = tkinter.Entry(window)
 Moles_of_A.grid(row=1, column=3)
 Mass_of_B = tkinter.Entry(window)
-Mass_of_B.insert(0, "103")
+Mass_of_B.insert(0, "100")
 Mass_of_B.grid(row=4, column=1)
 Moles_of_B = tkinter.Entry(window)
 Moles_of_B.grid(row=2, column=3)
