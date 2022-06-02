@@ -101,8 +101,8 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 b.mol -= 1
             sim_status(round(100 - (b.mol / bms * 100), 2))
     elif rt.name == PolyCondensation:
-        temp_AV = 1000
         while b.mol >= 0:
+            IDLIST = []
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
             index = next((i for i, v in enumerate(chain_lengths) if round(v[1], 1) == round(MC[1], 1)), None)
             next_change = round(chain_lengths[index + 1][1],1) - round(composition[MC[0]],1)
@@ -146,6 +146,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 for chain_ID in range(0, len(chain_lengths_id)):
                     if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
                         ID = chain_lengths_id[chain_ID][1]
+                        IDLIST.append(ID)
                         if ID == "Amine":
                             amine_ct += 1
                             total_amine_ct += 1
@@ -167,7 +168,27 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     except TypeError:
         composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
         composition_tuple = [tuple(l) for l in composition]
+    try:
+        IDLIST = [IDLIST[x:x + len(a.comp)] for x in range(0, len(IDLIST), len(a.comp))]
+        IDLIST_tuple = [tuple(l) for l in IDLIST]
+    except TypeError:
+        IDLIST = [IDLIST[x:x + 1] for x in range(0, len(IDLIST), 1)]
+        IDLIST_tuple = [tuple(l) for l in IDLIST]
     print(composition_tuple)
+    print(IDLIST_tuple)
+
+    RC = random.choice(list(enumerate(IDLIST_tuple)))
+    RCR = random.choice(RC[1])
+    RCR_index = RC[1].index(RCR)
+    RC2 = random.choice(list(enumerate(IDLIST_tuple)))
+    RCR2 = random.choice(RC2[1])
+    if RCR != RCR2:
+        composition_tuple[RC][0][1][RCR_index] += sum(composition_tuple[RC[0]])
+
+
+    # if RCR != RCR2:
+    #     composition_tuple[IDindex1] = composition_tuple[IDindex1] + IDindex2
+
 
     # Tabulates final composition and converts to dataframe
     rxn_summary = collections.Counter(composition_tuple)
