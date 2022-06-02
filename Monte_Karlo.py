@@ -179,7 +179,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
 
 
     if rt.name == PolyCondensation:
-        while temp_TAV > 0:
+        while temp_TAV > 4:
             composition_tuple = [list(l) for l in composition_tuple]
             IDLIST_tuple = [list(l) for l in IDLIST_tuple]
             RC = random.choice(list(enumerate(IDLIST_tuple)))
@@ -188,7 +188,8 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             RC2 = random.choice(list(enumerate(IDLIST_tuple)))
             RCR2 = random.choice(RC2[1])
             if RCR != RCR2:
-                composition_tuple[RC[0]][RCR_index] += sum(composition_tuple[RC2[0]])
+                composition_tuple[RC[0]][RCR_index] += sum(composition_tuple[RC2[0]]) - rt.wl
+                composition_tuple[RC[0]][RCR_index] = round(composition_tuple[RC[0]][RCR_index], 2)
                 del composition_tuple[RC2[0]]
                 del IDLIST_tuple[RC2[0]]
             else:
@@ -217,6 +218,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             temp_AV = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
             tempOH = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
             print(temp_TAV, temp_AV, tempOH)
+
     composition_tuple = [tuple(l) for l in composition_tuple]
     # Tabulates final composition and converts to dataframe
     rxn_summary = collections.Counter(composition_tuple)
