@@ -36,7 +36,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     final_product_masses = ({a.sn: round(a.mw, 1), b.sn: round(b.mw, 1)})
     if rt.name != PolyCondensation:
         final_product_masses.update(
-            {f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + (i * b.mw - i * rt.wl), 1) for i in range(1, 1001)})
+            {f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + (i * b.mw - i * rt.wl), 1) for i in range(1, 500)})
     elif rt.name == PolyCondensation:
         final_product_masses.update(
             {f"{a.sn}({i})_{b.sn}({str(i)})": round(i * a.mw + i * b.mw - (i + i - 1) * rt.wl, 2) for i in
@@ -51,7 +51,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     #Creates a list with possible chain lengths
     cw = a.prgmw
     chain_lengths = [(0, a.prgmw)]
-    for chain_length in range(2, 200, 2):
+    for chain_length in range(2, 50, 2):
         cw = cw + b.mw-rt.wl
         chain_lengths.append((chain_length - 1, round(cw, 2)))
         cw = cw + a.mw-rt.wl
@@ -60,7 +60,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     if rt.name == PolyCondensation:
         cw = a.prgmw
         chain_lengths_id = [((0, a.prgmw), a.rg)]
-        for chain_length in range(2, 200, 2):
+        for chain_length in range(2, 50, 2):
             cw = cw + b.mw - rt.wl
             chain_lengths_id.append(((chain_length - 1, round(cw, 2)), b.rg))
             cw = cw + a.mw - rt.wl
@@ -140,8 +140,6 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             amine_ct = 0
             acid_ct = 0
             alcohol_ct = 0
-            total_amine_ct = 0
-            total_acid_ct = 0
             for chain in composition:
                 for chain_ID in range(0, len(chain_lengths_id)):
                     if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
@@ -149,19 +147,14 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                         IDLIST.append(ID)
                         if ID == "Amine":
                             amine_ct += 1
-                            total_amine_ct += 1
                         if ID == "Acid":
                             acid_ct += 1
-                            total_acid_ct += 1
                         if ID == "Alcohol":
                             alcohol_ct += 1
                         break
             temp_TAV = round((amine_ct * 56100) / (sum(composition)), 2)
             temp_AV = round((acid_ct * 56100) / (sum(composition)), 2)
             tempOH = round((alcohol_ct * 56100) / (sum(composition)), 2)
-            print(temp_TAV, temp_AV, tempOH)
-        print(total_amine_ct, total_acid_ct)
-        print(composition)
     try:
         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
         composition_tuple = [tuple(l) for l in composition]
@@ -174,9 +167,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     except TypeError:
         IDLIST = [IDLIST[x:x + 1] for x in range(0, len(IDLIST), 1)]
         IDLIST_tuple = [tuple(l) for l in IDLIST]
-    print(composition_tuple)
-    print(IDLIST_tuple)
-
+    composition_tuple_sums1 = [sum(l) for l in composition_tuple]
 
     if rt.name == PolyCondensation:
         while temp_TAV > 4:
@@ -188,8 +179,11 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             RC2 = random.choice(list(enumerate(IDLIST_tuple)))
             RCR2 = random.choice(RC2[1])
             if RCR != RCR2:
+                print(composition_tuple[RC[0]])
+                print(composition_tuple[RC2[0]])
+                print(sum(composition_tuple[RC2[0]]) - rt.wl)
                 composition_tuple[RC[0]][RCR_index] += sum(composition_tuple[RC2[0]]) - rt.wl
-                composition_tuple[RC[0]][RCR_index] = round(composition_tuple[RC[0]][RCR_index], 2)
+                print(composition_tuple[RC[0]])
                 del composition_tuple[RC2[0]]
                 del IDLIST_tuple[RC2[0]]
             else:
@@ -198,8 +192,6 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             amine_ct = 0
             acid_ct = 0
             alcohol_ct = 0
-            total_amine_ct = 0
-            total_acid_ct = 0
             for chain in composition_tuple_temp:
                 for chain_ID in range(0, len(chain_lengths_id)):
                     if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
@@ -207,19 +199,17 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                         IDLIST.append(ID)
                         if ID == "Amine":
                             amine_ct += 1
-                            total_amine_ct += 1
                         if ID == "Acid":
                             acid_ct += 1
-                            total_acid_ct += 1
                         if ID == "Alcohol":
                             alcohol_ct += 1
                         break
             temp_TAV = round((amine_ct * 56100) / (sum(composition_tuple_temp)), 2)
             temp_AV = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
             tempOH = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            print(temp_TAV, temp_AV, tempOH)
-
     composition_tuple = [tuple(l) for l in composition_tuple]
+    print(composition_tuple)
+    print(chain_lengths)
     # Tabulates final composition and converts to dataframe
     rxn_summary = collections.Counter(composition_tuple)
     RS = []
