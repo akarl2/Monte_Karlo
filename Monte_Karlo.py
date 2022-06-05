@@ -19,6 +19,7 @@ pandas.set_option('display.width', 100)
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
+#Runs the simulation
 def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     a = str_to_class(a)()
     b = str_to_class(b)()
@@ -51,16 +52,17 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     #Creates a list with possible chain lengths
     cw = a.prgmw
     chain_lengths = [(0, a.prgmw)]
-    for chain_length in range(2, 50, 2):
+    for chain_length in range(2, 200, 2):
         cw = cw + b.mw-rt.wl
         chain_lengths.append((chain_length - 1, round(cw, 2)))
         cw = cw + a.mw-rt.wl
         chain_lengths.append((chain_length, round(cw, 2)))
+
     #Creates a list with the ID's of the chain lengths
     if rt.name == PolyCondensation:
         cw = a.prgmw
         chain_lengths_id = [((0, a.prgmw), a.rg)]
-        for chain_length in range(2, 50, 2):
+        for chain_length in range(2, 200, 2):
             cw = cw + b.mw - rt.wl
             chain_lengths_id.append(((chain_length - 1, round(cw, 2)), b.rg))
             cw = cw + a.mw - rt.wl
@@ -167,12 +169,11 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     except TypeError:
         IDLIST = [IDLIST[x:x + 1] for x in range(0, len(IDLIST), 1)]
         IDLIST_tuple = [tuple(l) for l in IDLIST]
-    composition_tuple_sums1 = [sum(l) for l in composition_tuple]
 
     if rt.name == PolyCondensation:
-        while temp_TAV > 4:
-            composition_tuple = [list(l) for l in composition_tuple]
-            IDLIST_tuple = [list(l) for l in IDLIST_tuple]
+        composition_tuple = [list(l) for l in composition_tuple]
+        IDLIST_tuple = [list(l) for l in IDLIST_tuple]
+        while temp_TAV > 1:
             RC = random.choice(list(enumerate(IDLIST_tuple)))
             RCR = random.choice(RC[1])
             RCR_index = RC[1].index(RCR)
@@ -211,10 +212,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             tempOH = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
             print(temp_TAV, temp_AV)
     composition_tuple = [tuple(l) for l in composition_tuple]
-    print(composition_tuple)
-    print(chain_lengths)
-    print(chain_lengths_id)
-    print(final_product_masses)
+
     # Tabulates final composition and converts to dataframe
     rxn_summary = collections.Counter(composition_tuple)
     RS = []
