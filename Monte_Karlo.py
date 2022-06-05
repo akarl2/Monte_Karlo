@@ -178,13 +178,14 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             RCR_index = RC[1].index(RCR)
             RC2 = random.choice(list(enumerate(IDLIST_tuple)))
             RCR2 = random.choice(RC2[1])
-            print(RCR, RCR2)
+            RCR2_index = RC2[1].index(RCR2)
+            if RCR2_index == 1:
+                other = 0
+            if RCR2_index == 0:
+                other = 1
             if RCR != RCR2 and RC[0] != RC2[0]:
-                print(composition_tuple[RC[0]])
-                print(composition_tuple[RC2[0]])
-                print(sum(composition_tuple[RC2[0]]) - rt.wl)
                 composition_tuple[RC[0]][RCR_index] += (sum(composition_tuple[RC2[0]]) - rt.wl)
-                print(composition_tuple[RC[0]])
+                IDLIST_tuple[RC[0]][RCR_index] = IDLIST_tuple[RC2[0]][other]
                 del composition_tuple[RC2[0]]
                 del IDLIST_tuple[RC2[0]]
             else:
@@ -212,6 +213,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     composition_tuple = [tuple(l) for l in composition_tuple]
     print(composition_tuple)
     print(chain_lengths)
+    print(chain_lengths_id)
     print(final_product_masses)
     # Tabulates final composition and converts to dataframe
     rxn_summary = collections.Counter(composition_tuple)
