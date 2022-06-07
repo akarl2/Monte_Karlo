@@ -180,6 +180,13 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             RC2 = random.choice(list(enumerate(IDLIST_tuple)))
             RCR2 = random.choice(RC2[1])
             RCR2_index = RC2[1].index(RCR2)
+            while RCR == RCR2 and RC[0] == RC2[0]:
+                RC = random.choice(list(enumerate(IDLIST_tuple)))
+                RCR = random.choice(RC[1])
+                RCR_index = RC[1].index(RCR)
+                RC2 = random.choice(list(enumerate(IDLIST_tuple)))
+                RCR2 = random.choice(RC2[1])
+                RCR2_index = RC2[1].index(RCR2)
             if RCR2_index == 1:
                 other = 0
             if RCR2_index == 0:
@@ -225,6 +232,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     rxn_summary_df.set_index('Product', inplace=True)
     rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
+    print(rxn_summary)
 
     # print each value in each row from Mass Distribution
     for i in range(len(rxn_summary_df)):
