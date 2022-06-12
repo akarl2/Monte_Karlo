@@ -103,11 +103,14 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 b.mol -= 1
             sim_status(round(100 - (b.mol / bms * 100), 2))
     elif rt.name == PolyCondensation:
-        while b.mol >= 0:
+        temp_TAV = 100
+        temp_AV = 100
+        while b.mol != 0:
+            print(temp_TAV, temp_AV)
             IDLIST = []
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
             index = next((i for i, v in enumerate(chain_lengths) if round(v[1], 1) == round(MC[1], 1)), None)
-            next_change = round(chain_lengths[index + 1][1],1) - round(composition[MC[0]],1)
+            next_change = round(chain_lengths[index + 1][1], 1) - round(composition[MC[0]], 1)
             new_value = round(chain_lengths[index+1][1], 1)
             if math.isclose(next_change, round(a.mw - rt.wl, 1), abs_tol=1):
                 try:
@@ -169,6 +172,8 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     except TypeError:
         IDLIST = [IDLIST[x:x + 1] for x in range(0, len(IDLIST), 1)]
         IDLIST_tuple = [tuple(l) for l in IDLIST]
+
+    print(temp_TAV,temp_AV)
 
     if rt.name == PolyCondensation:
         composition_tuple = [list(l) for l in composition_tuple]
@@ -270,6 +275,10 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     rxn_summary_df['OH Value'] = round(rxn_summary_df['OH Value'] * rxn_summary_df['Wt %'] / 100, 2)
     rxn_summary_df['Amine Value'] = round(rxn_summary_df['Amine Value'] * rxn_summary_df['Wt %'] / 100, 2)
     rxn_summary_df['Acid Value'] = round(rxn_summary_df['Acid Value'] * rxn_summary_df['Wt %'] / 100, 2)
+
+    # Summarizes values in dataframe into a single value
+    df2 = rxn_summary_df.groupby(['Molar Mass'], as_index = True).sum()
+    print(df2)
 
     # Add ehc to dataframe if rt == Etherification
     if rt.name == Etherification:
