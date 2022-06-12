@@ -160,6 +160,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             temp_TAV = round((amine_ct * 56100) / (sum(composition)), 2)
             temp_AV = round((acid_ct * 56100) / (sum(composition)), 2)
             tempOH = round((alcohol_ct * 56100) / (sum(composition)), 2)
+    print(sum(composition))
     try:
         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
         composition_tuple = [tuple(l) for l in composition]
