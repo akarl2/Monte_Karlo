@@ -103,10 +103,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 b.mol -= 1
             sim_status(round(100 - (b.mol / bms * 100), 2))
     elif rt.name == PolyCondensation:
-        temp_TAV = 100
-        temp_AV = 100
         while b.mol != 0:
-            print(temp_TAV, temp_AV)
             IDLIST = []
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
             index = next((i for i, v in enumerate(chain_lengths) if round(v[1], 1) == round(MC[1], 1)), None)
@@ -152,15 +149,14 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                         IDLIST.append(ID)
                         if ID == "Amine":
                             amine_ct += 1
-                        if ID == "Acid":
+                        elif ID == "Acid":
                             acid_ct += 1
-                        if ID == "Alcohol":
+                        elif ID == "Alcohol":
                             alcohol_ct += 1
                         break
             temp_TAV = round((amine_ct * 56100) / (sum(composition)), 2)
             temp_AV = round((acid_ct * 56100) / (sum(composition)), 2)
             tempOH = round((alcohol_ct * 56100) / (sum(composition)), 2)
-    print(sum(composition))
     try:
         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
         composition_tuple = [tuple(l) for l in composition]
@@ -174,12 +170,11 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
         IDLIST = [IDLIST[x:x + 1] for x in range(0, len(IDLIST), 1)]
         IDLIST_tuple = [tuple(l) for l in IDLIST]
 
-    print(temp_TAV,temp_AV)
 
     if rt.name == PolyCondensation:
         composition_tuple = [list(l) for l in composition_tuple]
         IDLIST_tuple = [list(l) for l in IDLIST_tuple]
-        while temp_TAV > 1:
+        while temp_TAV > .1:
             RC = random.choice(list(enumerate(IDLIST_tuple)))
             RCR = random.choice(RC[1])
             RCR_index = RC[1].index(RCR)
@@ -224,6 +219,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             temp_AV = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
             tempOH = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
             print(temp_TAV, temp_AV)
+            print(sum(composition_tuple_temp))
     composition_tuple = [tuple(l) for l in composition_tuple]
 
     # Tabulates final composition and converts to dataframe
