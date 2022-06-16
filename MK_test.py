@@ -51,7 +51,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
 
     #Creates a list with possible chain lengths
     cw = a.prgmw
-    chain_lengths = [(0, a.prgmw)]
+    chain_lengths = [(0, a.prgmw), (1, b.prgmw)]
     for chain_length in range(2, 200, 2):
         cw = cw + b.mw-rt.wl
         chain_lengths.append((chain_length - 1, round(cw, 3)))
@@ -61,7 +61,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     #Creates a list with the ID's of the chain lengths
     if rt.name == PolyCondensation:
         cw = a.prgmw
-        chain_lengths_id = [((0, a.prgmw), a.rg)]
+        chain_lengths_id = [((0, a.prgmw), a.rg), ((1, b.prgmw), b.rg)]
         for chain_length in range(2, 100, 2):
             cw = cw + b.mw - rt.wl
             chain_lengths_id.append(((chain_length - 1, round(cw, 3)), b.rg))
@@ -81,6 +81,20 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     except TypeError:
         for i in range(0, int(a.mol)):
             composition.append(a.mw)
+
+    if rt.name == PolyCondensation:
+        try:
+            for i in range(0, int(a.mol)):
+                composition.extend(group for group in a.comp)
+        except TypeError:
+            for i in range(0, int(a.mol)):
+                composition.append(a.mw)
+        try:
+            for i in range(0, int(b.mol)):
+                composition.extend(group for group in b.comp)
+        except TypeError:
+            for i in range(0, int(b.mol)):
+                composition.append(b.mw)
 
     # Create weights from starting composition list
     weights = []
@@ -103,79 +117,41 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                 b.mol -= 1
             sim_status(round(100 - (b.mol / bms * 100), 2))
     elif rt.name == PolyCondensation:
-        while b.mol > 0:
-            IDLIST = []
-            MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
-            index = next((i for i, v in enumerate(chain_lengths) if round(v[1], 1) == round(MC[1], 1)), None)
-            next_change = round(chain_lengths[index + 1][1], 1) - round(composition[MC[0]], 1)
-            new_value = round(chain_lengths[index+1][1], 1)
-            if math.isclose(next_change, round(a.mw - rt.wl, 1), abs_tol=1):
-                try:
-                    composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
-                    composition_tuple = [tuple(l) for l in composition]
-                except TypeError:
-                    composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
-                    composition_tuple = [tuple(l) for l in composition]
-                try:
-                    weights = [weights[x:x + len(a.comp)] for x in range(0, len(weights), len(a.comp))]
-                    weights_tuple = [tuple(l) for l in weights]
-                except TypeError:
-                    weights = [weights[x:x + 1] for x in range(0, len(weights), 1)]
-                    weights_tuple = [tuple(l) for l in weights]
-                try:
-                    index2 = composition_tuple.index(a.comp)
-                    del composition_tuple[index2]
-                    del weights_tuple[index2]
-                except ValueError:
-                    pass
-                weights = list(itertools.chain(*weights_tuple))
-                composition = list(itertools.chain(*composition_tuple))
-                weights[MC[0]] = cgK
-                composition[MC[0]] = new_value
-            if math.isclose(next_change, round(b.mw - rt.wl, 1), abs_tol=1):
-                if b.mol >= 0:
-                    b.mol -= 1
-                else:
-                    pass
-                weights[MC[0]] = cgK
-                composition[MC[0]] = new_value
-            amine_ct = 0
-            acid_ct = 0
-            alcohol_ct = 0
-            for chain in composition:
-                for chain_ID in range(0, len(chain_lengths_id)):
-                    if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
-                        ID = chain_lengths_id[chain_ID][1]
-                        IDLIST.append(ID)
-                        if ID == "Amine":
-                            amine_ct += 1
-                        elif ID == "Acid":
-                            acid_ct += 1
-                        elif ID == "Alcohol":
-                            alcohol_ct += 1
-                        break
-            temp_TAV = round((amine_ct * 56100) / (sum(composition)), 2)
-            temp_AV = round((acid_ct * 56100) / (sum(composition)), 2)
-            tempOH = round((alcohol_ct * 56100) / (sum(composition)), 2)
-    print(sum(composition))
-    try:
-        composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
-        composition_tuple = [tuple(l) for l in composition]
-    except TypeError:
-        composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
-        composition_tuple = [tuple(l) for l in composition]
-    try:
-        IDLIST = [IDLIST[x:x + len(a.comp)] for x in range(0, len(IDLIST), len(a.comp))]
-        IDLIST_tuple = [tuple(l) for l in IDLIST]
-    except TypeError:
-        IDLIST = [IDLIST[x:x + 1] for x in range(0, len(IDLIST), 1)]
-        IDLIST_tuple = [tuple(l) for l in IDLIST]
-
-
-
-    if rt.name == PolyCondensation:
+        IDLIST = []
+        amine_ct = 0
+        acid_ct = 0
+        alcohol_ct = 0
+        for chain in composition:
+            for chain_ID in range(0, len(chain_lengths_id)):
+                if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
+                    ID = chain_lengths_id[chain_ID][1]
+                    IDLIST.append(ID)
+                    if ID == "Amine":
+                        amine_ct += 1
+                    elif ID == "Acid":
+                        acid_ct += 1
+                    elif ID == "Alcohol":
+                        alcohol_ct += 1
+                    break
+        temp_TAV = round((amine_ct * 56100) / (sum(composition)), 2)
+        temp_AV = round((acid_ct * 56100) / (sum(composition)), 2)
+        tempOH = round((alcohol_ct * 56100) / (sum(composition)), 2)
+        try:
+            composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
+            composition_tuple = [tuple(l) for l in composition]
+        except TypeError:
+            composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
+            composition_tuple = [tuple(l) for l in composition]
+        try:
+            IDLIST = [IDLIST[x:x + len(a.comp)] for x in range(0, len(IDLIST), len(a.comp))]
+            IDLIST_tuple = [tuple(l) for l in IDLIST]
+        except TypeError:
+            IDLIST = [IDLIST[x:x + 1] for x in range(0, len(IDLIST), 1)]
+            IDLIST_tuple = [tuple(l) for l in IDLIST]
         composition_tuple = [list(l) for l in composition_tuple]
         IDLIST_tuple = [list(l) for l in IDLIST_tuple]
+        print(composition_tuple)
+        print(IDLIST_tuple)
         while temp_TAV > .1:
             RC = random.choice(list(enumerate(IDLIST_tuple)))
             RCR = random.choice(RC[1])
@@ -220,7 +196,8 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             temp_TAV = round((amine_ct * 56100) / (sum(composition_tuple_temp)), 2)
             temp_AV = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
             tempOH = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
-    composition_tuple = [tuple(l) for l in composition_tuple]
+            print(temp_TAV, temp_AV, tempOH)
+        composition_tuple = [tuple(l) for l in composition_tuple]
 
     # Tabulates final composition and converts to dataframe
     rxn_summary = collections.Counter(composition_tuple)
