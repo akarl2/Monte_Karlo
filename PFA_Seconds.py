@@ -2,10 +2,10 @@ import math
 import matplotlib.pyplot as plt
 from ChemData import ChemData
 
-gA = 25000
-gB = 25000
+gA = 250
+gB = 250
 gC = 0
-gD = 200
+gD = 50
 
 ngA = gA
 ngB = gB * .7
@@ -26,7 +26,7 @@ MB = molesB / volume
 MC = molesC / volume
 MD = molesD / volume
 
-minutes = 1000
+minutes = 500
 s_conA = MA
 s_conB = MB
 s_conC = MC
@@ -34,7 +34,6 @@ s_conD = MD
 cat_con = 0
 temperature = 325
 k1 = (1.20 * 10 ** -3) * math.exp((-55304 / 8.314) * (1 / temperature - 1 / 323))
-print(k1)
 k2 = (1.60 * 10 ** -4) * math.exp((-105073 / 8.314) * (1 / temperature - 1 / 323))
 Ke = 1.60 * math.exp((-10000 / 8.314) * (1 / 298 - 1 / temperature))
 
@@ -92,4 +91,4 @@ def plot_watts():
     plt.show()
 
 
-plot_conc()
+plot_watts()

@@ -154,6 +154,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                         elif ID == "Alcohol":
                             alcohol_ct += 1
                         break
+            print(composition)
             temp_TAV = round((amine_ct * 56100) / (sum(composition)), 2)
             temp_AV = round((acid_ct * 56100) / (sum(composition)), 2)
             tempOH = round((alcohol_ct * 56100) / (sum(composition)), 2)
@@ -176,6 +177,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     if rt.name == PolyCondensation:
         composition_tuple = [list(l) for l in composition_tuple]
         IDLIST_tuple = [list(l) for l in IDLIST_tuple]
+        print(composition_tuple)
         while temp_TAV > .1:
             RC = random.choice(list(enumerate(IDLIST_tuple)))
             RCR = random.choice(RC[1])

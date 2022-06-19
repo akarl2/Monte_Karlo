@@ -20,17 +20,17 @@ def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
 #Runs the simulation
-def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
+def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
     a = str_to_class(a)()
     b = str_to_class(b)()
     rt = str_to_class(rt)()
-    EOR = float(EOR)
+    eor = float(eor)
     a.mass = float(a_mass)
     b.mass = float(b_mass)
     a.mol = round(a.mass / a.mw, 3) * int(Samples)
     b.mol = round(b.mass / b.mw, 3) * int(Samples)
-    unreacted = b.mol - (EOR * b.mol)
-    b.mol = EOR * b.mol
+    unreacted = b.mol - (eor * b.mol)
+    b.mol = eor * b.mol
     bms = b.mol
 
     # Creates final product molar masses from final product name(s)
@@ -50,13 +50,14 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
              range(2, 1001)})
 
     #Creates a list with possible chain lengths
-    cw = a.prgmw
-    chain_lengths = [(0, a.prgmw), (1, b.prgmw)]
-    for chain_length in range(2, 200, 2):
-        cw = cw + b.mw-rt.wl
-        chain_lengths.append((chain_length - 1, round(cw, 3)))
-        cw = cw + a.mw-rt.wl
-        chain_lengths.append((chain_length, round(cw, 3)))
+    if rt.name == PolyCondensation:
+        cw = a.prgmw
+        chain_lengths = [(0, a.prgmw), (1, b.prgmw)]
+        for chain_length in range(2, 200, 2):
+            cw = cw + b.mw-rt.wl
+            chain_lengths.append((chain_length - 1, round(cw, 3)))
+            cw = cw + a.mw-rt.wl
+            chain_lengths.append((chain_length, round(cw, 3)))
 
     #Creates a list with the ID's of the chain lengths
     if rt.name == PolyCondensation:
@@ -74,15 +75,17 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
     cgK = float(CGRk)
 
     # Creates starting composition list
-    composition = []
-    try:
-        for i in range(0, int(a.mol)):
-            composition.extend(group for group in a.comp)
-    except TypeError:
-        for i in range(0, int(a.mol)):
-            composition.append(a.mw)
+    if rt.name != PolyCondensation:
+        composition = []
+        try:
+            for i in range(0, int(a.mol)):
+                composition.extend(group for group in a.comp)
+        except TypeError:
+            for i in range(0, int(a.mol)):
+                composition.append(a.mw)
 
     if rt.name == PolyCondensation:
+        composition = []
         try:
             for i in range(0, int(a.mol)):
                 composition.extend(group for group in a.comp)
@@ -136,6 +139,7 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
         temp_TAV = round((amine_ct * 56100) / (sum(composition)), 2)
         temp_AV = round((acid_ct * 56100) / (sum(composition)), 2)
         tempOH = round((alcohol_ct * 56100) / (sum(composition)), 2)
+        print(f"TAV: {temp_TAV}", f"AV: {temp_AV}", f"OH: {tempOH}")
         try:
             composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
             composition_tuple = [tuple(l) for l in composition]
@@ -150,22 +154,21 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
             IDLIST_tuple = [tuple(l) for l in IDLIST]
         composition_tuple = [list(l) for l in composition_tuple]
         IDLIST_tuple = [list(l) for l in IDLIST_tuple]
-        print(composition_tuple)
-        print(IDLIST_tuple)
-        while temp_TAV > .1:
+        while temp_TAV > 4:
+            print("Before", f"TAV: {amine_ct}", f"AV: {acid_ct}")
             RC = random.choice(list(enumerate(IDLIST_tuple)))
             RCR = random.choice(RC[1])
-            RCR_index = RC[1].index(RCR)
+            RCR_index = random.choice(list(enumerate(RC[1])))[0]
             RC2 = random.choice(list(enumerate(IDLIST_tuple)))
             RCR2 = random.choice(RC2[1])
-            RCR2_index = RC2[1].index(RCR2)
+            RCR2_index = random.choice(list(enumerate(RC2[1])))[0]
             while RCR == RCR2 and RC[0] == RC2[0]:
                 RC = random.choice(list(enumerate(IDLIST_tuple)))
                 RCR = random.choice(RC[1])
-                RCR_index = RC[1].index(RCR)
+                RCR_index = random.choice(list(enumerate(RC[1])))[0]
                 RC2 = random.choice(list(enumerate(IDLIST_tuple)))
                 RCR2 = random.choice(RC2[1])
-                RCR2_index = RC2[1].index(RCR2)
+                RCR2_index = random.choice(list(enumerate(RC2[1])))[0]
             if RCR2_index == 1:
                 other = 0
             if RCR2_index == 0:
@@ -188,15 +191,15 @@ def simulate(a, b, rt, Samples, EOR, a_mass, b_mass, PRGk, SRGk, CGRk):
                         IDLIST.append(ID)
                         if ID == "Amine":
                             amine_ct += 1
-                        if ID == "Acid":
+                        elif ID == "Acid":
                             acid_ct += 1
-                        if ID == "Alcohol":
+                        elif ID == "Alcohol":
                             alcohol_ct += 1
                         break
             temp_TAV = round((amine_ct * 56100) / (sum(composition_tuple_temp)), 2)
             temp_AV = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
             tempOH = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            print(temp_TAV, temp_AV, tempOH)
+            print("After", f"TAV: {amine_ct}", f"AV: {acid_ct}")
         composition_tuple = [tuple(l) for l in composition_tuple]
 
     # Tabulates final composition and converts to dataframe
@@ -397,7 +400,7 @@ def update_OH_Value(Value):
     OH_Value.insert(0, Value)
 
 def sim_values():
-    simulate(a=speciesA.get(), b=speciesB.get(), rt=reaction_type.get(), Samples=Samples.get(), EOR=EOR.get(),
+    simulate(a=speciesA.get(), b=speciesB.get(), rt=reaction_type.get(), Samples=Samples.get(), eor=EOR.get(),
              a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get(), PRGk=PRGk.get(), SRGk=SRGk.get(), CGRk=CGRk.get())
 
 # add button to simulate

@@ -201,9 +201,9 @@ class DETA:
         self.formula = "C4H13N3"
         self.mw = 103.169
         self.density = 0.955
-        self.prgmw = 30.05
-        self.srgmw = 43.07
-        self.comp = (self.prgmw, self.srgmw, self.prgmw)
+        self.prgmw = 51.5845
+        self.srgmw = 0
+        self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
         self.rg = "Amine"
 

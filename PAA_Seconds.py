@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 
 from ChemData import ChemData
 
-gA = 500
-gB = 500
+gA = 250
+gB = 250
 gC = 0
-gD = 250
+gD = 50
 
 ngA = gA
 ngB = gB * .7
@@ -26,13 +26,13 @@ MB = molesB / volume
 MC = molesC / volume
 MD = molesD / volume
 
-minutes = 300
+minutes = 500
 s_conA = MA
 s_conB = MB
 s_conC = MC
 s_conD = MD
 cat_con = .314
-temperature = 320
+temperature = 325
 k1 = (6.83 * 10 ** 8) * (math.sqrt(s_conA * (1.75 * 10 ** -5)) + cat_con + math.sqrt(cat_con * (1.3 * 10 ** -2))) * (
     math.exp((-57846.15) / (8.134 * temperature)))
 k2 = (6.73 * 10 ** 8) * (math.sqrt(s_conA * (1.75 * 10 ** -5)) + cat_con + math.sqrt(cat_con * (1.3 * 10 ** -2))) * (
