@@ -195,13 +195,11 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
                             acid_ct += 1
                         elif ID == "Alcohol":
                             alcohol_ct += 1
-                        else:
-                            print("Fuck")
                         break
             temp_TAV = round((amine_ct * 56100) / (sum(composition_tuple_temp)), 2)
             temp_AV = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
             tempOH = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
-        print(len(IDLIST), len(composition_tuple_temp))
+            print(len(IDLIST), len(composition_tuple_temp))
         composition_tuple = [tuple(l) for l in composition_tuple]
         print(f"TAV: {temp_TAV}", f"AV: {temp_AV}")
 
