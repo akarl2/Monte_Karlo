@@ -75,17 +75,15 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
     cgK = float(CGRk)
 
     # Creates starting composition list
+    composition = []
     if rt.name != PolyCondensation:
-        composition = []
         try:
             for i in range(0, int(a.mol)):
                 composition.extend(group for group in a.comp)
         except TypeError:
             for i in range(0, int(a.mol)):
                 composition.append(a.mw)
-
     if rt.name == PolyCondensation:
-        composition = []
         try:
             for i in range(0, int(a.mol)):
                 composition.extend(group for group in a.comp)
@@ -120,6 +118,7 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
                 b.mol -= 1
             sim_status(round(100 - (b.mol / bms * 100), 2))
     elif rt.name == PolyCondensation:
+        #determines starting status of the reaction
         IDLIST = []
         amine_ct = 0
         acid_ct = 0
@@ -139,23 +138,21 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
         temp_TAV = round((amine_ct * 56100) / (sum(composition)), 2)
         temp_AV = round((acid_ct * 56100) / (sum(composition)), 2)
         tempOH = round((alcohol_ct * 56100) / (sum(composition)), 2)
-        print(f"TAV: {temp_TAV}", f"AV: {temp_AV}", f"OH: {tempOH}")
         try:
             composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
             composition_tuple = [tuple(l) for l in composition]
-        except TypeError:
-            composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
-            composition_tuple = [tuple(l) for l in composition]
-        try:
             IDLIST = [IDLIST[x:x + len(a.comp)] for x in range(0, len(IDLIST), len(a.comp))]
             IDLIST_tuple = [tuple(l) for l in IDLIST]
         except TypeError:
+            composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
+            composition_tuple = [tuple(l) for l in composition]
             IDLIST = [IDLIST[x:x + 1] for x in range(0, len(IDLIST), 1)]
             IDLIST_tuple = [tuple(l) for l in IDLIST]
         composition_tuple = [list(l) for l in composition_tuple]
         IDLIST_tuple = [list(l) for l in IDLIST_tuple]
+
+        #runs the reaction
         while temp_TAV > 4:
-            print("Before", f"TAV: {amine_ct}", f"AV: {acid_ct}")
             RC = random.choice(list(enumerate(IDLIST_tuple)))
             RCR = random.choice(RC[1])
             RCR_index = random.choice(list(enumerate(RC[1])))[0]
@@ -180,7 +177,10 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
                 del IDLIST_tuple[RC2[0]]
             else:
                 pass
+
+            #determines current status of reaction
             composition_tuple_temp = list(itertools.chain(*composition_tuple))
+            IDLIST = []
             amine_ct = 0
             acid_ct = 0
             alcohol_ct = 0
@@ -195,21 +195,26 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
                             acid_ct += 1
                         elif ID == "Alcohol":
                             alcohol_ct += 1
+                        else:
+                            print("Fuck")
                         break
             temp_TAV = round((amine_ct * 56100) / (sum(composition_tuple_temp)), 2)
             temp_AV = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
             tempOH = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            print("After", f"TAV: {amine_ct}", f"AV: {acid_ct}")
+        print(len(IDLIST), len(composition_tuple_temp))
         composition_tuple = [tuple(l) for l in composition_tuple]
+        print(f"TAV: {temp_TAV}", f"AV: {temp_AV}")
 
     # Tabulates final composition and converts to dataframe
     rxn_summary = collections.Counter(composition_tuple)
+    print(rxn_summary)
     RS = []
     for key in rxn_summary:
-        MS = round(sum(key))
+        MS = sum(key)
         for item in final_product_masses:
-            if MS == round(final_product_masses[item]):
+            if math.isclose(MS, final_product_masses[item], abs_tol=1):
                 RS.append((item, rxn_summary[key], key))
+
     # Convert RS to dataframe
     rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     rxn_summary_df.set_index('Product', inplace=True)
@@ -312,7 +317,7 @@ reaction_type.set("Reaction Type")
 Reaction_Type = tkinter.OptionMenu(window, reaction_type, *Reactions)
 Reaction_Type.grid(row=5, column=1)
 Samples = tkinter.Entry(window)
-Samples.insert(0, "1000")
+Samples.insert(0, "10")
 Samples.grid(row=6, column=1)
 EOR = tkinter.Entry(window)
 EOR.insert(0, 1)
