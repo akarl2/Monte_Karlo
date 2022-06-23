@@ -270,10 +270,9 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
     rxn_summary_df['OH Value'] = round(rxn_summary_df['OH Value'] * rxn_summary_df['Wt %'] / 100, 2)
     rxn_summary_df['Amine Value'] = round(rxn_summary_df['Amine Value'] * rxn_summary_df['Wt %'] / 100, 2)
     rxn_summary_df['Acid Value'] = round(rxn_summary_df['Acid Value'] * rxn_summary_df['Wt %'] / 100, 2)
-
-    # Summarizes values in dataframe into a single value
-    df2 = rxn_summary_df.groupby(['Molar Mass'], as_index = True).sum()
-    print(df2)
+    # sum rxn_summary_df by product but keep Molar mass the same
+    rxn_summary_df = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
+    rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
 
     # Add ehc to dataframe if rt == Etherification
     if rt.name == Etherification:
