@@ -52,22 +52,35 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
     #Creates a list with possible chain lengths
     if rt.name == PolyCondensation:
         cw = a.prgmw
+        cw2 = b.prgmw
         chain_lengths = [(0, a.prgmw), (1, b.prgmw)]
         for chain_length in range(2, 200, 2):
             cw = cw + b.mw-rt.wl
             chain_lengths.append((chain_length - 1, round(cw, 3)))
             cw = cw + a.mw-rt.wl
             chain_lengths.append((chain_length, round(cw, 3)))
+            cw2 = cw2 + a.mw - rt.wl
+            chain_lengths.append(((chain_length, round(cw2, 3)), a.rg))
+            cw2 = cw2 + b.mw - rt.wl
+            chain_lengths.append(((chain_length, round(cw2, 3)), b.rg))
 
     #Creates a list with the ID's of the chain lengths
     if rt.name == PolyCondensation:
         cw = a.prgmw
+        cw2 = b.prgmw
         chain_lengths_id = [((0, a.prgmw), a.rg), ((1, b.prgmw), b.rg)]
         for chain_length in range(2, 100, 2):
             cw = cw + b.mw - rt.wl
             chain_lengths_id.append(((chain_length - 1, round(cw, 3)), b.rg))
             cw = cw + a.mw - rt.wl
             chain_lengths_id.append(((chain_length, round(cw, 3)), a.rg))
+            cw2 = cw2 + a.mw - rt.wl
+            chain_lengths_id.append(((chain_length, round(cw2, 3)), a.rg))
+            cw2 = cw2 + b.mw - rt.wl
+            chain_lengths_id.append(((chain_length, round(cw2, 3)), b.rg))
+
+    print(chain_lengths)
+    print(chain_lengths_id)
 
     # Specify rate constants
     prgK = float(PRGk)
@@ -152,20 +165,24 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
         IDLIST_tuple = [list(l) for l in IDLIST_tuple]
 
         #runs the reaction
-        while temp_TAV > 4:
+        while temp_TAV > 1:
             RC = random.choice(list(enumerate(IDLIST_tuple)))
-            RCR = random.choice(RC[1])
-            RCR_index = random.choice(list(enumerate(RC[1])))[0]
+            RCR_temp = random.choice(list(enumerate(RC[1])))
+            RCR = RCR_temp[1]
+            RCR_index = RCR_temp[0]
             RC2 = random.choice(list(enumerate(IDLIST_tuple)))
-            RCR2 = random.choice(RC2[1])
-            RCR2_index = random.choice(list(enumerate(RC2[1])))[0]
+            RCR2_temp = random.choice(list(enumerate(RC2[1])))
+            RCR2 = RCR2_temp[1]
+            RCR2_index = RCR2_temp[0]
             while RCR == RCR2 and RC[0] == RC2[0]:
                 RC = random.choice(list(enumerate(IDLIST_tuple)))
-                RCR = random.choice(RC[1])
-                RCR_index = random.choice(list(enumerate(RC[1])))[0]
+                RCR_temp = random.choice(list(enumerate(RC[1])))
+                RCR = RCR_temp[1]
+                RCR_index = RCR_temp[0]
                 RC2 = random.choice(list(enumerate(IDLIST_tuple)))
-                RCR2 = random.choice(RC2[1])
-                RCR2_index = random.choice(list(enumerate(RC2[1])))[0]
+                RCR2_temp = random.choice(list(enumerate(RC2[1])))
+                RCR2 = RCR2_temp[1]
+                RCR2_index = RCR2_temp[0]
             if RCR2_index == 1:
                 other = 0
             if RCR2_index == 0:
@@ -199,9 +216,8 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
             temp_TAV = round((amine_ct * 56100) / (sum(composition_tuple_temp)), 2)
             temp_AV = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
             tempOH = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            print(len(IDLIST), len(composition_tuple_temp))
+            print(temp_TAV, temp_AV)
         composition_tuple = [tuple(l) for l in composition_tuple]
-        print(f"TAV: {temp_TAV}", f"AV: {temp_AV}")
 
     # Tabulates final composition and converts to dataframe
     rxn_summary = collections.Counter(composition_tuple)
@@ -256,8 +272,8 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
     rxn_summary_df['Acid Value'] = round(rxn_summary_df['Acid Value'] * rxn_summary_df['Wt %'] / 100, 2)
 
     # Summarizes values in dataframe into a single value
-    # df2 = rxn_summary_df.groupby(['Molar Mass'], as_index = True).sum()
-    # print(df2)
+    df2 = rxn_summary_df.groupby(['Molar Mass'], as_index = True).sum()
+    print(df2)
 
     # Add ehc to dataframe if rt == Etherification
     if rt.name == Etherification:
