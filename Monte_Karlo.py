@@ -20,16 +20,17 @@ def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
 #Runs the simulation
-def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
+def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo):
     a = str_to_class(a)()
     b = str_to_class(b)()
     rt = str_to_class(rt)()
     eor = float(eor)
+    emr = float(emr)
     a.mass = float(a_mass)
     b.mass = float(b_mass)
     a.mol = round(a.mass / a.mw, 3) * int(Samples)
     b.mol = round(b.mass / b.mw, 3) * int(Samples)
-    unreacted = b.mol - (eor * b.mol)
+    #unreacted = b.mol - (eor * b.mol)
     b.mol = eor * b.mol
     bms = b.mol
 
@@ -48,6 +49,7 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
         final_product_masses.update(
             {f"{a.sn}({i})_{b.sn}({str(i - 1)})": round(i * a.mw + (i - 1) * b.mw - (i + i - 2) * rt.wl, 1) for i in
              range(2, 1001)})
+
 
     #Creates a list with possible chain lengths
     if rt.name == PolyCondensation:
@@ -78,9 +80,6 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
             chain_lengths_id.append(((chain_length, round(cw2, 3)), a.rg))
             cw2 = cw2 + b.mw - rt.wl
             chain_lengths_id.append(((chain_length, round(cw2, 3)), b.rg))
-
-    print(chain_lengths)
-    print(chain_lengths_id)
 
     # Specify rate constants
     prgK = float(PRGk)
@@ -130,6 +129,12 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
                 composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
                 b.mol -= 1
             sim_status(round(100 - (b.mol / bms * 100), 2))
+        try:
+            composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
+            composition_tuple = [tuple(l) for l in composition]
+        except TypeError:
+            composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
+            composition_tuple = [tuple(l) for l in composition]
     elif rt.name == PolyCondensation:
         #determines starting status of the reaction
         IDLIST = []
@@ -148,9 +153,13 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
                     elif ID == "Alcohol":
                         alcohol_ct += 1
                     break
-        temp_TAV = round((amine_ct * 56100) / (sum(composition)), 2)
-        temp_AV = round((acid_ct * 56100) / (sum(composition)), 2)
-        tempOH = round((alcohol_ct * 56100) / (sum(composition)), 2)
+        if emo == "Amine_Value":
+            emo_a = round((amine_ct * 56100) / (sum(composition)), 2)
+        elif emo == "Acid_Value":
+            emo_a = round((acid_ct * 56100) / (sum(composition)), 2)
+        elif emo == "OH_Value":
+            emo_a = round((alcohol_ct * 56100) / (sum(composition)), 2)
+
         try:
             composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
             composition_tuple = [tuple(l) for l in composition]
@@ -165,7 +174,7 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
         IDLIST_tuple = [list(l) for l in IDLIST_tuple]
 
         #runs the reaction
-        while temp_TAV > 1:
+        while emo_a > emr:
             RC = random.choice(list(enumerate(IDLIST_tuple)))
             RCR_temp = random.choice(list(enumerate(RC[1])))
             RCR = RCR_temp[1]
@@ -213,10 +222,13 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
                         elif ID == "Alcohol":
                             alcohol_ct += 1
                         break
-            temp_TAV = round((amine_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            temp_AV = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            tempOH = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            print(temp_TAV, temp_AV)
+            if emo == "Amine_Value":
+                emo_a = round((amine_ct * 56100) / (sum(composition_tuple_temp)), 2)
+            elif emo == "Acid_Value":
+                emo_a = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
+            elif emo == "OH_Value":
+                emo_a = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
+            print(emo_a)
         composition_tuple = [tuple(l) for l in composition_tuple]
 
     # Tabulates final composition and converts to dataframe
@@ -232,34 +244,35 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
     # Convert RS to dataframe
     rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     rxn_summary_df.set_index('Product', inplace=True)
-    rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
+
 
     # print each value in each row from Mass Distribution
-    for i in range(len(rxn_summary_df)):
-        amine_ct = 0
-        acid_ct = 0
-        alcohol_ct = 0
-        try:
-            for j in range(len(rxn_summary_df.iloc[i]['Mass Distribution'])):
-                for chain_length in range(0, len(chain_lengths_id)):
-                    if math.isclose(rxn_summary_df.iloc[i]['Mass Distribution'][j], chain_lengths_id[chain_length][0][1], abs_tol=1):
-                        chain_ID = chain_lengths_id[chain_length][1]
-                        if chain_ID == "Amine":
-                            amine_ct += 1
-                        if chain_ID == "Acid":
-                            acid_ct += 1
-                        if chain_ID == "Alcohol":
-                            alcohol_ct += 1
-                        break
-            amine_value = round((amine_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])),2)
-            acid_value = round((acid_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])),2)
-            alcohol_value = round((alcohol_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])),2)
-            rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "Amine Value"] = amine_value
-            rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "Acid Value"] = acid_value
-            rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "OH Value"] = alcohol_value
-        except TypeError:
-            chain_ID = "Amine"
-            amine_ct += 1
+    if rt.name == PolyCondensation:
+        for i in range(len(rxn_summary_df)):
+            amine_ct = 0
+            acid_ct = 0
+            alcohol_ct = 0
+            try:
+                for j in range(len(rxn_summary_df.iloc[i]['Mass Distribution'])):
+                    for chain_length in range(0, len(chain_lengths_id)):
+                        if math.isclose(rxn_summary_df.iloc[i]['Mass Distribution'][j], chain_lengths_id[chain_length][0][1], abs_tol=1):
+                            chain_ID = chain_lengths_id[chain_length][1]
+                            if chain_ID == "Amine":
+                                amine_ct += 1
+                            if chain_ID == "Acid":
+                                acid_ct += 1
+                            if chain_ID == "Alcohol":
+                                alcohol_ct += 1
+                            break
+                amine_value = round((amine_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])),2)
+                acid_value = round((acid_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])),2)
+                alcohol_value = round((alcohol_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])),2)
+                rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "Amine Value"] = amine_value
+                rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "Acid Value"] = acid_value
+                rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "OH Value"] = alcohol_value
+            except TypeError:
+                chain_ID = "Amine"
+                amine_ct += 1
 
     # Add columns to dataframe
     rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get)
@@ -267,12 +280,16 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk):
     rxn_summary_df['Mass'] = rxn_summary_df['Molar Mass'] * rxn_summary_df['Count']
     rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
     rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
-    rxn_summary_df['OH Value'] = round(rxn_summary_df['OH Value'] * rxn_summary_df['Wt %'] / 100, 2)
-    rxn_summary_df['Amine Value'] = round(rxn_summary_df['Amine Value'] * rxn_summary_df['Wt %'] / 100, 2)
-    rxn_summary_df['Acid Value'] = round(rxn_summary_df['Acid Value'] * rxn_summary_df['Wt %'] / 100, 2)
+    try:
+        rxn_summary_df['OH Value'] = round(rxn_summary_df['OH Value'] * rxn_summary_df['Wt %'] / 100, 2)
+        rxn_summary_df['Amine Value'] = round(rxn_summary_df['Amine Value'] * rxn_summary_df['Wt %'] / 100, 2)
+        rxn_summary_df['Acid Value'] = round(rxn_summary_df['Acid Value'] * rxn_summary_df['Wt %'] / 100, 2)
+    except KeyError:
+        pass
+
     # sum rxn_summary_df by product but keep Molar mass the same
-    rxn_summary_df = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
-    rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
+    # rxn_summary_df = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
+    # rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
 
     # Add ehc to dataframe if rt == Etherification
     if rt.name == Etherification:
@@ -330,7 +347,7 @@ reaction_type.set("Reaction Type")
 Reaction_Type = tkinter.OptionMenu(window, reaction_type, *Reactions)
 Reaction_Type.grid(row=5, column=1)
 Samples = tkinter.Entry(window)
-Samples.insert(0, "10")
+Samples.insert(0, "500")
 Samples.grid(row=6, column=1)
 EOR = tkinter.Entry(window)
 EOR.insert(0, 1)
@@ -347,6 +364,13 @@ Amine_Value = tkinter.Entry(window)
 Amine_Value.grid(row=18, column=1)
 OH_Value = tkinter.Entry(window)
 OH_Value.grid(row=19, column=1)
+End_Metric_Selection = tkinter.StringVar()
+End_Metric_Selection.set("Amine_Value")
+End_Metric_Options = tkinter.OptionMenu(window, End_Metric_Selection, *End_Metrics)
+End_Metric_Options.grid(row=21, column=1)
+End_Metric_Entry = tkinter.Entry(window)
+End_Metric_Entry.insert(0, "250")
+End_Metric_Entry.grid(row=22, column=1)
 PRGk = tkinter.Entry(window)
 PRGk.insert(0, 1)
 PRGk.grid(row=8, column=1)
@@ -357,6 +381,7 @@ CGRk = tkinter.Entry(window)
 CGRk.insert(0, 1)
 CGRk.grid(row=10, column=1)
 results = tkinter.Text(window, height=20, width=50)
+
 def show_results(rxn_summary_df):
     global results
     frame = tkinter.Frame(window)
@@ -381,13 +406,13 @@ def update_moles_A(self):
     a = str_to_class(speciesA.get())()
     molesA = float(Mass_of_A.get()) / float(a.mw)
     Moles_of_A.delete(0, 'end')
-    Moles_of_A.insert(0, round(molesA,4))
+    Moles_of_A.insert(0, round(molesA, 4))
 
 def update_moles_B(self):
     b = str_to_class(speciesB.get())()
     molesB = float(Mass_of_B.get()) / float(b.mw)
     Moles_of_B.delete(0, 'end')
-    Moles_of_B.insert(0, round(molesB,4))
+    Moles_of_B.insert(0, round(molesB, 4))
 
 #Run update_moles_A() when the user changes the value of Mass_of_A
 Mass_of_A.bind("<KeyRelease>", update_moles_A)
@@ -396,30 +421,24 @@ Mass_of_B.bind("<KeyRelease>", update_moles_B)
 def update_percent_EHC(Value):
     Percent_EHC.delete(0, tkinter.END)
     Percent_EHC.insert(0, Value)
-
 def sim_status(Value):
     Sim_status.delete(0, tkinter.END)
     Sim_status.insert(0, Value)
-
 def update_WPE(Value):
     Theoretical_WPE.delete(0, tkinter.END)
     Theoretical_WPE.insert(0, Value)
-
 def update_Acid_Value(Value):
     Acid_Value.delete(0, tkinter.END)
     Acid_Value.insert(0, Value)
-
 def update_Amine_Value(Value):
     Amine_Value.delete(0, tkinter.END)
     Amine_Value.insert(0, Value)
-
 def update_OH_Value(Value):
     OH_Value.delete(0, tkinter.END)
     OH_Value.insert(0, Value)
-
 def sim_values():
     simulate(a=speciesA.get(), b=speciesB.get(), rt=reaction_type.get(), Samples=Samples.get(), eor=EOR.get(),
-             a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get(), PRGk=PRGk.get(), SRGk=SRGk.get(), CGRk=CGRk.get())
+             a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get(), PRGk=PRGk.get(), SRGk=SRGk.get(), CGRk=CGRk.get(), emr=End_Metric_Entry.get(), emo=End_Metric_Selection.get())
 
 # add button to simulate
 button = tkinter.Button(window, text="Simulate", command=sim_values,width=15,bg="red")
@@ -443,6 +462,7 @@ tkinter.Label(window, text="Theoretical WPE: ", bg=bg_color).grid(row=16, column
 tkinter.Label(window, text="Acid Value: ", bg=bg_color).grid(row=17, column=0)
 tkinter.Label(window, text="Amine Value: ", bg=bg_color).grid(row=18, column=0)
 tkinter.Label(window, text="OH Value: ", bg=bg_color).grid(row=19, column=0)
+tkinter.Label(window, text="End Metric: ", bg=bg_color).grid(row=21, column=0)
 tkinter.Label(window, text="Primary K: ", bg=bg_color).grid(row=8, column=0)
 tkinter.Label(window, text="Secondary k: ", bg=bg_color).grid(row=9, column=0)
 tkinter.Label(window, text="Child k: ", bg=bg_color).grid(row=10, column=0)

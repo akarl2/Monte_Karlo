@@ -221,8 +221,8 @@ class Adipic_Acid:
         self.rg = "Acid"
 
 #Create a dictionary of all the above classes
-reactantsA = ["Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic_Acid"]
-reactantsB = ["Epichlorohydrin", "Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic Acid", "PAA", "DETA", "Adipic_Acid"]
+reactantsA = ["Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic_Acid", "PAA", "DETA", "Adipic_Acid"]
+reactantsB = ["Epichlorohydrin", "Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic_Acid", "Formic Acid", "PAA", "DETA", "Adipic_Acid"]
 
 
 class P_Hydroxyl:
@@ -268,6 +268,9 @@ class Ester:
 class Amide:
     def __init__(self):
         self.name = "Amide"
+
+
+
 
 
 

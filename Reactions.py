@@ -1,6 +1,6 @@
 from Database import *
 
-class Condensation():
+class Condensation:
     def __init__(self):
         self.wl = Water().mw
         self.name = Condensation
@@ -16,3 +16,4 @@ class Etherification:
         self.name = Etherification
 
 Reactions = ["Condensation", "PolyCondensation", "Etherification"]
+End_Metrics = ["Amine_Value", "Acid_Value", "OH_Value"]
