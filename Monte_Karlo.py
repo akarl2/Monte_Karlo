@@ -30,7 +30,6 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
     b.mass = float(b_mass)
     a.mol = round(a.mass / a.mw, 3) * int(Samples)
     b.mol = round(b.mass / b.mw, 3) * int(Samples)
-    #unreacted = b.mol - (eor * b.mol)
     b.mol = eor * b.mol
     bms = b.mol
 
@@ -49,22 +48,6 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
         final_product_masses.update(
             {f"{a.sn}({i})_{b.sn}({str(i - 1)})": round(i * a.mw + (i - 1) * b.mw - (i + i - 2) * rt.wl, 1) for i in
              range(2, 1001)})
-
-
-    #Creates a list with possible chain lengths
-    if rt.name == PolyCondensation:
-        cw = a.prgmw
-        cw2 = b.prgmw
-        chain_lengths = [(0, a.prgmw), (1, b.prgmw)]
-        for chain_length in range(2, 200, 2):
-            cw = cw + b.mw-rt.wl
-            chain_lengths.append((chain_length - 1, round(cw, 3)))
-            cw = cw + a.mw-rt.wl
-            chain_lengths.append((chain_length, round(cw, 3)))
-            cw2 = cw2 + a.mw - rt.wl
-            chain_lengths.append(((chain_length, round(cw2, 3)), a.rg))
-            cw2 = cw2 + b.mw - rt.wl
-            chain_lengths.append(((chain_length, round(cw2, 3)), b.rg))
 
     #Creates a list with the ID's of the chain lengths
     if rt.name == PolyCondensation:
@@ -109,16 +92,14 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
             for i in range(0, int(b.mol)):
                 composition.append(b.mw)
 
-    # Create weights from starting composition list
-    weights = []
-    for group in composition:
-        if group == a.prgmw:
-            weights.append(int(prgK))
-        else:
-            weights.append(int(srgK))
-
     # Reacts away b.mol until gone.  Still need to add different rate constants(weights)
     if rt.name != PolyCondensation:
+        weights = []
+        for group in composition:
+            if group == a.prgmw:
+                weights.append(int(prgK))
+            else:
+                weights.append(int(srgK))
         while b.mol >= 0:
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
             if MC[1] == a.prgmw or MC[1] == a.srgmw:
@@ -159,7 +140,6 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
             emo_a = round((acid_ct * 56100) / (sum(composition)), 2)
         elif emo == "OH_Value":
             emo_a = round((alcohol_ct * 56100) / (sum(composition)), 2)
-
         try:
             composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
             composition_tuple = [tuple(l) for l in composition]
@@ -192,13 +172,14 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
                 RCR2_temp = random.choice(list(enumerate(RC2[1])))
                 RCR2 = RCR2_temp[1]
                 RCR2_index = RCR2_temp[0]
-            if RCR2_index == 1:
-                other = 0
-            if RCR2_index == 0:
-                other = 1
+            # randomly select another value from RCR2_index other than RCR2_value
+            RCR2_other = random.choice(list(enumerate(RC2[1])))
+            while RCR2_other[0] == RCR2_index:
+                RCR2_other = random.choice(list(enumerate(RC2[1])))
+            RCR2_other_index = RCR2_other[0]
             if RCR != RCR2 and RC[0] != RC2[0]:
                 composition_tuple[RC[0]][RCR_index] += (sum(composition_tuple[RC2[0]]) - rt.wl)
-                IDLIST_tuple[RC[0]][RCR_index] = IDLIST_tuple[RC2[0]][other]
+                IDLIST_tuple[RC[0]][RCR_index] = IDLIST_tuple[RC2[0]][RCR2_other_index]
                 del composition_tuple[RC2[0]]
                 del IDLIST_tuple[RC2[0]]
             else:
@@ -233,7 +214,6 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
 
     # Tabulates final composition and converts to dataframe
     rxn_summary = collections.Counter(composition_tuple)
-    print(rxn_summary)
     RS = []
     for key in rxn_summary:
         MS = sum(key)
@@ -244,7 +224,6 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
     # Convert RS to dataframe
     rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     rxn_summary_df.set_index('Product', inplace=True)
-
 
     # print each value in each row from Mass Distribution
     if rt.name == PolyCondensation:
@@ -287,10 +266,6 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
     except KeyError:
         pass
 
-    # sum rxn_summary_df by product but keep Molar mass the same
-    # rxn_summary_df = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
-    # rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
-
     # Add ehc to dataframe if rt == Etherification
     if rt.name == Etherification:
         ehc = []
@@ -312,7 +287,13 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
         EHCp = round(rxn_summary_df['% ehc'].sum(), 4)
         update_percent_EHC(round(EHCp, 2))
         update_WPE(round((3545.3 / EHCp) - 36.4, 2))
-    update_results(rxn_summary_df)
+
+    # sum rxn_summary_df by product but keep Molar mass the same
+    rxn_summary_df = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
+    rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
+    rxn_summary_df_compact = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
+    rxn_summary_df_compact.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
+    update_results(rxn_summary_df_compact)
 
     if rt.name == PolyCondensation:
         update_Acid_Value(round(rxn_summary_df['Acid Value'].sum(), 2))
@@ -382,18 +363,27 @@ CGRk.insert(0, 1)
 CGRk.grid(row=10, column=1)
 results = tkinter.Text(window, height=20, width=50)
 
-def show_results(rxn_summary_df):
+def show_results(rxn_summary_df_compact):
     global results
     frame = tkinter.Frame(window)
     x = (window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2
     y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
     frame.place(x=x, y=y, anchor='center')
-    results = Table(frame, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True, width=x,
+    results = Table(frame, dataframe=rxn_summary_df_compact, showtoolbar=True, showstatusbar=True, showindex=True, width=x,
                     height=y, align='center')
     results.show()
 
 #Replace results Table with new results
-def update_results(rxn_summary_df):
+def update_results(rxn_summary_df_compact):
+    global results
+    try:
+        results.destroy()
+        show_results(rxn_summary_df_compact)
+    except:
+        show_results(rxn_summary_df_compact)
+        pass
+
+def expand_results(rxn_summary_df):
     global results
     try:
         results.destroy()
@@ -441,8 +431,12 @@ def sim_values():
              a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get(), PRGk=PRGk.get(), SRGk=SRGk.get(), CGRk=CGRk.get(), emr=End_Metric_Entry.get(), emo=End_Metric_Selection.get())
 
 # add button to simulate
-button = tkinter.Button(window, text="Simulate", command=sim_values,width=15,bg="red")
+button = tkinter.Button(window, text="Simulate", command=sim_values, width=15, bg="red")
 button.grid(row=11, column=1)
+
+# add button to expand dataframe
+expand = tkinter.Button(window, text="Expand Data", command=expand_results, width=15, bg="green")
+expand.grid(row=23, column=1)
 
 
 # Add a label for the interactions entry
@@ -466,8 +460,6 @@ tkinter.Label(window, text="End Metric: ", bg=bg_color).grid(row=21, column=0)
 tkinter.Label(window, text="Primary K: ", bg=bg_color).grid(row=8, column=0)
 tkinter.Label(window, text="Secondary k: ", bg=bg_color).grid(row=9, column=0)
 tkinter.Label(window, text="Child k: ", bg=bg_color).grid(row=10, column=0)
-
-
 
 
 window.mainloop()
