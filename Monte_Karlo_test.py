@@ -134,7 +134,6 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
                     elif ID == "Alcohol":
                         alcohol_ct += 1
                     break
-
         Amine_Value = round((amine_ct * 56100) / (sum(composition)), 2)
         Acid_Value = round((acid_ct * 56100) / (sum(composition)), 2)
         OH_Value = round((alcohol_ct * 56100) / (sum(composition)), 2)
