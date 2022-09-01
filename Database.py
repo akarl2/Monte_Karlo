@@ -105,6 +105,18 @@ class Trimethylolpropane:
         self.comp = (self.prgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
 
+class Cyclohexanedimethanol:
+    def __init__(self):
+        self.name = "Cyclohexanedimethanol"
+        self.sn = "CHDM"
+        self.formula = "C8H16O2"
+        self.mw = 144.21
+        self.density = 1.02
+        self.prgmw = 72.105
+        self.srgmw = 0
+        self.comp = (self.prgmw, self.prgmw)
+        self.mass = self.mw
+
 class C181:
     def __init__(self):
         self.name = "C181"
@@ -221,8 +233,8 @@ class Adipic_Acid:
         self.rg = "Acid"
 
 #Create a dictionary of all the above classes
-reactantsA = ["Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic_Acid", "PAA", "DETA", "Adipic_Acid"]
-reactantsB = ["Epichlorohydrin", "Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic_Acid", "Formic Acid", "PAA", "DETA", "Adipic_Acid"]
+reactantsA = ["Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic_Acid", "PAA", "DETA", "Adipic_Acid", "Cyclohexanedimethanol"]
+reactantsB = ["Epichlorohydrin", "Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic_Acid", "Formic Acid", "PAA", "DETA", "Adipic_Acid", "Cyclohexanedimethanol"]
 
 
 class P_Hydroxyl:

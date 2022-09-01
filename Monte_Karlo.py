@@ -9,6 +9,7 @@ import itertools
 from pandastable import Table, TableModel, config
 import statsmodels
 import math
+import numpy as np
 
 # Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
@@ -29,8 +30,8 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
     a.mass = float(a_mass)
     b.mass = float(b_mass)
     a.mol = round(a.mass / a.mw, 3) * int(Samples)
-    b.mol = round(b.mass / b.mw, 3) * int(Samples)
-    b.mol = eor * b.mol
+    b.mol = (round(b.mass / b.mw, 3) * int(Samples)) * eor
+    unreacted = b.mol - (eor * b.mol)
     bms = b.mol
 
     # Creates final product molar masses from final product name(s)
@@ -92,7 +93,7 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
             for i in range(0, int(b.mol)):
                 composition.append(b.mw)
 
-    # Reacts away b.mol until gone.  Still need to add different rate constants(weights)
+    # Reacts away b.mol until gone.
     if rt.name != PolyCondensation:
         weights = []
         for group in composition:
@@ -187,7 +188,7 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
 
             #determines current status of reaction
             composition_tuple_temp = list(itertools.chain(*composition_tuple))
-            IDLIST = []
+            IDLIST = [None] * len(composition_tuple_temp)
             amine_ct = 0
             acid_ct = 0
             alcohol_ct = 0
@@ -220,10 +221,14 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
         for item in final_product_masses:
             if math.isclose(MS, final_product_masses[item], abs_tol=1):
                 RS.append((item, rxn_summary[key], key))
+    #rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
+
+    #print(rxn_summary)
 
     # Convert RS to dataframe
     rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     rxn_summary_df.set_index('Product', inplace=True)
+    rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
 
     # print each value in each row from Mass Distribution
     if rt.name == PolyCondensation:

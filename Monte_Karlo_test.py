@@ -9,6 +9,7 @@ import itertools
 from pandastable import Table, TableModel, config
 import statsmodels
 import math
+import time
 
 # Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
