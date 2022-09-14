@@ -1,13 +1,4 @@
-class Epichlorohydrin:
-    def __init__(self):
-        self.name = "Epichlorohydrin"
-        self.sn = "Epi"
-        self.formula = "C3H5ClO"
-        self.mw = 92.52
-        self.density = 1.18
-        self.prgmw = 92.52
-        self.srgmw = 0
-        self.comp = self.prgmw
+#------------------------------------------Alcohols------------------------------#
 
 class Butanol:
     def __init__(self):
@@ -41,6 +32,18 @@ class PPG425:
         self.mw = 425
         self.density = 1.26
         self.prgmw = 212.5
+        self.srgmw = 0
+        self.comp = (self.prgmw, self.prgmw)
+        self.mass = self.mw
+
+class Pripol:
+    def __init__(self):
+        self.name = "Pripol"
+        self.sn = "Pripol"
+        self.formula = "C3H6O3"
+        self.mw = 542
+        self.density = 1.26
+        self.prgmw = 271.014
         self.srgmw = 0
         self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
@@ -117,27 +120,16 @@ class Cyclohexanedimethanol:
         self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
 
-class C181:
+class Ethylhexanol:
     def __init__(self):
-        self.name = "C181"
-        self.sn = "C181"
-        self.formula = "C18H34O2"
-        self.mw = 282.47
-        self.density = 0.895
+        self.name = "2-Ethylhexanol"
+        self.sn = "2-EH"
+        self.formula = "C8H18O"
+        self.mw = 130.23
+        self.density = 0.833
         self.prg = Carboxyl
         self.mass = self.mw
         self.comp = self.prg
-
-class Water:
-    def __init__(self):
-        self.name = "Water"
-        self.sn = "H2O"
-        self.formula = "H2O"
-        self.mw = 18.01528
-        self.density = 1.000
-        self.prg = 1
-        self.srg = 0
-        self.tg = self.prg + self.srg
 
 class Ethanol:
     def __init__(self):
@@ -162,24 +154,68 @@ class Methanol:
         self.comp = self.prgmw
         self.mass = self.mw
 
-class Acetone:
+#-------------------------------------------Amines----------------------------#
+class DETA:
     def __init__(self):
-        self.name = "Acetone"
-        self.sn = "AcOH"
-        self.formula = "C2H3O"
-        self.mw = 42.0367
-        self.density = 0.789
-        self.prg = 0
-        self.srg = 0
-        self.tg = self.prg + self.srg
+        self.name = "DETA"
+        self.sn = "DETA"
+        self.formula = "C4H13N3"
+        self.mw = 103.169
+        self.density = 0.955
+        self.prgmw = 51.5845
+        self.srgmw = 0
+        self.comp = (self.prgmw, self.prgmw)
+        self.mass = self.mw
+        self.rg = "Amine"
 
-class AceticAcid:
+class DEA:
     def __init__(self):
-        self.name = "Acetic Acid"
+        self.name = "Diethanolamine"
+        self.sn = "DEA"
+        self.formula = "C4H11NO2"
+        self.mw = 105.14
+        self.density = 0.955
+        self.prgmw = 43.068
+        self.srgmw = 31.034
+        self.comp = (self.srgmw,self.prgmw,self.srgmw)
+        self.mass = self.mw
+        self.rg = "Amine"
+
+#---------------------------------------------------------Acids------------------------------------------------#
+
+class Adipic_Acid:
+    def __init__(self):
+        self.name = "Adipic Acid"
         self.sn = "AA"
-        self.formula = "CH3COOH"
-        self.mw = 60.052
-        self.density = 1.05
+        self.formula = "C6H10O4"
+        self.mw = 146.14
+        self.density = 1.36
+        self.prgmw = 73.07
+        self.srgmw = 0
+        self.comp = (self.prgmw, self.prgmw)
+        self.mass = self.mw
+        self.rg = "Acid"
+
+class Isostearic_Acid:
+    def __init__(self):
+        self.name = "Isostearic Acid"
+        self.sn = "ISA"
+        self.formula = "C18H36O2"
+        self.mw = 284.48
+        self.prgmw = 284.48
+        self.srgmw = 0
+        self.density = 0.93
+        self.prg = Carboxyl
+        self.mass = self.mw
+        self.comp = self.prg
+
+class PAA:
+    def __init__(self):
+        self.name = "PAA"
+        self.sn = "PAA"
+        self.formula = "C2H4O3"
+        self.mw = 76.0514
+        self.density = 104
         self.prg = 1
         self.srg = 0
         self.tg = self.prg + self.srg
@@ -195,46 +231,69 @@ class FormicAcid:
         self.srg = 0
         self.tg = self.prg + self.srg
 
-class PAA:
+class AceticAcid:
     def __init__(self):
-        self.name = "PAA"
-        self.sn = "PAA"
-        self.formula = "C2H4O3"
-        self.mw = 76.0514
-        self.density = 104
+        self.name = "Acetic Acid"
+        self.sn = "AA"
+        self.formula = "CH3COOH"
+        self.mw = 60.052
+        self.density = 1.05
         self.prg = 1
         self.srg = 0
         self.tg = self.prg + self.srg
 
-class DETA:
+class C181:
     def __init__(self):
-        self.name = "DETA"
-        self.sn = "DETA"
-        self.formula = "C4H13N3"
-        self.mw = 103.169
-        self.density = 0.955
-        self.prgmw = 51.5845
+        self.name = "C181"
+        self.sn = "C181"
+        self.formula = "C18H34O2"
+        self.mw = 282.47
+        self.prgmw = 282.47
         self.srgmw = 0
-        self.comp = (self.prgmw, self.prgmw)
+        self.density = 0.895
+        self.prg = Carboxyl
         self.mass = self.mw
-        self.rg = "Amine"
+        self.comp = self.prg
 
-class Adipic_Acid:
+
+#-------------------------------------Other--------------------------------------#
+
+class Acetone:
     def __init__(self):
-        self.name = "Adipic Acid"
-        self.sn = "AA"
-        self.formula = "C6H10O4"
-        self.mw = 146.14
-        self.density = 1.36
-        self.prgmw = 73.07
+        self.name = "Acetone"
+        self.sn = "AcOH"
+        self.formula = "C2H3O"
+        self.mw = 42.0367
+        self.density = 0.789
+        self.prg = 0
+        self.srg = 0
+        self.tg = self.prg + self.srg
+
+class Water:
+    def __init__(self):
+        self.name = "Water"
+        self.sn = "H2O"
+        self.formula = "H2O"
+        self.mw = 18.01528
+        self.density = 1.000
+        self.prg = 1
+        self.srg = 0
+        self.tg = self.prg + self.srg
+
+class Epichlorohydrin:
+    def __init__(self):
+        self.name = "Epichlorohydrin"
+        self.sn = "Epi"
+        self.formula = "C3H5ClO"
+        self.mw = 92.52
+        self.density = 1.18
+        self.prgmw = 92.52
         self.srgmw = 0
-        self.comp = (self.prgmw, self.prgmw)
-        self.mass = self.mw
-        self.rg = "Acid"
+        self.comp = self.prgmw
 
 #Create a dictionary of all the above classes
-reactantsA = ["Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic_Acid", "PAA", "DETA", "Adipic_Acid", "Cyclohexanedimethanol"]
-reactantsB = ["Epichlorohydrin", "Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic_Acid", "Formic Acid", "PAA", "DETA", "Adipic_Acid", "Cyclohexanedimethanol"]
+reactantsA = ["Epichlorohydrin","Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic_Acid", "PAA", "DETA", "Adipic_Acid", "Cyclohexanedimethanol","Ethylhexanol", "Pripol", "Isostearic_Acid", "DEA"]
+reactantsB = reactantsA
 
 
 class P_Hydroxyl:

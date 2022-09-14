@@ -221,9 +221,6 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
         for item in final_product_masses:
             if math.isclose(MS, final_product_masses[item], abs_tol=1):
                 RS.append((item, rxn_summary[key], key))
-    #rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
-
-    #print(rxn_summary)
 
     # Convert RS to dataframe
     rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
@@ -257,6 +254,9 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
             except TypeError:
                 chain_ID = "Amine"
                 amine_ct += 1
+
+    global expanded_results
+    expanded_results = rxn_summary_df
 
     # Add columns to dataframe
     rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get)
@@ -298,12 +298,14 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
     rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
     rxn_summary_df_compact = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
     rxn_summary_df_compact.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
-    update_results(rxn_summary_df_compact)
+
 
     if rt.name == PolyCondensation:
         update_Acid_Value(round(rxn_summary_df['Acid Value'].sum(), 2))
         update_Amine_Value(round(rxn_summary_df['Amine Value'].sum(), 2))
         update_OH_Value(round(rxn_summary_df['OH Value'].sum(), 2))
+
+    show_results(rxn_summary_df_compact)
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
@@ -370,32 +372,37 @@ results = tkinter.Text(window, height=20, width=50)
 
 def show_results(rxn_summary_df_compact):
     global results
+    global frame
+    try:
+        results.destroy()
+        frame.destroy()
+    except NameError:
+        pass
     frame = tkinter.Frame(window)
     x = (window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2
     y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
+    x = x + 100
     frame.place(x=x, y=y, anchor='center')
     results = Table(frame, dataframe=rxn_summary_df_compact, showtoolbar=True, showstatusbar=True, showindex=True, width=x,
                     height=y, align='center')
     results.show()
 
-#Replace results Table with new results
-def update_results(rxn_summary_df_compact):
+def show_results_expanded():
     global results
+    global frame
     try:
         results.destroy()
-        show_results(rxn_summary_df_compact)
-    except:
-        show_results(rxn_summary_df_compact)
+        frame.destroy()
+    except NameError:
         pass
-
-def expand_results(rxn_summary_df):
-    global results
-    try:
-        results.destroy()
-        show_results(rxn_summary_df)
-    except:
-        show_results(rxn_summary_df)
-        pass
+    frame = tkinter.Frame(window)
+    x = (window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2
+    y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
+    x = x + 100
+    frame.place(x=x, y=y, anchor='center')
+    results = Table(frame, dataframe=expanded_results, showtoolbar=True, showstatusbar=True, showindex=True, width=x,
+                    height=y, align='center')
+    results.show()
 
 def update_moles_A(self):
     a = str_to_class(speciesA.get())()
@@ -440,11 +447,11 @@ button = tkinter.Button(window, text="Simulate", command=sim_values, width=15, b
 button.grid(row=11, column=1)
 
 # add button to expand dataframe
-expand = tkinter.Button(window, text="Expand Data", command=expand_results, width=15, bg="green")
+expand = tkinter.Button(window, text="Expand Data", command=show_results_expanded, width=15, bg="green")
 expand.grid(row=23, column=1)
 
 
-# Add a label for the interactions entry
+#---------------------------------------------Labels for UI---------------------------------#
 bg_color = '#00BFFF'
 tkinter.Label(window, text="Grams of A: ", bg=bg_color).grid(row=2, column=0)
 tkinter.Label(window, text="Moles of A: ", bg=bg_color).grid(row=1, column=2, padx=10)
