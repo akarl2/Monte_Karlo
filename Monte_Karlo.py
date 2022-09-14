@@ -1,7 +1,9 @@
 import collections
 import random
 import sys
+import time
 import tkinter
+from tkinter import ttk
 import pandas
 from Database import *
 from Reactions import *
@@ -9,7 +11,6 @@ import itertools
 from pandastable import Table, TableModel, config
 import statsmodels
 import math
-import numpy as np
 
 # Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
@@ -22,6 +23,7 @@ def str_to_class(classname):
 
 #Runs the simulation
 def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo):
+    progress['value'] = 0
     a = str_to_class(a)()
     b = str_to_class(b)()
     rt = str_to_class(rt)()
@@ -29,6 +31,9 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
     emr = float(emr)
     a.mass = float(a_mass)
     b.mass = float(b_mass)
+    prgK = float(PRGk)
+    srgK = float(SRGk)
+    cgK = float(CGRk)
     a.mol = round(a.mass / a.mw, 3) * int(Samples)
     b.mol = (round(b.mass / b.mw, 3) * int(Samples)) * eor
     unreacted = b.mol - (eor * b.mol)
@@ -64,11 +69,6 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
             chain_lengths_id.append(((chain_length, round(cw2, 3)), a.rg))
             cw2 = cw2 + b.mw - rt.wl
             chain_lengths_id.append(((chain_length, round(cw2, 3)), b.rg))
-
-    # Specify rate constants
-    prgK = float(PRGk)
-    srgK = float(SRGk)
-    cgK = float(CGRk)
 
     # Creates starting composition list
     composition = []
@@ -110,7 +110,8 @@ def simulate(a, b, rt, Samples, eor, a_mass, b_mass, PRGk, SRGk, CGRk, emr, emo)
             else:
                 composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
                 b.mol -= 1
-            sim_status(round(100 - (b.mol / bms * 100), 2))
+            progress['value'] = round(100 - (b.mol / bms * 100), 1)
+            window.update()
         try:
             composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
             composition_tuple = [tuple(l) for l in composition]
@@ -370,6 +371,11 @@ CGRk.insert(0, 1)
 CGRk.grid(row=10, column=1)
 results = tkinter.Text(window, height=20, width=50)
 
+#add a determinate progress bar to window using sim_status
+progress = ttk.Progressbar(window, orient="horizontal", length=300, mode="determinate")
+progress.grid(row=1, column=5)
+
+
 def show_results(rxn_summary_df_compact):
     global results
     global frame
@@ -423,9 +429,6 @@ Mass_of_B.bind("<KeyRelease>", update_moles_B)
 def update_percent_EHC(Value):
     Percent_EHC.delete(0, tkinter.END)
     Percent_EHC.insert(0, Value)
-def sim_status(Value):
-    Sim_status.delete(0, tkinter.END)
-    Sim_status.insert(0, Value)
 def update_WPE(Value):
     Theoretical_WPE.delete(0, tkinter.END)
     Theoretical_WPE.insert(0, Value)

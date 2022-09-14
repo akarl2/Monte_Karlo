@@ -23,6 +23,7 @@ class Glycerol:
         self.srgmw = 30.02598
         self.comp = (self.prgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
+        self.rg = "Alcohol"
 
 class PPG425:
     def __init__(self):
@@ -178,6 +179,7 @@ class DEA:
         self.prgmw = 43.068
         self.srgmw = 31.034
         self.comp = (self.srgmw,self.prgmw,self.srgmw)
+        self.compid = ("Alcohol","Amine","Alcohol")
         self.mass = self.mw
         self.rg = "Amine"
 
@@ -254,6 +256,7 @@ class C181:
         self.prg = Carboxyl
         self.mass = self.mw
         self.comp = self.prg
+        self.rg = "Acid"
 
 
 #-------------------------------------Other--------------------------------------#
