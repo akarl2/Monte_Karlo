@@ -1,3 +1,8 @@
+
+#Create a dictionary of all the above classes
+reactantsA = ["Epichlorohydrin","Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic_Acid", "PAA", "DETA", "Adipic_Acid", "Cyclohexanedimethanol","Ethylhexanol", "Pripol", "Isostearic_Acid", "DEA", "Lysinol"]
+reactantsB = reactantsA
+
 #------------------------------------------Alcohols------------------------------#
 
 class Butanol:
@@ -183,6 +188,20 @@ class DEA:
         self.mass = self.mw
         self.rg = "Amine"
 
+class Lysinol:
+    def __init__(self):
+        self.name = "Lysinol"
+        self.sn = "Lys"
+        self.formula = "C6H16NO2"
+        self.mw = 132.20
+        self.density = 1.1
+        self.prgmw = 16.023
+        self.srgmw = 100.159
+        self.comp = (self.prgmw,self.prgmw,self.srgmw)
+        self.compid = ("Amine","Amine","Alcohol")
+        self.mass = self.mw
+        self.rg = "Amine"
+
 #---------------------------------------------------------Acids------------------------------------------------#
 
 class Adipic_Acid:
@@ -294,10 +313,7 @@ class Epichlorohydrin:
         self.srgmw = 0
         self.comp = self.prgmw
 
-#Create a dictionary of all the above classes
-reactantsA = ["Epichlorohydrin","Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic_Acid", "PAA", "DETA", "Adipic_Acid", "Cyclohexanedimethanol","Ethylhexanol", "Pripol", "Isostearic_Acid", "DEA"]
-reactantsB = reactantsA
-
+#-------------------------------Functional Groups--------------------------------#
 
 class P_Hydroxyl:
     def __init__(self):
