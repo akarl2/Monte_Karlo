@@ -15,5 +15,5 @@ class Etherification:
         self.wl = 0
         self.name = Etherification
 
-Reactions = ["Condensation", "PolyCondensation", "Etherification"]
+Reactions = ["Condensation", "Etherification", "PolyCondensation"]
 End_Metrics = ["Amine_Value", "Acid_Value", "OH_Value"]

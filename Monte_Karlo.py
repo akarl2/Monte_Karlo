@@ -2,7 +2,7 @@ import collections
 import random
 import sys
 import tkinter
-from tkinter import ttk
+from tkinter import ttk, messagebox
 import pandas
 from Database import *
 from Reactions import *
@@ -98,17 +98,16 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
         for group in composition:
             if group == a.prgmw:
                 weights.append(int(prgK))
-            else:
+            elif group == a.srgmw:
                 weights.append(int(srgK))
         while b.mol >= 0 and running == True:
             MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
             if MC[1] == a.prgmw or MC[1] == a.srgmw:
                 composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
-                b.mol -= 1
                 weights[MC[0]] = cgK
             else:
                 composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
-                b.mol -= 1
+            b.mol -= 1
             progress['value'] = round(100 - (b.mol / bms * 100), 1)
             window.update()
         try:
@@ -384,14 +383,8 @@ def clear_values():
     Amine_Value.delete(0, tkinter.END)
     OH_Value.delete(0, tkinter.END)
 
-# Converts string name to class name
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
-
-def sim_values():
-    simulate(a=speciesA.get(), b=speciesB.get(), rt=reaction_type.get(), samples=Samples.get(), eor=EOR.get(),
-             a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get(), prgk=PRGk.get(), srgk=SRGk.get(), crgk=CGRk.get(),
-             emr=End_Metric_Entry.get(), emo=End_Metric_Selection.get())
 
 def stop():
     global running
@@ -400,17 +393,27 @@ def stop():
     else:
         pass
 
+def sim_values():
+    try:
+        simulate(a=speciesA.get(), b=speciesB.get(), rt=reaction_type.get(), samples=Samples.get(), eor=EOR.get(),
+                 a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get(), prgk=PRGk.get(), srgk=SRGk.get(), crgk=CGRk.get(),
+                 emr=End_Metric_Entry.get(), emo=End_Metric_Selection.get())
+    except AttributeError:
+        messagebox.showerror("Field Error", "Please fill out all fields!")
+        pass
+
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
+window.iconbitmap("testtube.ico")
 window.title("Monte Karlo")
 window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
 window.configure(background="#00BFFF")
-Mass_of_A = tkinter.Entry(window)
-Mass_of_A.insert(0, "250")
+Mass_of_A = tkinter.Entry(window, width=20)
+Mass_of_A.insert(0, "100")
 Mass_of_A.grid(row=2, column=1)
 Moles_of_A = tkinter.Entry(window)
 Moles_of_A.grid(row=1, column=3)
-Mass_of_B = tkinter.Entry(window)
+Mass_of_B = tkinter.Entry(window, width=20)
 Mass_of_B.insert(0, "100")
 Mass_of_B.grid(row=4, column=1)
 Moles_of_B = tkinter.Entry(window)
@@ -428,7 +431,7 @@ reaction_type.set("Reaction Type")
 Reaction_Type = tkinter.OptionMenu(window, reaction_type, *Reactions)
 Reaction_Type.grid(row=5, column=1)
 Samples = tkinter.Entry(window)
-Samples.insert(0, "500")
+Samples.insert(0, "1000")
 Samples.grid(row=6, column=1)
 EOR = tkinter.Entry(window)
 EOR.insert(0, 1)
@@ -459,7 +462,7 @@ SRGk = tkinter.Entry(window)
 SRGk.insert(0, 0)
 SRGk.grid(row=9, column=1)
 CGRk = tkinter.Entry(window)
-CGRk.insert(0, 1)
+CGRk.insert(0, 0)
 CGRk.grid(row=10, column=1)
 results = tkinter.Text(window, height=20, width=50)
 
@@ -475,7 +478,7 @@ stop_button.grid(row=12, column=1)
 expand = tkinter.Button(window, text="Expand Data", command=show_results_expanded, width=15, bg="green")
 expand.grid(row=23, column=1)
 
-# Run update_moles_A() when the user changes the value of Mass_of_A
+# Update moles when user changes the value of Mass_of_A or Mass_of_B
 Mass_of_A.bind("<KeyRelease>", update_moles_A)
 Mass_of_B.bind("<KeyRelease>", update_moles_B)
 
