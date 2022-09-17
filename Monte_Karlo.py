@@ -185,6 +185,7 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
             else:
                 pass
 
+
             # determines current status of reaction
             composition_tuple_temp = list(itertools.chain(*composition_tuple))
             IDLIST = [None] * len(composition_tuple_temp)
