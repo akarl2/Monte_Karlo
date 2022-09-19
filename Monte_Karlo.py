@@ -16,10 +16,12 @@ pandas.set_option('display.max_columns', None)
 pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
+global running, emo_a, results, frame, expanded_results
 running = False
+
 # Runs the simulation
 def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo):
-    global running, chain_lengths_id, emo_a, composition_tuple
+    global running, emo_a, results, expanded_results
     progress['value'] = 0
     clear_values()
     a = str_to_class(a)()
@@ -112,10 +114,10 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
             window.update()
         try:
             composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
-            composition_tuple = [tuple(l) for l in composition]
+            composition_tuple = [tuple(item) for item in composition]
         except TypeError:
             composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
-            composition_tuple = [tuple(l) for l in composition]
+            composition_tuple = [tuple(item) for item in composition]
     elif rt.name == PolyCondensation:
         # determines starting status of the reaction
         IDLIST = []
@@ -142,16 +144,16 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
             emo_a = round((alcohol_ct * 56100) / (sum(composition)), 2)
         try:
             composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
-            composition_tuple = [tuple(l) for l in composition]
+            composition_tuple = [tuple(item) for item in composition]
             IDLIST = [IDLIST[x:x + len(a.comp)] for x in range(0, len(IDLIST), len(a.comp))]
-            IDLIST_tuple = [tuple(l) for l in IDLIST]
+            IDLIST_tuple = [tuple(item) for item in IDLIST]
         except TypeError:
             composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
-            composition_tuple = [tuple(l) for l in composition]
+            composition_tuple = [tuple(item) for item in composition]
             IDLIST = [IDLIST[x:x + 1] for x in range(0, len(IDLIST), 1)]
-            IDLIST_tuple = [tuple(l) for l in IDLIST]
-        composition_tuple = [list(l) for l in composition_tuple]
-        IDLIST_tuple = [list(l) for l in IDLIST_tuple]
+            IDLIST_tuple = [tuple(item) for item in IDLIST]
+        composition_tuple = [list(item) for item in composition_tuple]
+        IDLIST_tuple = [list(item) for item in IDLIST_tuple]
 
         # runs the reaction
         while emo_a > emr and running == True:
@@ -185,7 +187,6 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
             else:
                 pass
 
-
             # determines current status of reaction
             composition_tuple_temp = list(itertools.chain(*composition_tuple))
             IDLIST = [None] * len(composition_tuple_temp)
@@ -210,9 +211,10 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
                 emo_a = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
             elif emo == "OH_Value":
                 emo_a = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            progress['value'] = round((emr/emo_a)*100, 1)
+            progress['value'] = round((emr / emo_a) * 100, 1)
             window.update()
-        composition_tuple = [tuple(l) for l in composition_tuple]
+
+        composition_tuple = [tuple(item) for item in composition_tuple]
 
     # Tabulates final composition and converts to dataframe
     rxn_summary = collections.Counter(composition_tuple)
@@ -226,7 +228,8 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
     # Convert RS to dataframe
     rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     rxn_summary_df.set_index('Product', inplace=True)
-    rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
+    if rt.name != PolyCondensation:
+        rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
 
     # print each value in each row from Mass Distribution
     if rt.name == PolyCondensation:
@@ -308,11 +311,10 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
 
     show_results(rxn_summary_df_compact)
 
-#-------------------------------------------Aux Functions---------------------------------#
+# -------------------------------------------Aux Functions---------------------------------#
 
 def show_results(rxn_summary_df_compact):
-    global results
-    global frame
+    global results, frame
     try:
         results.destroy()
         frame.destroy()
@@ -328,9 +330,9 @@ def show_results(rxn_summary_df_compact):
                     height=y, align='center')
     results.show()
 
+
 def show_results_expanded():
-    global results
-    global frame
+    global results, frame
     try:
         results.destroy()
         frame.destroy()
@@ -345,11 +347,13 @@ def show_results_expanded():
                     height=y, align='center')
     results.show()
 
+
 def update_moles_A(self):
     a = str_to_class(speciesA.get())()
-    molesA = float(Mass_of_A.get()) / float(a.mw)
     Moles_of_A.delete(0, 'end')
+    molesA = float(Mass_of_A.get()) / float(a.mw)
     Moles_of_A.insert(0, round(molesA, 4))
+
 
 def update_moles_B(self):
     b = str_to_class(speciesB.get())()
@@ -357,25 +361,31 @@ def update_moles_B(self):
     Moles_of_B.delete(0, 'end')
     Moles_of_B.insert(0, round(molesB, 4))
 
+
 def update_percent_EHC(Value):
     Percent_EHC.delete(0, tkinter.END)
     Percent_EHC.insert(0, Value)
+
 
 def update_WPE(Value):
     Theoretical_WPE.delete(0, tkinter.END)
     Theoretical_WPE.insert(0, Value)
 
+
 def update_Acid_Value(Value):
     Acid_Value.delete(0, tkinter.END)
     Acid_Value.insert(0, Value)
+
 
 def update_Amine_Value(Value):
     Amine_Value.delete(0, tkinter.END)
     Amine_Value.insert(0, Value)
 
+
 def update_OH_Value(Value):
     OH_Value.delete(0, tkinter.END)
     OH_Value.insert(0, Value)
+
 
 def clear_values():
     Percent_EHC.delete(0, tkinter.END)
@@ -384,8 +394,10 @@ def clear_values():
     Amine_Value.delete(0, tkinter.END)
     OH_Value.delete(0, tkinter.END)
 
+
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
+
 
 def stop():
     global running
@@ -393,6 +405,7 @@ def stop():
         running = False
     else:
         pass
+
 
 def sim_values():
     try:
@@ -402,6 +415,7 @@ def sim_values():
     except AttributeError:
         messagebox.showerror("Field Error", "Please fill out all fields!")
         pass
+
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
@@ -465,7 +479,6 @@ SRGk.grid(row=9, column=1)
 CGRk = tkinter.Entry(window)
 CGRk.insert(0, 0)
 CGRk.grid(row=10, column=1)
-results = tkinter.Text(window, height=20, width=50)
 
 # add button to simulate
 button = tkinter.Button(window, text="Simulate", command=sim_values, width=15, bg="Green")
