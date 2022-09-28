@@ -184,7 +184,7 @@ class DEA:
         self.prgmw = 43.068
         self.srgmw = 31.034
         self.comp = (self.srgmw,self.prgmw,self.srgmw)
-        self.compid = ("Alcohol","Amine","Alcohol")
+        self.compid = ("Alcohol", "Amine", "Alcohol")
         self.mass = self.mw
         self.rg = "Amine"
 
@@ -222,13 +222,14 @@ class Isostearic_Acid:
         self.name = "Isostearic Acid"
         self.sn = "ISA"
         self.formula = "C18H36O2"
-        self.mw = 284.48
-        self.prgmw = 284.48
+        self.mw = 284.5
+        self.prgmw = 284.5
         self.srgmw = 0
         self.density = 0.93
         self.prg = Carboxyl
         self.mass = self.mw
         self.comp = self.prg
+
 
 class PAA:
     def __init__(self):

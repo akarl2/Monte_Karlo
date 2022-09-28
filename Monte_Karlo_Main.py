@@ -56,6 +56,8 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
             {f"{a.sn}({i})_{b.sn}({str(i - 1)})": round(i * a.mw + (i - 1) * b.mw - (i + i - 2) * rt.wl, 1) for i in
              range(2, 1001)})
 
+    print(final_product_masses)
+
     # Creates a list with the ID's of the chain lengths
     if rt.name == PolyCondensation:
         cw = a.prgmw
@@ -321,15 +323,13 @@ def show_results(rxn_summary_df_compact):
     except NameError:
         pass
     frame = tkinter.Frame(window)
-    x = (window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2
+    x = ((window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2) + 100
     y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
-    x = x + 100
     frame.place(x=x, y=y, anchor='center')
     results = Table(frame, dataframe=rxn_summary_df_compact, showtoolbar=True, showstatusbar=True, showindex=True,
                     width=x,
                     height=y, align='center')
     results.show()
-
 
 def show_results_expanded():
     global results, frame
@@ -339,14 +339,12 @@ def show_results_expanded():
     except NameError:
         pass
     frame = tkinter.Frame(window)
-    x = (window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2
+    x = ((window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2) + 100
     y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
-    x = x + 100
     frame.place(x=x, y=y, anchor='center')
     results = Table(frame, dataframe=expanded_results, showtoolbar=True, showstatusbar=True, showindex=True, width=x,
                     height=y, align='center')
     results.show()
-
 
 def update_moles_A(self):
     a = str_to_class(speciesA.get())()
@@ -354,38 +352,31 @@ def update_moles_A(self):
     molesA = float(Mass_of_A.get()) / float(a.mw)
     Moles_of_A.insert(0, round(molesA, 4))
 
-
 def update_moles_B(self):
     b = str_to_class(speciesB.get())()
     molesB = float(Mass_of_B.get()) / float(b.mw)
     Moles_of_B.delete(0, 'end')
     Moles_of_B.insert(0, round(molesB, 4))
 
-
 def update_percent_EHC(Value):
     Percent_EHC.delete(0, tkinter.END)
     Percent_EHC.insert(0, Value)
-
 
 def update_WPE(Value):
     Theoretical_WPE.delete(0, tkinter.END)
     Theoretical_WPE.insert(0, Value)
 
-
 def update_Acid_Value(Value):
     Acid_Value.delete(0, tkinter.END)
     Acid_Value.insert(0, Value)
-
 
 def update_Amine_Value(Value):
     Amine_Value.delete(0, tkinter.END)
     Amine_Value.insert(0, Value)
 
-
 def update_OH_Value(Value):
     OH_Value.delete(0, tkinter.END)
     OH_Value.insert(0, Value)
-
 
 def clear_values():
     Percent_EHC.delete(0, tkinter.END)
@@ -394,10 +385,8 @@ def clear_values():
     Amine_Value.delete(0, tkinter.END)
     OH_Value.delete(0, tkinter.END)
 
-
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
-
 
 def stop():
     global running
@@ -405,7 +394,6 @@ def stop():
         running = False
     else:
         pass
-
 
 def sim_values():
     try:
@@ -415,7 +403,6 @@ def sim_values():
     except AttributeError:
         messagebox.showerror("Field Error", "Please fill out all fields!")
         pass
-
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
