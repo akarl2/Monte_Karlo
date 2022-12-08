@@ -86,7 +86,6 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
         for i in range(0, int(b.mol)):
             composition.append(b.mw)
 
-
     # Reacts away b.mol until gone.
     if rt.name != PolyCondensation:
         weights = []
@@ -97,18 +96,21 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
                 weights.append(int(srgK))
             elif group == b.prgmw:
                 weights.append(1)
-        indicesA = [i for i, x in enumerate(composition) if x == a.prgmw or x == a.srgmw]
+            else:
+                weights.append(int(cgK))
+        indicesA = [i for i, x in enumerate(composition) if x == a.prgmw or x == a.srgmw or x != b.prgmw]
         indicesB = [i for i, x in enumerate(composition) if x == b.prgmw]
         while len(indicesA) > 1 and len(indicesB) > 1 and running == True:
-            indicesA = [i for i, x in enumerate(composition) if x == a.prgmw or x == a.srgmw]
+            indicesA = [i for i, x in enumerate(composition) if x == a.prgmw or x == a.srgmw or x != b.prgmw]
             weightsA = [weights[i] for i in indicesA]
             indicesB = [i for i, x in enumerate(composition) if x == b.prgmw]
             weightsB = [weights[i] for i in indicesB]
             MCA = random.choices(list(enumerate(indicesA)), weights=weightsA, k=1)[0]
             MCB = random.choices(list(enumerate(indicesB)), weights=weightsB, k=1)[0]
-            composition[MCA[0]] = round(composition[MCA[1]] + composition[MCB[1]] - rt.wl, 3)
+            composition[MCA[1]] = round(composition[MCA[1]] + composition[MCB[1]] - rt.wl, 3)
             composition.pop(MCB[1])
             weights[MCA[0]] = cgK
+            b.mol -= 1
             progress['value'] = round(100 - (b.mol / bms * 100), 1)
             window.update()
         try:
@@ -228,8 +230,7 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
     # Convert RS to dataframe
     rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     rxn_summary_df.set_index('Product', inplace=True)
-    if rt.name != PolyCondensation:
-        rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
+    #rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
 
     # print each value in each row from Mass Distribution
     if rt.name == PolyCondensation:
@@ -398,8 +399,10 @@ def sim_values():
         simulate(a=speciesA.get(), b=speciesB.get(), rt=reaction_type.get(), samples=Samples.get(), eor=EOR.get(),
                  a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get(), prgk=PRGk.get(), srgk=SRGk.get(), crgk=CGRk.get(),
                  emr=End_Metric_Entry.get(), emo=End_Metric_Selection.get())
-    except AttributeError:
-        messagebox.showerror("Field Error", "Please fill out all fields!")
+    except AttributeError as e:
+        messagebox.showerror("Exception raised", str(e))
+
+
         pass
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
