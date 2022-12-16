@@ -1,15 +1,4 @@
-import collections
-import random
-import sys
-import tkinter
-from tkinter import ttk, messagebox
-import pandas
-from Database import *
-from Reactions import *
-import itertools
-from pandastable import Table, TableModel, config
-import statsmodels
-import math
+from Module_Imports import *
 
 # Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
@@ -45,6 +34,7 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
     if rt.name != PolyCondensation:
         final_product_masses.update(
             {f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + (i * b.mw - i * rt.wl), 1) for i in range(1, 500)})
+        
     elif rt.name == PolyCondensation:
         final_product_masses.update(
             {f"{a.sn}({i})_{b.sn}({str(i)})": round(i * a.mw + i * b.mw - (i + i - 1) * rt.wl, 2) for i in
@@ -55,8 +45,6 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
         final_product_masses.update(
             {f"{a.sn}({i})_{b.sn}({str(i - 1)})": round(i * a.mw + (i - 1) * b.mw - (i + i - 2) * rt.wl, 1) for i in
              range(2, 1001)})
-
-    print(final_product_masses)
 
     # Creates a list with the ID's of the chain lengths
     if rt.name == PolyCondensation:
@@ -75,26 +63,18 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
 
     # Creates starting composition list
     composition = []
-    if rt.name != PolyCondensation:
-        try:
-            for i in range(0, int(a.mol)):
-                composition.extend(group for group in a.comp)
-        except TypeError:
-            for i in range(0, int(a.mol)):
-                composition.append(a.mw)
-    if rt.name == PolyCondensation:
-        try:
-            for i in range(0, int(a.mol)):
-                composition.extend(group for group in a.comp)
-        except TypeError:
-            for i in range(0, int(a.mol)):
-                composition.append(a.mw)
-        try:
-            for i in range(0, int(b.mol)):
-                composition.extend(group for group in b.comp)
-        except TypeError:
-            for i in range(0, int(b.mol)):
-                composition.append(b.mw)
+    try:
+        for i in range(0, int(a.mol)):
+            composition.extend(group for group in a.comp)
+    except TypeError:
+        for i in range(0, int(a.mol)):
+            composition.append(a.mw)
+    try:
+        for i in range(0, int(b.mol)):
+            composition.extend(group for group in b.comp)
+    except TypeError:
+        for i in range(0, int(b.mol)):
+            composition.append(b.mw)
 
     # Reacts away b.mol until gone.
     if rt.name != PolyCondensation:
@@ -104,13 +84,22 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
                 weights.append(int(prgK))
             elif group == a.srgmw:
                 weights.append(int(srgK))
-        while b.mol >= 0 and running == True:
-            MC = random.choices(list(enumerate(composition)), weights=weights, k=1)[0]
-            if MC[1] == a.prgmw or MC[1] == a.srgmw:
-                composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
-                weights[MC[0]] = cgK
+            elif group == b.prgmw:
+                weights.append(1)
             else:
-                composition[MC[0]] = round(MC[1] + b.mw - rt.wl, 4)
+                weights.append(int(cgK))
+        indicesA = [i for i, x in enumerate(composition) if x == a.prgmw or x == a.srgmw or x != b.prgmw]
+        indicesB = [i for i, x in enumerate(composition) if x == b.prgmw]
+        while len(indicesA) > 1 and len(indicesB) > 1 and running == True:
+            indicesA = [i for i, x in enumerate(composition) if x == a.prgmw or x == a.srgmw or x != b.prgmw]
+            weightsA = [weights[i] for i in indicesA]
+            indicesB = [i for i, x in enumerate(composition) if x == b.prgmw]
+            weightsB = [weights[i] for i in indicesB]
+            MCA = random.choices(list(enumerate(indicesA)), weights=weightsA, k=1)[0]
+            MCB = random.choices(list(enumerate(indicesB)), weights=weightsB, k=1)[0]
+            composition[MCA[1]] = round(composition[MCA[1]] + composition[MCB[1]] - rt.wl, 3)
+            composition.pop(MCB[1])
+            weights[MCA[0]] = cgK
             b.mol -= 1
             progress['value'] = round(100 - (b.mol / bms * 100), 1)
             window.update()
@@ -120,6 +109,7 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
         except TypeError:
             composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
             composition_tuple = [tuple(item) for item in composition]
+
     elif rt.name == PolyCondensation:
         # determines starting status of the reaction
         IDLIST = []
@@ -230,8 +220,7 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
     # Convert RS to dataframe
     rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     rxn_summary_df.set_index('Product', inplace=True)
-    if rt.name != PolyCondensation:
-        rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
+    #rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
 
     # print each value in each row from Mass Distribution
     if rt.name == PolyCondensation:
@@ -327,8 +316,7 @@ def show_results(rxn_summary_df_compact):
     y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
     frame.place(x=x, y=y, anchor='center')
     results = Table(frame, dataframe=rxn_summary_df_compact, showtoolbar=True, showstatusbar=True, showindex=True,
-                    width=x,
-                    height=y, align='center')
+                    width=x, height=y, align='center')
     results.show()
 
 def show_results_expanded():
@@ -400,11 +388,12 @@ def sim_values():
         simulate(a=speciesA.get(), b=speciesB.get(), rt=reaction_type.get(), samples=Samples.get(), eor=EOR.get(),
                  a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get(), prgk=PRGk.get(), srgk=SRGk.get(), crgk=CGRk.get(),
                  emr=End_Metric_Entry.get(), emo=End_Metric_Selection.get())
-    except AttributeError:
-        messagebox.showerror("Field Error", "Please fill out all fields!")
+    except AttributeError as e:
+        messagebox.showerror("Exception raised", str(e))
         pass
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
+
 window = tkinter.Tk()
 window.iconbitmap("testtube.ico")
 window.title("Monte Karlo")
@@ -483,9 +472,38 @@ expand.grid(row=23, column=1)
 Mass_of_A.bind("<KeyRelease>", update_moles_A)
 Mass_of_B.bind("<KeyRelease>", update_moles_B)
 
+# update moles when user changes the value of speciesA or speciesB
+Reactant_A.bind("<ButtonRelease-1>", update_moles_A)
+Reactant_B.bind("<ButtonRelease-1>", update_moles_B)
+
 # add a determinate progress bar to window using sim_status
 progress = ttk.Progressbar(window, orient="horizontal", length=300, mode="determinate")
 progress.grid(row=1, column=5)
+
+class Data_Entry_Table(tkinter.Frame):
+    def __init__(self, master=window):
+        tkinter.Frame.__init__(self, master)
+        self.tablewidth = None
+        self.tableheight = None
+        self.entries = None
+        self.grid(row=10, column=4)
+        self.createWidgets()
+
+    def createWidgets(self):
+        self.entries = {}
+        self.tableheight = 5
+        self.tablewidth = 5
+        counter = 0
+        for row in range(self.tableheight):
+            for column in range(self.tablewidth):
+                self.entries[counter] = tkinter.Entry(self)
+                self.entries[counter].grid(row=row, column=column)
+                self.entries[counter].insert(0, counter)
+                counter += 1
+data_entry = Data_Entry_Table()
+
+entry = AutocompleteEntry(data_entry, reactantsA)
+entry.grid(row=0, column=0)
 
 # ---------------------------------------------Labels for UI---------------------------------#
 bg_color = '#00BFFF'
