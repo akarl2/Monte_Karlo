@@ -8,6 +8,7 @@ pandas.set_option('display.width', 100)
 global running, emo_a, results, frame, expanded_results
 running = False
 
+
 # Runs the simulation
 def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo):
     global running, emo_a, results, expanded_results
@@ -34,7 +35,7 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
     if rt.name != PolyCondensation:
         final_product_masses.update(
             {f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + (i * b.mw - i * rt.wl), 1) for i in range(1, 500)})
-        
+
     elif rt.name == PolyCondensation:
         final_product_masses.update(
             {f"{a.sn}({i})_{b.sn}({str(i)})": round(i * a.mw + i * b.mw - (i + i - 1) * rt.wl, 2) for i in
@@ -220,7 +221,7 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
     # Convert RS to dataframe
     rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     rxn_summary_df.set_index('Product', inplace=True)
-    #rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
+    # rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
 
     # print each value in each row from Mass Distribution
     if rt.name == PolyCondensation:
@@ -279,7 +280,8 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
                 try:
                     ehc.append(35.453 / i * 100)
                 except TypeError:
-                    if sum(i) == a.mw:   ehc.append(0)
+                    if sum(i) == a.mw:
+                        ehc.append(0)
                     else:
                         ehc.append(35.453 / sum(i) * 100)
         rxn_summary_df['ehc'] = ehc
@@ -391,6 +393,7 @@ def sim_values():
         messagebox.showerror("Exception raised", str(e))
         pass
 
+
 # ---------------------------------------------------User-Interface----------------------------------------------#
 
 window = tkinter.Tk()
@@ -478,6 +481,34 @@ Reactant_B.bind("<ButtonRelease-1>", update_moles_B)
 # add a determinate progress bar to window using sim_status
 progress = ttk.Progressbar(window, orient="horizontal", length=300, mode="determinate")
 progress.grid(row=1, column=5)
+
+
+class Data_Entry_Table(tkinter.Frame):
+    def __init__(self, master=window):
+        tkinter.Frame.__init__(self, master)
+        self.tablewidth = None
+        self.tableheight = None
+        self.entries = None
+        self.grid(row=10, column=4)
+        self.createWidgets()
+
+    def createWidgets(self):
+        self.entries = {}
+        self.tableheight = 5
+        self.tablewidth = 5
+        counter = 0
+        for row in range(self.tableheight):
+            for column in range(self.tablewidth):
+                self.entries[counter] = tkinter.Entry(self)
+                self.entries[counter].grid(row=row, column=column)
+                self.entries[counter].insert(0, counter)
+                counter += 1
+
+
+data_entry = Data_Entry_Table()
+
+entry = AutocompleteEntry(data_entry, reactantsA)
+entry.grid(row=0, column=0)
 
 # ---------------------------------------------Labels for UI---------------------------------#
 bg_color = '#00BFFF'

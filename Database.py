@@ -211,6 +211,19 @@ class DETA_LTETA:
         self.rg_2 = "Amine"
 
 
+class LTETA:
+    def __init__(self):
+        self.name = "Liner TETA"
+        self.sn = "L-TETA"
+        self.formula = "C6H18N4"
+        self.mw = 146.234
+        self.density = 0.982
+        self.prgmw = 30.0492
+        self.srgmw = 43.0678
+        self.comp = (self.prgmw, self.srgmw, self.srgmw, self.prgmw)
+        self.mass = self.mw
+        self.rg = "Amine"
+
 class DEA:
     def __init__(self):
         self.name = "Diethanolamine"
@@ -220,7 +233,7 @@ class DEA:
         self.density = 0.955
         self.prgmw = 43.068
         self.srgmw = 31.034
-        self.comp = (self.srgmw,self.prgmw,self.srgmw)
+        self.comp = (self.srgmw, self.prgmw, self.srgmw)
         self.compid = ("Alcohol", "Amine", "Alcohol")
         self.mass = self.mw
         self.rg = "Amine"
@@ -259,14 +272,13 @@ class Isostearic_Acid:
         self.name = "Isostearic Acid"
         self.sn = "ISA"
         self.formula = "C18H36O2"
-        self.mw = 284.5
-        self.prgmw = 284.5
+        self.mw = 284.48
+        self.prgmw = 284.48
         self.srgmw = 0
         self.density = 0.93
         self.prg = Carboxyl
         self.mass = self.mw
         self.comp = self.prg
-
 
 class PAA:
     def __init__(self):
