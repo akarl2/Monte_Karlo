@@ -289,7 +289,7 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
         update_WPE(round((3545.3 / EHCp) - 36.4, 2))
 
     # sum rxn_summary_df by product but keep Molar mass the same
-    rxn_summary_df = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
+    rxn_summary_df = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum(numeric_only=True)
     rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
     rxn_summary_df_compact = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
     rxn_summary_df_compact.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
