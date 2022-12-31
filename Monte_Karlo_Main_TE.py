@@ -336,16 +336,22 @@ def show_results_expanded():
     results.show()
 
 def update_moles_A(self):
-    a = str_to_class(speciesA.get())()
-    Moles_of_A.delete(0, 'end')
-    molesA = float(Mass_of_A.get()) / float(a.mw)
-    Moles_of_A.insert(0, round(molesA, 4))
+    try:
+        a = str_to_class(speciesA.get())()
+        Moles_of_A.delete(0, 'end')
+        molesA = float(Mass_of_A.get()) / float(a.mw)
+        Moles_of_A.insert(0, round(molesA, 4))
+    except AttributeError:
+        pass
 
 def update_moles_B(self):
-    b = str_to_class(speciesB.get())()
-    molesB = float(Mass_of_B.get()) / float(b.mw)
-    Moles_of_B.delete(0, 'end')
-    Moles_of_B.insert(0, round(molesB, 4))
+    try:
+        b = str_to_class(speciesB.get())()
+        molesB = float(Mass_of_B.get()) / float(b.mw)
+        Moles_of_B.delete(0, 'end')
+        Moles_of_B.insert(0, round(molesB, 4))
+    except AttributeError:
+        pass
 
 def update_percent_EHC(Value):
     Percent_EHC.delete(0, tkinter.END)
@@ -484,8 +490,7 @@ Reactant_B.bind("<ButtonRelease-1>", update_moles_B)
 progress = ttk.Progressbar(window, orient="horizontal", length=300, mode="determinate")
 progress.grid(row=1, column=5)
 
-
-class Data_Entry_Table(tkinter.Frame, a):
+class Data_Entry_Table(tkinter.Frame):
     def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
         self.tablewidth = None
@@ -494,9 +499,9 @@ class Data_Entry_Table(tkinter.Frame, a):
         self.grid(row=10, column=4)
         self.createWidgets()
 
-    def createWidgets(self):
+    def createWidgets(self, a):
         self.entries = {}
-        self.tableheight = tableheight
+        self.tableheight = a.numgroups
         self.tablewidth = tablewidth
         counter = 0
         for row in range(self.tableheight):
@@ -506,14 +511,14 @@ class Data_Entry_Table(tkinter.Frame, a):
                 self.entries[counter].insert(0, counter)
                 counter += 1
 
-if tableheight is None or tablewidth is None:
+a = speciesA.get()
+if a == "Reactant A":
     pass
 else:
-    a = speciesA.get()
-    if a == "Reactant A":
-        pass
-    else:
-        a = str_to_class(a)
+    a = str_to_class(a)
+    print(a)
+    Data_Entry_Table.createWidgets(a)
+    print("Table Created")
 
 #entry = AutocompleteEntry(data_entry, reactantsA)
 #entry.grid(row=0, column=0)
