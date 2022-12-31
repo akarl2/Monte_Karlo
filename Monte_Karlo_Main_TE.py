@@ -291,7 +291,7 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
         update_WPE(round((3545.3 / EHCp) - 36.4, 2))
 
     # sum rxn_summary_df by product but keep Molar mass the same
-    rxn_summary_df = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
+    rxn_summary_df = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum(numeric_only=True)
     rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
     rxn_summary_df_compact = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
     rxn_summary_df_compact.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
@@ -395,6 +395,8 @@ def sim_values():
 
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
+tableheight = None
+tablewidth = None
 
 window = tkinter.Tk()
 window.iconbitmap("testtube.ico")
@@ -483,7 +485,7 @@ progress = ttk.Progressbar(window, orient="horizontal", length=300, mode="determ
 progress.grid(row=1, column=5)
 
 
-class Data_Entry_Table(tkinter.Frame):
+class Data_Entry_Table(tkinter.Frame, a):
     def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
         self.tablewidth = None
@@ -494,8 +496,8 @@ class Data_Entry_Table(tkinter.Frame):
 
     def createWidgets(self):
         self.entries = {}
-        self.tableheight = 5
-        self.tablewidth = 5
+        self.tableheight = tableheight
+        self.tablewidth = tablewidth
         counter = 0
         for row in range(self.tableheight):
             for column in range(self.tablewidth):
@@ -504,11 +506,17 @@ class Data_Entry_Table(tkinter.Frame):
                 self.entries[counter].insert(0, counter)
                 counter += 1
 
+if tableheight is None or tablewidth is None:
+    pass
+else:
+    a = speciesA.get()
+    if a == "Reactant A":
+        pass
+    else:
+        a = str_to_class(a)
 
-data_entry = Data_Entry_Table()
-
-entry = AutocompleteEntry(data_entry, reactantsA)
-entry.grid(row=0, column=0)
+#entry = AutocompleteEntry(data_entry, reactantsA)
+#entry.grid(row=0, column=0)
 
 # ---------------------------------------------Labels for UI---------------------------------#
 bg_color = '#00BFFF'

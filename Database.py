@@ -173,6 +173,7 @@ class DETA:
         self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
         self.rg = "Amine"
+        self.numgroups = len(set(self.comp))
 
 class LTETA:
     def __init__(self):
@@ -186,30 +187,7 @@ class LTETA:
         self.comp = (self.prgmw, self.srgmw, self.srgmw,self.prgmw)
         self.mass = self.mw
         self.rg = "Amine"
-
-class DETA_LTETA:
-    def __init__(self):
-        self.name_1 = "DETA"
-        self.name_2 = "LTETA"
-        self.sn_1 = "DETA"
-        self.sn_2 = "LTETA"
-        self.formula_1 = "C4H13N3"
-        self.formula_2 = "C6H18N4"
-        self.mw_1 = 103.169
-        self.mw_2 = 146.234
-        self.density_1 = 0.955
-        self.density_2 = 0.982
-        self.prgmw_1 = 51.5845
-        self.srgmw_1 = 0
-        self.prgmw_2 = 30.049
-        self.srgmw_2 = 43.068
-        self.comp_1 = (self.prgmw_1, self.prgmw_1)
-        self.comp_2 = (self.prgmw_2, self.srgmw_2, self.srgmw_2,self.prgmw_2)
-        self.mass_1 = self.mw_1
-        self.mass_2 = self.mw_2
-        self.rg_1 = "Amine"
-        self.rg_2 = "Amine"
-
+        self.numgroups = len(set(self.comp))
 
 class LTETA:
     def __init__(self):
