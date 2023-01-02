@@ -170,7 +170,7 @@ class DETA:
         self.density = 0.955
         self.prgmw = 51.5845
         self.srgmw = 0
-        self.comp = (self.prgmw, self.prgmw)
+        self.comp = (self.prgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
         self.rg = "Amine"
         self.numgroups = len(set(self.comp))

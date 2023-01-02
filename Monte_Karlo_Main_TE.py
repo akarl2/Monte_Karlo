@@ -1,3 +1,5 @@
+import tkinter
+
 from Module_Imports import *
 
 # Set pandas dataframe display
@@ -401,8 +403,8 @@ def sim_values():
 
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
-tableheight = None
-tablewidth = None
+tableheight = 5
+tablewidth = 5
 
 window = tkinter.Tk()
 window.iconbitmap("testtube.ico")
@@ -491,18 +493,15 @@ progress = ttk.Progressbar(window, orient="horizontal", length=300, mode="determ
 progress.grid(row=1, column=5)
 
 class Data_Entry_Table(tkinter.Frame):
-    def __init__(self, master=window):
+    def __init__(self, master=window, a = None):
         tkinter.Frame.__init__(self, master)
-        self.tablewidth = None
-        self.tableheight = None
-        self.entries = None
         self.grid(row=10, column=4)
-        self.createWidgets()
+        self.createWidgets(a=a)
 
     def createWidgets(self, a):
         self.entries = {}
         self.tableheight = a.numgroups
-        self.tablewidth = tablewidth
+        self.tablewidth = 2
         counter = 0
         for row in range(self.tableheight):
             for column in range(self.tablewidth):
@@ -511,17 +510,16 @@ class Data_Entry_Table(tkinter.Frame):
                 self.entries[counter].insert(0, counter)
                 counter += 1
 
-a = speciesA.get()
-if a == "Reactant A":
-    pass
-else:
-    a = str_to_class(a)
-    print(a)
-    Data_Entry_Table.createWidgets(a)
-    print("Table Created")
+def update_table(a):
+    a = speciesA.get()
+    if a != "Reactant A":
+        a = str_to_class(a)()
+        Data_Entry_Table(a=a)
+    else:
+        pass
 
-#entry = AutocompleteEntry(data_entry, reactantsA)
-#entry.grid(row=0, column=0)
+window.bind("<Return>", update_table)
+
 
 # ---------------------------------------------Labels for UI---------------------------------#
 bg_color = '#00BFFF'

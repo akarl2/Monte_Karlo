@@ -479,6 +479,7 @@ Reactant_B.bind("<ButtonRelease-1>", update_moles_B)
 progress = ttk.Progressbar(window, orient="horizontal", length=300, mode="determinate")
 progress.grid(row=1, column=5)
 
+
 # ---------------------------------------------Labels for UI---------------------------------#
 bg_color = '#00BFFF'
 tkinter.Label(window, text="Grams of A: ", bg=bg_color).grid(row=2, column=0)
