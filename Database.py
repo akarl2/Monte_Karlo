@@ -65,6 +65,7 @@ class Sorbitol:
         self.srgmw = 30.02598
         self.comp = (self.prgmw, self.srgmw, self.srgmw, self.srgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
+        self.numgroups = len(set(self.comp))
 
 class Propylene_Glycol:
     def __init__(self):
@@ -75,8 +76,9 @@ class Propylene_Glycol:
         self.density = 1.04
         self.prgmw = self.mw / 2
         self.srgmw = 0
-        self.comp = (self.prgmw,self.prgmw)
+        self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
+        self.numgroups = len(set(self.comp))
 
 class Pentaerythritol:
     def __init__(self):
@@ -340,6 +342,7 @@ class Epichlorohydrin:
         self.prgmw = 92.52
         self.srgmw = 0
         self.comp = self.prgmw
+        self.numgroups = 1
 
 #-------------------------------Functional Groups--------------------------------#
 
