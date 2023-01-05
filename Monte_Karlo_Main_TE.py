@@ -1,5 +1,3 @@
-import tkinter
-
 from Module_Imports import *
 
 # Set pandas dataframe display
@@ -9,7 +7,6 @@ pandas.set_option('display.width', 100)
 
 global running, emo_a, results, frame, expanded_results
 running = False
-
 
 # Runs the simulation
 def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo):
@@ -491,22 +488,31 @@ progress = ttk.Progressbar(window, orient="horizontal", length=300, mode="determ
 progress.grid(row=1, column=5)
 
 class Data_Entry_Table(tkinter.Frame):
-    def __init__(self, master=window, a = None, b = None):
+    def __init__(self, master=window, a=None, b=None):
         tkinter.Frame.__init__(self, master)
+        self.tablewidth = None
+        self.entries = None
+        self.tableheight = None
         self.grid(row=10, column=4)
         self.createWidgets(a=a, b=b)
 
     def createWidgets(self, a, b):
         self.entries = {}
-        self.tableheight = b.numgroups
-        self.tablewidth = (a.numgroups * 2)
+        self.tableheight = b.numgroups + 3
+        self.tablewidth = (a.numgroups * 2) + 3
         counter = 0
         for row in range(self.tableheight):
             for column in range(self.tablewidth):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                self.entries[counter].insert(0, counter)
+                self.entries[counter].insert(0, str(counter))
+                self.entries[counter].config(justify="center")
                 counter += 1
+        self.tabel_labels()
+
+    def tabel_labels(self):
+        self.entries[0].delete(0, tkinter.END)
+        self.entries[0].insert(0, "Group")
 
 def update_table(self):
     a = speciesA.get()
@@ -518,11 +524,11 @@ def update_table(self):
     else:
         pass
 
+
+
 #run update_table when user changes the value of speciesA or speciesB
 Reactant_A.bind("<ButtonRelease-1>", update_table)
 Reactant_B.bind("<ButtonRelease-1>", update_table)
-
-#window.bind("<Return>", update_table)
 
 # ---------------------------------------------Labels for UI---------------------------------#
 bg_color = '#00BFFF'

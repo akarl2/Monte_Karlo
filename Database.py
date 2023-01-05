@@ -217,6 +217,7 @@ class DEA:
         self.compid = ("Alcohol", "Amine", "Alcohol")
         self.mass = self.mw
         self.rg = "Amine"
+        self.numgroups = len(set(self.comp))
 
 class Lysinol:
     def __init__(self):
@@ -259,6 +260,7 @@ class Isostearic_Acid:
         self.prg = Carboxyl
         self.mass = self.mw
         self.comp = self.prg
+        self.numgroups = 1
 
 class PAA:
     def __init__(self):
@@ -306,6 +308,7 @@ class C181:
         self.mass = self.mw
         self.comp = self.prg
         self.rg = "Acid"
+        self.numgroups = 1
 
 
 #-------------------------------------Other--------------------------------------#
