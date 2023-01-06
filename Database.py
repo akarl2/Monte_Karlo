@@ -16,6 +16,7 @@ class Butanol:
         self.srgmw = 0
         self.comp = self.mw
         self.mass = self.mw
+        self.numgroups = 1
 
 class Glycerol:
     def __init__(self):
@@ -29,6 +30,7 @@ class Glycerol:
         self.comp = (self.prgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
         self.rg = "Alcohol"
+        self.numgroups = len(set(self.comp))
 
 class PPG425:
     def __init__(self):
@@ -41,6 +43,7 @@ class PPG425:
         self.srgmw = 0
         self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
+        self.numgroups = len(set(self.comp))
 
 class Pripol:
     def __init__(self):
@@ -53,6 +56,7 @@ class Pripol:
         self.srgmw = 0
         self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
+        self.numgroups = len(set(self.comp))
 
 class Sorbitol:
     def __init__(self):
@@ -91,6 +95,7 @@ class Pentaerythritol:
         self.density = 1.40
         self.comp = (self.prgmw,self.prgmw,self.prgmw,self.prgmw)
         self.mass = self.mw
+        self.numgroups = len(set(self.comp))
 
 class Butanediol:
     def __init__(self):
@@ -103,6 +108,7 @@ class Butanediol:
         self.srgmw = 0
         self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
+        self.numgroups = len(set(self.comp))
 
 class Trimethylolpropane:
     def __init__(self):
@@ -115,6 +121,7 @@ class Trimethylolpropane:
         self.srgmw = 44.722
         self.comp = (self.prgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
+        self.numgroups = len(set(self.comp))
 
 class Cyclohexanedimethanol:
     def __init__(self):
@@ -127,6 +134,7 @@ class Cyclohexanedimethanol:
         self.srgmw = 0
         self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
+        self.numgroups = len(set(self.comp))
 
 class Ethylhexanol:
     def __init__(self):
@@ -138,6 +146,7 @@ class Ethylhexanol:
         self.prg = Carboxyl
         self.mass = self.mw
         self.comp = self.prg
+        self.numgroups = 1
 
 class Ethanol:
     def __init__(self):
@@ -161,6 +170,7 @@ class Methanol:
         self.srgmw = 0
         self.comp = self.prgmw
         self.mass = self.mw
+        self.numgroups = 1
 
 #-------------------------------------------Amines----------------------------#
 class DETA:
@@ -308,7 +318,6 @@ class C181:
         self.mass = self.mw
         self.comp = self.prg
         self.rg = "Acid"
-        self.numgroups = 1
 
 
 #-------------------------------------Other--------------------------------------#

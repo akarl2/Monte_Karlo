@@ -494,25 +494,46 @@ class Data_Entry_Table(tkinter.Frame):
         self.entries = None
         self.tableheight = None
         self.grid(row=10, column=4)
-        self.createWidgets(a=a, b=b)
+        self.create_table(a=a, b=b)
 
-    def createWidgets(self, a, b):
+    def create_table(self, a, b):
         self.entries = {}
-        self.tableheight = b.numgroups + 3
-        self.tablewidth = (a.numgroups * 2) + 3
+        self.tableheight = b.numgroups + 4
+        self.tablewidth = (a.numgroups * 2) + 4
         counter = 0
-        for row in range(self.tableheight):
-            for column in range(self.tablewidth):
+        for column in range(self.tablewidth):
+            for row in range(self.tableheight):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
                 self.entries[counter].insert(0, str(counter))
-                self.entries[counter].config(justify="center")
+                self.entries[counter].config(justify="center", width=18)
                 counter += 1
         self.tabel_labels()
 
     def tabel_labels(self):
+        self.entries[3].delete(0, tkinter.END)
+        self.entries[3].insert(0, "Mass (g)")
+        self.entries[8].delete(0, tkinter.END)
+        self.entries[8].insert(0, "Moles")
+        self.entries[13].delete(0, tkinter.END)
+        self.entries[13].insert(0, "Reactant")
+        self.entries[15].delete(0, tkinter.END)
+        self.entries[15].insert(0, "Mass (g) = ")
+        self.entries[16].delete(0, tkinter.END)
+        self.entries[16].insert(0, "Moles = ")
+        self.entries[17].delete(0, tkinter.END)
+        self.entries[17].insert(0, "Reactant = ")
+        self.entries[19].delete(0, tkinter.END)
+        self.entries[19].insert(0, "Primary K")
+        self.entries[23].delete(0, tkinter.END)
+        self.entries[23].insert(0, "Primary K")
+        self.entries[28].delete(0, tkinter.END)
+        self.entries[28].insert(0, "Child K - Primary")
+        self.entries[33].delete(0, tkinter.END)
+        self.entries[33].insert(0, "Secondary K")
+        self.entries[38].delete(0, tkinter.END)
+        self.entries[38].insert(0, "Child K - Secondary")
         self.entries[0].delete(0, tkinter.END)
-        self.entries[0].insert(0, "Group")
 
 def update_table(self):
     a = speciesA.get()
@@ -523,8 +544,6 @@ def update_table(self):
         Data_Entry_Table(a=a, b=b)
     else:
         pass
-
-
 
 #run update_table when user changes the value of speciesA or speciesB
 Reactant_A.bind("<ButtonRelease-1>", update_table)
