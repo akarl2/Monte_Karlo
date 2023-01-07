@@ -2,6 +2,7 @@
 #Create a dictionary of all the above classes
 reactantsA = ["Epichlorohydrin","Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic_Acid", "PAA", "DETA", "Adipic_Acid", "Cyclohexanedimethanol","Ethylhexanol", "Pripol", "Isostearic_Acid", "DEA", "Lysinol"]
 reactantsB = reactantsA
+Reactants = reactantsA
 
 #------------------------------------------Alcohols------------------------------#
 
