@@ -340,7 +340,6 @@ def update_moles_A(self):
     try:
         a = str_to_class(speciesA.get())()
         Moles_of_A.delete(0, 'end')
-        Data_Entry_Table.entries[0].delete(0, 'end')
         molesA = float(Mass_of_A.get()) / float(a.mw)
         Moles_of_A.insert(0, round(molesA, 4))
     except AttributeError:
@@ -491,18 +490,18 @@ progress = ttk.Progressbar(window, orient="horizontal", length=300, mode="determ
 progress.grid(row=1, column=5)
 
 class Data_Entry_Table(tkinter.Frame):
-    def __init__(self, master=window, a=None, b=None):
+    def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
         self.tablewidth = None
         self.entries = None
         self.tableheight = None
         self.grid(row=10, column=4)
-        self.create_table(a=a, b=b)
+        self.create_table()
 
-    def create_table(self, a, b):
+    def create_table(self):
         self.entries = {}
-        self.tableheight = b.numgroups + 4
-        self.tablewidth = (a.numgroups * 2) + 4
+        self.tableheight = 5
+        self.tablewidth = 8
         counter = 0
         for column in range(self.tablewidth):
             for row in range(self.tableheight):
@@ -564,38 +563,33 @@ class Data_Entry_Table(tkinter.Frame):
         self.user_entry()
 
     def user_entry(self):
-        global entryA1
-        entryA1 = AutocompleteEntry(self, completevalues=Reactants, width=18)
+        global entryA1reactant, entryB1reactant
+        entryA1reactant = tkinter.StringVar()
+        entryA1 = AutocompleteCombobox(self, completevalues=Reactants, width=18, textvariable=entryA1reactant)
         entryA1.grid(row=2, column=4)
         entryA1.config(justify="center")
-        entryA1 = tkinter.StringVar()
-        entryB1 = AutocompleteEntry(self, completevalues=Reactants, width=18)
+        entryB1reactant = tkinter.StringVar()
+        entryB1 = AutocompleteCombobox(self, completevalues=Reactants, width=18, textvariable=entryB1reactant)
         entryB1.grid(row=4, column=2)
         entryB1.config(justify="center")
 
+    def update_moles(self):
+        a = str_to_class(entryA1reactant.get())
+        Mass_of_A = float(self.entries[20].get())
+        molesA = Mass_of_A / float(a.mw)
+        self.entries[21].delete(0, tkinter.END)
+        self.entries[21].insert(0, round(molesA, 4))
 
     def get_values(self):
         return self.entries[20].get()
 
-def update_table(self):
-    a = speciesA.get()
-    b = speciesB.get()
-    if a != "Reactant A" and b != "Reactant B":
-        a = str_to_class(a)()
-        b = str_to_class(b)()
-        DET = Data_Entry_Table(a=a, b=b)
+DET = Data_Entry_Table()
 
-
-    else:
-        pass
-
-def test(self):
-    print(entryA1.get())
-window.bind("<Return>", test)
+window.bind("<Return>", DET.update_moles)
 
 #run update_table when user changes the value of speciesA or speciesB
-Reactant_A.bind("<ButtonRelease-1>", update_table)
-Reactant_B.bind("<ButtonRelease-1>", update_table)
+# Reactant_A.bind("<ButtonRelease-1>", update_table)
+# Reactant_B.bind("<ButtonRelease-1>", update_table)
 
 # ---------------------------------------------Labels for UI---------------------------------#
 bg_color = '#00BFFF'
