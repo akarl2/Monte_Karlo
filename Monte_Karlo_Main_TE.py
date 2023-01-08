@@ -1,3 +1,5 @@
+import tkinter
+
 from Module_Imports import *
 
 # Set pandas dataframe display
@@ -559,16 +561,21 @@ class Data_Entry_Table(tkinter.Frame):
         self.entries[4].insert(0, "100")
         self.entries[20].delete(0, tkinter.END)
         self.entries[20].insert(0, "100")
-
         self.user_entry()
 
     def user_entry(self):
+        global entryA1
         entryA1 = AutocompleteEntry(self, completevalues=Reactants, width=18)
         entryA1.grid(row=2, column=4)
         entryA1.config(justify="center")
+        entryA1 = tkinter.StringVar()
         entryB1 = AutocompleteEntry(self, completevalues=Reactants, width=18)
         entryB1.grid(row=4, column=2)
         entryB1.config(justify="center")
+
+
+    def get_values(self):
+        return self.entries[20].get()
 
 def update_table(self):
     a = speciesA.get()
@@ -576,9 +583,15 @@ def update_table(self):
     if a != "Reactant A" and b != "Reactant B":
         a = str_to_class(a)()
         b = str_to_class(b)()
-        Data_Entry_Table(a=a, b=b)
+        DET = Data_Entry_Table(a=a, b=b)
+
+
     else:
         pass
+
+def test(self):
+    print(entryA1.get())
+window.bind("<Return>", test)
 
 #run update_table when user changes the value of speciesA or speciesB
 Reactant_A.bind("<ButtonRelease-1>", update_table)
