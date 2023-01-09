@@ -13,8 +13,7 @@ running = False
 # Runs the simulation
 def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo):
     global running, emo_a, results, expanded_results
-    progress['value'] = 0
-    clear_values()
+    sim.progress['value'] = 0
     a = str_to_class(a)()
     b = str_to_class(b)()
     rt = str_to_class(rt)()
@@ -103,7 +102,7 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
             composition.pop(MCB[1])
             weights[MCA[0]] = cgK
             b.mol -= 1
-            progress['value'] = round(100 - (b.mol / bms * 100), 1)
+            sim.progress['value'] = round(100 - (b.mol / bms * 100), 1)
             window.update()
         try:
             composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
@@ -288,8 +287,9 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
         rxn_summary_df['ehc'] = ehc
         rxn_summary_df['% ehc'] = (rxn_summary_df['ehc'] * rxn_summary_df['Wt %']) / 100
         EHCp = round(rxn_summary_df['% ehc'].sum(), 4)
-        update_percent_EHC(round(EHCp, 2))
-        update_WPE(round((3545.3 / EHCp) - 36.4, 2))
+        RM.update_EHC(round(EHCp, 2))
+        WPE = (3545.3 / EHCp) - 36.4
+        RM.update_WPE(round(WPE, 2))
 
     # sum rxn_summary_df by product but keep Molar mass the same
     rxn_summary_df = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum(numeric_only=True)
@@ -298,9 +298,9 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
     rxn_summary_df_compact.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
 
     if rt.name == PolyCondensation:
-        update_Acid_Value(round(rxn_summary_df['Acid Value'].sum(), 2))
-        update_Amine_Value(round(rxn_summary_df['Amine Value'].sum(), 2))
-        update_OH_Value(round(rxn_summary_df['OH Value'].sum(), 2))
+        RM.updateAV(round(rxn_summary_df['Acid Value'].sum(), 2))
+        RM.updateTAV(round(rxn_summary_df['Amine Value'].sum(), 2))
+        RM.updateOHV(round(rxn_summary_df['OH Value'].sum(), 2))
 
     show_results(rxn_summary_df_compact)
 
@@ -336,34 +336,6 @@ def show_results_expanded():
                     height=y, align='center')
     results.show()
 
-
-def update_percent_EHC(Value):
-    Percent_EHC.delete(0, tkinter.END)
-    Percent_EHC.insert(0, Value)
-
-def update_WPE(Value):
-    Theoretical_WPE.delete(0, tkinter.END)
-    Theoretical_WPE.insert(0, Value)
-
-def update_Acid_Value(Value):
-    Acid_Value.delete(0, tkinter.END)
-    Acid_Value.insert(0, Value)
-
-def update_Amine_Value(Value):
-    Amine_Value.delete(0, tkinter.END)
-    Amine_Value.insert(0, Value)
-
-def update_OH_Value(Value):
-    OH_Value.delete(0, tkinter.END)
-    OH_Value.insert(0, Value)
-
-def clear_values():
-    Percent_EHC.delete(0, tkinter.END)
-    Theoretical_WPE.delete(0, tkinter.END)
-    Acid_Value.delete(0, tkinter.END)
-    Amine_Value.delete(0, tkinter.END)
-    OH_Value.delete(0, tkinter.END)
-
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
@@ -376,9 +348,9 @@ def stop():
 
 def sim_values():
     try:
-        simulate(a=A1reactant.get(), b=B1reactant.get(), rt=reaction_type.get(), samples=Samples.get(), eor=EOR.get(),
+        simulate(a=A1reactant.get(), b=B1reactant.get(), rt=RXN_Type.get(), samples=RXN_Samples.get(), eor=RXN_EOR.get(),
                  a_mass=massA1.get(), b_mass=massB1.get(), prgk=RET.entries[24].get(), srgk=RET.entries[34].get(), crgk=RET.entries[29].get(),
-                 emr=End_Metric_Entry.get(), emo=End_Metric_Selection.get())
+                 emr=RXN_EM_Value.get(), emo=RXN_EM.get())
     except AttributeError as e:
         messagebox.showerror("Exception raised", str(e))
         pass
@@ -392,52 +364,6 @@ window.title("Monte Karlo")
 window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
 window.configure(background="#00BFFF")
 
-reaction_type = tkinter.StringVar()
-reaction_type.set("Reaction Type")
-Reaction_Type = tkinter.OptionMenu(window, reaction_type, *Reactions)
-Reaction_Type.grid(row=5, column=1)
-Samples = tkinter.Entry(window)
-Samples.insert(0, "1000")
-Samples.grid(row=6, column=1)
-EOR = tkinter.Entry(window)
-EOR.insert(0, 1)
-EOR.grid(row=7, column=1)
-Sim_status = tkinter.Entry(window)
-Sim_status.grid(row=1, column=5)
-Percent_EHC = tkinter.Entry(window)
-Percent_EHC.grid(row=15, column=1)
-Theoretical_WPE = tkinter.Entry(window)
-Theoretical_WPE.grid(row=16, column=1)
-Acid_Value = tkinter.Entry(window)
-Acid_Value.grid(row=17, column=1)
-Amine_Value = tkinter.Entry(window)
-Amine_Value.grid(row=18, column=1)
-OH_Value = tkinter.Entry(window)
-OH_Value.grid(row=19, column=1)
-End_Metric_Selection = tkinter.StringVar()
-End_Metric_Selection.set("Amine_Value")
-End_Metric_Options = tkinter.OptionMenu(window, End_Metric_Selection, *End_Metrics)
-End_Metric_Options.grid(row=21, column=1)
-End_Metric_Entry = tkinter.Entry(window)
-End_Metric_Entry.insert(0, "250")
-End_Metric_Entry.grid(row=22, column=1)
-PRGk = tkinter.Entry(window)
-
-# add button to simulate
-button = tkinter.Button(window, text="Simulate", command=sim_values, width=15, bg="Green")
-button.grid(row=11, column=1)
-
-# add a button to stop the simulation
-stop_button = tkinter.Button(window, text="Stop", command=stop, width=15, bg="Red")
-stop_button.grid(row=12, column=1)
-
-# add button to expand dataframe
-expand = tkinter.Button(window, text="Expand Data", command=show_results_expanded, width=15, bg="green")
-expand.grid(row=23, column=1)
-
-# add a determinate progress bar to window using sim_status
-progress = ttk.Progressbar(window, orient="horizontal", length=300, mode="determinate")
-progress.grid(row=1, column=5)
 
 global massA1, massB1, A1reactant, B1reactant
 class RXN_Entry_Table(tkinter.Frame):
@@ -548,7 +474,179 @@ class RXN_Entry_Table(tkinter.Frame):
         except:
             pass
 
+global RXN_Type, RXN_Samples, RXN_EOR
+class RXN_Details(tkinter.Frame):
+    def __init__(self, master=window):
+        tkinter.Frame.__init__(self, master)
+        self.entries = None
+        self.grid(row=0, column=4)
+        self.create_table()
+
+    def create_table(self):
+        self.entries = {}
+        self.tableheight = 3
+        self.tablewidth = 2
+        counter = 0
+        for column in range(self.tablewidth):
+            for row in range(self.tableheight):
+                self.entries[counter] = tkinter.Entry(self)
+                self.entries[counter].grid(row=row, column=column)
+                self.entries[counter].insert(0, str(counter))
+                self.entries[counter].config(justify="center", width=18)
+                counter += 1
+        self.table_labels()
+
+    def table_labels(self):
+        self.entries[0].delete(0, tkinter.END)
+        self.entries[0].insert(0, "Reaction Type =")
+        self.entries[1].delete(0, tkinter.END)
+        self.entries[1].insert(0, "# of Samples =")
+        self.entries[2].delete(0, tkinter.END)
+        self.entries[2].insert(0, "Extent of Reaction =")
+        self.entries[5].delete(0, tkinter.END)
+        self.entries[5].insert(0, "1")
+        self.user_entry()
+
+    def user_entry(self):
+        global RXN_Type, RXN_Samples, RXN_EOR
+        RXN_Type = tkinter.StringVar()
+        RXN_Type_Entry = AutocompleteCombobox(self, completevalues=Reactions, width=15, textvariable=RXN_Type)
+        RXN_Type_Entry.grid(row=0, column=1)
+        RXN_Type_Entry.config(justify="center")
+        RXN_Samples = tkinter.StringVar()
+        RXN_Samples_Entry = AutocompleteCombobox(self, completevalues=Num_Samples, width=15, textvariable=RXN_Samples)
+        RXN_Samples_Entry.insert(0, "1000")
+        RXN_Samples_Entry.grid(row=1, column=1)
+        RXN_Samples_Entry.config(justify="center")
+        RXN_EOR = self.entries[5]
+
+global RXN_EM, RXN_EM_Value
+class RXN_Metrics(tkinter.Frame):
+    def __init__(self, master=window):
+        tkinter.Frame.__init__(self, master)
+        self.entries = None
+        self.grid(row=0, column=10)
+        self.create_table()
+
+    def create_table(self):
+        self.entries = {}
+        self.tableheight = 7
+        self.tablewidth = 2
+        counter = 0
+        for column in range(self.tablewidth):
+            for row in range(self.tableheight):
+                self.entries[counter] = tkinter.Entry(self)
+                self.entries[counter].grid(row=row, column=column)
+                self.entries[counter].insert(0, str(counter))
+                self.entries[counter].config(justify="center", width=18)
+                counter += 1
+        self.table_labels()
+
+    def table_labels(self):
+        self.entries[0].delete(0, tkinter.END)
+        self.entries[0].insert(0, "EHC, % =")
+        self.entries[1].delete(0, tkinter.END)
+        self.entries[1].insert(0, "Theory WPE =")
+        self.entries[2].delete(0, tkinter.END)
+        self.entries[2].insert(0, "Acid Value =")
+        self.entries[3].delete(0, tkinter.END)
+        self.entries[3].insert(0, "Amine Value =")
+        self.entries[4].delete(0, tkinter.END)
+        self.entries[4].insert(0, "OH Value =")
+        self.entries[5].delete(0, tkinter.END)
+        self.entries[5].insert(0, "End Metric =")
+        self.user_entry()
+
+
+    def user_entry(self):
+        global RXN_EM, RXN_EM_Value
+        RXN_EM = tkinter.StringVar()
+        RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
+        RXN_EM_Entry.grid(row=5, column=1)
+        RXN_EM_Entry.config(justify="center")
+        RXN_EM_Value = self.entries[13]
+
+    def update_EHC(self, EHCpercent):
+        self.entries[7].delete(0, tkinter.END)
+        self.entries[7].insert(0, EHCpercent)
+
+    def update_WPE(self, WPE):
+        self.entries[8].delete(0, tkinter.END)
+        self.entries[8].insert(0, WPE)
+
+    def updateAV(self, AV):
+        self.entries[9].delete(0, tkinter.END)
+        self.entries[9].insert(0, AV)
+
+    def updateTAV(self, TAV):
+        self.entries[10].delete(0, tkinter.END)
+        self.entries[10].insert(0, TAV)
+
+    def updateOHV(self, OHV):
+        self.entries[11].delete(0, tkinter.END)
+        self.entries[11].insert(0, OHV)
+
+class Buttons(tkinter.Frame):
+    def __init__(self, master=window):
+        tkinter.Frame.__init__(self, master)
+        self.entries = None
+        self.grid(row=0, column=25)
+        self.create_table()
+
+    def create_table(self):
+        self.entries = {}
+        self.tableheight = 3
+        self.tablewidth = 1
+        counter = 0
+        for column in range(self.tablewidth):
+            for row in range(self.tableheight):
+                self.entries[counter] = tkinter.Entry(self)
+                self.entries[counter].grid(row=row, column=column)
+                self.entries[counter].insert(0, str(counter))
+                self.entries[counter].config(justify="center", width=18)
+                counter += 1
+        self.add_buttons()
+
+    def add_buttons(self):
+        Simulate = tkinter.Button(self, text="Simulate", command=sim_values, width=15, bg="Green")
+        Simulate.grid(row=0, column=0)
+        stop_button = tkinter.Button(self, text="Stop", command=stop, width=15, bg="Red")
+        stop_button.grid(row=1, column=0)
+        expand = tkinter.Button(self, text="Expand Data", command=show_results_expanded, width=15, bg="blue")
+        expand.grid(row=2, column=0)
+
+class Simstatus(tkinter.Frame):
+    def __init__(self, master=window):
+        tkinter.Frame.__init__(self, master)
+        self.progress = None
+        self.entries = None
+        self.grid(row=0, column=2)
+        self.create_table()
+
+    def create_table(self):
+        self.entries = {}
+        self.tableheight = 1
+        self.tablewidth = 2
+        counter = 0
+        for column in range(self.tablewidth):
+            for row in range(self.tableheight):
+                self.entries[counter] = tkinter.Entry(self)
+                self.entries[counter].grid(row=row, column=column)
+                self.entries[counter].insert(0, str(counter))
+                self.entries[counter].config(justify="center", width=18)
+                counter += 1
+        self.add_buttons()
+
+    def add_buttons(self):
+        progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate")
+        progress.grid(row=0, column=1)
+
+
 RET = RXN_Entry_Table()
+RD = RXN_Details()
+RM = RXN_Metrics()
+Buttons = Buttons()
+sim = Simstatus()
 
 #update table with events
 A1reactant.trace("w", lambda name, index, mode, sv=A1reactant: RET.update_table())
@@ -557,18 +655,6 @@ massA1.bind("<KeyRelease>", lambda event: RET.update_table())
 massB1.bind("<KeyRelease>", lambda event: RET.update_table())
 
 
-# ---------------------------------------------Labels for UI---------------------------------#
-bg_color = '#00BFFF'
-tkinter.Label(window, text="Reaction Type: ", bg=bg_color).grid(row=5, column=0)
-tkinter.Label(window, text="# of Samples: ", bg=bg_color).grid(row=6, column=0)
-tkinter.Label(window, text="Extent of Reaction (EOR): ", bg=bg_color).grid(row=7, column=0)
-tkinter.Label(window, text="Simulation Status: ", bg=bg_color).grid(row=1, column=4)
-tkinter.Label(window, text="% EHC: ", bg=bg_color).grid(row=15, column=0)
-tkinter.Label(window, text="Theoretical WPE: ", bg=bg_color).grid(row=16, column=0)
-tkinter.Label(window, text="Acid Value: ", bg=bg_color).grid(row=17, column=0)
-tkinter.Label(window, text="Amine Value: ", bg=bg_color).grid(row=18, column=0)
-tkinter.Label(window, text="OH Value: ", bg=bg_color).grid(row=19, column=0)
-tkinter.Label(window, text="End Metric: ", bg=bg_color).grid(row=21, column=0)
 
 
 window.mainloop()

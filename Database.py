@@ -32,6 +32,9 @@ class Glycerol:
         self.mass = self.mw
         self.rg = "Alcohol"
         self.numgroups = len(set(self.comp))
+        self.prgk = 1
+        self.srgk = 1
+        self.crgk = 0
 
 class PPG425:
     def __init__(self):

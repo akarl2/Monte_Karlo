@@ -17,3 +17,6 @@ class Etherification:
 
 Reactions = ["Condensation", "Etherification", "PolyCondensation"]
 End_Metrics = ["Amine_Value", "Acid_Value", "OH_Value"]
+Num_Samples = ["1000", "2500", "5000", "10000", "100000"]
+
+
