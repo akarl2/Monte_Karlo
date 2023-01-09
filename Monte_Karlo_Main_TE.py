@@ -489,12 +489,11 @@ Reactant_B.bind("<ButtonRelease-1>", update_moles_B)
 progress = ttk.Progressbar(window, orient="horizontal", length=300, mode="determinate")
 progress.grid(row=1, column=5)
 
-class Data_Entry_Table(tkinter.Frame):
+global massA1, massB1
+class RXN_Entry_Table(tkinter.Frame):
     def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
-        self.tablewidth = None
         self.entries = None
-        self.tableheight = None
         self.grid(row=10, column=4)
         self.create_table()
 
@@ -560,32 +559,30 @@ class Data_Entry_Table(tkinter.Frame):
         self.entries[4].insert(0, "100")
         self.entries[20].delete(0, tkinter.END)
         self.entries[20].insert(0, "100")
+        global massA1, massB1
+        massA1 = self.entries[20]
+        massB1 = self.entries[4]
         self.user_entry()
 
     def user_entry(self):
         global entryA1reactant, entryB1reactant
         entryA1reactant = tkinter.StringVar()
-        entryA1 = AutocompleteCombobox(self, completevalues=Reactants, width=18, textvariable=entryA1reactant)
+        entryA1 = AutocompleteCombobox(self, completevalues=Reactants, width=15, textvariable=entryA1reactant)
         entryA1.grid(row=2, column=4)
         entryA1.config(justify="center")
         entryB1reactant = tkinter.StringVar()
-        entryB1 = AutocompleteCombobox(self, completevalues=Reactants, width=18, textvariable=entryB1reactant)
+        entryB1 = AutocompleteCombobox(self, completevalues=Reactants, width=15, textvariable=entryB1reactant)
         entryB1.grid(row=4, column=2)
         entryB1.config(justify="center")
 
     def update_moles(self):
-        a = str_to_class(entryA1reactant.get())
-        Mass_of_A = float(self.entries[20].get())
-        molesA = Mass_of_A / float(a.mw)
+        a = str_to_class(entryA1reactant.get())()
+        molesA = float(massA1.get()) / float(a.mw)
         self.entries[21].delete(0, tkinter.END)
         self.entries[21].insert(0, round(molesA, 4))
 
-    def get_values(self):
-        return self.entries[20].get()
-
-DET = Data_Entry_Table()
-
-window.bind("<Return>", DET.update_moles)
+RET = RXN_Entry_Table()
+window.bind("<Return>", lambda e: RET.update_moles())
 
 #run update_table when user changes the value of speciesA or speciesB
 # Reactant_A.bind("<ButtonRelease-1>", update_table)
