@@ -581,6 +581,14 @@ class RXN_Entry_Table(tkinter.Frame):
             molesA = float(massA1.get()) / float(a.mw)
             self.entries[21].delete(0, tkinter.END)
             self.entries[21].insert(0, round(molesA, 4))
+            self.entries[24].delete(0, tkinter.END)
+            self.entries[24].insert(0, a.prgk)
+            self.entries[34].delete(0, tkinter.END)
+            self.entries[34].insert(0, a.srgk)
+            self.entries[29].delete(0, tkinter.END)
+            self.entries[29].insert(0, a.crgk)
+            self.entries[39].delete(0, tkinter.END)
+            self.entries[39].insert(0, a.crgk)
         except:
             pass
         try:
@@ -598,6 +606,7 @@ entryA1reactant.trace("w", lambda name, index, mode, sv=entryA1reactant: RET.upd
 entryB1reactant.trace("w", lambda name, index, mode, sv=entryB1reactant: RET.update_moles())
 RET.entries[20].bind("<KeyRelease>", lambda event: RET.update_moles())
 RET.entries[4].bind("<KeyRelease>", lambda event: RET.update_moles())
+
 
 # ---------------------------------------------Labels for UI---------------------------------#
 bg_color = '#00BFFF'

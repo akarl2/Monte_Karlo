@@ -187,6 +187,9 @@ class DETA:
         self.mass = self.mw
         self.rg = "Amine"
         self.numgroups = len(set(self.comp))
+        self.prgk = 1
+        self.srgk = 0
+        self.crgk = 0
 
 class LTETA:
     def __init__(self):
