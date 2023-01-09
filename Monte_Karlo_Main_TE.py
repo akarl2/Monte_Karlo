@@ -576,17 +576,28 @@ class RXN_Entry_Table(tkinter.Frame):
         entryB1.config(justify="center")
 
     def update_moles(self):
-        a = str_to_class(entryA1reactant.get())()
-        molesA = float(massA1.get()) / float(a.mw)
-        self.entries[21].delete(0, tkinter.END)
-        self.entries[21].insert(0, round(molesA, 4))
+        try:
+            a = str_to_class(entryA1reactant.get())()
+            molesA = float(massA1.get()) / float(a.mw)
+            self.entries[21].delete(0, tkinter.END)
+            self.entries[21].insert(0, round(molesA, 4))
+        except:
+            pass
+        try:
+            b = str_to_class(entryB1reactant.get())()
+            molesB = float(massB1.get()) / float(b.mw)
+            self.entries[9].delete(0, tkinter.END)
+            self.entries[9].insert(0, round(molesB, 4))
+        except:
+            pass
 
 RET = RXN_Entry_Table()
-window.bind("<Return>", lambda e: RET.update_moles())
 
-#run update_table when user changes the value of speciesA or speciesB
-# Reactant_A.bind("<ButtonRelease-1>", update_table)
-# Reactant_B.bind("<ButtonRelease-1>", update_table)
+
+entryA1reactant.trace("w", lambda name, index, mode, sv=entryA1reactant: RET.update_moles())
+entryB1reactant.trace("w", lambda name, index, mode, sv=entryB1reactant: RET.update_moles())
+RET.entries[20].bind("<KeyRelease>", lambda event: RET.update_moles())
+RET.entries[4].bind("<KeyRelease>", lambda event: RET.update_moles())
 
 # ---------------------------------------------Labels for UI---------------------------------#
 bg_color = '#00BFFF'
