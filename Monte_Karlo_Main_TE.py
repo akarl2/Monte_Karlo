@@ -336,23 +336,6 @@ def show_results_expanded():
                     height=y, align='center')
     results.show()
 
-def update_moles_A(self):
-    try:
-        a = str_to_class(speciesA.get())()
-        Moles_of_A.delete(0, 'end')
-        molesA = float(Mass_of_A.get()) / float(a.mw)
-        Moles_of_A.insert(0, round(molesA, 4))
-    except AttributeError:
-        pass
-
-def update_moles_B(self):
-    try:
-        b = str_to_class(speciesB.get())()
-        molesB = float(Mass_of_B.get()) / float(b.mw)
-        Moles_of_B.delete(0, 'end')
-        Moles_of_B.insert(0, round(molesB, 4))
-    except AttributeError:
-        pass
 
 def update_percent_EHC(Value):
     Percent_EHC.delete(0, tkinter.END)
@@ -393,8 +376,8 @@ def stop():
 
 def sim_values():
     try:
-        simulate(a=speciesA.get(), b=speciesB.get(), rt=reaction_type.get(), samples=Samples.get(), eor=EOR.get(),
-                 a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get(), prgk=PRGk.get(), srgk=SRGk.get(), crgk=CGRk.get(),
+        simulate(a=A1reactant.get(), b=B1reactant.get(), rt=reaction_type.get(), samples=Samples.get(), eor=EOR.get(),
+                 a_mass=massA1.get(), b_mass=massB1.get(), prgk=RET.entries[24].get(), srgk=RET.entries[34].get(), crgk=RET.entries[29].get(),
                  emr=End_Metric_Entry.get(), emo=End_Metric_Selection.get())
     except AttributeError as e:
         messagebox.showerror("Exception raised", str(e))
@@ -408,24 +391,7 @@ window.iconbitmap("testtube.ico")
 window.title("Monte Karlo")
 window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
 window.configure(background="#00BFFF")
-Mass_of_A = tkinter.Entry(window, width=20)
-Mass_of_A.insert(0, "100")
-Mass_of_A.grid(row=2, column=1)
-Moles_of_A = tkinter.Entry(window)
-Moles_of_A.grid(row=1, column=3)
-Mass_of_B = tkinter.Entry(window, width=20)
-Mass_of_B.insert(0, "100")
-Mass_of_B.grid(row=4, column=1)
-Moles_of_B = tkinter.Entry(window)
-Moles_of_B.grid(row=2, column=3)
-speciesA = tkinter.StringVar()
-speciesA.set("Reactant A")
-Reactant_A = tkinter.OptionMenu(window, speciesA, *reactantsA)
-Reactant_A.grid(row=1, column=1)
-speciesB = tkinter.StringVar()
-speciesB.set("Reactant B")
-Reactant_B = tkinter.OptionMenu(window, speciesB, *reactantsB)
-Reactant_B.grid(row=3, column=1)
+
 reaction_type = tkinter.StringVar()
 reaction_type.set("Reaction Type")
 Reaction_Type = tkinter.OptionMenu(window, reaction_type, *Reactions)
@@ -456,14 +422,6 @@ End_Metric_Entry = tkinter.Entry(window)
 End_Metric_Entry.insert(0, "250")
 End_Metric_Entry.grid(row=22, column=1)
 PRGk = tkinter.Entry(window)
-PRGk.insert(0, 1)
-PRGk.grid(row=8, column=1)
-SRGk = tkinter.Entry(window)
-SRGk.insert(0, 0)
-SRGk.grid(row=9, column=1)
-CGRk = tkinter.Entry(window)
-CGRk.insert(0, 0)
-CGRk.grid(row=10, column=1)
 
 # add button to simulate
 button = tkinter.Button(window, text="Simulate", command=sim_values, width=15, bg="Green")
@@ -477,19 +435,11 @@ stop_button.grid(row=12, column=1)
 expand = tkinter.Button(window, text="Expand Data", command=show_results_expanded, width=15, bg="green")
 expand.grid(row=23, column=1)
 
-# Update moles when user changes the value of Mass_of_A or Mass_of_B
-Mass_of_A.bind("<KeyRelease>", update_moles_A)
-Mass_of_B.bind("<KeyRelease>", update_moles_B)
-
-# update moles when user changes the value of speciesA or speciesB
-Reactant_A.bind("<ButtonRelease-1>", update_moles_A)
-Reactant_B.bind("<ButtonRelease-1>", update_moles_B)
-
 # add a determinate progress bar to window using sim_status
 progress = ttk.Progressbar(window, orient="horizontal", length=300, mode="determinate")
 progress.grid(row=1, column=5)
 
-global massA1, massB1
+global massA1, massB1, A1reactant, B1reactant
 class RXN_Entry_Table(tkinter.Frame):
     def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
@@ -531,19 +481,19 @@ class RXN_Entry_Table(tkinter.Frame):
         self.entries[17].insert(0, "Reactant = ")
         self.entries[17].config(state="readonly", font=("Helvetica", 8, "bold"))
         self.entries[19].delete(0, tkinter.END)
-        self.entries[19].insert(0, "Primary K")
+        self.entries[19].insert(0, "1° K")
         self.entries[19].config(state="readonly", font=("Helvetica", 8, "bold"))
         self.entries[23].delete(0, tkinter.END)
-        self.entries[23].insert(0, "Primary K")
+        self.entries[23].insert(0, "1° K")
         self.entries[23].config(state="readonly", font=("Helvetica", 8, "bold"))
         self.entries[28].delete(0, tkinter.END)
-        self.entries[28].insert(0, "Child K - Primary")
+        self.entries[28].insert(0, "Child K - 1°")
         self.entries[28].config(state="readonly", font=("Helvetica", 8, "bold"))
         self.entries[33].delete(0, tkinter.END)
-        self.entries[33].insert(0, "Secondary K")
+        self.entries[33].insert(0, "2° K")
         self.entries[33].config(state="readonly", font=("Helvetica", 8, "bold"))
         self.entries[38].delete(0, tkinter.END)
-        self.entries[38].insert(0, "Child K - Secondary")
+        self.entries[38].insert(0, "Child K - 2°")
         self.entries[38].config(state="readonly", font=("Helvetica", 8, "bold"))
         self.entries[0].delete(0, tkinter.END)
         self.entries[1].delete(0, tkinter.END)
@@ -559,25 +509,24 @@ class RXN_Entry_Table(tkinter.Frame):
         self.entries[4].insert(0, "100")
         self.entries[20].delete(0, tkinter.END)
         self.entries[20].insert(0, "100")
-        global massA1, massB1
-        massA1 = self.entries[20]
-        massB1 = self.entries[4]
         self.user_entry()
 
     def user_entry(self):
-        global entryA1reactant, entryB1reactant
-        entryA1reactant = tkinter.StringVar()
-        entryA1 = AutocompleteCombobox(self, completevalues=Reactants, width=15, textvariable=entryA1reactant)
+        global A1reactant, B1reactant, massA1, massB1
+        A1reactant = tkinter.StringVar()
+        entryA1 = AutocompleteCombobox(self, completevalues=Reactants, width=15, textvariable=A1reactant)
         entryA1.grid(row=2, column=4)
         entryA1.config(justify="center")
-        entryB1reactant = tkinter.StringVar()
-        entryB1 = AutocompleteCombobox(self, completevalues=Reactants, width=15, textvariable=entryB1reactant)
+        B1reactant = tkinter.StringVar()
+        entryB1 = AutocompleteCombobox(self, completevalues=Reactants, width=15, textvariable=B1reactant)
         entryB1.grid(row=4, column=2)
         entryB1.config(justify="center")
+        massA1 = self.entries[20]
+        massB1 = self.entries[4]
 
-    def update_moles(self):
+    def update_table(self):
         try:
-            a = str_to_class(entryA1reactant.get())()
+            a = str_to_class(A1reactant.get())()
             molesA = float(massA1.get()) / float(a.mw)
             self.entries[21].delete(0, tkinter.END)
             self.entries[21].insert(0, round(molesA, 4))
@@ -592,7 +541,7 @@ class RXN_Entry_Table(tkinter.Frame):
         except:
             pass
         try:
-            b = str_to_class(entryB1reactant.get())()
+            b = str_to_class(B1reactant.get())()
             molesB = float(massB1.get()) / float(b.mw)
             self.entries[9].delete(0, tkinter.END)
             self.entries[9].insert(0, round(molesB, 4))
@@ -601,21 +550,15 @@ class RXN_Entry_Table(tkinter.Frame):
 
 RET = RXN_Entry_Table()
 
-
-entryA1reactant.trace("w", lambda name, index, mode, sv=entryA1reactant: RET.update_moles())
-entryB1reactant.trace("w", lambda name, index, mode, sv=entryB1reactant: RET.update_moles())
-RET.entries[20].bind("<KeyRelease>", lambda event: RET.update_moles())
-RET.entries[4].bind("<KeyRelease>", lambda event: RET.update_moles())
+#update table with events
+A1reactant.trace("w", lambda name, index, mode, sv=A1reactant: RET.update_table())
+B1reactant.trace("w", lambda name, index, mode, sv=B1reactant: RET.update_table())
+massA1.bind("<KeyRelease>", lambda event: RET.update_table())
+massB1.bind("<KeyRelease>", lambda event: RET.update_table())
 
 
 # ---------------------------------------------Labels for UI---------------------------------#
 bg_color = '#00BFFF'
-tkinter.Label(window, text="Grams of A: ", bg=bg_color).grid(row=2, column=0)
-tkinter.Label(window, text="Moles of A: ", bg=bg_color).grid(row=1, column=2, padx=10)
-tkinter.Label(window, text="Grams of B: ", bg=bg_color).grid(row=4, column=0)
-tkinter.Label(window, text="Moles of B: ", bg=bg_color).grid(row=2, column=2, padx=10)
-tkinter.Label(window, text="Reactant A: ", bg=bg_color).grid(row=1, column=0)
-tkinter.Label(window, text="Reactant B: ", bg=bg_color).grid(row=3, column=0)
 tkinter.Label(window, text="Reaction Type: ", bg=bg_color).grid(row=5, column=0)
 tkinter.Label(window, text="# of Samples: ", bg=bg_color).grid(row=6, column=0)
 tkinter.Label(window, text="Extent of Reaction (EOR): ", bg=bg_color).grid(row=7, column=0)
@@ -626,8 +569,6 @@ tkinter.Label(window, text="Acid Value: ", bg=bg_color).grid(row=17, column=0)
 tkinter.Label(window, text="Amine Value: ", bg=bg_color).grid(row=18, column=0)
 tkinter.Label(window, text="OH Value: ", bg=bg_color).grid(row=19, column=0)
 tkinter.Label(window, text="End Metric: ", bg=bg_color).grid(row=21, column=0)
-tkinter.Label(window, text="Primary K: ", bg=bg_color).grid(row=8, column=0)
-tkinter.Label(window, text="Secondary k: ", bg=bg_color).grid(row=9, column=0)
-tkinter.Label(window, text="Child k: ", bg=bg_color).grid(row=10, column=0)
+
 
 window.mainloop()
