@@ -204,7 +204,7 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
                 emo_a = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
             elif emo == "OH_Value":
                 emo_a = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            progress['value'] = round((emr / emo_a) * 100, 1)
+            sim.progress = round((emo_a / emr) * 100, 2)
             window.update()
 
         composition_tuple = [tuple(item) for item in composition_tuple]
@@ -355,15 +355,12 @@ def sim_values():
         messagebox.showerror("Exception raised", str(e))
         pass
 
-
 # ---------------------------------------------------User-Interface----------------------------------------------#
-
 window = tkinter.Tk()
 window.iconbitmap("testtube.ico")
 window.title("Monte Karlo")
 window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
 window.configure(background="#00BFFF")
-
 
 global massA1, massB1, A1reactant, B1reactant
 class RXN_Entry_Table(tkinter.Frame):
@@ -557,7 +554,6 @@ class RXN_Metrics(tkinter.Frame):
         self.entries[5].insert(0, "End Metric =")
         self.user_entry()
 
-
     def user_entry(self):
         global RXN_EM, RXN_EM_Value
         RXN_EM = tkinter.StringVar()
@@ -635,12 +631,17 @@ class Simstatus(tkinter.Frame):
                 self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=18)
                 counter += 1
+        self.tabel_labels()
+
+    def tabel_labels(self):
+        self.entries[0].delete(0, tkinter.END)
+        self.entries[0].insert(0, "Simulation Status")
+        self.entries[0].config(state="readonly")
         self.add_buttons()
 
     def add_buttons(self):
-        progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate")
-        progress.grid(row=0, column=1)
-
+        self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate")
+        self.progress.grid(row=0, column=1)
 
 RET = RXN_Entry_Table()
 RD = RXN_Details()
