@@ -11,3 +11,4 @@ import itertools
 from pandastable import Table, TableModel, config
 import statsmodels
 import math
+from Reactants import *

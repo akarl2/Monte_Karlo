@@ -1,3 +1,4 @@
+
 from Module_Imports import *
 
 # Set pandas dataframe display
@@ -363,8 +364,8 @@ global massA1, massB1, A1reactant, B1reactant
 class RxnEntryTable(tkinter.Frame):
     def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
-        self.tablewidth = 8
-        self.tableheight = 5
+        self.tablewidth = 12
+        self.tableheight = 15
         self.entries = None
         self.grid(row=5, column=3)
         self.create_table()
@@ -372,101 +373,87 @@ class RxnEntryTable(tkinter.Frame):
     def create_table(self):
         self.entries = {}
         counter = 0
-        for column in range(self.tablewidth):
-            for row in range(self.tableheight):
+        for row in range(self.tableheight):
+            for column in range(self.tablewidth):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                #self.entries[counter].insert(0, str(counter))
+                self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=18)
                 counter += 1
         self.tabel_labels()
 
     def tabel_labels(self):
-        self.entries[3].delete(0, tkinter.END)
-        self.entries[3].insert(0, "Mass (g)")
-        self.entries[3].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[8].delete(0, tkinter.END)
-        self.entries[8].insert(0, "Moles")
-        self.entries[8].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[13].delete(0, tkinter.END)
-        self.entries[13].insert(0, "Reactant")
-        self.entries[13].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[15].delete(0, tkinter.END)
-        self.entries[15].insert(0, "Mass (g) = ")
-        self.entries[15].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[16].delete(0, tkinter.END)
-        self.entries[16].insert(0, "Moles = ")
-        self.entries[16].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[17].delete(0, tkinter.END)
-        self.entries[17].insert(0, "Reactant = ")
-        self.entries[17].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[19].delete(0, tkinter.END)
-        self.entries[19].insert(0, "1° K")
-        self.entries[19].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[23].delete(0, tkinter.END)
-        self.entries[23].insert(0, "1° K")
-        self.entries[23].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[28].delete(0, tkinter.END)
-        self.entries[28].insert(0, "Child K - 1°")
-        self.entries[28].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[33].delete(0, tkinter.END)
-        self.entries[33].insert(0, "2° K")
-        self.entries[33].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[38].delete(0, tkinter.END)
-        self.entries[38].insert(0, "Child K - 2°")
-        self.entries[38].config(state="readonly", font=("Helvetica", 8, "bold"))
         self.entries[0].delete(0, tkinter.END)
+        self.entries[0].insert(0, "Reactant")
+        self.entries[0].config(state="readonly", font=("Helvetica", 8, "bold"))
         self.entries[1].delete(0, tkinter.END)
+        self.entries[1].insert(0, "Mass (g)")
+        self.entries[1].config(state="readonly", font=("Helvetica", 8, "bold"))
         self.entries[2].delete(0, tkinter.END)
-        self.entries[5].delete(0, tkinter.END)
-        self.entries[6].delete(0, tkinter.END)
-        self.entries[7].delete(0, tkinter.END)
-        self.entries[10].delete(0, tkinter.END)
-        self.entries[11].delete(0, tkinter.END)
-        self.entries[12].delete(0, tkinter.END)
-        self.entries[18].delete(0, tkinter.END)
+        self.entries[2].insert(0, "Moles")
+        self.entries[2].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[3].delete(0, tkinter.END)
+        self.entries[3].insert(0, "1° - ID")
+        self.entries[3].config(state="readonly", font=("Helvetica", 8, "bold"))
         self.entries[4].delete(0, tkinter.END)
-        self.entries[4].insert(0, "100")
-        self.entries[20].delete(0, tkinter.END)
-        self.entries[20].insert(0, "100")
+        self.entries[4].insert(0, "1° - K")
+        self.entries[4].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[5].delete(0, tkinter.END)
+        self.entries[5].insert(0, "1° - Child K")
+        self.entries[5].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[6].delete(0, tkinter.END)
+        self.entries[6].insert(0, "2° - ID")
+        self.entries[6].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[7].delete(0, tkinter.END)
+        self.entries[7].insert(0, "2° - K")
+        self.entries[7].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[8].delete(0, tkinter.END)
+        self.entries[8].insert(0, "2° - Child K")
+        self.entries[8].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[9].delete(0, tkinter.END)
+        self.entries[9].insert(0, "3° - ID")
+        self.entries[9].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[10].delete(0, tkinter.END)
+        self.entries[10].insert(0, "3° - K")
+        self.entries[10].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[11].delete(0, tkinter.END)
+        self.entries[11].insert(0, "3° - Child K")
+        self.entries[11].config(state="readonly", font=("Helvetica", 8, "bold"))
         self.user_entry()
 
     def user_entry(self):
-        global A1reactant, B1reactant, massA1, massB1
-        A1reactant = tkinter.StringVar()
-        entryA1 = AutocompleteCombobox(self, completevalues=Reactants, width=15, textvariable=A1reactant)
-        entryA1.grid(row=2, column=4)
-        entryA1.config(justify="center")
-        B1reactant = tkinter.StringVar()
-        entryB1 = AutocompleteCombobox(self, completevalues=Reactants, width=15, textvariable=B1reactant)
-        entryB1.grid(row=4, column=2)
-        entryB1.config(justify="center")
-        massA1 = self.entries[20]
-        massB1 = self.entries[4]
+        cell = 12
+        row = 1
+        index = 0
+        for species in range(self.tableheight - 1):
+            Entry_Reactants[index] = tkinter.StringVar()
+            self.entries[cell] = AutocompleteCombobox(self, completevalues=Reactants, width=15, textvariable=Entry_Reactants[index])
+            self.entries[cell].grid(row=row, column=0)
+            self.entries[cell].config(justify="center")
+            cell = cell + self.tablewidth
+            row = row + 1
+            index = index + 1
+        cell = 13
+        row = 1
+        index = 0
+        for species in range(self.tableheight-1):
+            Entry_masses[(index)] = self.entries[cell]
+            cell = cell + self.tablewidth
+            row = row + 1
+            index = index + 1
 
     def update_table(self):
-        try:
-            a = str_to_class(A1reactant.get())()
-            molesA = float(massA1.get()) / float(a.mw)
-            self.entries[21].delete(0, tkinter.END)
-            self.entries[21].insert(0, round(molesA, 4))
-            self.entries[24].delete(0, tkinter.END)
-            self.entries[24].insert(0, a.prgk)
-            self.entries[34].delete(0, tkinter.END)
-            self.entries[34].insert(0, a.srgk)
-            self.entries[29].delete(0, tkinter.END)
-            self.entries[29].insert(0, a.crgk)
-            self.entries[39].delete(0, tkinter.END)
-            self.entries[39].insert(0, a.crgk)
-        except:
-            pass
-        try:
-            b = str_to_class(B1reactant.get())()
-            molesB = float(massB1.get()) / float(b.mw)
-            self.entries[9].delete(0, tkinter.END)
-            self.entries[9].insert(0, round(molesB, 4))
-        except:
-            pass
+        cell = 14
+        index = 0
+        for species in range(self.tableheight-1):
+            if self.entries[cell-2].get() != "":
+                a = str_to_class(Entry_Reactants[index].get())()
+                molesA = float(Entry_masses[index].get()) / float(a.mw)
+                self.entries[cell].delete(0, tkinter.END)
+                self.entries[cell].insert(0, str(round(molesA,4)))
+            cell = cell + self.tablewidth
+            index = index + 1
+
 
 global RXN_Type, RXN_Samples, RXN_EOR
 class RxnDetails(tkinter.Frame):
@@ -655,11 +642,15 @@ RM = RxnMetrics()
 Buttons = Buttons()
 sim = SimStatus()
 
-#update table with events
-A1reactant.trace("w", lambda name, index, mode, sv=A1reactant: RET.update_table())
-B1reactant.trace("w", lambda name, index, mode, sv=B1reactant: RET.update_table())
-massA1.bind("<KeyRelease>", lambda event: RET.update_table())
-massB1.bind("<KeyRelease>", lambda event: RET.update_table())
+
+Entry_Reactants[0].trace("w", lambda name, index, mode, sv=Entry_Reactants[0]: RET.update_table())
+Entry_Reactants[1].trace("w", lambda name, index, mode, sv=Entry_Reactants[1]: RET.update_table())
+Entry_masses[0].bind("<KeyRelease>", lambda event: RET.update_table())
+Entry_masses[1].bind("<KeyRelease>", lambda event: RET.update_table())
+
+
+
+
 
 
 window.mainloop()
