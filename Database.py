@@ -74,6 +74,9 @@ class Sorbitol:
         self.comp = (self.prgmw, self.srgmw, self.srgmw, self.srgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
         self.numgroups = len(set(self.comp))
+        self.prgk = 1
+        self.srgk = 1
+        self.crgk = 0
 
 class Propylene_Glycol:
     def __init__(self):

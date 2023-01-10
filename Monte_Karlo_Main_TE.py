@@ -363,17 +363,17 @@ window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_sc
 window.configure(background="#00BFFF")
 
 global massA1, massB1, A1reactant, B1reactant
-class RXN_Entry_Table(tkinter.Frame):
+class RxnEntryTable(tkinter.Frame):
     def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
+        self.tablewidth = 8
+        self.tableheight = 5
         self.entries = None
         self.grid(row=10, column=4)
         self.create_table()
 
     def create_table(self):
         self.entries = {}
-        self.tableheight = 5
-        self.tablewidth = 8
         counter = 0
         for column in range(self.tablewidth):
             for row in range(self.tableheight):
@@ -472,9 +472,11 @@ class RXN_Entry_Table(tkinter.Frame):
             pass
 
 global RXN_Type, RXN_Samples, RXN_EOR
-class RXN_Details(tkinter.Frame):
+class RxnDetails(tkinter.Frame):
     def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
+        self.tableheight = None
+        self.tablewidth = None
         self.entries = None
         self.grid(row=0, column=4)
         self.create_table()
@@ -518,9 +520,11 @@ class RXN_Details(tkinter.Frame):
         RXN_EOR = self.entries[5]
 
 global RXN_EM, RXN_EM_Value
-class RXN_Metrics(tkinter.Frame):
+class RxnMetrics(tkinter.Frame):
     def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
+        self.tablewidth = None
+        self.tableheight = None
         self.entries = None
         self.grid(row=0, column=10)
         self.create_table()
@@ -585,6 +589,8 @@ class RXN_Metrics(tkinter.Frame):
 class Buttons(tkinter.Frame):
     def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
+        self.tablewidth = None
+        self.tableheight = None
         self.entries = None
         self.grid(row=0, column=25)
         self.create_table()
@@ -611,9 +617,11 @@ class Buttons(tkinter.Frame):
         expand = tkinter.Button(self, text="Expand Data", command=show_results_expanded, width=15, bg="blue")
         expand.grid(row=2, column=0)
 
-class Simstatus(tkinter.Frame):
+class SimStatus(tkinter.Frame):
     def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
+        self.tablewidth = None
+        self.tableheight = None
         self.progress = None
         self.entries = None
         self.grid(row=0, column=2)
@@ -643,19 +651,17 @@ class Simstatus(tkinter.Frame):
         self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate")
         self.progress.grid(row=0, column=1)
 
-RET = RXN_Entry_Table()
-RD = RXN_Details()
-RM = RXN_Metrics()
+RET = RxnEntryTable()
+RD = RxnDetails()
+RM = RxnMetrics()
 Buttons = Buttons()
-sim = Simstatus()
+sim = SimStatus()
 
 #update table with events
 A1reactant.trace("w", lambda name, index, mode, sv=A1reactant: RET.update_table())
 B1reactant.trace("w", lambda name, index, mode, sv=B1reactant: RET.update_table())
 massA1.bind("<KeyRelease>", lambda event: RET.update_table())
 massB1.bind("<KeyRelease>", lambda event: RET.update_table())
-
-
 
 
 window.mainloop()
