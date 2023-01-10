@@ -1,5 +1,3 @@
-import tkinter
-
 from Module_Imports import *
 
 # Set pandas dataframe display
@@ -7,10 +5,9 @@ pandas.set_option('display.max_columns', None)
 pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
+# Runs the simulation
 global running, emo_a, results, frame, expanded_results
 running = False
-
-# Runs the simulation
 def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo):
     global running, emo_a, results, expanded_results
     sim.progress['value'] = 0
@@ -204,7 +201,7 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
                 emo_a = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
             elif emo == "OH_Value":
                 emo_a = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            sim.progress = round((emo_a / emr) * 100, 2)
+            sim.progress['value'] = round((emo_a / emr) * 100, 2)
             window.update()
 
         composition_tuple = [tuple(item) for item in composition_tuple]
@@ -369,7 +366,7 @@ class RxnEntryTable(tkinter.Frame):
         self.tablewidth = 8
         self.tableheight = 5
         self.entries = None
-        self.grid(row=10, column=4)
+        self.grid(row=5, column=3)
         self.create_table()
 
     def create_table(self):
@@ -379,7 +376,7 @@ class RxnEntryTable(tkinter.Frame):
             for row in range(self.tableheight):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                self.entries[counter].insert(0, str(counter))
+                #self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=18)
                 counter += 1
         self.tabel_labels()
@@ -478,7 +475,7 @@ class RxnDetails(tkinter.Frame):
         self.tableheight = None
         self.tablewidth = None
         self.entries = None
-        self.grid(row=0, column=4)
+        self.grid(row=0, column=0, padx=5, pady=(20, 5))
         self.create_table()
 
     def create_table(self):
@@ -526,19 +523,19 @@ class RxnMetrics(tkinter.Frame):
         self.tablewidth = None
         self.tableheight = None
         self.entries = None
-        self.grid(row=0, column=10)
+        self.grid(row=3, column=0, padx=5, pady=5)
         self.create_table()
 
     def create_table(self):
         self.entries = {}
-        self.tableheight = 7
+        self.tableheight = 6
         self.tablewidth = 2
         counter = 0
         for column in range(self.tablewidth):
             for row in range(self.tableheight):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                self.entries[counter].insert(0, str(counter))
+                #self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=18)
                 counter += 1
         self.table_labels()
@@ -554,37 +551,36 @@ class RxnMetrics(tkinter.Frame):
         self.entries[3].insert(0, "Amine Value =")
         self.entries[4].delete(0, tkinter.END)
         self.entries[4].insert(0, "OH Value =")
-        self.entries[5].delete(0, tkinter.END)
-        self.entries[5].insert(0, "End Metric =")
         self.user_entry()
 
     def user_entry(self):
         global RXN_EM, RXN_EM_Value
         RXN_EM = tkinter.StringVar()
         RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
-        RXN_EM_Entry.grid(row=5, column=1)
+        RXN_EM_Entry.grid(row=5, column=0)
         RXN_EM_Entry.config(justify="center")
-        RXN_EM_Value = self.entries[13]
+        RXN_EM_Entry.insert(0, "End Metric")
+        RXN_EM_Value = self.entries[11]
 
     def update_EHC(self, EHCpercent):
-        self.entries[7].delete(0, tkinter.END)
-        self.entries[7].insert(0, EHCpercent)
+        self.entries[6].delete(0, tkinter.END)
+        self.entries[6].insert(0, EHCpercent)
 
     def update_WPE(self, WPE):
-        self.entries[8].delete(0, tkinter.END)
-        self.entries[8].insert(0, WPE)
+        self.entries[7].delete(0, tkinter.END)
+        self.entries[7].insert(0, WPE)
 
     def updateAV(self, AV):
-        self.entries[9].delete(0, tkinter.END)
-        self.entries[9].insert(0, AV)
+        self.entries[8].delete(0, tkinter.END)
+        self.entries[8].insert(0, AV)
 
     def updateTAV(self, TAV):
-        self.entries[10].delete(0, tkinter.END)
-        self.entries[10].insert(0, TAV)
+        self.entries[9].delete(0, tkinter.END)
+        self.entries[9].insert(0, TAV)
 
     def updateOHV(self, OHV):
-        self.entries[11].delete(0, tkinter.END)
-        self.entries[11].insert(0, OHV)
+        self.entries[10].delete(0, tkinter.END)
+        self.entries[10].insert(0, OHV)
 
 class Buttons(tkinter.Frame):
     def __init__(self, master=window):
@@ -592,7 +588,7 @@ class Buttons(tkinter.Frame):
         self.tablewidth = None
         self.tableheight = None
         self.entries = None
-        self.grid(row=0, column=25)
+        self.grid(row=1, column=0, padx=5, pady=5)
         self.create_table()
 
     def create_table(self):
@@ -650,6 +646,8 @@ class SimStatus(tkinter.Frame):
     def add_buttons(self):
         self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate")
         self.progress.grid(row=0, column=1)
+
+
 
 RET = RxnEntryTable()
 RD = RxnDetails()
