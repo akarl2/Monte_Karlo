@@ -446,16 +446,17 @@ class RxnEntryTable(tkinter.Frame):
         index = 0
         cell = 12
         reactantID_list = []
+        reactantID_list_string = []
         for i in range(self.tableheight - 1):
             if self.entries[cell].get() != "":
                 a = str_to_class(Entry_Reactants[index].get())()
-                reactantID_list.append((a.sn,a.prgID,self.entries[cell+4].get()))
+                reactantID_list.append((a.sn, a.prgID, self.entries[cell+4].get()))
                 if self.entries[cell + 6].get() != "None":
                     a = str_to_class(self.entries[cell].get())()
-                    reactantID_list.append((a.sn,a.srgID,self.entries[cell+7].get()))
+                    reactantID_list.append((a.sn, a.srgID, self.entries[cell+7].get()))
                     if self.entries[cell + 9].get() != "None":
                         a = str_to_class(self.entries[cell].get())()
-                        reactantID_list.append((a.sn,a.trgID,self.entries[cell+10].get()))
+                        reactantID_list.append((a.sn, a.trgID,self.entries[cell+10].get()))
                     else:
                         pass
                 else:
@@ -464,7 +465,16 @@ class RxnEntryTable(tkinter.Frame):
                 pass
             cell = cell + self.tablewidth
             index = index + 1
-        print(reactantID_list)
+
+        # make all possible combinations of 2 items in reactantID_list seperated by an underscore
+        reactantID_list_combinations = []
+        for i in range(len(reactantID_list)):
+            for j in range(i + 1, len(reactantID_list)):
+                reactantID_list_combinations.append(f'{reactantID_list[i]}_{reactantID_list[j]}')
+        reactantID_list_combinations = [x for x in reactantID_list_combinations if x.split('_')[0].split(',')[0] != x.split('_')[1].split(',')[0]]
+        reactantID_list_combinations = [x for x in reactantID_list_combinations if x.split('_')[0].split(',')[1] != x.split('_')[1].split(',')[1]]
+        print(reactantID_list_combinations)
+
 
     def update_table(self, index, cell):
         if self.entries[cell-2].get() != "" and self.entries[cell-1].get() != "":
