@@ -437,40 +437,64 @@ class RxnEntryTable(tkinter.Frame):
         row = 1
         index = 0
         for species in range(self.tableheight-1):
-            Entry_masses[(index)] = self.entries[cell]
+            Entry_masses[index] = self.entries[cell]
             cell = cell + self.tablewidth
             row = row + 1
             index = index + 1
 
-    def update_table(self, index,cell):
-        print(cell, index)
+    def get_reactants(self):
+        index = 0
+        cell = 12
+        reactantID_list = []
+        for i in range(self.tableheight - 1):
+            if self.entries[cell].get() != "":
+                a = str_to_class(Entry_Reactants[index].get())()
+                reactantID_list.append((a.sn,a.prgID,self.entries[cell+4].get()))
+                if self.entries[cell + 6].get() != "None":
+                    a = str_to_class(self.entries[cell].get())()
+                    reactantID_list.append((a.sn,a.srgID,self.entries[cell+7].get()))
+                    if self.entries[cell + 9].get() != "None":
+                        a = str_to_class(self.entries[cell].get())()
+                        reactantID_list.append((a.sn,a.trgID,self.entries[cell+10].get()))
+                    else:
+                        pass
+                else:
+                    pass
+            else:
+                pass
+            cell = cell + self.tablewidth
+            index = index + 1
+        print(reactantID_list)
+
+    def update_table(self, index, cell):
         if self.entries[cell-2].get() != "" and self.entries[cell-1].get() != "":
             a = str_to_class(Entry_Reactants[index].get())()
+            print(a)
             molesA = float(Entry_masses[index].get()) / float(a.mw)
             self.entries[cell].delete(0, tkinter.END)
             self.entries[cell].insert(0, str(round(molesA, 4)))
 
 
     def update_rates(self, index, cell):
-                a = str_to_class(Entry_Reactants[index].get())()
-                self.entries[cell+1].delete(0, tkinter.END)
-                self.entries[cell+1].insert(0, str(a.prgID))
-                self.entries[cell+2].delete(0, tkinter.END)
-                self.entries[cell+2].insert(0, str(a.prgk))
-                self.entries[cell+3].delete(0, tkinter.END)
-                self.entries[cell+3].insert(0, str(a.crgk))
-                self.entries[cell+4].delete(0, tkinter.END)
-                self.entries[cell+4].insert(0, str(a.srgID))
-                self.entries[cell+5].delete(0, tkinter.END)
-                self.entries[cell+5].insert(0, str(a.srgk))
-                self.entries[cell+6].delete(0, tkinter.END)
-                self.entries[cell+6].insert(0, str(a.crgk))
-                self.entries[cell+7].delete(0, tkinter.END)
-                self.entries[cell+7].insert(0, str(a.trgID))
-                self.entries[cell+8].delete(0, tkinter.END)
-                self.entries[cell+8].insert(0, str(a.trgk))
-                self.entries[cell+9].delete(0, tkinter.END)
-                self.entries[cell+9].insert(0, str(a.crgk))
+        a = str_to_class(Entry_Reactants[index].get())()
+        self.entries[cell+1].delete(0, tkinter.END)
+        self.entries[cell+1].insert(0, str(a.prgID))
+        self.entries[cell+2].delete(0, tkinter.END)
+        self.entries[cell+2].insert(0, str(a.prgk))
+        self.entries[cell+3].delete(0, tkinter.END)
+        self.entries[cell+3].insert(0, str(a.crgk))
+        self.entries[cell+4].delete(0, tkinter.END)
+        self.entries[cell+4].insert(0, str(a.srgID))
+        self.entries[cell+5].delete(0, tkinter.END)
+        self.entries[cell+5].insert(0, str(a.srgk))
+        self.entries[cell+6].delete(0, tkinter.END)
+        self.entries[cell+6].insert(0, str(a.crgk))
+        self.entries[cell+7].delete(0, tkinter.END)
+        self.entries[cell+7].insert(0, str(a.trgID))
+        self.entries[cell+8].delete(0, tkinter.END)
+        self.entries[cell+8].insert(0, str(a.trgk))
+        self.entries[cell+9].delete(0, tkinter.END)
+        self.entries[cell+9].insert(0, str(a.crgk))
 
 global RXN_Type, RXN_Samples, RXN_EOR
 class RxnDetails(tkinter.Frame):
@@ -491,7 +515,7 @@ class RxnDetails(tkinter.Frame):
             for row in range(self.tableheight):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                self.entries[counter].insert(0, str(counter))
+                #self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=18)
                 counter += 1
         self.table_labels()
@@ -539,7 +563,7 @@ class RxnMetrics(tkinter.Frame):
             for row in range(self.tableheight):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                self.entries[counter].insert(0, str(counter))
+                #self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=18)
                 counter += 1
         self.table_labels()
@@ -651,11 +675,17 @@ class SimStatus(tkinter.Frame):
         self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate")
         self.progress.grid(row=0, column=1)
 
+#Create a list with Entry_reactants and their corresponding prgID
+
+
 RET = RxnEntryTable()
 RD = RxnDetails()
 RM = RxnMetrics()
 Buttons = Buttons()
 sim = SimStatus()
+
+# Run RET.get_reactants() when pressing enter
+window.bind("<Return>", lambda event: RET.get_reactants())
 
 #run update_table if user changes value in RET
 Entry_Reactants[0].trace("w", lambda *args, index=0, cell=14: RET.update_table(index, cell))

@@ -1,8 +1,9 @@
+from inspect import isclass
+import Database
 
 #Create a dictionary of all the above classes
-reactantsA = ["Epichlorohydrin","Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic_Acid", "PAA", "DETA", "Adipic_Acid", "Cyclohexanedimethanol","Ethylhexanol", "Pripol", "Isostearic_Acid", "DEA", "Lysinol"]
+reactantsA = ["Epichlorohydrin","Butanol", "Glycerol", "PPG425", "Sorbitol", "Propylene_Glycol", "Pentaerythritol", "Butanediol", "Trimethylolpropane", "C181", "Water", "Ethanol", "Methanol", "Acetone", "Acetic Acid", "Formic_Acid", "PAA", "DETA", "Adipic_Acid", "Cyclohexanedimethanol","Ethylhexanol", "Pripol", "Isostearic_Acid", "DEA", "Lysinol", "LTETA"]
 reactantsB = reactantsA
-Reactants = reactantsA
 
 #------------------------------------------Alcohols------------------------------#
 
@@ -81,6 +82,10 @@ class Sorbitol:
         self.prgk = 1
         self.srgk = 1
         self.crgk = 0
+        self.trgk = 0
+        self.prgID = "OH"
+        self.srgID = "OH"
+        self.trgID = "None"
 
 class Propylene_Glycol:
     def __init__(self):
@@ -154,7 +159,6 @@ class Ethylhexanol:
         self.formula = "C8H18O"
         self.mw = 130.23
         self.density = 0.833
-        self.prg = Carboxyl
         self.mass = self.mw
         self.comp = self.prg
         self.numgroups = 1
@@ -203,7 +207,7 @@ class DETA:
         self.trgk = 0
         self.prgID = "NH₂"
         self.srgID = "NH"
-        self.trgID = "None"
+        self.trgID = None
 
 class LTETA:
     def __init__(self):
@@ -218,19 +222,14 @@ class LTETA:
         self.mass = self.mw
         self.rg = "Amine"
         self.numgroups = len(set(self.comp))
+        self.prgk = 1
+        self.srgk = 0
+        self.crgk = 0
+        self.trgk = 0
+        self.prgID = "NH₂"
+        self.srgID = "NH"
+        self.trgID = "None"
 
-class LTETA:
-    def __init__(self):
-        self.name = "Liner TETA"
-        self.sn = "L-TETA"
-        self.formula = "C6H18N4"
-        self.mw = 146.234
-        self.density = 0.982
-        self.prgmw = 30.0492
-        self.srgmw = 43.0678
-        self.comp = (self.prgmw, self.srgmw, self.srgmw, self.prgmw)
-        self.mass = self.mw
-        self.rg = "Amine"
 
 class DEA:
     def __init__(self):
@@ -268,6 +267,27 @@ class Lysinol:
         self.mass = self.mw
         self.rg = "Amine"
 
+class Lysine:
+    def __init__(self):
+        self.name = "Lysine"
+        self.sn = "Lys"
+        self.mw = 146.19
+        self.formula = "C6H14N2O2"
+        self.density = 1.28
+        self.prgmw = 72.1289
+        self.srgmw = 21.04122
+        self.trgmw = 45.01744
+        self.comp = (self.prgmw,self.srgmw,self.trgmw)
+        self.mass = self.mw
+        self.prgk = 1
+        self.srgk = 1
+        self.trgk = 0
+        self.crgk = 0
+        self.prgID = "NH₂"
+        self.srgID = "NH₂"
+        self.trgID = "COOH"
+
+
 #---------------------------------------------------------Acids------------------------------------------------#
 
 class Adipic_Acid:
@@ -292,10 +312,17 @@ class Isostearic_Acid:
         self.prgmw = 284.48
         self.srgmw = 0
         self.density = 0.93
-        self.prg = Carboxyl
         self.mass = self.mw
-        self.comp = self.prg
+        self.comp = self.prgmw
         self.numgroups = 1
+        self.mass = self.mw
+        self.prgk = 1
+        self.srgk = 0
+        self.trgk = 0
+        self.crgk = 0
+        self.prgID = "COOH"
+        self.srgID = "None"
+        self.trgID = "None"
 
 class PAA:
     def __init__(self):
@@ -339,9 +366,8 @@ class C181:
         self.prgmw = 282.47
         self.srgmw = 0
         self.density = 0.895
-        self.prg = Carboxyl
         self.mass = self.mw
-        self.comp = self.prg
+        self.comp = self.prgmw
         self.rg = "Acid"
         self.prgk = 1
         self.srgk = 0
@@ -387,52 +413,12 @@ class Epichlorohydrin:
         self.srgmw = 0
         self.comp = self.prgmw
         self.numgroups = 1
+        self.prgID = "COC"
+        self.srgID = "Cl"
 
-#-------------------------------Functional Groups--------------------------------#
+Reactants = [x for x in dir(Database) if isclass(getattr(Database, x))]
 
-class P_Hydroxyl:
-    def __init__(self):
-        self.name = "P-Hydroxyl"
-        self.OH = 1
-        self.wt = 17.007
-        self.rxn = (Carboxyl, Epoxide, self)
 
-class S_Hydroxyl:
-    def __init__(self):
-        self.name = "P-Hydroxyl"
-        self.OH = 1
-        self.wt = 17.007
-        self.rxn = (Carboxyl, Epoxide)
-
-class Carboxyl:
-    def __init__(self):
-        self.name = "Carbonyl"
-        self.COOH = 1
-        self.rxn = (P_Hydroxyl, S_Hydroxyl, Epoxide, P_Amine)
-
-class P_Amine:
-    def __init__(self):
-        self.name = "Carbonyl"
-        self.rxn = (Epoxide, Carboxyl)
-
-class S_Amine:
-    def __init__(self):
-        self.name = "Carbonyl"
-        self.rxn = (Epichlorohydrin, Carboxyl)
-
-class Epoxide:
-    def __init__(self):
-        self.name = "Epoxide"
-        self.rxn = (P_Hydroxyl, S_Hydroxyl, P_Amine, S_Amine, Carboxyl)
-
-class Ester:
-    def __init__(self):
-        self.name = "Ester"
-        self.rxn = P_Amine
-
-class Amide:
-    def __init__(self):
-        self.name = "Amide"
 
 
 
