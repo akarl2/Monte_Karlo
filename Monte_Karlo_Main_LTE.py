@@ -367,7 +367,7 @@ class RxnEntryTable(tkinter.Frame):
         self.tablewidth = 12
         self.tableheight = 15
         self.entries = None
-        self.grid(row=5, column=3)
+        self.grid(row=5, column=2)
         self.create_table()
 
     def create_table(self):
@@ -377,7 +377,7 @@ class RxnEntryTable(tkinter.Frame):
             for column in range(self.tablewidth):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                self.entries[counter].insert(0, str(counter))
+                #self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=18)
                 counter += 1
         self.tabel_labels()
@@ -442,18 +442,35 @@ class RxnEntryTable(tkinter.Frame):
             row = row + 1
             index = index + 1
 
-    def update_table(self):
-        cell = 14
-        index = 0
-        for species in range(self.tableheight-1):
-            if self.entries[cell-2].get() != "":
-                a = str_to_class(Entry_Reactants[index].get())()
-                molesA = float(Entry_masses[index].get()) / float(a.mw)
-                self.entries[cell].delete(0, tkinter.END)
-                self.entries[cell].insert(0, str(round(molesA,4)))
-            cell = cell + self.tablewidth
-            index = index + 1
+    def update_table(self, index,cell):
+        print(cell, index)
+        if self.entries[cell-2].get() != "" and self.entries[cell-1].get() != "":
+            a = str_to_class(Entry_Reactants[index].get())()
+            molesA = float(Entry_masses[index].get()) / float(a.mw)
+            self.entries[cell].delete(0, tkinter.END)
+            self.entries[cell].insert(0, str(round(molesA, 4)))
 
+
+    def update_rates(self, index, cell):
+                a = str_to_class(Entry_Reactants[index].get())()
+                self.entries[cell+1].delete(0, tkinter.END)
+                self.entries[cell+1].insert(0, str(a.prgID))
+                self.entries[cell+2].delete(0, tkinter.END)
+                self.entries[cell+2].insert(0, str(a.prgk))
+                self.entries[cell+3].delete(0, tkinter.END)
+                self.entries[cell+3].insert(0, str(a.crgk))
+                self.entries[cell+4].delete(0, tkinter.END)
+                self.entries[cell+4].insert(0, str(a.srgID))
+                self.entries[cell+5].delete(0, tkinter.END)
+                self.entries[cell+5].insert(0, str(a.srgk))
+                self.entries[cell+6].delete(0, tkinter.END)
+                self.entries[cell+6].insert(0, str(a.crgk))
+                self.entries[cell+7].delete(0, tkinter.END)
+                self.entries[cell+7].insert(0, str(a.trgID))
+                self.entries[cell+8].delete(0, tkinter.END)
+                self.entries[cell+8].insert(0, str(a.trgk))
+                self.entries[cell+9].delete(0, tkinter.END)
+                self.entries[cell+9].insert(0, str(a.crgk))
 
 global RXN_Type, RXN_Samples, RXN_EOR
 class RxnDetails(tkinter.Frame):
@@ -522,7 +539,7 @@ class RxnMetrics(tkinter.Frame):
             for row in range(self.tableheight):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                #self.entries[counter].insert(0, str(counter))
+                self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=18)
                 counter += 1
         self.table_labels()
@@ -634,20 +651,57 @@ class SimStatus(tkinter.Frame):
         self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate")
         self.progress.grid(row=0, column=1)
 
-
-
 RET = RxnEntryTable()
 RD = RxnDetails()
 RM = RxnMetrics()
 Buttons = Buttons()
 sim = SimStatus()
 
+#run update_table if user changes value in RET
+Entry_Reactants[0].trace("w", lambda *args, index=0, cell=14: RET.update_table(index, cell))
+Entry_Reactants[1].trace("w", lambda *args, index=1, cell=14 + 12: RET.update_table(index, cell))
+Entry_Reactants[2].trace("w", lambda *args, index=2, cell=26 + 12: RET.update_table(index, cell))
+Entry_Reactants[3].trace("w", lambda *args, index=3, cell=38 + 12: RET.update_table(index, cell))
+Entry_Reactants[4].trace("w", lambda *args, index=4, cell=50 + 12: RET.update_table(index, cell))
+Entry_Reactants[5].trace("w", lambda *args, index=5, cell=62 + 12: RET.update_table(index, cell))
+Entry_Reactants[6].trace("w", lambda *args, index=6, cell=74 + 12: RET.update_table(index, cell))
+Entry_Reactants[7].trace("w", lambda *args, index=7, cell=86 + 12: RET.update_table(index, cell))
+Entry_Reactants[8].trace("w", lambda *args, index=8, cell=98 + 12: RET.update_table(index, cell))
+Entry_Reactants[9].trace("w", lambda *args, index=9, cell=110 + 12: RET.update_table(index, cell))
+Entry_Reactants[10].trace("w", lambda *args, index=10, cell=122 + 12: RET.update_table(index, cell))
+Entry_Reactants[11].trace("w", lambda *args, index=11, cell=134 + 12: RET.update_table(index, cell))
+Entry_Reactants[12].trace("w", lambda *args, index=12, cell=146 + 12: RET.update_table(index, cell))
+Entry_Reactants[13].trace("w", lambda *args, index=13, cell=158 + 12: RET.update_table(index, cell))
 
-Entry_Reactants[0].trace("w", lambda name, index, mode, sv=Entry_Reactants[0]: RET.update_table())
-Entry_Reactants[1].trace("w", lambda name, index, mode, sv=Entry_Reactants[1]: RET.update_table())
-Entry_masses[0].bind("<KeyRelease>", lambda event: RET.update_table())
-Entry_masses[1].bind("<KeyRelease>", lambda event: RET.update_table())
+Entry_masses[0].bind("<KeyRelease>", lambda *args, index=0, cell=14: RET.update_table(index, cell))
+Entry_masses[1].bind("<KeyRelease>", lambda *args, index=1, cell=14 + 12: RET.update_table(index, cell))
+Entry_masses[2].bind("<KeyRelease>", lambda *args, index=2, cell=26 + 12: RET.update_table(index, cell))
+Entry_masses[3].bind("<KeyRelease>", lambda *args, index=3, cell=38 + 12: RET.update_table(index, cell))
+Entry_masses[4].bind("<KeyRelease>", lambda *args, index=4, cell=50 + 12: RET.update_table(index, cell))
+Entry_masses[5].bind("<KeyRelease>", lambda *args, index=5, cell=62 + 12: RET.update_table(index, cell))
+Entry_masses[6].bind("<KeyRelease>", lambda *args, index=6, cell=74 + 12: RET.update_table(index, cell))
+Entry_masses[7].bind("<KeyRelease>", lambda *args, index=7, cell=86 + 12: RET.update_table(index, cell))
+Entry_masses[8].bind("<KeyRelease>", lambda *args, index=8, cell=98 + 12: RET.update_table(index, cell))
+Entry_masses[9].bind("<KeyRelease>", lambda *args, index=9, cell=110 + 12: RET.update_table(index, cell))
+Entry_masses[10].bind("<KeyRelease>", lambda *args, index=10, cell=122 + 12: RET.update_table(index, cell))
+Entry_masses[11].bind("<KeyRelease>", lambda *args, index=11, cell=134 + 12: RET.update_table(index, cell))
+Entry_masses[12].bind("<KeyRelease>", lambda *args, index=12, cell=146 + 12: RET.update_table(index, cell))
+Entry_masses[13].bind("<KeyRelease>", lambda *args, index=13, cell=158 + 12: RET.update_table(index, cell))
 
+Entry_Reactants[0].trace("w", lambda *args, index=0, cell=14: RET.update_rates(index, cell))
+Entry_Reactants[1].trace("w", lambda *args, index=1, cell=14 + 12: RET.update_rates(index, cell))
+Entry_Reactants[2].trace("w", lambda *args, index=2, cell=26 + 12: RET.update_rates(index, cell))
+Entry_Reactants[3].trace("w", lambda *args, index=3, cell=38 + 12: RET.update_rates(index, cell))
+Entry_Reactants[4].trace("w", lambda *args, index=4, cell=50 + 12: RET.update_rates(index, cell))
+Entry_Reactants[5].trace("w", lambda *args, index=5, cell=62 + 12: RET.update_rates(index, cell))
+Entry_Reactants[6].trace("w", lambda *args, index=6, cell=74 + 12: RET.update_rates(index, cell))
+Entry_Reactants[7].trace("w", lambda *args, index=7, cell=86 + 12: RET.update_rates(index, cell))
+Entry_Reactants[8].trace("w", lambda *args, index=8, cell=98 + 12: RET.update_rates(index, cell))
+Entry_Reactants[9].trace("w", lambda *args, index=9, cell=110 + 12: RET.update_rates(index, cell))
+Entry_Reactants[10].trace("w", lambda *args, index=10, cell=122 + 12: RET.update_rates(index, cell))
+Entry_Reactants[11].trace("w", lambda *args, index=11, cell=134 + 12: RET.update_rates(index, cell))
+Entry_Reactants[12].trace("w", lambda *args, index=12, cell=146 + 12: RET.update_rates(index, cell))
+Entry_Reactants[13].trace("w", lambda *args, index=13, cell=158 + 12: RET.update_rates(index, cell))
 
 
 

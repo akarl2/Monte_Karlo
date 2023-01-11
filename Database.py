@@ -35,6 +35,10 @@ class Glycerol:
         self.prgk = 1
         self.srgk = 1
         self.crgk = 0
+        self.trgk = 0
+        self.prgID = "OH"
+        self.srgID = "OH"
+        self.trgID = "None"
 
 class PPG425:
     def __init__(self):
@@ -196,6 +200,10 @@ class DETA:
         self.prgk = 1
         self.srgk = 0
         self.crgk = 0
+        self.trgk = 0
+        self.prgID = "NH₂"
+        self.srgID = "NH"
+        self.trgID = "None"
 
 class LTETA:
     def __init__(self):
@@ -238,6 +246,13 @@ class DEA:
         self.mass = self.mw
         self.rg = "Amine"
         self.numgroups = len(set(self.comp))
+        self.prgk = 1
+        self.srgk = 0.5
+        self.crgk = 0
+        self.trgk = 0
+        self.prgID = "NH₂"
+        self.srgID = "OH"
+        self.trgID = "None"
 
 class Lysinol:
     def __init__(self):
@@ -328,6 +343,13 @@ class C181:
         self.mass = self.mw
         self.comp = self.prg
         self.rg = "Acid"
+        self.prgk = 1
+        self.srgk = 0
+        self.crgk = 0
+        self.trgk = 0
+        self.prgID = "COOH"
+        self.srgID = "None"
+        self.trgID = "None"
 
 
 #-------------------------------------Other--------------------------------------#
