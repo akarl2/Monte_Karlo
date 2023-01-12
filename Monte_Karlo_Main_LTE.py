@@ -468,6 +468,7 @@ class RxnEntryTable(tkinter.Frame):
             self.entries[cell].delete(0, tkinter.END)
             self.entries[cell].insert(0, str(round(molesA, 4)))
 
+
     def update_rates(self, index, cell):
         a = str_to_class(Entry_Reactants[index].get())()
         self.entries[cell+1].delete(0, tkinter.END)
