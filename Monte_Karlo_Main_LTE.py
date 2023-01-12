@@ -467,14 +467,17 @@ class RxnEntryTable(tkinter.Frame):
             index = index + 1
 
         # make all possible combinations of 2 items in reactantID_list seperated by an underscore
-        reactantID_list_combinations = []
+        reactant_combinations = []
+        reactant_combinations_for = []
         for i in range(len(reactantID_list)):
             for j in range(i + 1, len(reactantID_list)):
-                reactantID_list_combinations.append(f'{reactantID_list[i]}_{reactantID_list[j]}')
-        reactantID_list_combinations = [x for x in reactantID_list_combinations if x.split('_')[0].split(',')[0] != x.split('_')[1].split(',')[0]]
-        reactantID_list_combinations = [x for x in reactantID_list_combinations if x.split('_')[0].split(',')[1] != x.split('_')[1].split(',')[1]]
-        print(reactantID_list_combinations)
+                reactant_combinations.append(f'{reactantID_list[i]}_{reactantID_list[j]}')
+                reactant_combinations_for.append(f'{reactantID_list[i]}_{reactantID_list[j]}')
 
+        reactant_combinations = [x for x in reactant_combinations if x.split('_')[0].split(',')[0].split("(")[1].split("'")[1] != x.split('_')[1].split(',')[0].split("(")[1].split("'")[1]]
+        reactant_combinations = [x for x in reactant_combinations if x.split('_')[0].split(',')[1].split(" ")[1].split("'")[1] != x.split('_')[1].split(',')[1].split(" ")[1].split("'")[1]]
+        reactant_combinations = [x for x in reactant_combinations if float(x.split('_')[0].split(',')[2].split(")")[0].split(" ")[1].split("'")[1]) != 0 and float(x.split('_')[1].split(',')[2].split(")")[0].split(" ")[1].split("'")[1]) != 0]
+        print(reactant_combinations)
 
     def update_table(self, index, cell):
         if self.entries[cell-2].get() != "" and self.entries[cell-1].get() != "":
