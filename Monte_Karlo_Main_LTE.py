@@ -1,5 +1,18 @@
-
-from Module_Imports import *
+import collections
+import random
+import sys
+import tkinter
+from tkinter import ttk, messagebox
+import pandas
+from ttkwidgets.autocomplete import AutocompleteEntry, AutocompleteCombobox
+from Database import *
+from Reactions import *
+import itertools
+from pandastable import Table, TableModel, config
+import statsmodels
+import math
+from Reactants import *
+from Reactants import R1Data
 
 # Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
@@ -360,6 +373,11 @@ window.title("Monte Karlo")
 window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
 window.configure(background="#00BFFF")
 
+Entry_Reactants = ['R1Reactant', 'R2Reactant', 'R3Reactant', 'R4Reactant', 'R5Reactant', 'R6Reactant', 'R7Reactant', 'R8Reactant', 'R9Reactant', 'R10Reactant', 'R11Reactant', 'R12Reactant', 'R13Reactant', 'R14Reactant']
+Entry_masses = ['R1mass', 'R2mass', 'R3mass', 'R4mass', 'R5mass', 'R6mass', 'R7mass', 'R8mass', 'R9mass', 'R10mass', 'R11mass', 'R12mass', 'R13mass', 'R14mass']
+RDE = ['R1Data', 'R2Data', 'R3Data', 'R4Data', 'R5Data', 'R6Data', 'R7Data', 'R8Data', 'R9Data', 'R10Data', 'R11Data', 'R12Data', 'R13Data', 'R14Data']
+
+
 global massA1, massB1, A1reactant, B1reactant
 class RxnEntryTable(tkinter.Frame):
     def __init__(self, master=window):
@@ -442,51 +460,13 @@ class RxnEntryTable(tkinter.Frame):
             row = row + 1
             index = index + 1
 
-    def get_reactants(self):
-        index = 0
-        cell = 12
-        reactantID_list = []
-        reactantID_list_string = []
-        for i in range(self.tableheight - 1):
-            if self.entries[cell].get() != "":
-                a = str_to_class(Entry_Reactants[index].get())()
-                reactantID_list.append((a.sn, a.prgID, self.entries[cell+4].get()))
-                if self.entries[cell + 6].get() != "None":
-                    a = str_to_class(self.entries[cell].get())()
-                    reactantID_list.append((a.sn, a.srgID, self.entries[cell+7].get()))
-                    if self.entries[cell + 9].get() != "None":
-                        a = str_to_class(self.entries[cell].get())()
-                        reactantID_list.append((a.sn, a.trgID,self.entries[cell+10].get()))
-                    else:
-                        pass
-                else:
-                    pass
-            else:
-                pass
-            cell = cell + self.tablewidth
-            index = index + 1
-
-        # make all possible combinations of 2 items in reactantID_list seperated by an underscore
-        reactant_combinations = []
-        reactant_combinations_for = []
-        for i in range(len(reactantID_list)):
-            for j in range(i + 1, len(reactantID_list)):
-                reactant_combinations.append(f'{reactantID_list[i]}_{reactantID_list[j]}')
-                reactant_combinations_for.append(f'{reactantID_list[i]}_{reactantID_list[j]}')
-
-        reactant_combinations = [x for x in reactant_combinations if x.split('_')[0].split(',')[0].split("(")[1].split("'")[1] != x.split('_')[1].split(',')[0].split("(")[1].split("'")[1]]
-        reactant_combinations = [x for x in reactant_combinations if x.split('_')[0].split(',')[1].split(" ")[1].split("'")[1] != x.split('_')[1].split(',')[1].split(" ")[1].split("'")[1]]
-        reactant_combinations = [x for x in reactant_combinations if float(x.split('_')[0].split(',')[2].split(")")[0].split(" ")[1].split("'")[1]) != 0 and float(x.split('_')[1].split(',')[2].split(")")[0].split(" ")[1].split("'")[1]) != 0]
-        print(reactant_combinations)
-
     def update_table(self, index, cell):
         if self.entries[cell-2].get() != "" and self.entries[cell-1].get() != "":
             a = str_to_class(Entry_Reactants[index].get())()
-            print(a)
             molesA = float(Entry_masses[index].get()) / float(a.mw)
+            str_to_class(RDE[index]).assign(name=a, mass=Entry_masses[index].get(), moles=round(molesA,4))
             self.entries[cell].delete(0, tkinter.END)
             self.entries[cell].insert(0, str(round(molesA, 4)))
-
 
     def update_rates(self, index, cell):
         a = str_to_class(Entry_Reactants[index].get())()
@@ -688,17 +668,14 @@ class SimStatus(tkinter.Frame):
         self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate")
         self.progress.grid(row=0, column=1)
 
-#Create a list with Entry_reactants and their corresponding prgID
-
-
 RET = RxnEntryTable()
 RD = RxnDetails()
 RM = RxnMetrics()
 Buttons = Buttons()
 sim = SimStatus()
+R1Data = R1Data()
 
-# Run RET.get_reactants() when pressing enter
-window.bind("<Return>", lambda event: RET.get_reactants())
+
 
 #run update_table if user changes value in RET
 Entry_Reactants[0].trace("w", lambda *args, index=0, cell=14: RET.update_table(index, cell))
