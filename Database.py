@@ -201,13 +201,18 @@ class DETA:
         self.mass = self.mw
         self.rg = "Amine"
         self.numgroups = len(set(self.comp))
-        self.prgk = 1
-        self.srgk = 0
-        self.crgk = 0
-        self.trgk = 0
         self.prgID = "NH₂"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
         self.srgID = "NH"
+        self.srgk = 0
+        self.csrgID = "N"
+        self.csrgk = 0
         self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
 
 class LTETA:
     def __init__(self):
