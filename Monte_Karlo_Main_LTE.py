@@ -357,6 +357,13 @@ def stop():
     else:
         pass
 
+def check_entry(entry):
+    RET.entries[entry].get()
+    if RET.entries[entry].get() not in Reactants and RET.entries[entry].get() != "":
+        RET.entries[entry].delete(0, 'end')
+        messagebox.showerror("Error", "Please enter a valid reactant")
+
+
 def sim_values():
     cell = 15
     index = 0
@@ -367,6 +374,7 @@ def sim_values():
             index = index + 1
         else:
             break
+    print(R1Data.name,R2Data.name,R3Data.name,R4Data.name)
     # try:
     #     simulate(a=A1reactant.get(), b=B1reactant.get(), rt=RXN_Type.get(), samples=RXN_Samples.get(), eor=RXN_EOR.get(),
     #              a_mass=massA1.get(), b_mass=massB1.get(), prgk=RET.entries[24].get(), srgk=RET.entries[34].get(), crgk=RET.entries[29].get(),
@@ -487,7 +495,6 @@ class RxnEntryTable(tkinter.Frame):
                 molesA = float(Entry_masses[index].get()) / float(a.mw)
                 self.entries[cell+2].delete(0, tkinter.END)
                 self.entries[cell+2].insert(0, str(round(molesA, 4)))
-
 
     def update_rates(self, index, cell):
         if self.entries[cell].get() != "Clear":
@@ -703,6 +710,9 @@ Buttons = Buttons()
 sim = SimStatus()
 
 #run update_table if user changes value in RET
+
+RET.entries[15].bind('<FocusOut>', lambda *args, entry=15: check_entry(entry))
+
 Entry_Reactants[0].trace("w", lambda *args, index=0, cell=15: RET.update_table(index, cell))
 Entry_Reactants[1].trace("w", lambda *args, index=1, cell=30: RET.update_table(index, cell))
 Entry_Reactants[2].trace("w", lambda *args, index=2, cell=45: RET.update_table(index, cell))
@@ -733,7 +743,7 @@ Entry_masses[11].bind("<KeyRelease>", lambda *args, index=11, cell=180: RET.upda
 Entry_masses[12].bind("<KeyRelease>", lambda *args, index=12, cell=195: RET.update_table(index, cell))
 Entry_masses[13].bind("<KeyRelease>", lambda *args, index=13, cell=210: RET.update_table(index, cell))
 
-Entry_Reactants[0].trace("w", lambda *args, index=0, cell=15: RET.update_rates(index, cell))
+#Entry_Reactants[0].trace("w", lambda *args, index=0, cell=15: RET.update_rates(index, cell))
 Entry_Reactants[1].trace("w", lambda *args, index=1, cell=30: RET.update_rates(index, cell))
 Entry_Reactants[2].trace("w", lambda *args, index=2, cell=45: RET.update_rates(index, cell))
 Entry_Reactants[3].trace("w", lambda *args, index=3, cell=60: RET.update_rates(index, cell))
@@ -747,6 +757,8 @@ Entry_Reactants[10].trace("w", lambda *args, index=10, cell=165: RET.update_rate
 Entry_Reactants[11].trace("w", lambda *args, index=11, cell=180: RET.update_rates(index, cell))
 Entry_Reactants[12].trace("w", lambda *args, index=12, cell=195: RET.update_rates(index, cell))
 Entry_Reactants[13].trace("w", lambda *args, index=13, cell=210: RET.update_rates(index, cell))
+
+
 
 R1Data = R1Data()
 R2Data = R2Data()
@@ -762,9 +774,6 @@ R11Data = R11Data()
 R12Data = R12Data()
 R13Data = R13Data()
 R14Data = R14Data()
-
-
-
 
 
 window.mainloop()

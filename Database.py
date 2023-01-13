@@ -227,13 +227,18 @@ class LTETA:
         self.mass = self.mw
         self.rg = "Amine"
         self.numgroups = len(set(self.comp))
-        self.prgk = 1
-        self.srgk = 0
-        self.crgk = 0
-        self.trgk = 0
         self.prgID = "NH₂"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
         self.srgID = "NH"
-        self.trgID = "None"
+        self.srgk = 0
+        self.csrgID = "N"
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
 
 
 class DEA:
@@ -250,13 +255,18 @@ class DEA:
         self.mass = self.mw
         self.rg = "Amine"
         self.numgroups = len(set(self.comp))
-        self.prgk = 1
-        self.srgk = 0.5
-        self.crgk = 0
-        self.trgk = 0
         self.prgID = "NH₂"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
         self.srgID = "OH"
-        self.trgID = "None"
+        self.srgk = 0
+        self.csrgID = "O"
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
 
 class Lysinol:
     def __init__(self):
@@ -321,13 +331,18 @@ class Isostearic_Acid:
         self.comp = self.prgmw
         self.numgroups = 1
         self.mass = self.mw
-        self.prgk = 1
-        self.srgk = 0
-        self.trgk = 0
-        self.crgk = 0
         self.prgID = "COOH"
-        self.srgID = "None"
-        self.trgID = "None"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
 
 class PAA:
     def __init__(self):
@@ -374,13 +389,19 @@ class C181:
         self.mass = self.mw
         self.comp = self.prgmw
         self.rg = "Acid"
-        self.prgk = 1
-        self.srgk = 0
-        self.crgk = 0
-        self.trgk = 0
+        self.mass = self.mw
         self.prgID = "COOH"
-        self.srgID = "None"
-        self.trgID = "None"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
 
 
 #-------------------------------------Other--------------------------------------#
