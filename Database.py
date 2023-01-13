@@ -421,7 +421,12 @@ class Epichlorohydrin:
         self.prgID = "COC"
         self.srgID = "Cl"
 
+class Clear:
+    def __init__(self):
+        self.name = "Clear"
+
 Reactants = [x for x in dir(Database) if isclass(getattr(Database, x))]
+
 
 
 
