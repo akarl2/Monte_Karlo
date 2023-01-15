@@ -202,22 +202,16 @@ class DETA:
         self.rg = "Amine"
         self.numgroups = len(set(self.comp))
         self.prgID = "NH₂"
-        self.Nprg = 2
         self.prgk = 1
         self.cprgID = "NH"
-        self.Ncprg = 0
         self.cprgk = 0
         self.srgID = "NH"
-        self.Nsrg = 1
         self.srgk = 0
         self.csrgID = "N"
-        self.Ncsrg = 0
         self.csrgk = 0
         self.trgID = None
-        self.Ntrg = 0
         self.trgk = 0
         self.ctrgID = None
-        self.Nctrg = 0
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.srgID], [self.prgID]]
 
@@ -274,7 +268,7 @@ class DEA:
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
-        self.dist = [[self.prgID, self.srgID, self.prgID]]
+        self.dist = [[self.prgID], [self.srgID], [self.prgID]]
 
 class Lysinol:
     def __init__(self):
@@ -337,19 +331,7 @@ class Isostearic_Acid:
         self.density = 0.93
         self.mass = self.mw
         self.comp = self.prgmw
-        self.numgroups = 1
-        self.mass = self.mw
-        self.name = "C181"
-        self.sn = "C181"
-        self.formula = "C18H34O2"
-        self.mw = 282.47
-        self.prgmw = 282.47
-        self.srgmw = 0
         self.density = 0.895
-        self.mass = self.mw
-        self.comp = self.prgmw
-        self.rg = "Acid"
-        self.mass = self.mw
         self.prgID = "COOH"
         self.prgk = 1
         self.cprgID = None

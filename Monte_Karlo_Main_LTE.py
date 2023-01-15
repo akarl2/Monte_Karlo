@@ -367,6 +367,10 @@ def sim_values():
             index = index + 1
         else:
             break
+    print(R1Data.comp)
+    print(R2Data.comp)
+    print(R3Data.comp)
+    print(R4Data.comp)
     # try:
     #     simulate(a=A1reactant.get(), b=B1reactant.get(), rt=RXN_Type.get(), samples=RXN_Samples.get(), eor=RXN_EOR.get(),
     #              a_mass=massA1.get(), b_mass=massB1.get(), prgk=RET.entries[24].get(), srgk=RET.entries[34].get(), crgk=RET.entries[29].get(),
