@@ -1,8 +1,9 @@
 class R1Data:
     def __init__(self):
+        self.dist = None
+        self.sn = None
         self.comp = None
         self.mw = None
-        self.sw = None
         self.name = None
         self.species = None
         self.mass = None
@@ -33,33 +34,23 @@ class R1Data:
         self.mw = name.mw
         self.mass = mass
         self.moles = moles
-        self.prgID = prgID
-        self.Nprg = name.Nprg
-        self.prgk = float(prgk)
-        self.cprgID = cprgID
-        self.Ncprg = name.Ncprg
-        self.cprgk = float(cprgk)
-        self.srgID = srgID
-        self.Nsrg = name.Nsrg
-        self.srgk = float(srgk)
-        self.csrgID = csrgID
-        self.Ncsrg = name.Ncsrg
-        self.csrgk = float(csrgk)
-        self.trgID = trgID
-        self.Ntrg = name.Ntrg
-        self.trgk = float(trgk)
-        self.ctrgID = ctrgID
-        self.Nctrg = name.Nctrg
-        self.ctrgk = float(ctrgk)
-        self.comp = [[[self.prgID, self.Nprg, self.prgk], [self.cprgID, self.Ncprg, self.cprgk], [self.srgID, self.Nsrg, self.srgk],
-                      [self.csrgID, self.Ncsrg, self.csrgk], [self.trgID, self.Ntrg, self.trgk], [self.ctrgID, self.Nctrg, self.ctrgk]], [self.mw], [[self.sn, 1]]]
-        #remove none and 0 from list
-        for i in range(len(self.comp[0]) - 1, -1, -1):
-            if self.comp[0][i][0] == "None":
-                self.comp[0].pop(i)
-        for i in range(len(self.comp[0]) - 1, -1, -1):
-            if self.comp[0][i][2] == 0:
-                self.comp[0].pop(i)
+        self.prgID = [prgID, float(prgk)]
+        self.cprgID =[cprgID, float(cprgk)]
+        self.srgID = [srgID, float(srgk)]
+        self.csrgID = [csrgID, float(csrgk)]
+        self.trgID = [trgID, float(trgk)]
+        self.ctrgID = [ctrgID, float(ctrgk)]
+        self.dist = name.dist
+        self.comp = [self.dist, [self.mw], [[self.sn, 1]]]
+
+        for i in range(len(self.dist[0])):
+            print(self.comp[0][i][0])
+            if self.comp[0][i][0] == self.prgID[0]:
+                self.comp[0][i] = self.prgID
+            if self.comp[0][i][0] == self.srgID[0]:
+                self.comp[0][i] = self.srgID
+            if self.comp[0][i][0] == self.trgID[0]:
+                self.comp[0][i] = self.trgID
         print(self.comp)
 
 class R2Data:

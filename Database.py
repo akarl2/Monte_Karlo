@@ -263,23 +263,18 @@ class DEA:
         self.rg = "Amine"
         self.numgroups = len(set(self.comp))
         self.prgID = "NH₂"
-        self.Nprg = 2
         self.prgk = 1
         self.cprgID = "NH"
-        self.Ncprg = 0
         self.cprgk = 0
         self.srgID = "OH"
-        self.Nsrg = 1
         self.srgk = 0
-        self.csrgID = None
-        self.Ncsrg = 0
+        self.csrgID = "O"
         self.csrgk = 0
         self.trgID = None
-        self.Ntrg = 0
         self.trgk = 0
         self.ctrgID = None
-        self.Nctrg = 0
         self.ctrgk = 0
+        self.dist = [[self.prgID, self.srgID, self.prgID]]
 
 class Lysinol:
     def __init__(self):
@@ -356,23 +351,18 @@ class Isostearic_Acid:
         self.rg = "Acid"
         self.mass = self.mw
         self.prgID = "COOH"
-        self.Nprg = 1
         self.prgk = 1
         self.cprgID = None
-        self.Ncprg = 0
         self.cprgk = 0
         self.srgID = None
-        self.Nsrg = 0
         self.srgk = 0
         self.csrgID = None
-        self.Ncsrg = 0
         self.csrgk = 0
         self.trgID = None
-        self.Ntrg = 0
         self.trgk = 0
         self.ctrgID = None
-        self.Nctrg = 0
         self.ctrgk = 0
+        self.dist = [[self.prgID]]
 
 class PAA:
     def __init__(self):
