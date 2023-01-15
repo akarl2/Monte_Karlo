@@ -219,6 +219,7 @@ class DETA:
         self.ctrgID = None
         self.Nctrg = 0
         self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID], [self.prgID]]
 
 class LTETA:
     def __init__(self):
@@ -437,6 +438,7 @@ class C181:
         self.ctrgID = None
         self.Nctrg = 0
         self.ctrgk = 0
+        self.dist = [[self.prgID]]
 
 
 #-------------------------------------Other--------------------------------------#
