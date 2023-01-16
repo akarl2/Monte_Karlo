@@ -42,8 +42,7 @@ class R1Data:
         self.trgID = [trgID, float(trgk)]
         self.ctrgID = [ctrgID, float(ctrgk)]
         self.dist = name.dist
-        self.ct = int(ct)
-
+        self.ct = int(self.moles * int(ct))
         index = 0
         for i in self.dist:
             if self.dist[index][0] == self.prgID[0]:
@@ -83,8 +82,9 @@ class R2Data:
         self.Ncsrg = None
         self.Ntrg = None
         self.Nctrg = None
+        self.ct = None
 
-    def assign(self, name, mass, moles, prgID, prgk, cprgID, cprgk, srgID, srgk, csrgID, csrgk, trgID, trgk, ctrgID, ctrgk):
+    def assign(self, name, mass, moles, prgID, prgk, cprgID, cprgk, srgID, srgk, csrgID, csrgk, trgID, trgk, ctrgID, ctrgk, ct):
         self.name = name
         self.species = name.name
         self.sn = name.sn
@@ -98,6 +98,7 @@ class R2Data:
         self.trgID = [trgID, float(trgk)]
         self.ctrgID = [ctrgID, float(ctrgk)]
         self.dist = name.dist
+        self.ct = int(self.moles * int(ct))
         index = 0
         for i in self.dist:
             if self.dist[index][0] == self.prgID[0]:
@@ -107,7 +108,7 @@ class R2Data:
             if self.dist[index][0] == self.trgID[0]:
                 self.dist[index] = self.trgID
             index += 1
-        self.comp = [self.dist, [self.mw], [[self.sn, 1]]]
+        self.comp = [self.dist, [self.mw], [[self.sn, 1]], [self.ct]]
 
 class R3Data:
     def __init__(self):
@@ -137,8 +138,9 @@ class R3Data:
         self.Ncsrg = None
         self.Ntrg = None
         self.Nctrg = None
+        self.ct = None
 
-    def assign(self, name, mass, moles, prgID, prgk, cprgID, cprgk, srgID, srgk, csrgID, csrgk, trgID, trgk, ctrgID, ctrgk):
+    def assign(self, name, mass, moles, prgID, prgk, cprgID, cprgk, srgID, srgk, csrgID, csrgk, trgID, trgk, ctrgID, ctrgk, ct):
         self.name = name
         self.species = name.name
         self.sn = name.sn
@@ -152,6 +154,7 @@ class R3Data:
         self.trgID = [trgID, float(trgk)]
         self.ctrgID = [ctrgID, float(ctrgk)]
         self.dist = name.dist
+        self.ct = int(self.moles * int(ct))
         index = 0
         for i in self.dist:
             if self.dist[index][0] == self.prgID[0]:
@@ -161,7 +164,7 @@ class R3Data:
             if self.dist[index][0] == self.trgID[0]:
                 self.dist[index] = self.trgID
             index += 1
-        self.comp = [self.dist, [self.mw], [[self.sn, 1]]]
+        self.comp = [self.dist, [self.mw], [[self.sn, 1]], [self.ct]]
 
 class R4Data:
     def __init__(self):
@@ -191,8 +194,9 @@ class R4Data:
         self.Ncsrg = None
         self.Ntrg = None
         self.Nctrg = None
+        self.ct = None
 
-    def assign(self, name, mass, moles, prgID, prgk, cprgID, cprgk, srgID, srgk, csrgID, csrgk, trgID, trgk, ctrgID, ctrgk):
+    def assign(self, name, mass, moles, prgID, prgk, cprgID, cprgk, srgID, srgk, csrgID, csrgk, trgID, trgk, ctrgID, ctrgk, ct):
         self.name = name
         self.species = name.name
         self.sn = name.sn
@@ -206,6 +210,7 @@ class R4Data:
         self.trgID = [trgID, float(trgk)]
         self.ctrgID = [ctrgID, float(ctrgk)]
         self.dist = name.dist
+        self.ct = int(self.moles * int(ct))
         index = 0
         for i in self.dist:
             if self.dist[index][0] == self.prgID[0]:
@@ -215,7 +220,7 @@ class R4Data:
             if self.dist[index][0] == self.trgID[0]:
                 self.dist[index] = self.trgID
             index += 1
-        self.comp = [self.dist, [self.mw], [[self.sn, 1]]]
+        self.comp = [self.dist, [self.mw], [[self.sn, 1]], [self.ct]]
 
 class R5Data:
     def __init__(self):
