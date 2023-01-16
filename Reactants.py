@@ -26,8 +26,9 @@ class R1Data:
         self.Ncsrg = None
         self.Ntrg = None
         self.Nctrg = None
+        self.ct = None
 
-    def assign(self, name, mass, moles, prgID, prgk, cprgID, cprgk, srgID, srgk, csrgID, csrgk, trgID, trgk, ctrgID, ctrgk):
+    def assign(self, name, mass, moles, prgID, prgk, cprgID, cprgk, srgID, srgk, csrgID, csrgk, trgID, trgk, ctrgID, ctrgk, ct):
         self.name = name
         self.species = name.name
         self.sn = name.sn
@@ -41,6 +42,8 @@ class R1Data:
         self.trgID = [trgID, float(trgk)]
         self.ctrgID = [ctrgID, float(ctrgk)]
         self.dist = name.dist
+        self.ct = int(ct)
+
         index = 0
         for i in self.dist:
             if self.dist[index][0] == self.prgID[0]:
@@ -50,7 +53,7 @@ class R1Data:
             if self.dist[index][0] == self.trgID[0]:
                 self.dist[index] = self.trgID
             index += 1
-        self.comp = [self.dist, [self.mw], [[self.sn, 1]]]
+        self.comp = [self.dist, [self.mw], [[self.sn, 1]], [self.ct]]
 
 class R2Data:
     def __init__(self):

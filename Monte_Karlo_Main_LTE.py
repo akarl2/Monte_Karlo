@@ -362,7 +362,7 @@ def sim_values():
     index = 0
     for i in range(RET.tableheight-1):
         if RET.entries[cell].get() != "" and RET.entries[cell+1].get() != "":
-            str_to_class(RDE[index]).assign(name=str_to_class(Entry_Reactants[index].get())(), mass=Entry_masses[index].get(), moles=round(float(RET.entries[cell+2].get()), 4), prgID=RET.entries[cell+3].get(), prgk=RET.entries[cell+4].get(), cprgID=RET.entries[cell+5].get(), cprgk=RET.entries[cell+6].get(), srgID=RET.entries[cell+7].get(), srgk=RET.entries[cell+8].get(), csrgID=RET.entries[cell+9].get(), csrgk=RET.entries[cell+10].get(), trgID=RET.entries[cell+11].get(), trgk=RET.entries[cell+12].get(), ctrgID=RET.entries[cell+13].get(), ctrgk=RET.entries[cell+14].get())
+            str_to_class(RDE[index]).assign(name=str_to_class(Entry_Reactants[index].get())(), mass=Entry_masses[index].get(), moles=round(float(RET.entries[cell+2].get()), 4), prgID=RET.entries[cell+3].get(), prgk=RET.entries[cell+4].get(), cprgID=RET.entries[cell+5].get(), cprgk=RET.entries[cell+6].get(), srgID=RET.entries[cell+7].get(), srgk=RET.entries[cell+8].get(), csrgID=RET.entries[cell+9].get(), csrgk=RET.entries[cell+10].get(), trgID=RET.entries[cell+11].get(), trgk=RET.entries[cell+12].get(), ctrgID=RET.entries[cell+13].get(), ctrgk=RET.entries[cell+14].get(), ct=RXN_Samples.get())
             cell = cell + RET.tablewidth
             index = index + 1
         else:
