@@ -1,36 +1,22 @@
 import random
 
-list1 = [[['NH₂', 1.0], ['NH', 0.0], ['NH₂', 1.0]], [103.169], [['DETA', 1]], [1211]]
-list2 = [[['COOH', 1.0]], [282.47], [['C181', 1]], [442]]
+l1 = [[['NH₂', 1.0], ['NH', 0.0], ['NH₂', 1.0]], [103.169], [['DETA', 1]], [6058]]
+l2 = [[['NH₂', 1.0], ['OH', 0.0], ['NH₂', 1.0]], [105.14], [['DEA', 1]], [5944]]
+l3 = [[['COOH', 1.0]], [282.47], [['C181', 1]], [2212]]
+l4 = [[['COOH', 1.0]], [284.48], [['ISA', 1]], [2197]]
 
-NH2 = []
-COOH = []
 
-for i in list1[0]:
-    if i[0] == 'NH₂':
-        NH2.append(i + [list1[3]])
+last_value = l1[-1][0] # extract the last value, 6058
 
-for i in list2[0]:
-    if i[0] == 'COOH':
-        COOH.append(i + [list2[3]])
+result = []
+cv = 0
+for group in l1[0]:
 
-print(NH2)
-print(COOH)
+    weight = group[1]
+    cv = group[1] + weight
+    result.append(weight * last_value + cv)
 
-NH2_weighted = []
-COOH_weighted = []
+print(result)
 
-for i in NH2:
-    for _ in range(i[2]):
-        NH2_weighted.append(i[:2])
+#determine the with the largest value, multiply by the last value in the list by the weights.  group can be selected at random by using that value
 
-for i in COOH:
-    for _ in range(i[2]):
-        COOH_weighted.append(i[:2])
-
-random_NH2 = random.choices(NH2_weighted, weights=[i[1] for i in NH2_weighted])
-random_COOH = random.choices(COOH_weighted, weights=[i[1] for i in COOH_weighted])
-
-combined_list = [random_NH2[0], random_COOH[0]]
-
-print(combined_list)
