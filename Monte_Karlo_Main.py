@@ -109,6 +109,9 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
             indicesB = [i for i, x in enumerate(composition) if x == b.prgmw]
             weightsB = [weights[i] for i in indicesB]
             MCA = random.choices(list(enumerate(indicesA)), weights=weightsA, k=1)[0]
+            print(MCA)
+            print(indicesA)
+            print(list(enumerate(indicesA)))
             MCB = random.choices(list(enumerate(indicesB)), weights=weightsB, k=1)[0]
             composition[MCA[1]] = round(composition[MCA[1]] + composition[MCB[1]] - rt.wl, 3)
             composition.pop(MCB[1])
