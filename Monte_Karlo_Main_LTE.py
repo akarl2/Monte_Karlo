@@ -22,7 +22,16 @@ pandas.set_option('display.width', 100)
 # Runs the simulation
 global running, emo_a, results, frame, expanded_results
 running = False
-def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo):
+def simulate(starting_materials):
+
+    for index in starting_materials:
+        for group in index[0]:
+            print(index)
+            nv = group[1] * index[3][0]
+            print(group[1], index[3][0])
+    print(starting_materials)
+
+
     global running, emo_a, results, expanded_results
     sim.progress['value'] = 0
     a = str_to_class(a)()
@@ -360,17 +369,16 @@ def stop():
 def sim_values():
     cell = 15
     index = 0
+    starting_materials = []
     for i in range(RET.tableheight-1):
         if RET.entries[cell].get() != "" and RET.entries[cell+1].get() != "":
             str_to_class(RDE[index]).assign(name=str_to_class(Entry_Reactants[index].get())(), mass=Entry_masses[index].get(), moles=round(float(RET.entries[cell+2].get()), 4), prgID=RET.entries[cell+3].get(), prgk=RET.entries[cell+4].get(), cprgID=RET.entries[cell+5].get(), cprgk=RET.entries[cell+6].get(), srgID=RET.entries[cell+7].get(), srgk=RET.entries[cell+8].get(), csrgID=RET.entries[cell+9].get(), csrgk=RET.entries[cell+10].get(), trgID=RET.entries[cell+11].get(), trgk=RET.entries[cell+12].get(), ctrgID=RET.entries[cell+13].get(), ctrgk=RET.entries[cell+14].get(), ct=RXN_Samples.get())
             cell = cell + RET.tablewidth
+            starting_materials.append(str_to_class(RDE[index]).comp)
             index = index + 1
         else:
             break
-    print(R1Data.comp)
-    print(R2Data.comp)
-    print(R3Data.comp)
-    print(R4Data.comp)
+    simulate(starting_materials)
     # try:
     #     simulate(a=A1reactant.get(), b=B1reactant.get(), rt=RXN_Type.get(), samples=RXN_Samples.get(), eor=RXN_EOR.get(),
     #              a_mass=massA1.get(), b_mass=massB1.get(), prgk=RET.entries[24].get(), srgk=RET.entries[34].get(), crgk=RET.entries[29].get(),
