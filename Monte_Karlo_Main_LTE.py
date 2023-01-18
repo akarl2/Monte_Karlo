@@ -6,6 +6,7 @@ from tkinter import ttk, messagebox
 import pandas
 from ttkwidgets.autocomplete import AutocompleteEntry, AutocompleteCombobox
 from Database import *
+from Reactions import reactive_groups
 from Reactions import *
 import itertools
 from pandastable import Table, TableModel, config
@@ -22,32 +23,43 @@ pandas.set_option('display.width', 100)
 
 # Runs the simulation
 global running, emo_a, results, frame, expanded_results
-running = False
-global test
 def simulate(starting_materials):
-    starting_materials = [[[[group[0], group[1] * compound[3][0]] for group in compound[0]], compound[2], compound[3]] for compound in starting_materials]
-    weights = []
-    chemical = []
-    for i, chemicals in enumerate(starting_materials):
-        index = 0
-        for group in chemicals[0]:
-            chemical.append([i, index, group[0]])
-            weights.append(group[1])
-            index += 1
-    Groups = random.choices(chemical, weights, k=2)
-    while Groups[0][0] == Groups[1][0] or Groups[0][2] == Groups[1][2]:
-        Groups = random.choices(chemical, weights, k=2)
-    print(Groups)
+    composition = [[[[group[0], group[1] * compound[3][0]] for group in compound[0]], compound[2], compound[3]] for compound in starting_materials]
+    running = True
+    sim.progress['value'] = 0
 
-    print(starting_materials[Groups[0][0]][0][Groups[0][1]])
-    print(starting_materials[Groups[1][0]][0][Groups[1][1]])
+
+    while running:
+        weights = []
+        chemical = []
+        for i, chemicals in enumerate(composition):
+            index = 0
+            for group in chemicals[0]:
+                chemical.append([i, index, group[0]])
+                weights.append(group[1])
+                index += 1
+        Groups = random.choices(chemical, weights, k=2)
+        while Groups[0][0] == Groups[1][0] or Groups[0][2] == Groups[1][2]:
+            Groups = random.choices(chemical, weights, k=2)
+
+        for sublist in Groups:
+            if sublist:
+                reactive_group = sublist[2]
+                check_group = sublist[2]
+                if check_group in getattr(rg, reactive_group):
+                    print("{} found within the {} list".format(check_group, reactive_group))
+                else:
+                    print("{} not found within the {} list".format(check_group, reactive_group))
+            else:
+                print("sublist is empty")
+        print(Groups)
+        print(composition[Groups[0][0]][0][Groups[0][1]])
+        print(composition[Groups[1][0]][0][Groups[1][1]])
 
     # global running, emo_a, results, expanded_results
-    # sim.progress['value'] = 0
-    # rt = str_to_class(rt)()
     # eor = float(eor)
     # emr = float(emr)
-    # running = True
+
     # 
     # 
     # 
@@ -785,6 +797,9 @@ R11Data = R11Data()
 R12Data = R12Data()
 R13Data = R13Data()
 R14Data = R14Data()
+rg = reactive_groups()
+
+
 
 
 window.mainloop()
