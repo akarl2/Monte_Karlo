@@ -14,6 +14,7 @@ import math
 from Reactants import *
 from Reactants import R1Data, R2Data, R3Data, R4Data, R5Data, R6Data, R7Data, R8Data, R9Data, R10Data, R11Data, R12Data, R13Data, R14Data
 
+
 # Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
 pandas.set_option('display.max_rows', None)
@@ -22,14 +23,9 @@ pandas.set_option('display.width', 100)
 # Runs the simulation
 global running, emo_a, results, frame, expanded_results
 running = False
+global test
 def simulate(starting_materials):
-    for compound in starting_materials:
-        for group in compound[0]:
-            current_value = group[1]
-            factor = compound[3][0]
-        group[1] = current_value * factor
-
-    print(starting_materials)
+    starting_materials = [[[[group[0], group[1] * compound[3][0]] for group in compound[0]], compound[2], compound[3]] for compound in starting_materials]
     weights = []
     chemical = []
     for i, chemicals in enumerate(starting_materials):
@@ -45,282 +41,282 @@ def simulate(starting_materials):
     print(starting_materials[Groups[0][0]])
     print(starting_materials[Groups[1][0]])
 
-    global running, emo_a, results, expanded_results
-    sim.progress['value'] = 0
-    rt = str_to_class(rt)()
-    eor = float(eor)
-    emr = float(emr)
-    running = True
-
-
-
-    elif rt.name == PolyCondensation:
-        final_product_masses.update(
-            {f"{a.sn}({i})_{b.sn}({str(i)})": round(i * a.mw + i * b.mw - (i + i - 1) * rt.wl, 2) for i in
-             range(1, 1001)})
-        final_product_masses.update(
-            {f"{a.sn}({i - 1})_{b.sn}({str(i)})": round((i - 1) * a.mw + i * b.mw - (i + i - 2) * rt.wl, 1) for i in
-             range(2, 1001)})
-        final_product_masses.update(
-            {f"{a.sn}({i})_{b.sn}({str(i - 1)})": round(i * a.mw + (i - 1) * b.mw - (i + i - 2) * rt.wl, 1) for i in
-             range(2, 1001)})
-
-    # Creates a list with the ID's of the chain lengths
-    if rt.name == PolyCondensation:
-        cw = a.prgmw
-        cw2 = b.prgmw
-        chain_lengths_id = [((0, a.prgmw), a.rg), ((1, b.prgmw), b.rg)]
-        for chain_length in range(2, 100, 2):
-            cw = cw + b.mw - rt.wl
-            chain_lengths_id.append(((chain_length - 1, round(cw, 3)), b.rg))
-            cw = cw + a.mw - rt.wl
-            chain_lengths_id.append(((chain_length, round(cw, 3)), a.rg))
-            cw2 = cw2 + a.mw - rt.wl
-            chain_lengths_id.append(((chain_length, round(cw2, 3)), a.rg))
-            cw2 = cw2 + b.mw - rt.wl
-            chain_lengths_id.append(((chain_length, round(cw2, 3)), b.rg))
-
-    # Creates starting composition list
-    composition = []
-    try:
-        for i in range(0, int(a.mol)):
-            composition.extend(group for group in a.comp)
-    except TypeError:
-        for i in range(0, int(a.mol)):
-            composition.append(a.mw)
-    try:
-        for i in range(0, int(b.mol)):
-            composition.extend(group for group in b.comp)
-    except TypeError:
-        for i in range(0, int(b.mol)):
-            composition.append(b.mw)
-
-    # Reacts away b.mol until gone.
-    if rt.name != PolyCondensation:
-        weights = []
-        for group in composition:
-            if group == a.prgmw:
-                weights.append(int(prgK))
-            elif group == a.srgmw:
-                weights.append(int(srgK))
-            elif group == b.prgmw:
-                weights.append(1)
-            else:
-                weights.append(int(cgK))
-        indicesA = [i for i, x in enumerate(composition) if x == a.prgmw or x == a.srgmw or x != b.prgmw]
-        indicesB = [i for i, x in enumerate(composition) if x == b.prgmw]
-        while len(indicesA) > 1 and len(indicesB) > 1 and running is True:
-            indicesA = [i for i, x in enumerate(composition) if x == a.prgmw or x == a.srgmw or x != b.prgmw]
-            weightsA = [weights[i] for i in indicesA]
-            indicesB = [i for i, x in enumerate(composition) if x == b.prgmw]
-            weightsB = [weights[i] for i in indicesB]
-            MCA = random.choices(list(enumerate(indicesA)), weights=weightsA, k=1)[0]
-            MCB = random.choices(list(enumerate(indicesB)), weights=weightsB, k=1)[0]
-            composition[MCA[1]] = round(composition[MCA[1]] + composition[MCB[1]] - rt.wl, 3)
-            composition.pop(MCB[1])
-            weights[MCA[0]] = cgK
-            b.mol -= 1
-            sim.progress['value'] = round(100 - (b.mol / bms * 100), 1)
-            window.update()
-        try:
-            composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
-            composition_tuple = [tuple(item) for item in composition]
-        except TypeError:
-            composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
-            composition_tuple = [tuple(item) for item in composition]
-
-    elif rt.name == PolyCondensation:
-        # determines starting status of the reaction
-        IDLIST = []
-        amine_ct = 0
-        acid_ct = 0
-        alcohol_ct = 0
-        for chain in composition:
-            for chain_ID in range(0, len(chain_lengths_id)):
-                if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
-                    ID = chain_lengths_id[chain_ID][1]
-                    IDLIST.append(ID)
-                    if ID == "Amine":
-                        amine_ct += 1
-                    elif ID == "Acid":
-                        acid_ct += 1
-                    elif ID == "Alcohol":
-                        alcohol_ct += 1
-                    break
-        if emo == "Amine_Value":
-            emo_a = round((amine_ct * 56100) / (sum(composition)), 2)
-        elif emo == "Acid_Value":
-            emo_a = round((acid_ct * 56100) / (sum(composition)), 2)
-        elif emo == "OH_Value":
-            emo_a = round((alcohol_ct * 56100) / (sum(composition)), 2)
-        try:
-            composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
-            composition_tuple = [tuple(item) for item in composition]
-            IDLIST = [IDLIST[x:x + len(a.comp)] for x in range(0, len(IDLIST), len(a.comp))]
-            IDLIST_tuple = [tuple(item) for item in IDLIST]
-        except TypeError:
-            composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
-            composition_tuple = [tuple(item) for item in composition]
-            IDLIST = [IDLIST[x:x + 1] for x in range(0, len(IDLIST), 1)]
-            IDLIST_tuple = [tuple(item) for item in IDLIST]
-        composition_tuple = [list(item) for item in composition_tuple]
-        IDLIST_tuple = [list(item) for item in IDLIST_tuple]
-
-        # runs the reaction
-        while emo_a > emr and running == True:
-            RC = random.choice(list(enumerate(IDLIST_tuple)))
-            RCR_temp = random.choice(list(enumerate(RC[1])))
-            RCR = RCR_temp[1]
-            RCR_index = RCR_temp[0]
-            RC2 = random.choice(list(enumerate(IDLIST_tuple)))
-            RCR2_temp = random.choice(list(enumerate(RC2[1])))
-            RCR2 = RCR2_temp[1]
-            RCR2_index = RCR2_temp[0]
-            while RCR == RCR2 and RC[0] == RC2[0]:
-                RC = random.choice(list(enumerate(IDLIST_tuple)))
-                RCR_temp = random.choice(list(enumerate(RC[1])))
-                RCR = RCR_temp[1]
-                RCR_index = RCR_temp[0]
-                RC2 = random.choice(list(enumerate(IDLIST_tuple)))
-                RCR2_temp = random.choice(list(enumerate(RC2[1])))
-                RCR2 = RCR2_temp[1]
-                RCR2_index = RCR2_temp[0]
-            # randomly select another value from RCR2_index other than RCR2_value
-            RCR2_other = random.choice(list(enumerate(RC2[1])))
-            while RCR2_other[0] == RCR2_index:
-                RCR2_other = random.choice(list(enumerate(RC2[1])))
-            RCR2_other_index = RCR2_other[0]
-            if RCR != RCR2 and RC[0] != RC2[0]:
-                composition_tuple[RC[0]][RCR_index] += (sum(composition_tuple[RC2[0]]) - rt.wl)
-                IDLIST_tuple[RC[0]][RCR_index] = IDLIST_tuple[RC2[0]][RCR2_other_index]
-                del composition_tuple[RC2[0]]
-                del IDLIST_tuple[RC2[0]]
-            else:
-                pass
-
-            # determines current status of reaction
-            composition_tuple_temp = list(itertools.chain(*composition_tuple))
-            IDLIST = [None] * len(composition_tuple_temp)
-            amine_ct = 0
-            acid_ct = 0
-            alcohol_ct = 0
-            for chain in composition_tuple_temp:
-                for chain_ID in range(0, len(chain_lengths_id)):
-                    if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
-                        ID = chain_lengths_id[chain_ID][1]
-                        IDLIST.append(ID)
-                        if ID == "Amine":
-                            amine_ct += 1
-                        elif ID == "Acid":
-                            acid_ct += 1
-                        elif ID == "Alcohol":
-                            alcohol_ct += 1
-                        break
-            if emo == "Amine_Value":
-                emo_a = round((amine_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            elif emo == "Acid_Value":
-                emo_a = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            elif emo == "OH_Value":
-                emo_a = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            sim.progress['value'] = round((emo_a / emr) * 100, 2)
-            window.update()
-
-        composition_tuple = [tuple(item) for item in composition_tuple]
-
-    # Tabulates final composition and converts to dataframe
-    rxn_summary = collections.Counter(composition_tuple)
-    RS = []
-    for key in rxn_summary:
-        MS = sum(key)
-        for item in final_product_masses:
-            if math.isclose(MS, final_product_masses[item], abs_tol=1):
-                RS.append((item, rxn_summary[key], key))
-
-    # Convert RS to dataframe
-    rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
-    rxn_summary_df.set_index('Product', inplace=True)
-    # rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
-
-    # print each value in each row from Mass Distribution
-    if rt.name == PolyCondensation:
-        for i in range(len(rxn_summary_df)):
-            amine_ct = 0
-            acid_ct = 0
-            alcohol_ct = 0
-            try:
-                for j in range(len(rxn_summary_df.iloc[i]['Mass Distribution'])):
-                    for chain_length in range(0, len(chain_lengths_id)):
-                        if math.isclose(rxn_summary_df.iloc[i]['Mass Distribution'][j],
-                                        chain_lengths_id[chain_length][0][1], abs_tol=1):
-                            chain_ID = chain_lengths_id[chain_length][1]
-                            if chain_ID == "Amine":
-                                amine_ct += 1
-                            if chain_ID == "Acid":
-                                acid_ct += 1
-                            if chain_ID == "Alcohol":
-                                alcohol_ct += 1
-                            break
-                amine_value = round((amine_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])), 2)
-                acid_value = round((acid_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])), 2)
-                alcohol_value = round((alcohol_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])), 2)
-                rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "Amine Value"] = amine_value
-                rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "Acid Value"] = acid_value
-                rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "OH Value"] = alcohol_value
-            except TypeError:
-                chain_ID = "Amine"
-                amine_ct += 1
-
-    global expanded_results
-    expanded_results = rxn_summary_df
-
-    # Add columns to dataframe
-    rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get)
-    rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
-    rxn_summary_df['Mass'] = rxn_summary_df['Molar Mass'] * rxn_summary_df['Count']
-    rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
-    rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
-    try:
-        rxn_summary_df['OH Value'] = round(rxn_summary_df['OH Value'] * rxn_summary_df['Wt %'] / 100, 2)
-        rxn_summary_df['Amine Value'] = round(rxn_summary_df['Amine Value'] * rxn_summary_df['Wt %'] / 100, 2)
-        rxn_summary_df['Acid Value'] = round(rxn_summary_df['Acid Value'] * rxn_summary_df['Wt %'] / 100, 2)
-    except KeyError:
-        pass
-
-    # Add ehc to dataframe if rt == Etherification
-    if rt.name == Etherification:
-        ehc = []
-        for i in rxn_summary_df["Mass Distribution"]:
-            try:
-                EHCCount = 0
-                EHCCount += sum(chain_weight > max(a.comp) for chain_weight in i)
-                ehc.append(((EHCCount * 35.453) / sum(i)) * 100)
-            except TypeError:
-                try:
-                    ehc.append(35.453 / i * 100)
-                except TypeError:
-                    if sum(i) == a.mw:
-                        ehc.append(0)
-                    else:
-                        ehc.append(35.453 / sum(i) * 100)
-        rxn_summary_df['ehc'] = ehc
-        rxn_summary_df['% ehc'] = (rxn_summary_df['ehc'] * rxn_summary_df['Wt %']) / 100
-        EHCp = round(rxn_summary_df['% ehc'].sum(), 4)
-        RM.update_EHC(round(EHCp, 2))
-        WPE = (3545.3 / EHCp) - 36.4
-        RM.update_WPE(round(WPE, 2))
-
-    # sum rxn_summary_df by product but keep Molar mass the same
-    rxn_summary_df = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum(numeric_only=True)
-    rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
-    rxn_summary_df_compact = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
-    rxn_summary_df_compact.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
-
-    if rt.name == PolyCondensation:
-        RM.updateAV(round(rxn_summary_df['Acid Value'].sum(), 2))
-        RM.updateTAV(round(rxn_summary_df['Amine Value'].sum(), 2))
-        RM.updateOHV(round(rxn_summary_df['OH Value'].sum(), 2))
-
-    show_results(rxn_summary_df_compact)
+    # global running, emo_a, results, expanded_results
+    # sim.progress['value'] = 0
+    # rt = str_to_class(rt)()
+    # eor = float(eor)
+    # emr = float(emr)
+    # running = True
+    # 
+    # 
+    # 
+    # # elif rt.name == PolyCondensation:
+    # #     final_product_masses.update(
+    # #         {f"{a.sn}({i})_{b.sn}({str(i)})": round(i * a.mw + i * b.mw - (i + i - 1) * rt.wl, 2) for i in
+    # #          range(1, 1001)})
+    # #     final_product_masses.update(
+    # #         {f"{a.sn}({i - 1})_{b.sn}({str(i)})": round((i - 1) * a.mw + i * b.mw - (i + i - 2) * rt.wl, 1) for i in
+    # #          range(2, 1001)})
+    # #     final_product_masses.update(
+    # #         {f"{a.sn}({i})_{b.sn}({str(i - 1)})": round(i * a.mw + (i - 1) * b.mw - (i + i - 2) * rt.wl, 1) for i in
+    # #          range(2, 1001)})
+    # 
+    # # Creates a list with the ID's of the chain lengths
+    # if rt.name == PolyCondensation:
+    #     cw = a.prgmw
+    #     cw2 = b.prgmw
+    #     chain_lengths_id = [((0, a.prgmw), a.rg), ((1, b.prgmw), b.rg)]
+    #     for chain_length in range(2, 100, 2):
+    #         cw = cw + b.mw - rt.wl
+    #         chain_lengths_id.append(((chain_length - 1, round(cw, 3)), b.rg))
+    #         cw = cw + a.mw - rt.wl
+    #         chain_lengths_id.append(((chain_length, round(cw, 3)), a.rg))
+    #         cw2 = cw2 + a.mw - rt.wl
+    #         chain_lengths_id.append(((chain_length, round(cw2, 3)), a.rg))
+    #         cw2 = cw2 + b.mw - rt.wl
+    #         chain_lengths_id.append(((chain_length, round(cw2, 3)), b.rg))
+    # 
+    # # Creates starting composition list
+    # composition = []
+    # try:
+    #     for i in range(0, int(a.mol)):
+    #         composition.extend(group for group in a.comp)
+    # except TypeError:
+    #     for i in range(0, int(a.mol)):
+    #         composition.append(a.mw)
+    # try:
+    #     for i in range(0, int(b.mol)):
+    #         composition.extend(group for group in b.comp)
+    # except TypeError:
+    #     for i in range(0, int(b.mol)):
+    #         composition.append(b.mw)
+    # 
+    # # Reacts away b.mol until gone.
+    # if rt.name != PolyCondensation:
+    #     weights = []
+    #     for B in composition:
+    #         if B == a.prgmw:
+    #             weights.append(int(prgK))
+    #         elif B == a.srgmw:
+    #             weights.append(int(srgK))
+    #         elif B == b.prgmw:
+    #             weights.append(1)
+    #         else:
+    #             weights.append(int(cgK))
+    #     indicesA = [i for i, x in enumerate(composition) if x == a.prgmw or x == a.srgmw or x != b.prgmw]
+    #     indicesB = [i for i, x in enumerate(composition) if x == b.prgmw]
+    #     while len(indicesA) > 1 and len(indicesB) > 1 and running is True:
+    #         indicesA = [i for i, x in enumerate(composition) if x == a.prgmw or x == a.srgmw or x != b.prgmw]
+    #         weightsA = [weights[i] for i in indicesA]
+    #         indicesB = [i for i, x in enumerate(composition) if x == b.prgmw]
+    #         weightsB = [weights[i] for i in indicesB]
+    #         MCA = random.choices(list(enumerate(indicesA)), weights=weightsA, k=1)[0]
+    #         MCB = random.choices(list(enumerate(indicesB)), weights=weightsB, k=1)[0]
+    #         composition[MCA[1]] = round(composition[MCA[1]] + composition[MCB[1]] - rt.wl, 3)
+    #         composition.pop(MCB[1])
+    #         weights[MCA[0]] = cgK
+    #         b.mol -= 1
+    #         sim.progress['value'] = round(100 - (b.mol / bms * 100), 1)
+    #         window.update()
+    #     try:
+    #         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
+    #         composition_tuple = [tuple(item) for item in composition]
+    #     except TypeError:
+    #         composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
+    #         composition_tuple = [tuple(item) for item in composition]
+    # 
+    # elif rt.name == PolyCondensation:
+    #     # determines starting status of the reaction
+    #     IDLIST = []
+    #     amine_ct = 0
+    #     acid_ct = 0
+    #     alcohol_ct = 0
+    #     for chain in composition:
+    #         for chain_ID in range(0, len(chain_lengths_id)):
+    #             if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
+    #                 ID = chain_lengths_id[chain_ID][1]
+    #                 IDLIST.append(ID)
+    #                 if ID == "Amine":
+    #                     amine_ct += 1
+    #                 elif ID == "Acid":
+    #                     acid_ct += 1
+    #                 elif ID == "Alcohol":
+    #                     alcohol_ct += 1
+    #                 break
+    #     if emo == "Amine_Value":
+    #         emo_a = round((amine_ct * 56100) / (sum(composition)), 2)
+    #     elif emo == "Acid_Value":
+    #         emo_a = round((acid_ct * 56100) / (sum(composition)), 2)
+    #     elif emo == "OH_Value":
+    #         emo_a = round((alcohol_ct * 56100) / (sum(composition)), 2)
+    #     try:
+    #         composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
+    #         composition_tuple = [tuple(item) for item in composition]
+    #         IDLIST = [IDLIST[x:x + len(a.comp)] for x in range(0, len(IDLIST), len(a.comp))]
+    #         IDLIST_tuple = [tuple(item) for item in IDLIST]
+    #     except TypeError:
+    #         composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
+    #         composition_tuple = [tuple(item) for item in composition]
+    #         IDLIST = [IDLIST[x:x + 1] for x in range(0, len(IDLIST), 1)]
+    #         IDLIST_tuple = [tuple(item) for item in IDLIST]
+    #     composition_tuple = [list(item) for item in composition_tuple]
+    #     IDLIST_tuple = [list(item) for item in IDLIST_tuple]
+    # 
+    #     # runs the reaction
+    #     while emo_a > emr and running == True:
+    #         RC = random.choice(list(enumerate(IDLIST_tuple)))
+    #         RCR_temp = random.choice(list(enumerate(RC[1])))
+    #         RCR = RCR_temp[1]
+    #         RCR_index = RCR_temp[0]
+    #         RC2 = random.choice(list(enumerate(IDLIST_tuple)))
+    #         RCR2_temp = random.choice(list(enumerate(RC2[1])))
+    #         RCR2 = RCR2_temp[1]
+    #         RCR2_index = RCR2_temp[0]
+    #         while RCR == RCR2 and RC[0] == RC2[0]:
+    #             RC = random.choice(list(enumerate(IDLIST_tuple)))
+    #             RCR_temp = random.choice(list(enumerate(RC[1])))
+    #             RCR = RCR_temp[1]
+    #             RCR_index = RCR_temp[0]
+    #             RC2 = random.choice(list(enumerate(IDLIST_tuple)))
+    #             RCR2_temp = random.choice(list(enumerate(RC2[1])))
+    #             RCR2 = RCR2_temp[1]
+    #             RCR2_index = RCR2_temp[0]
+    #         # randomly select another value from RCR2_index other than RCR2_value
+    #         RCR2_other = random.choice(list(enumerate(RC2[1])))
+    #         while RCR2_other[0] == RCR2_index:
+    #             RCR2_other = random.choice(list(enumerate(RC2[1])))
+    #         RCR2_other_index = RCR2_other[0]
+    #         if RCR != RCR2 and RC[0] != RC2[0]:
+    #             composition_tuple[RC[0]][RCR_index] += (sum(composition_tuple[RC2[0]]) - rt.wl)
+    #             IDLIST_tuple[RC[0]][RCR_index] = IDLIST_tuple[RC2[0]][RCR2_other_index]
+    #             del composition_tuple[RC2[0]]
+    #             del IDLIST_tuple[RC2[0]]
+    #         else:
+    #             pass
+    # 
+    #         # determines current status of reaction
+    #         composition_tuple_temp = list(itertools.chain(*composition_tuple))
+    #         IDLIST = [None] * len(composition_tuple_temp)
+    #         amine_ct = 0
+    #         acid_ct = 0
+    #         alcohol_ct = 0
+    #         for chain in composition_tuple_temp:
+    #             for chain_ID in range(0, len(chain_lengths_id)):
+    #                 if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
+    #                     ID = chain_lengths_id[chain_ID][1]
+    #                     IDLIST.append(ID)
+    #                     if ID == "Amine":
+    #                         amine_ct += 1
+    #                     elif ID == "Acid":
+    #                         acid_ct += 1
+    #                     elif ID == "Alcohol":
+    #                         alcohol_ct += 1
+    #                     break
+    #         if emo == "Amine_Value":
+    #             emo_a = round((amine_ct * 56100) / (sum(composition_tuple_temp)), 2)
+    #         elif emo == "Acid_Value":
+    #             emo_a = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
+    #         elif emo == "OH_Value":
+    #             emo_a = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
+    #         sim.progress['value'] = round((emo_a / emr) * 100, 2)
+    #         window.update()
+    # 
+    #     composition_tuple = [tuple(item) for item in composition_tuple]
+    # 
+    # # Tabulates final composition and converts to dataframe
+    # rxn_summary = collections.Counter(composition_tuple)
+    # RS = []
+    # for key in rxn_summary:
+    #     MS = sum(key)
+    #     for item in final_product_masses:
+    #         if math.isclose(MS, final_product_masses[item], abs_tol=1):
+    #             RS.append((item, rxn_summary[key], key))
+    # 
+    # # Convert RS to dataframe
+    # rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
+    # rxn_summary_df.set_index('Product', inplace=True)
+    # # rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
+    # 
+    # # print each value in each row from Mass Distribution
+    # if rt.name == PolyCondensation:
+    #     for i in range(len(rxn_summary_df)):
+    #         amine_ct = 0
+    #         acid_ct = 0
+    #         alcohol_ct = 0
+    #         try:
+    #             for j in range(len(rxn_summary_df.iloc[i]['Mass Distribution'])):
+    #                 for chain_length in range(0, len(chain_lengths_id)):
+    #                     if math.isclose(rxn_summary_df.iloc[i]['Mass Distribution'][j],
+    #                                     chain_lengths_id[chain_length][0][1], abs_tol=1):
+    #                         chain_ID = chain_lengths_id[chain_length][1]
+    #                         if chain_ID == "Amine":
+    #                             amine_ct += 1
+    #                         if chain_ID == "Acid":
+    #                             acid_ct += 1
+    #                         if chain_ID == "Alcohol":
+    #                             alcohol_ct += 1
+    #                         break
+    #             amine_value = round((amine_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])), 2)
+    #             acid_value = round((acid_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])), 2)
+    #             alcohol_value = round((alcohol_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])), 2)
+    #             rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "Amine Value"] = amine_value
+    #             rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "Acid Value"] = acid_value
+    #             rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "OH Value"] = alcohol_value
+    #         except TypeError:
+    #             chain_ID = "Amine"
+    #             amine_ct += 1
+    # 
+    # global expanded_results
+    # expanded_results = rxn_summary_df
+    # 
+    # # Add columns to dataframe
+    # rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get)
+    # rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
+    # rxn_summary_df['Mass'] = rxn_summary_df['Molar Mass'] * rxn_summary_df['Count']
+    # rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
+    # rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
+    # try:
+    #     rxn_summary_df['OH Value'] = round(rxn_summary_df['OH Value'] * rxn_summary_df['Wt %'] / 100, 2)
+    #     rxn_summary_df['Amine Value'] = round(rxn_summary_df['Amine Value'] * rxn_summary_df['Wt %'] / 100, 2)
+    #     rxn_summary_df['Acid Value'] = round(rxn_summary_df['Acid Value'] * rxn_summary_df['Wt %'] / 100, 2)
+    # except KeyError:
+    #     pass
+    # 
+    # # Add ehc to dataframe if rt == Etherification
+    # if rt.name == Etherification:
+    #     ehc = []
+    #     for i in rxn_summary_df["Mass Distribution"]:
+    #         try:
+    #             EHCCount = 0
+    #             EHCCount += sum(chain_weight > max(a.comp) for chain_weight in i)
+    #             ehc.append(((EHCCount * 35.453) / sum(i)) * 100)
+    #         except TypeError:
+    #             try:
+    #                 ehc.append(35.453 / i * 100)
+    #             except TypeError:
+    #                 if sum(i) == a.mw:
+    #                     ehc.append(0)
+    #                 else:
+    #                     ehc.append(35.453 / sum(i) * 100)
+    #     rxn_summary_df['ehc'] = ehc
+    #     rxn_summary_df['% ehc'] = (rxn_summary_df['ehc'] * rxn_summary_df['Wt %']) / 100
+    #     EHCp = round(rxn_summary_df['% ehc'].sum(), 4)
+    #     RM.update_EHC(round(EHCp, 2))
+    #     WPE = (3545.3 / EHCp) - 36.4
+    #     RM.update_WPE(round(WPE, 2))
+    # 
+    # # sum rxn_summary_df by product but keep Molar mass the same
+    # rxn_summary_df = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum(numeric_only=True)
+    # rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
+    # rxn_summary_df_compact = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
+    # rxn_summary_df_compact.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
+    # 
+    # if rt.name == PolyCondensation:
+    #     RM.updateAV(round(rxn_summary_df['Acid Value'].sum(), 2))
+    #     RM.updateTAV(round(rxn_summary_df['Amine Value'].sum(), 2))
+    #     RM.updateOHV(round(rxn_summary_df['OH Value'].sum(), 2))
+    # 
+    # show_results(rxn_summary_df_compact)
 
 # -------------------------------------------Aux Functions---------------------------------#
 

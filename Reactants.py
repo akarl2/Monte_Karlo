@@ -34,7 +34,7 @@ class R1Data:
         self.sn = name.sn
         self.mw = name.mw
         self.mass = mass
-        self.moles = moles
+        self.moles = round(moles, 4)
         self.prgID = [prgID, float(prgk)]
         self.cprgID =[cprgID, float(cprgk)]
         self.srgID = [srgID, float(srgk)]
