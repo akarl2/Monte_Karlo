@@ -37,9 +37,10 @@ def simulate(starting_materials):
     Groups = random.choices(chemical, weights, k=2)
     while Groups[0][0] == Groups[1][0] or Groups[0][2] == Groups[1][2]:
         Groups = random.choices(chemical, weights, k=2)
+    print(Groups)
 
-    print(starting_materials[Groups[0][0]])
-    print(starting_materials[Groups[1][0]])
+    print(starting_materials[Groups[0][0]][0][Groups[0][1]])
+    print(starting_materials[Groups[1][0]][0][Groups[1][1]])
 
     # global running, emo_a, results, expanded_results
     # sim.progress['value'] = 0
