@@ -23,38 +23,36 @@ pandas.set_option('display.width', 100)
 global running, emo_a, results, frame, expanded_results
 running = False
 def simulate(starting_materials):
+    for compound in starting_materials:
+        for group in compound[0]:
+            current_value = group[1]
+            factor = compound[3][0]
+        group[1] = current_value * factor
 
-    for index in starting_materials:
-        for group in index[0]:
-            print(index)
-            nv = group[1] * index[3][0]
-            print(group[1], index[3][0])
     print(starting_materials)
+    weights = []
+    chemical = []
+    for i, chemicals in enumerate(starting_materials):
+        index = 0
+        for group in chemicals[0]:
+            chemical.append([i, index, group[0]])
+            weights.append(group[1])
+            index += 1
+    Groups = random.choices(chemical, weights, k=2)
+    while Groups[0][0] == Groups[1][0] or Groups[0][2] == Groups[1][2]:
+        Groups = random.choices(chemical, weights, k=2)
 
+    print(starting_materials[Groups[0][0]])
+    print(starting_materials[Groups[1][0]])
 
     global running, emo_a, results, expanded_results
     sim.progress['value'] = 0
-    a = str_to_class(a)()
-    b = str_to_class(b)()
     rt = str_to_class(rt)()
     eor = float(eor)
     emr = float(emr)
-    a.mass = float(a_mass)
-    b.mass = float(b_mass)
-    prgK = float(prgk)
-    srgK = float(srgk)
-    cgK = float(crgk)
-    a.mol = round(a.mass / a.mw, 3) * int(samples)
-    b.mol = (round(b.mass / b.mw, 3) * int(samples)) * eor
     running = True
-    unreacted = b.mol - (eor * b.mol)
-    bms = b.mol
 
-    # Creates final product molar masses from final product name(s)
-    final_product_masses = ({a.sn: round(a.mw, 1), b.sn: round(b.mw, 1)})
-    if rt.name != PolyCondensation:
-        final_product_masses.update(
-            {f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + (i * b.mw - i * rt.wl), 1) for i in range(1, 500)})
+
 
     elif rt.name == PolyCondensation:
         final_product_masses.update(
