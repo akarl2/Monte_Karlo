@@ -13,8 +13,8 @@ from pandastable import Table, TableModel, config
 import statsmodels
 import math
 from Reactants import *
-from Reactants import R1Data, R2Data, R3Data, R4Data, R5Data, R6Data, R7Data, R8Data, R9Data, R10Data, R11Data, R12Data, R13Data, R14Data
-
+from Reactants import R1Data, R2Data, R3Data, R4Data, R5Data, R6Data, R7Data, R8Data, R9Data, R10Data, R11Data, R12Data, \
+    R13Data, R14Data
 
 # Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
@@ -23,11 +23,23 @@ pandas.set_option('display.width', 100)
 
 # Runs the simulation
 global running, emo_a, results, frame, expanded_results
+
+
 def simulate(starting_materials):
-    composition = [[[[group[0], group[1] * compound[3][0]] for group in compound[0]], compound[2], compound[3]] for compound in starting_materials]
+    composition = [[[[group[0], group[1] * compound[3][0]] for group in compound[0]], compound[2], compound[3]] for
+                   compound in starting_materials]
     running = True
     sim.progress['value'] = 0
 
+    def check_groups(Groups):
+        for sublist in Groups:
+            if sublist:
+                reactive_group = sublist[2]
+                check_group = sublist[2]
+                if check_group in getattr(rg, reactive_group):
+                    return True
+                else:
+                    return False
 
     while running:
         weights = []
@@ -39,19 +51,9 @@ def simulate(starting_materials):
                 weights.append(group[1])
                 index += 1
         Groups = random.choices(chemical, weights, k=2)
-        while Groups[0][0] == Groups[1][0] or Groups[0][2] == Groups[1][2]:
+        while Groups[0][0] == Groups[1][0] or check_groups(Groups) is True:
             Groups = random.choices(chemical, weights, k=2)
 
-        for sublist in Groups:
-            if sublist:
-                reactive_group = sublist[2]
-                check_group = sublist[2]
-                if check_group in getattr(rg, reactive_group):
-                    print("{} found within the {} list".format(check_group, reactive_group))
-                else:
-                    print("{} not found within the {} list".format(check_group, reactive_group))
-            else:
-                print("sublist is empty")
         print(Groups)
         print(composition[Groups[0][0]][0][Groups[0][1]])
         print(composition[Groups[1][0]][0][Groups[1][1]])
@@ -331,6 +333,7 @@ def simulate(starting_materials):
     # 
     # show_results(rxn_summary_df_compact)
 
+
 # -------------------------------------------Aux Functions---------------------------------#
 
 def show_results(rxn_summary_df_compact):
@@ -348,6 +351,7 @@ def show_results(rxn_summary_df_compact):
                     width=x, height=y, align='center')
     results.show()
 
+
 def show_results_expanded():
     global results, frame
     try:
@@ -363,8 +367,10 @@ def show_results_expanded():
                     height=y, align='center')
     results.show()
 
+
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
+
 
 def stop():
     global running
@@ -373,13 +379,23 @@ def stop():
     else:
         pass
 
+
 def sim_values():
     cell = 15
     index = 0
     starting_materials = []
-    for i in range(RET.tableheight-1):
-        if RET.entries[cell].get() != "" and RET.entries[cell+1].get() != "":
-            str_to_class(RDE[index]).assign(name=str_to_class(Entry_Reactants[index].get())(), mass=Entry_masses[index].get(), moles=round(float(RET.entries[cell+2].get()), 4), prgID=RET.entries[cell+3].get(), prgk=RET.entries[cell+4].get(), cprgID=RET.entries[cell+5].get(), cprgk=RET.entries[cell+6].get(), srgID=RET.entries[cell+7].get(), srgk=RET.entries[cell+8].get(), csrgID=RET.entries[cell+9].get(), csrgk=RET.entries[cell+10].get(), trgID=RET.entries[cell+11].get(), trgk=RET.entries[cell+12].get(), ctrgID=RET.entries[cell+13].get(), ctrgk=RET.entries[cell+14].get(), ct=RXN_Samples.get())
+    for i in range(RET.tableheight - 1):
+        if RET.entries[cell].get() != "" and RET.entries[cell + 1].get() != "":
+            str_to_class(RDE[index]).assign(name=str_to_class(Entry_Reactants[index].get())(),
+                                            mass=Entry_masses[index].get(),
+                                            moles=round(float(RET.entries[cell + 2].get()), 4),
+                                            prgID=RET.entries[cell + 3].get(), prgk=RET.entries[cell + 4].get(),
+                                            cprgID=RET.entries[cell + 5].get(), cprgk=RET.entries[cell + 6].get(),
+                                            srgID=RET.entries[cell + 7].get(), srgk=RET.entries[cell + 8].get(),
+                                            csrgID=RET.entries[cell + 9].get(), csrgk=RET.entries[cell + 10].get(),
+                                            trgID=RET.entries[cell + 11].get(), trgk=RET.entries[cell + 12].get(),
+                                            ctrgID=RET.entries[cell + 13].get(), ctrgk=RET.entries[cell + 14].get(),
+                                            ct=RXN_Samples.get())
             cell = cell + RET.tablewidth
             starting_materials.append(str_to_class(RDE[index]).comp)
             index = index + 1
@@ -394,6 +410,7 @@ def sim_values():
     #     messagebox.showerror("Exception raised", str(e))
     #     pass
 
+
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
 window.iconbitmap("testtube.ico")
@@ -401,12 +418,17 @@ window.title("Monte Karlo")
 window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
 window.configure(background="#000000")
 
-Entry_Reactants = ['R1Reactant', 'R2Reactant', 'R3Reactant', 'R4Reactant', 'R5Reactant', 'R6Reactant', 'R7Reactant', 'R8Reactant', 'R9Reactant', 'R10Reactant', 'R11Reactant', 'R12Reactant', 'R13Reactant', 'R14Reactant']
-Entry_masses = ['R1mass', 'R2mass', 'R3mass', 'R4mass', 'R5mass', 'R6mass', 'R7mass', 'R8mass', 'R9mass', 'R10mass', 'R11mass', 'R12mass', 'R13mass', 'R14mass']
-RDE = ['R1Data', 'R2Data', 'R3Data', 'R4Data', 'R5Data', 'R6Data', 'R7Data', 'R8Data', 'R9Data', 'R10Data', 'R11Data', 'R12Data', 'R13Data', 'R14Data']
+Entry_Reactants = ['R1Reactant', 'R2Reactant', 'R3Reactant', 'R4Reactant', 'R5Reactant', 'R6Reactant', 'R7Reactant',
+                   'R8Reactant', 'R9Reactant', 'R10Reactant', 'R11Reactant', 'R12Reactant', 'R13Reactant',
+                   'R14Reactant']
+Entry_masses = ['R1mass', 'R2mass', 'R3mass', 'R4mass', 'R5mass', 'R6mass', 'R7mass', 'R8mass', 'R9mass', 'R10mass',
+                'R11mass', 'R12mass', 'R13mass', 'R14mass']
+RDE = ['R1Data', 'R2Data', 'R3Data', 'R4Data', 'R5Data', 'R6Data', 'R7Data', 'R8Data', 'R9Data', 'R10Data', 'R11Data',
+       'R12Data', 'R13Data', 'R14Data']
 
 global massA1, massB1, A1reactant, B1reactant, starting_cell
 starting_cell = 15
+
 
 def check_entry(entry, index, cell):
     RET.entries[entry].get()
@@ -417,13 +439,14 @@ def check_entry(entry, index, cell):
         RET.update_table(index, cell)
         RET.update_rates(index, cell)
 
+
 class RxnEntryTable(tkinter.Frame):
     def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
         self.tablewidth = 15
         self.tableheight = 15
         self.entries = None
-        self.grid(row=5, column=0, padx = 5, pady = 5)
+        self.grid(row=5, column=0, padx=5, pady=5)
         self.create_table()
 
     def create_table(self):
@@ -433,7 +456,7 @@ class RxnEntryTable(tkinter.Frame):
             for column in range(self.tablewidth):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                #self.entries[counter].insert(0, str(counter))
+                # self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=10)
                 counter += 1
         self.entries[0].config(width=27)
@@ -441,16 +464,16 @@ class RxnEntryTable(tkinter.Frame):
 
     def tabel_labels(self):
         offset = 0
-        self.entries[offset+0].insert(0, "Reactant")
-        self.entries[offset+0].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset+1].insert(0, "Mass (g)")
-        self.entries[offset+1].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset+2].insert(0, "Moles")
-        self.entries[offset+2].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset+3].insert(0, "1° - ID")
-        self.entries[offset+3].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset+4].insert(0, "1° - K")
-        self.entries[offset+4].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 0].insert(0, "Reactant")
+        self.entries[offset + 0].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 1].insert(0, "Mass (g)")
+        self.entries[offset + 1].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 2].insert(0, "Moles")
+        self.entries[offset + 2].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 3].insert(0, "1° - ID")
+        self.entries[offset + 3].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 4].insert(0, "1° - K")
+        self.entries[offset + 4].config(state="readonly", font=("Helvetica", 8, "bold"))
         self.entries[offset + 5].insert(0, "C1° - ID")
         self.entries[offset + 5].config(state="readonly", font=("Helvetica", 8, "bold"))
         self.entries[offset + 6].insert(0, "1° - Child K")
@@ -479,7 +502,8 @@ class RxnEntryTable(tkinter.Frame):
         index = 0
         for species in range(self.tableheight - 1):
             Entry_Reactants[index] = tkinter.StringVar()
-            self.entries[cell] = AutocompleteCombobox(self, completevalues=Reactants, width=24, textvariable=Entry_Reactants[index])
+            self.entries[cell] = AutocompleteCombobox(self, completevalues=Reactants, width=24,
+                                                      textvariable=Entry_Reactants[index])
             self.entries[cell].grid(row=row, column=0)
             self.entries[cell].config(justify="center")
             cell = cell + self.tablewidth
@@ -488,7 +512,7 @@ class RxnEntryTable(tkinter.Frame):
         cell = starting_cell + 1
         row = 1
         index = 0
-        for species in range(self.tableheight-1):
+        for species in range(self.tableheight - 1):
             Entry_masses[index] = self.entries[cell]
             cell = cell + self.tablewidth
             row = row + 1
@@ -497,76 +521,79 @@ class RxnEntryTable(tkinter.Frame):
     def update_table(self, index, cell):
         if self.entries[cell].get() == "Clear":
             self.entries[cell].delete(0, tkinter.END)
-            self.entries[cell+1].delete(0, tkinter.END)
-            self.entries[cell+2].delete(0, tkinter.END)
-            self.entries[cell+3].config(state="normal")
-            self.entries[cell+3].delete(0, tkinter.END)
-            self.entries[cell+4].delete(0, tkinter.END)
-            self.entries[cell+5].config(state="normal")
-            self.entries[cell+5].delete(0, tkinter.END)
-            self.entries[cell+6].delete(0, tkinter.END)
-            self.entries[cell+7].config(state="normal")
-            self.entries[cell+7].delete(0, tkinter.END)
-            self.entries[cell+8].delete(0, tkinter.END)
-            self.entries[cell+9].config(state="normal")
-            self.entries[cell+9].delete(0, tkinter.END)
-            self.entries[cell+10].delete(0, tkinter.END)
-            self.entries[cell+11].config(state="normal")
-            self.entries[cell+11].delete(0, tkinter.END)
-            self.entries[cell+12].delete(0, tkinter.END)
-            self.entries[cell+13].config(state="normal")
-            self.entries[cell+13].delete(0, tkinter.END)
-            self.entries[cell+14].delete(0, tkinter.END)
+            self.entries[cell + 1].delete(0, tkinter.END)
+            self.entries[cell + 2].delete(0, tkinter.END)
+            self.entries[cell + 3].config(state="normal")
+            self.entries[cell + 3].delete(0, tkinter.END)
+            self.entries[cell + 4].delete(0, tkinter.END)
+            self.entries[cell + 5].config(state="normal")
+            self.entries[cell + 5].delete(0, tkinter.END)
+            self.entries[cell + 6].delete(0, tkinter.END)
+            self.entries[cell + 7].config(state="normal")
+            self.entries[cell + 7].delete(0, tkinter.END)
+            self.entries[cell + 8].delete(0, tkinter.END)
+            self.entries[cell + 9].config(state="normal")
+            self.entries[cell + 9].delete(0, tkinter.END)
+            self.entries[cell + 10].delete(0, tkinter.END)
+            self.entries[cell + 11].config(state="normal")
+            self.entries[cell + 11].delete(0, tkinter.END)
+            self.entries[cell + 12].delete(0, tkinter.END)
+            self.entries[cell + 13].config(state="normal")
+            self.entries[cell + 13].delete(0, tkinter.END)
+            self.entries[cell + 14].delete(0, tkinter.END)
         else:
-            if self.entries[cell].get() != "" and self.entries[cell+1].get() != "":
+            if self.entries[cell].get() != "" and self.entries[cell + 1].get() != "":
                 a = str_to_class(Entry_Reactants[index].get())()
                 molesA = float(Entry_masses[index].get()) / float(a.mw)
-                self.entries[cell+2].delete(0, tkinter.END)
-                self.entries[cell+2].insert(0, str(round(molesA, 4)))
+                self.entries[cell + 2].delete(0, tkinter.END)
+                self.entries[cell + 2].insert(0, str(round(molesA, 4)))
 
     def update_rates(self, index, cell):
         if self.entries[cell].get() != "Clear" and self.entries[cell].get() != "":
             a = str_to_class(Entry_Reactants[index].get())()
-            self.entries[cell+3].config(state="normal")
-            self.entries[cell+3].delete(0, tkinter.END)
-            self.entries[cell+3].insert(0, str(a.prgID))
-            self.entries[cell+3].config(state="readonly")
-            self.entries[cell+4].delete(0, tkinter.END)
-            self.entries[cell+4].insert(0, str(a.prgk))
-            self.entries[cell+5].config(state="normal")
-            self.entries[cell+5].delete(0, tkinter.END)
-            self.entries[cell+5].insert(0, str(a.cprgID))
-            self.entries[cell+5].config(state="readonly")
-            self.entries[cell+6].delete(0, tkinter.END)
-            self.entries[cell+6].insert(0, str(a.cprgk))
-            self.entries[cell+7].config(state="normal")
-            self.entries[cell+7].delete(0, tkinter.END)
-            self.entries[cell+7].insert(0, str(a.srgID))
-            self.entries[cell+7].config(state="readonly")
-            self.entries[cell+8].delete(0, tkinter.END)
-            self.entries[cell+8].insert(0, str(a.srgk))
-            self.entries[cell+9].config(state="normal")
-            self.entries[cell+9].delete(0, tkinter.END)
-            self.entries[cell+9].insert(0, str(a.csrgID))
-            self.entries[cell+9].config(state="readonly")
-            self.entries[cell+10].delete(0, tkinter.END)
-            self.entries[cell+10].insert(0, str(a.csrgk))
-            self.entries[cell+11].config(state="normal")
-            self.entries[cell+11].delete(0, tkinter.END)
-            self.entries[cell+11].insert(0, str(a.trgID))
-            self.entries[cell+11].config(state="readonly")
-            self.entries[cell+12].delete(0, tkinter.END)
-            self.entries[cell+12].insert(0, str(a.trgk))
-            self.entries[cell+13].config(state="normal")
-            self.entries[cell+13].delete(0, tkinter.END)
-            self.entries[cell+13].insert(0, str(a.ctrgID))
-            self.entries[cell+13].config(state="readonly")
-            self.entries[cell+14].delete(0, tkinter.END)
-            self.entries[cell+14].insert(0, str(a.ctrgk))
+            self.entries[cell + 3].config(state="normal")
+            self.entries[cell + 3].delete(0, tkinter.END)
+            self.entries[cell + 3].insert(0, str(a.prgID))
+            self.entries[cell + 3].config(state="readonly")
+            self.entries[cell + 4].delete(0, tkinter.END)
+            self.entries[cell + 4].insert(0, str(a.prgk))
+            self.entries[cell + 5].config(state="normal")
+            self.entries[cell + 5].delete(0, tkinter.END)
+            self.entries[cell + 5].insert(0, str(a.cprgID))
+            self.entries[cell + 5].config(state="readonly")
+            self.entries[cell + 6].delete(0, tkinter.END)
+            self.entries[cell + 6].insert(0, str(a.cprgk))
+            self.entries[cell + 7].config(state="normal")
+            self.entries[cell + 7].delete(0, tkinter.END)
+            self.entries[cell + 7].insert(0, str(a.srgID))
+            self.entries[cell + 7].config(state="readonly")
+            self.entries[cell + 8].delete(0, tkinter.END)
+            self.entries[cell + 8].insert(0, str(a.srgk))
+            self.entries[cell + 9].config(state="normal")
+            self.entries[cell + 9].delete(0, tkinter.END)
+            self.entries[cell + 9].insert(0, str(a.csrgID))
+            self.entries[cell + 9].config(state="readonly")
+            self.entries[cell + 10].delete(0, tkinter.END)
+            self.entries[cell + 10].insert(0, str(a.csrgk))
+            self.entries[cell + 11].config(state="normal")
+            self.entries[cell + 11].delete(0, tkinter.END)
+            self.entries[cell + 11].insert(0, str(a.trgID))
+            self.entries[cell + 11].config(state="readonly")
+            self.entries[cell + 12].delete(0, tkinter.END)
+            self.entries[cell + 12].insert(0, str(a.trgk))
+            self.entries[cell + 13].config(state="normal")
+            self.entries[cell + 13].delete(0, tkinter.END)
+            self.entries[cell + 13].insert(0, str(a.ctrgID))
+            self.entries[cell + 13].config(state="readonly")
+            self.entries[cell + 14].delete(0, tkinter.END)
+            self.entries[cell + 14].insert(0, str(a.ctrgk))
         else:
             pass
 
+
 global RXN_Type, RXN_Samples, RXN_EOR
+
+
 class RxnDetails(tkinter.Frame):
     def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
@@ -585,7 +612,7 @@ class RxnDetails(tkinter.Frame):
             for row in range(self.tableheight):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                #self.entries[counter].insert(0, str(counter))
+                # self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=18)
                 counter += 1
         self.table_labels()
@@ -614,7 +641,10 @@ class RxnDetails(tkinter.Frame):
         RXN_Samples_Entry.config(justify="center")
         RXN_EOR = self.entries[5]
 
+
 global RXN_EM, RXN_EM_Value
+
+
 class RxnMetrics(tkinter.Frame):
     def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
@@ -633,7 +663,7 @@ class RxnMetrics(tkinter.Frame):
             for row in range(self.tableheight):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                #self.entries[counter].insert(0, str(counter))
+                # self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=18)
                 counter += 1
         self.table_labels()
@@ -680,6 +710,7 @@ class RxnMetrics(tkinter.Frame):
         self.entries[10].delete(0, tkinter.END)
         self.entries[10].insert(0, OHV)
 
+
 class Buttons(tkinter.Frame):
     def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
@@ -710,6 +741,7 @@ class Buttons(tkinter.Frame):
         stop_button.grid(row=1, column=0)
         expand = tkinter.Button(self, text="Expand Data", command=show_results_expanded, width=15, bg="blue")
         expand.grid(row=2, column=0)
+
 
 class SimStatus(tkinter.Frame):
     def __init__(self, master=window):
@@ -745,28 +777,29 @@ class SimStatus(tkinter.Frame):
         self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate")
         self.progress.grid(row=0, column=1)
 
+
 RET = RxnEntryTable()
 RD = RxnDetails()
 RM = RxnMetrics()
 Buttons = Buttons()
 sim = SimStatus()
 
-#run update_table if user changes value in RET
+# run update_table if user changes value in RET
 
-RET.entries[15].bind('<FocusOut>', lambda *args, entry=15, index = 0, cell = 15: check_entry(entry, index, cell))
-RET.entries[30].bind('<FocusOut>', lambda *args, entry=30, index = 1, cell = 30: check_entry(entry, index, cell))
-RET.entries[45].bind('<FocusOut>', lambda *args, entry=45, index = 2, cell = 45: check_entry(entry, index, cell))
-RET.entries[60].bind('<FocusOut>', lambda *args, entry=60, index = 3, cell = 60: check_entry(entry, index, cell))
-RET.entries[75].bind('<FocusOut>', lambda *args, entry=75, index = 4, cell = 75: check_entry(entry, index, cell))
-RET.entries[90].bind('<FocusOut>', lambda *args, entry=90, index = 5, cell = 90: check_entry(entry, index, cell))
-RET.entries[105].bind('<FocusOut>', lambda *args, entry=105, index = 6, cell = 105: check_entry(entry, index, cell))
-RET.entries[120].bind('<FocusOut>', lambda *args, entry=120, index = 7, cell = 120: check_entry(entry, index, cell))
-RET.entries[135].bind('<FocusOut>', lambda *args, entry=135, index = 8, cell = 135: check_entry(entry, index, cell))
-RET.entries[150].bind('<FocusOut>', lambda *args, entry=150, index = 9, cell = 150: check_entry(entry, index, cell))
-RET.entries[165].bind('<FocusOut>', lambda *args, entry=165, index = 10, cell = 165: check_entry(entry, index, cell))
-RET.entries[180].bind('<FocusOut>', lambda *args, entry=180, index = 11, cell = 180: check_entry(entry, index, cell))
-RET.entries[195].bind('<FocusOut>', lambda *args, entry=195, index = 12, cell = 195: check_entry(entry, index, cell))
-RET.entries[210].bind('<FocusOut>', lambda *args, entry=210, index = 13, cell = 210: check_entry(entry, index, cell))
+RET.entries[15].bind('<FocusOut>', lambda *args, entry=15, index=0, cell=15: check_entry(entry, index, cell))
+RET.entries[30].bind('<FocusOut>', lambda *args, entry=30, index=1, cell=30: check_entry(entry, index, cell))
+RET.entries[45].bind('<FocusOut>', lambda *args, entry=45, index=2, cell=45: check_entry(entry, index, cell))
+RET.entries[60].bind('<FocusOut>', lambda *args, entry=60, index=3, cell=60: check_entry(entry, index, cell))
+RET.entries[75].bind('<FocusOut>', lambda *args, entry=75, index=4, cell=75: check_entry(entry, index, cell))
+RET.entries[90].bind('<FocusOut>', lambda *args, entry=90, index=5, cell=90: check_entry(entry, index, cell))
+RET.entries[105].bind('<FocusOut>', lambda *args, entry=105, index=6, cell=105: check_entry(entry, index, cell))
+RET.entries[120].bind('<FocusOut>', lambda *args, entry=120, index=7, cell=120: check_entry(entry, index, cell))
+RET.entries[135].bind('<FocusOut>', lambda *args, entry=135, index=8, cell=135: check_entry(entry, index, cell))
+RET.entries[150].bind('<FocusOut>', lambda *args, entry=150, index=9, cell=150: check_entry(entry, index, cell))
+RET.entries[165].bind('<FocusOut>', lambda *args, entry=165, index=10, cell=165: check_entry(entry, index, cell))
+RET.entries[180].bind('<FocusOut>', lambda *args, entry=180, index=11, cell=180: check_entry(entry, index, cell))
+RET.entries[195].bind('<FocusOut>', lambda *args, entry=195, index=12, cell=195: check_entry(entry, index, cell))
+RET.entries[210].bind('<FocusOut>', lambda *args, entry=210, index=13, cell=210: check_entry(entry, index, cell))
 
 Entry_masses[0].bind("<KeyRelease>", lambda *args, index=0, cell=15: RET.update_table(index, cell))
 Entry_masses[1].bind("<KeyRelease>", lambda *args, index=1, cell=30: RET.update_table(index, cell))
@@ -798,8 +831,5 @@ R12Data = R12Data()
 R13Data = R13Data()
 R14Data = R14Data()
 rg = reactive_groups()
-
-
-
 
 window.mainloop()

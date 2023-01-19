@@ -22,10 +22,10 @@ Num_Samples = ["1000", "2500", "5000", "10000", "100000"]
 
 class reactive_groups:
     def __init__(self):
-        self.NH2 = ['COOH', 'COC']
+        self.NH2 = ['COOH', 'COC', 'Cl']
         self.NH = ['COOH', 'COC']
         self.OH = ['COOH', 'COC']
-        self.COOH = ['NH₂', 'OH']
-        self.COC = ['NH₂', 'OH']
+        self.COOH = ['NH₂', 'OH', 'COC']
+        self.COC = ['NH₂', 'OH', 'COOH', 'NH']
 
 
