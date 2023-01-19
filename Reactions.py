@@ -25,7 +25,7 @@ class reactive_groups:
         self.NH2 = ['COOH', 'COC', 'Cl']
         self.NH = ['COOH', 'COC']
         self.OH = ['COOH', 'COC']
-        self.COOH = ['NH₂', 'OH', 'COC']
-        self.COC = ['NH₂', 'OH', 'COOH', 'NH']
+        self.COOH = ['NH2', 'OH', 'COC']
+        self.COC = ['NH2', 'OH', 'COOH', 'NH']
 
 

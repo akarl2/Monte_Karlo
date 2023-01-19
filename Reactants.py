@@ -52,6 +52,7 @@ class R1Data:
             if self.dist[index][0] == self.trgID[0]:
                 self.dist[index] = self.trgID
             index += 1
+        self.dist = [[j if type(j) != str else j.replace("NH₂", "NH2") for j in i] for i in self.dist]
         self.comp = [self.dist, [self.mw], [[self.sn, 1]], [self.ct]]
 
 class R2Data:
@@ -108,6 +109,7 @@ class R2Data:
             if self.dist[index][0] == self.trgID[0]:
                 self.dist[index] = self.trgID
             index += 1
+        self.dist = [[j if type(j) != str else j.replace("NH₂", "NH2") for j in i] for i in self.dist]
         self.comp = [self.dist, [self.mw], [[self.sn, 1]], [self.ct]]
 
 class R3Data:
@@ -164,6 +166,7 @@ class R3Data:
             if self.dist[index][0] == self.trgID[0]:
                 self.dist[index] = self.trgID
             index += 1
+        self.dist = [[j if type(j) != str else j.replace("NH₂", "NH2") for j in i] for i in self.dist]
         self.comp = [self.dist, [self.mw], [[self.sn, 1]], [self.ct]]
 
 class R4Data:
@@ -220,6 +223,7 @@ class R4Data:
             if self.dist[index][0] == self.trgID[0]:
                 self.dist[index] = self.trgID
             index += 1
+        self.dist = [[j if type(j) != str else j.replace("NH₂", "NH2") for j in i] for i in self.dist]
         self.comp = [self.dist, [self.mw], [[self.sn, 1]], [self.ct]]
 
 class R5Data:

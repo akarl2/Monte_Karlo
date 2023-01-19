@@ -13,8 +13,7 @@ from pandastable import Table, TableModel, config
 import statsmodels
 import math
 from Reactants import *
-from Reactants import R1Data, R2Data, R3Data, R4Data, R5Data, R6Data, R7Data, R8Data, R9Data, R10Data, R11Data, R12Data, \
-    R13Data, R14Data
+from Reactants import R1Data, R2Data, R3Data, R4Data, R5Data, R6Data, R7Data, R8Data, R9Data, R10Data, R11Data, R12Data, R13Data, R14Data
 
 # Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
@@ -31,15 +30,17 @@ def simulate(starting_materials):
     running = True
     sim.progress['value'] = 0
 
-    def check_groups(Groups):
-        for sublist in Groups:
-            if sublist:
-                reactive_group = sublist[2]
-                check_group = sublist[2]
-                if check_group in getattr(rg, reactive_group):
-                    return True
-                else:
-                    return False
+    def check_react(groups):
+        reactive_group = groups[0][2]
+        check_group = groups[1][2]
+        print(reactive_group,check_group)
+        if check_group in getattr(rg, reactive_group):
+            print("true")
+            return True
+
+        else:
+            print("false")
+            return False
 
     while running:
         weights = []
@@ -50,13 +51,11 @@ def simulate(starting_materials):
                 chemical.append([i, index, group[0]])
                 weights.append(group[1])
                 index += 1
-        Groups = random.choices(chemical, weights, k=2)
-        while Groups[0][0] == Groups[1][0] or check_groups(Groups) is True:
-            Groups = random.choices(chemical, weights, k=2)
+        groups = random.choices(chemical, weights, k=2)
+        while groups[0][0] == groups[1][0] or check_react(groups) is False:
+            groups = random.choices(chemical, weights, k=2)
 
-        print(Groups)
-        print(composition[Groups[0][0]][0][Groups[0][1]])
-        print(composition[Groups[1][0]][0][Groups[1][1]])
+        print("move forward")
 
     # global running, emo_a, results, expanded_results
     # eor = float(eor)
