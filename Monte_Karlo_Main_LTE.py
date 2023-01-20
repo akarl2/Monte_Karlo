@@ -29,7 +29,7 @@ def simulate(starting_materials):
     running = True
     sim.progress['value'] = 0
 
-    composition = [[[[group[0], group[1] * compound[3][0]] for group in compound[0]], compound[2], compound[3]] for
+    composition = [[[[group[0], group[1] * compound[3][0]] for group in compound[0]], compound[2], compound[3], compound[1]] for
                    compound in starting_materials]
 
 
@@ -50,17 +50,18 @@ def simulate(starting_materials):
     def new_compound(composition, groups):
         NC = composition[groups[0][0]]
         compoundA = composition[groups[0][0]]
-        print(compoundA)
         compoundB = composition[groups[1][0]]
         compoundAloc = groups[0][1]
         compoundBloc = groups[1][1]
         compoundAgroup = groups[0][2]
         compoundBgroup = groups[1][2]
-        NC = [[[group[0], NC[2][0] / group[1]] if group[1] != 0 else group for group in NC[0]], NC[1], [1]]
+        NC = [[[group[0], group[1] / NC[2][0]] if group[1] != 0 else group for group in NC[0]], NC[1], [1], NC[3]]
         NC[0][groups[0][1]][0] = new_group(groupA, groupB)
         NC[0][groups[0][1]][1] = (compoundA[0][compoundAloc][1] / compoundA[2][0]) * (compoundB[0][compoundBloc][1] / compoundB[2][0])
-        NCA = [[[group[0], group[1] - 1] if group[1] != 0 else group for group in compoundA[0]], compoundA[1], [compoundA[2][0]-1] if compoundA[2][0] != 0 else [0]]
-        NCB = [[[group[0], group[1] - 1] if group[1] != 0 else group for group in compoundB[0]], compoundB[1], [compoundB[2][0]-1] if compoundB[2][0] != 0 else [0]]
+        NCA = [[[group[0], group[1] / compoundA[2][0]] if group[1] != 0 else group for group in compoundA[0]], compoundA[1], [compoundA[2][0] - 1] if compoundA[2][0] != 0 else [0], compoundA[3]]
+        NCA = [[[group[0], group[1] * NCA[2][0]] if group[1] != 0 else group for group in NCA[0]], NCA[1], [NCA[2][0]] if NCA[2][0] != 0 else [0], NCA[3]]
+        NCB = [[[group[0], group[1] / compoundB[2][0]] if group[1] != 0 else group for group in compoundB[0]], compoundB[1], [compoundB[2][0] - 1] if compoundB[2][0] != 0 else [0], compoundB[3]]
+        NCB = [[[group[0], group[1] * NCB[2][0]] if group[1] != 0 else group for group in NCB[0]], NCB[1], [NCB[2][0]] if NCB[2][0] != 0 else [0], NCB[3]]
         composition[groups[0][0]] = NCA
         composition[groups[1][0]] = NCB
         composition.append(NC)
