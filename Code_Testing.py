@@ -1,9 +1,14 @@
-dist = [["NH₂"], ["OH"], ["NH₂"]]
+class NH2:
+    def __init__(self):
+        self.COOH = "CONH"
+        self.COC = 'COCNH'
+        self.Cl = 'ClNH'
 
-self.dist = [[j.replace("NH₂", "NH2") for j in i] for i in self.dist]
+reactive_group = 'NH2'
+check_group = 'COOH'
 
+def new_group(reactive_group, check_group):
+    NG = getattr(eval(reactive_group + '()'), check_group)
+    print(NG)
 
-print(new_list)
-
-
-
+new_group(reactive_group, check_group)
