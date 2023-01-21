@@ -54,22 +54,31 @@ def simulate(starting_materials):
         compoundB = composition[groups[1][0]]
         compoundAloc = groups[0][1]
         compoundBloc = groups[1][1]
+        print(groups)
         NW = compoundA[3][0] + compoundB[3][0] - new_group(groupA, groupB)['WL']
         NC = [[[group[0], group[1] / NC[2][0]] if group[1] != 0 else group for group in NC[0]], NC[1], [1], [NW]]
         NC[0][groups[0][1]][0] = new_group(groupA, groupB)['NG']
         NC[0][groups[0][1]][1] = (compoundA[0][compoundAloc][1] / compoundA[2][0]) * (compoundB[0][compoundBloc][1] / compoundB[2][0])
         NC[0][groups[0][1]][1] = 0
-        NCA = [[[group[0], group[1] / compoundA[2][0]] if group[1] != 0 else group for group in compoundA[0]], compoundA[1], [compoundA[2][0] - 1] if compoundA[2][0] != 0 else [0], compoundA[3]]
-        NCA = [[[group[0], group[1] * NCA[2][0]] if group[1] != 0 else group for group in NCA[0]], NCA[1], [NCA[2][0]] if NCA[2][0] != 0 else [0], NCA[3]]
-        NCB = [[[group[0], group[1] / compoundB[2][0]] if group[1] != 0 else group for group in compoundB[0]], compoundB[1], [compoundB[2][0] - 1] if compoundB[2][0] != 0 else [0], compoundB[3]]
-        NCB = [[[group[0], group[1] * NCB[2][0]] if group[1] != 0 else group for group in NCB[0]], NCB[1], [NCB[2][0]] if NCB[2][0] != 0 else [0], NCB[3]]
+        NCAt = [[[group[0], group[1] / compoundA[2][0]] if group[1] != 0 else group for group in compoundA[0]], compoundA[1], [compoundA[2][0] - 1] if compoundA[2][0] != 0 else [0], compoundA[3]]
+        NCA = [[[group[0], group[1] * NCAt[2][0]] if group[1] != 0 else group for group in NCAt[0]], NCAt[1], [NCAt[2][0]] if NCAt[2][0] != 0 else [0], NCAt[3]]
+        NCBt = [[[group[0], group[1] / compoundB[2][0]] if group[1] != 0 else group for group in compoundB[0]], compoundB[1], [compoundB[2][0] - 1] if compoundB[2][0] != 0 else [0], compoundB[3]]
+        NCB = [[[group[0], group[1] * NCBt[2][0]] if group[1] != 0 else group for group in NCBt[0]], NCBt[1], [NCBt[2][0]] if NCBt[2][0] != 0 else [0], NCBt[3]]
+        old_groups = NCBt[0]
+        print(old_groups)
+        if len(old_groups) == 1:
+            pass
+        else:
+            del(old_groups[compoundBloc])
+            print(old_groups)
+            NC[0].append(old_groups)
+
+        print(NC)
         composition[groups[0][0]] = NCA
         composition[groups[1][0]] = NCB
         composition.append(NC)
         print(composition)
         NC[45]
-
-
 
     while running:
         weights = []
