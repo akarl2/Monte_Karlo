@@ -32,7 +32,6 @@ def simulate(starting_materials):
     composition = [[[[group[0], group[1] * compound[3][0]] for group in compound[0]], compound[2], compound[3], compound[1]] for
                    compound in starting_materials]
 
-
     def check_react(groups):
         global groupA, groupB
         groupA = groups[0][2]
@@ -54,7 +53,13 @@ def simulate(starting_materials):
         compoundB = composition[groups[1][0]]
         compoundAloc = groups[0][1]
         compoundBloc = groups[1][1]
-        print(groups)
+        new_name = {}
+        for group, count in compoundA[1] + compoundB[1]:
+            if group in new_name:
+                new_name[group] += count
+            else:
+                new_name[group] = count
+        new_name = [[group, count] for group, count in new_name.items()]
         NW = compoundA[3][0] + compoundB[3][0] - new_group(groupA, groupB)['WL']
         NC = [[[group[0], group[1] / NC[2][0]] if group[1] != 0 else group for group in NC[0]], NC[1], [1], [NW]]
         NC[0][groups[0][1]][0] = new_group(groupA, groupB)['NG']
@@ -65,20 +70,16 @@ def simulate(starting_materials):
         NCBt = [[[group[0], group[1] / compoundB[2][0]] if group[1] != 0 else group for group in compoundB[0]], compoundB[1], [compoundB[2][0] - 1] if compoundB[2][0] != 0 else [0], compoundB[3]]
         NCB = [[[group[0], group[1] * NCBt[2][0]] if group[1] != 0 else group for group in NCBt[0]], NCBt[1], [NCBt[2][0]] if NCBt[2][0] != 0 else [0], NCBt[3]]
         old_groups = NCBt[0]
-        print(old_groups)
+        NC[1] = new_name
         if len(old_groups) == 1:
             pass
         else:
             del(old_groups[compoundBloc])
-            print(old_groups)
             NC[0].append(old_groups)
-
-        print(NC)
         composition[groups[0][0]] = NCA
         composition[groups[1][0]] = NCB
         composition.append(NC)
-        print(composition)
-        NC[45]
+        print(NC)
 
     while running:
         weights = []
@@ -89,6 +90,8 @@ def simulate(starting_materials):
                 chemical.append([i, index, group[0]])
                 weights.append(group[1])
                 index += 1
+        print(chemical)
+        print(weights)
         groups = random.choices(chemical, weights, k=2)
         while groups[0][0] == groups[1][0] or check_react(groups) is False:
             groups = random.choices(chemical, weights, k=2)
