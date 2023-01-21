@@ -31,30 +31,44 @@ class reactive_groups:
 class NH2:
     def __init__(self):
         self.COOH = "CONH"
+        self.COOH_wl = Water().mw
         self.COC = 'COCNH'
+        self.COC_wl = 0
         self.Cl = 'ClNH'
+        self.Cl_wl = 0
+
 
 class COOH:
     def __init__(self):
         self.NH2 = "CONH"
+        self.NH2_wl = Water().mw
         self.OH = 'COOC'
+        self.OH_wl = Water().mw
         self.COC = 'COCOH'
+        self.COC_wl = 0
 
 class NH:
     def __init__(self):
         self.COC = 'COCN'
+        self.COC_wl = 0
 
 class COC:
     def __init__(self):
         self.NH2 = 'COCNH'
+        self.NH2_wl = 0
         self.OH = 'COOC'
+        self.OH_wl = 0
         self.COOH = 'COCOH'
+        self.COOH_wl = 0
         self.NH = 'COCN'
+        self.NH_wl = 0
 
 class OH:
     def __init__(self):
         self.COOH = 'COOC'
+        self.COOH_wl = Water().mw
         self.COC = 'COOC'
+        self.COC_wl = 0
 
 
 

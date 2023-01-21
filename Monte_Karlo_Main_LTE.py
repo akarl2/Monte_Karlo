@@ -6,7 +6,7 @@ from tkinter import ttk, messagebox
 import pandas
 from ttkwidgets.autocomplete import AutocompleteEntry, AutocompleteCombobox
 from Database import *
-from Reactions import reactive_groups
+from Reactions import reactive_groups, NH2,NH,COOH,COC,OH
 from Reactions import *
 import itertools
 from pandastable import Table, TableModel, config
@@ -45,19 +45,20 @@ def simulate(starting_materials):
 
     def new_group(groupA, groupB):
         NG = getattr(eval(groupA + '()'), groupB)
-        return NG
+        WL = getattr(eval(groupA + '()'), groupB + '_wl')
+        return {'NG': NG, 'WL': WL}
 
-    def new_compound(composition, groups):
+    def update_comp(composition, groups):
         NC = composition[groups[0][0]]
         compoundA = composition[groups[0][0]]
         compoundB = composition[groups[1][0]]
         compoundAloc = groups[0][1]
         compoundBloc = groups[1][1]
-        compoundAgroup = groups[0][2]
-        compoundBgroup = groups[1][2]
-        NC = [[[group[0], group[1] / NC[2][0]] if group[1] != 0 else group for group in NC[0]], NC[1], [1], NC[3]]
-        NC[0][groups[0][1]][0] = new_group(groupA, groupB)
+        NW = compoundA[3][0] + compoundB[3][0] - new_group(groupA, groupB)['WL']
+        NC = [[[group[0], group[1] / NC[2][0]] if group[1] != 0 else group for group in NC[0]], NC[1], [1], [NW]]
+        NC[0][groups[0][1]][0] = new_group(groupA, groupB)['NG']
         NC[0][groups[0][1]][1] = (compoundA[0][compoundAloc][1] / compoundA[2][0]) * (compoundB[0][compoundBloc][1] / compoundB[2][0])
+        NC[0][groups[0][1]][1] = 0
         NCA = [[[group[0], group[1] / compoundA[2][0]] if group[1] != 0 else group for group in compoundA[0]], compoundA[1], [compoundA[2][0] - 1] if compoundA[2][0] != 0 else [0], compoundA[3]]
         NCA = [[[group[0], group[1] * NCA[2][0]] if group[1] != 0 else group for group in NCA[0]], NCA[1], [NCA[2][0]] if NCA[2][0] != 0 else [0], NCA[3]]
         NCB = [[[group[0], group[1] / compoundB[2][0]] if group[1] != 0 else group for group in compoundB[0]], compoundB[1], [compoundB[2][0] - 1] if compoundB[2][0] != 0 else [0], compoundB[3]]
@@ -66,7 +67,9 @@ def simulate(starting_materials):
         composition[groups[1][0]] = NCB
         composition.append(NC)
         print(composition)
-        NC[40]
+        NC[45]
+
+
 
     while running:
         weights = []
@@ -80,11 +83,7 @@ def simulate(starting_materials):
         groups = random.choices(chemical, weights, k=2)
         while groups[0][0] == groups[1][0] or check_react(groups) is False:
             groups = random.choices(chemical, weights, k=2)
-        new_compound(composition, groups)
-
-
-        # # composition[groups[0][0]][3][0] -= 1
-        # # composition[groups[1][0]][3][0] -= 1
+        update_comp(composition, groups)
 
         print("move forward")
 
