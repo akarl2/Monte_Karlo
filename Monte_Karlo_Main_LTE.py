@@ -97,7 +97,7 @@ def simulate(starting_materials):
             else:
                 composition[groups[0][0]] = NCA
         composition.append(NC)
-        print(len(composition))
+        print(composition[-1][1])
 
 
     while running:
