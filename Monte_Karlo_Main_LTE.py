@@ -78,10 +78,27 @@ def simulate(starting_materials):
             del(old_groups[compoundBloc])
             for sublist in old_groups:
                 NC[0].append(sublist)
-        composition[groups[0][0]] = NCA
-        composition[groups[1][0]] = NCB
+        if groups[0][0] > groups[1][0]:
+            if NCA[2][0] == 0:
+                del(composition[groups[0][0]])
+            else:
+                composition[groups[0][0]] = NCA
+            if NCB[2][0] == 0:
+                del(composition[groups[1][0]])
+            else:
+                composition[groups[1][0]] = NCB
+        else:
+            if NCB[2][0] == 0:
+                del(composition[groups[1][0]])
+            else:
+                composition[groups[1][0]] = NCB
+            if NCA[2][0] == 0:
+                del(composition[groups[0][0]])
+            else:
+                composition[groups[0][0]] = NCA
         composition.append(NC)
-        print(composition[0],composition[1], composition[2])
+        print(len(composition))
+
 
     while running:
         weights = []

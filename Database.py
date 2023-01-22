@@ -319,6 +319,21 @@ class Adipic_Acid:
         self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
         self.rg = "Acid"
+        self.numgroups = len(set(self.comp))
+        self.prgID = "COOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID],[self.prgID]]
+
 
 class Isostearic_Acid:
     def __init__(self):
