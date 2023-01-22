@@ -60,6 +60,7 @@ def simulate(starting_materials):
             else:
                 new_name[group] = count
         new_name = [[group, count] for group, count in new_name.items()]
+        new_name.sort(key=lambda x: x[0])
         NW = compoundA[3][0] + compoundB[3][0] - new_group(groupA, groupB)['WL']
         NC = [[[group[0], group[1] / NC[2][0]] if group[1] != 0 else group for group in NC[0]], NC[1], [1], [NW]]
         NC[0][groups[0][1]][0] = new_group(groupA, groupB)['NG']
@@ -77,11 +78,10 @@ def simulate(starting_materials):
             del(old_groups[compoundBloc])
             for sublist in old_groups:
                 NC[0].append(sublist)
-            print(f'after{NC[0]}')
         composition[groups[0][0]] = NCA
         composition[groups[1][0]] = NCB
         composition.append(NC)
-        print(composition)
+        print(composition[0],composition[1], composition[2])
 
     while running:
         weights = []
@@ -101,35 +101,7 @@ def simulate(starting_materials):
     # eor = float(eor)
     # emr = float(emr)
 
-    # 
-    # 
-    # 
-    # # elif rt.name == PolyCondensation:
-    # #     final_product_masses.update(
-    # #         {f"{a.sn}({i})_{b.sn}({str(i)})": round(i * a.mw + i * b.mw - (i + i - 1) * rt.wl, 2) for i in
-    # #          range(1, 1001)})
-    # #     final_product_masses.update(
-    # #         {f"{a.sn}({i - 1})_{b.sn}({str(i)})": round((i - 1) * a.mw + i * b.mw - (i + i - 2) * rt.wl, 1) for i in
-    # #          range(2, 1001)})
-    # #     final_product_masses.update(
-    # #         {f"{a.sn}({i})_{b.sn}({str(i - 1)})": round(i * a.mw + (i - 1) * b.mw - (i + i - 2) * rt.wl, 1) for i in
-    # #          range(2, 1001)})
-    # 
-    # # Creates a list with the ID's of the chain lengths
-    # if rt.name == PolyCondensation:
-    #     cw = a.prgmw
-    #     cw2 = b.prgmw
-    #     chain_lengths_id = [((0, a.prgmw), a.rg), ((1, b.prgmw), b.rg)]
-    #     for chain_length in range(2, 100, 2):
-    #         cw = cw + b.mw - rt.wl
-    #         chain_lengths_id.append(((chain_length - 1, round(cw, 3)), b.rg))
-    #         cw = cw + a.mw - rt.wl
-    #         chain_lengths_id.append(((chain_length, round(cw, 3)), a.rg))
-    #         cw2 = cw2 + a.mw - rt.wl
-    #         chain_lengths_id.append(((chain_length, round(cw2, 3)), a.rg))
-    #         cw2 = cw2 + b.mw - rt.wl
-    #         chain_lengths_id.append(((chain_length, round(cw2, 3)), b.rg))
-    # 
+
     # # Creates starting composition list
     # composition = []
     # try:
