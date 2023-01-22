@@ -75,11 +75,13 @@ def simulate(starting_materials):
             pass
         else:
             del(old_groups[compoundBloc])
-            NC[0].append(old_groups)
+            for sublist in old_groups:
+                NC[0].append(sublist)
+            print(f'after{NC[0]}')
         composition[groups[0][0]] = NCA
         composition[groups[1][0]] = NCB
         composition.append(NC)
-        print(NC)
+        print(composition)
 
     while running:
         weights = []
@@ -90,14 +92,10 @@ def simulate(starting_materials):
                 chemical.append([i, index, group[0]])
                 weights.append(group[1])
                 index += 1
-        print(chemical)
-        print(weights)
         groups = random.choices(chemical, weights, k=2)
         while groups[0][0] == groups[1][0] or check_react(groups) is False:
             groups = random.choices(chemical, weights, k=2)
         update_comp(composition, groups)
-
-        print("move forward")
 
     # global running, emo_a, results, expanded_results
     # eor = float(eor)
