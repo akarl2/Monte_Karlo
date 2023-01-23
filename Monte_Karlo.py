@@ -29,8 +29,13 @@ def simulate(starting_materials):
     running = True
     sim.progress['value'] = 0
 
-    composition = [[[[group[0], group[1] * compound[3][0]] for group in compound[0]], compound[2], compound[3], compound[1]] for
-                   compound in starting_materials]
+    composition = []
+    for compound in starting_materials:
+        for i in range(compound[3][0]):
+            inner_result = []
+            for group in compound[0]:
+                inner_result.append([group[0], group[1]])
+            composition.append([inner_result, compound[2], compound[1]])
 
     def check_react(groups):
         global groupA, groupB
@@ -61,45 +66,23 @@ def simulate(starting_materials):
                 new_name[group] = count
         new_name = [[group, count] for group, count in new_name.items()]
         new_name.sort(key=lambda x: x[0])
-        NW = compoundA[3][0] + compoundB[3][0] - new_group(groupA, groupB)['WL']
-        NC = [[[group[0], group[1] / NC[2][0]] if group[1] != 0 else group for group in NC[0]], NC[1], [1], [NW]]
+        NW = compoundA[2][0] + compoundB[2][0] - new_group(groupA, groupB)['WL']
+        NC = [[[group[0], group[1]] for group in NC[0]], new_name, [NW]]
         NC[0][groups[0][1]][0] = new_group(groupA, groupB)['NG']
-        NC[0][groups[0][1]][1] = (compoundA[0][compoundAloc][1] / compoundA[2][0]) * (compoundB[0][compoundBloc][1] / compoundB[2][0])
         NC[0][groups[0][1]][1] = 0
-        NCAt = [[[group[0], group[1] / compoundA[2][0]] if group[1] != 0 else group for group in compoundA[0]], compoundA[1], [compoundA[2][0] - 1] if compoundA[2][0] != 0 else [0], compoundA[3]]
-        NCA = [[[group[0], group[1] * NCAt[2][0]] if group[1] != 0 else group for group in NCAt[0]], NCAt[1], [NCAt[2][0]] if NCAt[2][0] != 0 else [0], NCAt[3]]
-        NCBt = [[[group[0], group[1] / compoundB[2][0]] if group[1] != 0 else group for group in compoundB[0]], compoundB[1], [compoundB[2][0] - 1] if compoundB[2][0] != 0 else [0], compoundB[3]]
-        NCB = [[[group[0], group[1] * NCBt[2][0]] if group[1] != 0 else group for group in NCBt[0]], NCBt[1], [NCBt[2][0]] if NCBt[2][0] != 0 else [0], NCBt[3]]
-        old_groups = NCBt[0]
-        print(old_groups)
-        exit()
-        NC[1] = new_name
+        old_groups = compoundB[0]
         if len(old_groups) == 1:
             pass
         else:
             del(old_groups[compoundBloc])
+
             for sublist in old_groups:
                 NC[0].append(sublist)
-        if groups[0][0] > groups[1][0]:
-            if NCA[2][0] == 0:
-                del(composition[groups[0][0]])
-            else:
-                composition[groups[0][0]] = NCA
-            if NCB[2][0] == 0:
-                del(composition[groups[1][0]])
-            else:
-                composition[groups[1][0]] = NCB
-        else:
-            if NCB[2][0] == 0:
-                del(composition[groups[1][0]])
-            else:
-                composition[groups[1][0]] = NCB
-            if NCA[2][0] == 0:
-                del(composition[groups[0][0]])
-            else:
-                composition[groups[0][0]] = NCA
         NC[0].sort(key=lambda x: x[0])
-        composition.append(NC)
+        composition[groups[0][0]] = NC
+        print(NC)
+        del(composition[groups[1][0]])
+
 
     while running:
         weights = []
@@ -134,7 +117,7 @@ def simulate(starting_materials):
     # except TypeError:
     #     for i in range(0, int(b.mol)):
     #         composition.append(b.mw)
-    # 
+    #
     # # Reacts away b.mol until gone.
     # if rt.name != PolyCondensation:
     #     weights = []
@@ -168,7 +151,7 @@ def simulate(starting_materials):
     #     except TypeError:
     #         composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
     #         composition_tuple = [tuple(item) for item in composition]
-    # 
+    #
     # elif rt.name == PolyCondensation:
     #     # determines starting status of the reaction
     #     IDLIST = []
@@ -205,7 +188,7 @@ def simulate(starting_materials):
     #         IDLIST_tuple = [tuple(item) for item in IDLIST]
     #     composition_tuple = [list(item) for item in composition_tuple]
     #     IDLIST_tuple = [list(item) for item in IDLIST_tuple]
-    # 
+    #
     #     # runs the reaction
     #     while emo_a > emr and running == True:
     #         RC = random.choice(list(enumerate(IDLIST_tuple)))
@@ -237,7 +220,7 @@ def simulate(starting_materials):
     #             del IDLIST_tuple[RC2[0]]
     #         else:
     #             pass
-    # 
+    #
     #         # determines current status of reaction
     #         composition_tuple_temp = list(itertools.chain(*composition_tuple))
     #         IDLIST = [None] * len(composition_tuple_temp)
@@ -264,9 +247,9 @@ def simulate(starting_materials):
     #             emo_a = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
     #         sim.progress['value'] = round((emo_a / emr) * 100, 2)
     #         window.update()
-    # 
+    #
     #     composition_tuple = [tuple(item) for item in composition_tuple]
-    # 
+    #
     # # Tabulates final composition and converts to dataframe
     # rxn_summary = collections.Counter(composition_tuple)
     # RS = []
@@ -275,12 +258,12 @@ def simulate(starting_materials):
     #     for item in final_product_masses:
     #         if math.isclose(MS, final_product_masses[item], abs_tol=1):
     #             RS.append((item, rxn_summary[key], key))
-    # 
+    #
     # # Convert RS to dataframe
     # rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     # rxn_summary_df.set_index('Product', inplace=True)
     # # rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
-    # 
+    #
     # # print each value in each row from Mass Distribution
     # if rt.name == PolyCondensation:
     #     for i in range(len(rxn_summary_df)):
@@ -309,10 +292,10 @@ def simulate(starting_materials):
     #         except TypeError:
     #             chain_ID = "Amine"
     #             amine_ct += 1
-    # 
+    #
     # global expanded_results
     # expanded_results = rxn_summary_df
-    # 
+    #
     # # Add columns to dataframe
     # rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get)
     # rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
@@ -325,7 +308,7 @@ def simulate(starting_materials):
     #     rxn_summary_df['Acid Value'] = round(rxn_summary_df['Acid Value'] * rxn_summary_df['Wt %'] / 100, 2)
     # except KeyError:
     #     pass
-    # 
+    #
     # # Add ehc to dataframe if rt == Etherification
     # if rt.name == Etherification:
     #     ehc = []
@@ -348,18 +331,18 @@ def simulate(starting_materials):
     #     RM.update_EHC(round(EHCp, 2))
     #     WPE = (3545.3 / EHCp) - 36.4
     #     RM.update_WPE(round(WPE, 2))
-    # 
+    #
     # # sum rxn_summary_df by product but keep Molar mass the same
     # rxn_summary_df = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum(numeric_only=True)
     # rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
     # rxn_summary_df_compact = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
     # rxn_summary_df_compact.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
-    # 
+    #
     # if rt.name == PolyCondensation:
     #     RM.updateAV(round(rxn_summary_df['Acid Value'].sum(), 2))
     #     RM.updateTAV(round(rxn_summary_df['Amine Value'].sum(), 2))
     #     RM.updateOHV(round(rxn_summary_df['OH Value'].sum(), 2))
-    # 
+    #
     # show_results(rxn_summary_df_compact)
 
 
