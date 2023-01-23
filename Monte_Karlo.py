@@ -85,12 +85,11 @@ def simulate(starting_materials):
         organize_data(composition)
 
     def organize_data(composition):
-        comp_summary = Counter([(tuple(tuple(i) for i in sublist[0]),tuple(tuple(i) for i in sublist[1]),sublist[2][0]) for sublist in composition])
+        comp_summary = Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
         print(comp_summary)
 
-
-
     while running:
+
         weights = []
         chemical = []
         for i, chemicals in enumerate(composition):
