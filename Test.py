@@ -28,9 +28,9 @@ global groupA, groupB
 def simulate(starting_materials):
     running = True
     sim.progress['value'] = 0
+    composition = starting_materials
+    print(composition)
 
-    composition = [[[[group[0], group[1] * compound[3][0]] for group in compound[0]], compound[2], compound[3], compound[1]] for
-                   compound in starting_materials]
 
     def check_react(groups):
         global groupA, groupB
@@ -78,42 +78,24 @@ def simulate(starting_materials):
             del(old_groups[compoundBloc])
             for sublist in old_groups:
                 NC[0].append(sublist)
-        if groups[0][0] > groups[1][0]:
-            if NCA[2][0] == 0:
-                del(composition[groups[0][0]])
-            else:
-                composition[groups[0][0]] = NCA
-            if NCB[2][0] == 0:
-                del(composition[groups[1][0]])
-            else:
-                composition[groups[1][0]] = NCB
-        else:
-            if NCB[2][0] == 0:
-                del(composition[groups[1][0]])
-            else:
-                composition[groups[1][0]] = NCB
-            if NCA[2][0] == 0:
-                del(composition[groups[0][0]])
-            else:
-                composition[groups[0][0]] = NCA
+        del(composition[groups[1][0]])
         NC[0].sort(key=lambda x: x[0])
         composition.append(NC)
 
     while running:
-        print(composition)
-        break
         weights = []
         chemical = []
         for i, chemicals in enumerate(composition):
             index = 0
+            print(chemicals)
             for group in chemicals[0]:
-                print(chemicals, group)
-                print(chemicals[0])
-                break
                 chemical.append([i, index, group[0]])
                 weights.append(group[1])
                 index += 1
+        print(chemical)
+        print(weights)
         groups = random.choices(chemical, weights, k=2)
+
         while groups[0][0] == groups[1][0] or check_react(groups) is False:
             groups = random.choices(chemical, weights, k=2)
         update_comp(composition, groups)
@@ -137,7 +119,7 @@ def simulate(starting_materials):
     # except TypeError:
     #     for i in range(0, int(b.mol)):
     #         composition.append(b.mw)
-    # 
+    #
     # # Reacts away b.mol until gone.
     # if rt.name != PolyCondensation:
     #     weights = []
@@ -171,7 +153,7 @@ def simulate(starting_materials):
     #     except TypeError:
     #         composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
     #         composition_tuple = [tuple(item) for item in composition]
-    # 
+    #
     # elif rt.name == PolyCondensation:
     #     # determines starting status of the reaction
     #     IDLIST = []
@@ -208,7 +190,7 @@ def simulate(starting_materials):
     #         IDLIST_tuple = [tuple(item) for item in IDLIST]
     #     composition_tuple = [list(item) for item in composition_tuple]
     #     IDLIST_tuple = [list(item) for item in IDLIST_tuple]
-    # 
+    #
     #     # runs the reaction
     #     while emo_a > emr and running == True:
     #         RC = random.choice(list(enumerate(IDLIST_tuple)))
@@ -240,7 +222,7 @@ def simulate(starting_materials):
     #             del IDLIST_tuple[RC2[0]]
     #         else:
     #             pass
-    # 
+    #
     #         # determines current status of reaction
     #         composition_tuple_temp = list(itertools.chain(*composition_tuple))
     #         IDLIST = [None] * len(composition_tuple_temp)
@@ -267,9 +249,9 @@ def simulate(starting_materials):
     #             emo_a = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
     #         sim.progress['value'] = round((emo_a / emr) * 100, 2)
     #         window.update()
-    # 
+    #
     #     composition_tuple = [tuple(item) for item in composition_tuple]
-    # 
+    #
     # # Tabulates final composition and converts to dataframe
     # rxn_summary = collections.Counter(composition_tuple)
     # RS = []
@@ -278,12 +260,12 @@ def simulate(starting_materials):
     #     for item in final_product_masses:
     #         if math.isclose(MS, final_product_masses[item], abs_tol=1):
     #             RS.append((item, rxn_summary[key], key))
-    # 
+    #
     # # Convert RS to dataframe
     # rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
     # rxn_summary_df.set_index('Product', inplace=True)
     # # rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
-    # 
+    #
     # # print each value in each row from Mass Distribution
     # if rt.name == PolyCondensation:
     #     for i in range(len(rxn_summary_df)):
@@ -312,10 +294,10 @@ def simulate(starting_materials):
     #         except TypeError:
     #             chain_ID = "Amine"
     #             amine_ct += 1
-    # 
+    #
     # global expanded_results
     # expanded_results = rxn_summary_df
-    # 
+    #
     # # Add columns to dataframe
     # rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get)
     # rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
@@ -328,7 +310,7 @@ def simulate(starting_materials):
     #     rxn_summary_df['Acid Value'] = round(rxn_summary_df['Acid Value'] * rxn_summary_df['Wt %'] / 100, 2)
     # except KeyError:
     #     pass
-    # 
+    #
     # # Add ehc to dataframe if rt == Etherification
     # if rt.name == Etherification:
     #     ehc = []
@@ -351,18 +333,18 @@ def simulate(starting_materials):
     #     RM.update_EHC(round(EHCp, 2))
     #     WPE = (3545.3 / EHCp) - 36.4
     #     RM.update_WPE(round(WPE, 2))
-    # 
+    #
     # # sum rxn_summary_df by product but keep Molar mass the same
     # rxn_summary_df = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum(numeric_only=True)
     # rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
     # rxn_summary_df_compact = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
     # rxn_summary_df_compact.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
-    # 
+    #
     # if rt.name == PolyCondensation:
     #     RM.updateAV(round(rxn_summary_df['Acid Value'].sum(), 2))
     #     RM.updateTAV(round(rxn_summary_df['Amine Value'].sum(), 2))
     #     RM.updateOHV(round(rxn_summary_df['OH Value'].sum(), 2))
-    # 
+    #
     # show_results(rxn_summary_df_compact)
 
 
@@ -432,7 +414,7 @@ def sim_values():
             index = index + 1
         else:
             break
-    simulate(starting_materials)
+    simulate(starting_materials[0])
     # try:
     #     simulate(a=A1reactant.get(), b=B1reactant.get(), rt=RXN_Type.get(), samples=RXN_Samples.get(), eor=RXN_EOR.get(),
     #              a_mass=massA1.get(), b_mass=massB1.get(), prgk=RET.entries[24].get(), srgk=RET.entries[34].get(), crgk=RET.entries[29].get(),

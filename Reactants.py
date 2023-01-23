@@ -53,7 +53,10 @@ class R1Data:
                 self.dist[index] = self.trgID
             index += 1
         self.dist = [[j if type(j) != str else j.replace("NH₂", "NH2") for j in i] for i in self.dist]
-        self.comp = [self.dist, [self.mw], [[self.sn, 1]], [self.ct]]
+        #self.comp = [self.dist, [self.mw], [[self.sn, 1]], [self.ct]]
+        #print(self.comp)
+        self.comp = [[self.dist, [[self.sn, 1]], [self.mw]]] * self.ct
+        print(self.comp)
 
 class R2Data:
     def __init__(self):
@@ -110,7 +113,7 @@ class R2Data:
                 self.dist[index] = self.trgID
             index += 1
         self.dist = [[j if type(j) != str else j.replace("NH₂", "NH2") for j in i] for i in self.dist]
-        self.comp = [self.dist, [self.mw], [[self.sn, 1]], [self.ct]]
+        self.comp = [self.dist, [[self.sn, 1]], [self.mw]] * self.ct
 
 class R3Data:
     def __init__(self):

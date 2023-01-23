@@ -1,17 +1,15 @@
-CA = [['DETA', 1]]
-CC = [['DETA', 1], ['COOH', 1], ['COC', 1], ['Cl', 1]]
-CB = [['COOH', 1]]
+from collections import Counter
+
+comp = [[[['NH2', 810.0], ['NH', 0.0], ['NH2', 810.0]], [['DETA', 1]], [810], [103.169]], [[['NH2', 1.0], ['NH', 0.0], ['CONH', 0]], [['C181', 1], ['DETA', 1]], [1], [367.62372]], [[['NH2', 1.0], ['NH', 0.0], ['CONH', 0]], [['C181', 1], ['DETA', 1]], [1], [367.62372]], [[['CONH', 0], ['NH', 0.0], ['NH2', 1.0]], [['C181', 1], ['DETA', 1]], [1], [367.62372]]]
+short_comp = [[comp[1], comp[2], comp[3]] for comp in comp]
+
+print(short_comp)
 
 
-#combine CB and CC by adding the values of the second list to the first list and create a new list with the results
+test = [[(['DETA_1']), [810], [103.169]], [(['C181_1_DETA_1']), [1], [367.62372]], [(['C181_1_DETA_1']), [1], [367.62372]], [(['C181_1_DETA_1']), [1], [367.62372]]]
 
-groups = {}
-for group, count in CC + CB:
-    if group in groups:
-        groups[group] += count
-    else:
-        groups[group] = count
+[[[['NH2', 1.0], ['NH', 0.0], ['NH2', 1.0]], [['DETA', 1]], [103.169]]
 
-combined_list = [[group, count] for group, count in groups.items()]
+[[[['NH2', 19.0], ['NH', 0.0], ['NH2', 19.0]], [['DETA', 1]], [19], [103.169]], [[['COOH', 7.0]], [['C181', 1]], [7], [282.47]]]
 
-print(combined_list)
+[[[['NH2', 1.0], ['NH', 0.0], ['NH2', 1.0]], [['DETA', 1]], [103.169]
