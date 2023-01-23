@@ -68,7 +68,7 @@ def simulate(starting_materials):
         new_name = [[group, count] for group, count in new_name.items()]
         new_name.sort(key=lambda x: x[0])
         NW = compoundA[2][0] + compoundB[2][0] - new_group(groupA, groupB)['WL']
-        NC = [[[group[0], group[1]] for group in NC[0]], new_name, [NW]]
+        NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW,2)]]
         NC[0][groups[0][1]][0] = new_group(groupA, groupB)['NG']
         NC[0][groups[0][1]][1] = 0.0
         old_groups = compoundB[0]
@@ -85,7 +85,7 @@ def simulate(starting_materials):
         organize_data(composition)
 
     def organize_data(composition):
-        comp_summary = Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1])) for sublist in composition])
+        comp_summary = Counter([(tuple(tuple(i) for i in sublist[0]),tuple(tuple(i) for i in sublist[1]),sublist[2][0]) for sublist in composition])
         print(comp_summary)
 
 
