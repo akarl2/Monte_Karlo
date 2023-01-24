@@ -86,7 +86,27 @@ def simulate(starting_materials):
 
     def organize_data(composition):
         comp_summary = Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
-        print(comp_summary)
+        sum_comp = 0
+        for key in comp_summary:
+            sum_comp = sum_comp + (comp_summary[key] * key[2])
+        amine_ct = 0
+        acid_ct = 0
+        alcohol_ct = 0
+        for key in comp_summary:
+            for group in key[0]:
+                if group[0] == 'NH2':
+                    amine_ct += 1
+                elif group[0] == 'COOH':
+                    acid_ct += 1
+                elif group[0] == 'OH':
+                    alcohol_ct += 1
+
+        test = amine_ct * 56100
+        print(test)
+        TAV = round((amine_ct * 56100) / (sum_comp), 2)
+        AV = round((acid_ct * 56100) / (sum_comp), 2)
+        OH = round((alcohol_ct * 56100) / (sum_comp), 2)
+        print(TAV,AV, OH)
 
     while running:
 

@@ -4,10 +4,6 @@ data = [[[['NH2', 1.0], ['NH', 0.0], ['NH2', 1.0]], [['DETA', 1]], [103.169]], [
 
 group_counter = Counter([(tuple(tuple(i) for i in sublist[0]),tuple(tuple(i) for i in sublist[1]),sublist[2][0]) for sublist in data])
 
-#Convert group_counter to dataframe
-import pandas as pd
-df = pd.DataFrame.from_dict(group_counter, orient='index')
+for key in group_counter:
+    print(key, group_counter[key])
 
-print(df)
-
-print(group_counter)
