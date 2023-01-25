@@ -4,9 +4,9 @@ import sys
 import tkinter
 from tkinter import ttk, messagebox
 import pandas
-from ttkwidgets.autocomplete import AutocompleteEntry, AutocompleteCombobox
+from ttkwidgets.autocomplete import AutocompleteCombobox
 from Database import *
-from Reactions import reactive_groups, NH2,NH,COOH,COC,OH
+from Reactions import reactive_groups,NH2,NH,COOH,COC,OH
 from Reactions import *
 import itertools
 from pandastable import Table, TableModel, config
@@ -165,16 +165,6 @@ def RXN_Results(composition, TAV, AV, OH):
     show_results(rxn_summary_df_compact)
 
 
-    # global expanded_results
-    # expanded_results = rxn_summary_df
-    #
-
-    # try:
-    #     rxn_summary_df['OH Value'] = round(rxn_summary_df['OH Value'] * rxn_summary_df['Wt %'] / 100, 2)
-    #     rxn_summary_df['Amine Value'] = round(rxn_summary_df['Amine Value'] * rxn_summary_df['Wt %'] / 100, 2)
-    #     rxn_summary_df['Acid Value'] = round(rxn_summary_df['Acid Value'] * rxn_summary_df['Wt %'] / 100, 2)
-    # except KeyError:
-    #     pass
     #
     # # Add ehc to dataframe if rt == Etherification
     # if rt.name == Etherification:
