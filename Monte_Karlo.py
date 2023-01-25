@@ -3,6 +3,7 @@ from collections import Counter
 import random
 import sys
 import tkinter
+import customtkinter
 from tkinter import ttk, messagebox
 import pandas
 from ttkwidgets.autocomplete import AutocompleteEntry, AutocompleteCombobox
@@ -29,7 +30,8 @@ global groupA, groupB
 def simulate(starting_materials):
     running = True
     sim.progress['value'] = 0
-
+    end_metric_selection = str(RXN_EM.get())
+    end_metric_value = float(RXN_EM_Value.get())
     composition = []
     for compound in starting_materials:
         for i in range(compound[3][0]):
@@ -85,6 +87,7 @@ def simulate(starting_materials):
         organize_data(composition)
 
     def organize_data(composition):
+        global running
         comp_summary = Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
         sum_comp = 0
         for key in comp_summary:
@@ -94,22 +97,42 @@ def simulate(starting_materials):
         alcohol_ct = 0
         for key in comp_summary:
             for group in key[0]:
-                if group[0] == 'NH2':
-                    amine_ct += 1
+                if group[0] == 'NH2' or group[0] == 'NH':
+                    amine_ct += comp_summary[key]
                 elif group[0] == 'COOH':
-                    acid_ct += 1
+                    acid_ct += comp_summary[key]
                 elif group[0] == 'OH':
-                    alcohol_ct += 1
-
-        test = amine_ct * 56100
-        print(test)
+                    alcohol_ct += comp_summary[key]
         TAV = round((amine_ct * 56100) / (sum_comp), 2)
         AV = round((acid_ct * 56100) / (sum_comp), 2)
         OH = round((alcohol_ct * 56100) / (sum_comp), 2)
-        print(TAV,AV, OH)
+        print('TAV: ' + str(TAV), 'AV: ' + str(AV), 'OH: ' + str(OH))
+
+
+        if end_metric_selection == 'Amine_Value':
+            sim.progress['value'] = round(((end_metric_value / TAV ) * 100), 2)
+            print(TAV, end_metric_value)
+            if TAV <= end_metric_value:
+                running = False
+                sim.progress['value'] = 100
+            #window.update()
+        elif end_metric_selection == 'Acid_Value':
+            sim.progress['value'] = round(((AV / end_metric_value) * 100), 2)
+            window.update()
+            if AV <= end_metric_value:
+                running = False
+                sim.progress['value'] = 100
+                window.update()
+        elif end_metric_selection == 'OH_Value':
+            sim.progress['value'] = round(((OH / end_metric_value) * 100), 2)
+            window.update()
+            if OH <= end_metric_value:
+                running = False
+                sim.progress['value'] = 100
+                window.update()
 
     while running:
-
+        print(running)
         weights = []
         chemical = []
         for i, chemicals in enumerate(composition):
@@ -128,45 +151,9 @@ def simulate(starting_materials):
     # emr = float(emr)
 
 
-    # # Creates starting composition list
-    # composition = []
-    # try:
-    #     for i in range(0, int(a.mol)):
-    #         composition.extend(group for group in a.comp)
-    # except TypeError:
-    #     for i in range(0, int(a.mol)):
-    #         composition.append(a.mw)
-    # try:
-    #     for i in range(0, int(b.mol)):
-    #         composition.extend(group for group in b.comp)
-    # except TypeError:
-    #     for i in range(0, int(b.mol)):
-    #         composition.append(b.mw)
+
     #
-    # # Reacts away b.mol until gone.
-    # if rt.name != PolyCondensation:
-    #     weights = []
-    #     for B in composition:
-    #         if B == a.prgmw:
-    #             weights.append(int(prgK))
-    #         elif B == a.srgmw:
-    #             weights.append(int(srgK))
-    #         elif B == b.prgmw:
-    #             weights.append(1)
-    #         else:
-    #             weights.append(int(cgK))
-    #     indicesA = [i for i, x in enumerate(composition) if x == a.prgmw or x == a.srgmw or x != b.prgmw]
-    #     indicesB = [i for i, x in enumerate(composition) if x == b.prgmw]
-    #     while len(indicesA) > 1 and len(indicesB) > 1 and running is True:
-    #         indicesA = [i for i, x in enumerate(composition) if x == a.prgmw or x == a.srgmw or x != b.prgmw]
-    #         weightsA = [weights[i] for i in indicesA]
-    #         indicesB = [i for i, x in enumerate(composition) if x == b.prgmw]
-    #         weightsB = [weights[i] for i in indicesB]
-    #         MCA = random.choices(list(enumerate(indicesA)), weights=weightsA, k=1)[0]
-    #         MCB = random.choices(list(enumerate(indicesB)), weights=weightsB, k=1)[0]
-    #         composition[MCA[1]] = round(composition[MCA[1]] + composition[MCB[1]] - rt.wl, 3)
-    #         composition.pop(MCB[1])
-    #         weights[MCA[0]] = cgK
+
     #         b.mol -= 1
     #         sim.progress['value'] = round(100 - (b.mol / bms * 100), 1)
     #         window.update()
@@ -465,7 +452,6 @@ RDE = ['R1Data', 'R2Data', 'R3Data', 'R4Data', 'R5Data', 'R6Data', 'R7Data', 'R8
 global massA1, massB1, A1reactant, B1reactant, starting_cell
 starting_cell = 15
 
-
 def check_entry(entry, index, cell):
     RET.entries[entry].get()
     if RET.entries[entry].get() not in Reactants and RET.entries[entry].get() != "":
@@ -679,8 +665,6 @@ class RxnDetails(tkinter.Frame):
 
 
 global RXN_EM, RXN_EM_Value
-
-
 class RxnMetrics(tkinter.Frame):
     def __init__(self, master=window):
         tkinter.Frame.__init__(self, master)
