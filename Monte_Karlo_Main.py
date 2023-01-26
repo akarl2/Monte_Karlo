@@ -106,47 +106,22 @@ def simulate(starting_materials):
                     epoxide_ct += comp_summary[key]
                 elif group[0] == 'C3OHCl':
                     EHC_ct += comp_summary[key]
-        TAV = round((amine_ct * 56100) / (sum_comp), 2)
-        AV = round((acid_ct * 56100) / (sum_comp), 2)
-        OH = round((alcohol_ct * 56100) / (sum_comp), 2)
-        COC = round((epoxide_ct * 56100) / (sum_comp), 2)
-        EHC = round((EHC_ct * 35.453) / (sum_comp) * 100, 2)
-
-        if end_metric_selection == 'Amine Value':
-            sim.progress['value'] = round(((end_metric_value / TAV ) * 100), 2)
-            if TAV <= end_metric_value:
-                running = False
-                RXN_Results(composition, TAV, AV, OH, EHC)
-                sim.progress['value'] = 100
-            window.update()
-        elif end_metric_selection == 'Acid Value':
-            sim.progress['value'] = round(((end_metric_value / AV) * 100), 2)
-            if AV <= end_metric_value:
-                running = False
-                RXN_Results(composition, TAV, AV, OH, EHC)
-                sim.progress['value'] = 100
-            window.update()
-        elif end_metric_selection == 'OH Value':
-            sim.progress['value'] = round(((end_metric_value / OH) * 100), 2)
-            if OH <= end_metric_value:
-                running = False
-                RXN_Results(composition, TAV, AV, OH, EHC)
-                sim.progress['value'] = 100
-            window.update()
-        elif end_metric_selection == 'Epoxide Value':
-            sim.progress['value'] = round(((end_metric_value / COC) * 100), 2)
-            if COC <= end_metric_value:
-                running = False
-                RXN_Results(composition, TAV, AV, OH, EHC)
-                sim.progress['value'] = 100
-            window.update()
-        elif end_metric_selection == '% EHC':
+        TAV = round((amine_ct * 56100) / sum_comp, 2)
+        AV = round((acid_ct * 56100) / sum_comp, 2)
+        OH = round((alcohol_ct * 56100) / sum_comp, 2)
+        COC = round((epoxide_ct * 56100) / sum_comp, 2)
+        EHC = round((EHC_ct * 35.453) / sum_comp * 100, 2)
+        metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC}
+        RXN_metric_value = metrics[end_metric_selection]
+        if end_metric_selection != '% EHC':
+            sim.progress['value'] = round(((end_metric_value / RXN_metric_value) * 100), 2)
+        else:
             sim.progress['value'] = round(((EHC / end_metric_value) * 100), 2)
-            if EHC >= end_metric_value:
-                running = False
-                RXN_Results(composition, TAV, AV, OH, EHC)
-                sim.progress['value'] = 100
-            window.update()
+        if RXN_metric_value <= end_metric_value:
+            running = False
+            sim.progress['value'] = 100
+            RXN_Results(composition, TAV, AV, OH, EHC)
+        window.update()
 
     while running:
         weights = []
@@ -167,7 +142,7 @@ def RXN_Results(composition, TAV, AV, OH, EHC):
     RM.entries[6].insert(0, EHC)
     RM.entries[7].delete(0, tkinter.END)
     try:
-        RM.entries[7].insert(0, round((3545.3 / EHC) - 36.4), 2)
+        RM.entries[7].insert(0, round((3545.3 / EHC) - 36.4, 2))
     except ZeroDivisionError:
         RM.entries[7].insert(0, 'N/A')
     RM.entries[8].delete(0, tkinter.END)
@@ -191,32 +166,6 @@ def RXN_Results(composition, TAV, AV, OH, EHC):
     rxn_summary_df_compact = rxn_summary_df
 
     show_results(rxn_summary_df_compact)
-
-
-    #
-    # # Add ehc to dataframe if rt == Etherification
-    # if rt.name == Etherification:
-    #     ehc = []
-    #     for i in rxn_summary_df["Mass Distribution"]:
-    #         try:
-    #             EHCCount = 0
-    #             EHCCount += sum(chain_weight > max(a.comp) for chain_weight in i)
-    #             ehc.append(((EHCCount * 35.453) / sum(i)) * 100)
-    #         except TypeError:
-    #             try:
-    #                 ehc.append(35.453 / i * 100)
-    #             except TypeError:
-    #                 if sum(i) == a.mw:
-    #                     ehc.append(0)
-    #                 else:
-    #                     ehc.append(35.453 / sum(i) * 100)
-    #     rxn_summary_df['ehc'] = ehc
-    #     rxn_summary_df['% ehc'] = (rxn_summary_df['ehc'] * rxn_summary_df['Wt %']) / 100
-    #     EHCp = round(rxn_summary_df['% ehc'].sum(), 4)
-    #     RM.update_EHC(round(EHCp, 2))
-    #     WPE = (3545.3 / EHCp) - 36.4
-    #     RM.update_WPE(round(WPE, 2))
-    #
 
 
 # -------------------------------------------Aux Functions---------------------------------#
@@ -253,7 +202,6 @@ def show_results_expanded():
 
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
-
 
 def stop():
     global running
@@ -527,7 +475,6 @@ class RxnDetails(tkinter.Frame):
         RXN_Samples_Entry.config(justify="center")
         RXN_EOR = self.entries[5]
 
-
 global RXN_EM, RXN_EM_Value
 class RxnMetrics(tkinter.Frame):
     def __init__(self, master=tab1):
@@ -578,26 +525,6 @@ class RxnMetrics(tkinter.Frame):
         RXN_EM_Entry.config(justify="center")
         RXN_EM_Entry.insert(0, "End Metric")
         RXN_EM_Value = self.entries[11]
-
-    def update_EHC(self, EHCpercent):
-        self.entries[6].delete(0, tkinter.END)
-        self.entries[6].insert(0, EHCpercent)
-
-    def update_WPE(self, WPE):
-        self.entries[7].delete(0, tkinter.END)
-        self.entries[7].insert(0, WPE)
-
-    def updateAV(self, AV):
-        self.entries[8].delete(0, tkinter.END)
-        self.entries[8].insert(0, AV)
-
-    def updateTAV(self, TAV):
-        self.entries[9].delete(0, tkinter.END)
-        self.entries[9].insert(0, TAV)
-
-    def updateOHV(self, OHV):
-        self.entries[10].delete(0, tkinter.END)
-        self.entries[10].insert(0, OHV)
 
 
 class Buttons(tkinter.Frame):
