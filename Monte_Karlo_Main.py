@@ -1,324 +1,220 @@
-import collections
+from collections import Counter
 import random
 import sys
 import tkinter
 from tkinter import ttk, messagebox
 import pandas
-from ttkwidgets.autocomplete import AutocompleteEntry, AutocompleteCombobox
+from ttkwidgets.autocomplete import AutocompleteCombobox
 from Database import *
+from Reactions import reactive_groups,NH2,NH,COOH,COC,POH,SOH,C3OHCl
 from Reactions import *
 import itertools
 from pandastable import Table, TableModel, config
 import statsmodels
 import math
 from Reactants import *
+from Reactants import R1Data, R2Data, R3Data, R4Data, R5Data, R6Data, R7Data, R8Data, R9Data, R10Data, R11Data, R12Data, \
+    R13Data, R14Data
 
 # Set pandas dataframe display
 pandas.set_option('display.max_columns', None)
 pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
-global running, emo_a, results, frame, expanded_results
-running = False
-
 # Runs the simulation
-def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo):
-    global running, emo_a, results, expanded_results
-    progress['value'] = 0
-    clear_values()
-    a = str_to_class(a)()
-    b = str_to_class(b)()
-    rt = str_to_class(rt)()
-    eor = float(eor)
-    emr = float(emr)
-    a.mass = float(a_mass)
-    b.mass = float(b_mass)
-    prgK = float(prgk)
-    srgK = float(srgk)
-    cgK = float(crgk)
-    a.mol = round(a.mass / a.mw, 3) * int(samples)
-    b.mol = (round(b.mass / b.mw, 3) * int(samples)) * eor
+global running, emo_a, results, frame, expanded_results, groupA, groupB
+def simulate(starting_materials):
+    global running
     running = True
-    unreacted = b.mol - (eor * b.mol)
-    bms = b.mol
-
-    # Creates final product molar masses from final product name(s)
-    final_product_masses = ({a.sn: round(a.mw, 1), b.sn: round(b.mw, 1)})
-    if rt.name != PolyCondensation:
-        final_product_masses.update(
-            {f"{a.sn}({1})_{b.sn}({str(i)})": round(a.mw + (i * b.mw - i * rt.wl), 1) for i in range(1, 500)})
-        
-    elif rt.name == PolyCondensation:
-        final_product_masses.update(
-            {f"{a.sn}({i})_{b.sn}({str(i)})": round(i * a.mw + i * b.mw - (i + i - 1) * rt.wl, 2) for i in
-             range(1, 1001)})
-        final_product_masses.update(
-            {f"{a.sn}({i - 1})_{b.sn}({str(i)})": round((i - 1) * a.mw + i * b.mw - (i + i - 2) * rt.wl, 1) for i in
-             range(2, 1001)})
-        final_product_masses.update(
-            {f"{a.sn}({i})_{b.sn}({str(i - 1)})": round(i * a.mw + (i - 1) * b.mw - (i + i - 2) * rt.wl, 1) for i in
-             range(2, 1001)})
-
-    # Creates a list with the ID's of the chain lengths
-    if rt.name == PolyCondensation:
-        cw = a.prgmw
-        cw2 = b.prgmw
-        chain_lengths_id = [((0, a.prgmw), a.rg), ((1, b.prgmw), b.rg)]
-        for chain_length in range(2, 100, 2):
-            cw = cw + b.mw - rt.wl
-            chain_lengths_id.append(((chain_length - 1, round(cw, 3)), b.rg))
-            cw = cw + a.mw - rt.wl
-            chain_lengths_id.append(((chain_length, round(cw, 3)), a.rg))
-            cw2 = cw2 + a.mw - rt.wl
-            chain_lengths_id.append(((chain_length, round(cw2, 3)), a.rg))
-            cw2 = cw2 + b.mw - rt.wl
-            chain_lengths_id.append(((chain_length, round(cw2, 3)), b.rg))
-
-    # Creates starting composition list
+    sim.progress['value'] = 0
+    end_metric_selection = str(RXN_EM.get())
+    end_metric_value = float(RXN_EM_Value.get())
     composition = []
-    try:
-        for i in range(0, int(a.mol)):
-            composition.extend(group for group in a.comp)
-    except TypeError:
-        for i in range(0, int(a.mol)):
-            composition.append(a.mw)
-    try:
-        for i in range(0, int(b.mol)):
-            composition.extend(group for group in b.comp)
-    except TypeError:
-        for i in range(0, int(b.mol)):
-            composition.append(b.mw)
+    for compound in starting_materials:
+        for i in range(compound[3][0]):
+            inner_result = []
+            for group in compound[0]:
+                inner_result.append([group[0], group[1]])
+            composition.append([inner_result, compound[2], compound[1]])
 
-    # Reacts away b.mol until gone.
-    if rt.name != PolyCondensation:
-        weights = []
-        for group in composition:
-            if group == a.prgmw:
-                weights.append(int(prgK))
-            elif group == a.srgmw:
-                weights.append(int(srgK))
-            elif group == b.prgmw:
-                weights.append(1)
+    def check_react(groups):
+        global groupA, groupB
+        groupA = groups[0][2]
+        groupB = groups[1][2]
+        if groupB in getattr(rg, groupA):
+            new_group(groupA, groupB)
+            return True
+        else:
+            return False
+
+    def new_group(groupA, groupB):
+        NG = getattr(eval(groupA + '()'), groupB)
+        WL = getattr(eval(groupA + '()'), groupB + '_wl')
+        return {'NG': NG, 'WL': WL}
+
+    def update_comp(composition, groups):
+        NC = composition[groups[0][0]]
+        compoundA = composition[groups[0][0]]
+        compoundB = composition[groups[1][0]]
+        compoundAloc = groups[0][1]
+        compoundBloc = groups[1][1]
+        new_name = {}
+        for group, count in compoundA[1] + compoundB[1]:
+            if group in new_name:
+                new_name[group] += count
             else:
-                weights.append(int(cgK))
-        indicesA = [i for i, x in enumerate(composition) if x == a.prgmw or x == a.srgmw or x != b.prgmw]
-        indicesB = [i for i, x in enumerate(composition) if x == b.prgmw]
-        while len(indicesA) > 1 and len(indicesB) > 1 and running == True:
-            indicesA = [i for i, x in enumerate(composition) if x == a.prgmw or x == a.srgmw or x != b.prgmw]
-            weightsA = [weights[i] for i in indicesA]
-            indicesB = [i for i, x in enumerate(composition) if x == b.prgmw]
-            weightsB = [weights[i] for i in indicesB]
-            MCA = random.choices(list(enumerate(indicesA)), weights=weightsA, k=1)[0]
-            print(MCA)
-            print(indicesA)
-            print(list(enumerate(indicesA)))
-            MCB = random.choices(list(enumerate(indicesB)), weights=weightsB, k=1)[0]
-            composition[MCA[1]] = round(composition[MCA[1]] + composition[MCB[1]] - rt.wl, 3)
-            composition.pop(MCB[1])
-            weights[MCA[0]] = cgK
-            b.mol -= 1
-            progress['value'] = round(100 - (b.mol / bms * 100), 1)
-            window.update()
-        try:
-            composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
-            composition_tuple = [tuple(item) for item in composition]
-        except TypeError:
-            composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
-            composition_tuple = [tuple(item) for item in composition]
+                new_name[group] = count
+        new_name = [[group, count] for group, count in new_name.items()]
+        new_name.sort(key=lambda x: x[0])
+        NW = compoundA[2][0] + compoundB[2][0] - new_group(groupA, groupB)['WL']
+        NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW,2)]]
+        NC[0][groups[0][1]][0] = new_group(groupA, groupB)['NG']
+        NC[0][groups[0][1]][1] = 0.06
+        old_groups = compoundB[0]
+        if len(old_groups) == 1:
+            pass
+        else:
+            del(old_groups[compoundBloc])
 
-    elif rt.name == PolyCondensation:
-        # determines starting status of the reaction
-        IDLIST = []
+            for sublist in old_groups:
+                NC[0].append(sublist)
+        NC[0].sort(key=lambda x: x[0])
+        composition[groups[0][0]] = NC
+        del(composition[groups[1][0]])
+        RXN_Status(composition)
+
+    def RXN_Status(composition):
+        global running
+        comp_summary = Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+        sum_comp = 0
+        for key in comp_summary:
+            sum_comp = sum_comp + (comp_summary[key] * key[2])
         amine_ct = 0
         acid_ct = 0
         alcohol_ct = 0
-        for chain in composition:
-            for chain_ID in range(0, len(chain_lengths_id)):
-                if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
-                    ID = chain_lengths_id[chain_ID][1]
-                    IDLIST.append(ID)
-                    if ID == "Amine":
-                        amine_ct += 1
-                    elif ID == "Acid":
-                        acid_ct += 1
-                    elif ID == "Alcohol":
-                        alcohol_ct += 1
-                    break
-        if emo == "Amine_Value":
-            emo_a = round((amine_ct * 56100) / (sum(composition)), 2)
-        elif emo == "Acid_Value":
-            emo_a = round((acid_ct * 56100) / (sum(composition)), 2)
-        elif emo == "OH_Value":
-            emo_a = round((alcohol_ct * 56100) / (sum(composition)), 2)
-        try:
-            composition = [composition[x:x + len(a.comp)] for x in range(0, len(composition), len(a.comp))]
-            composition_tuple = [tuple(item) for item in composition]
-            IDLIST = [IDLIST[x:x + len(a.comp)] for x in range(0, len(IDLIST), len(a.comp))]
-            IDLIST_tuple = [tuple(item) for item in IDLIST]
-        except TypeError:
-            composition = [composition[x:x + 1] for x in range(0, len(composition), 1)]
-            composition_tuple = [tuple(item) for item in composition]
-            IDLIST = [IDLIST[x:x + 1] for x in range(0, len(IDLIST), 1)]
-            IDLIST_tuple = [tuple(item) for item in IDLIST]
-        composition_tuple = [list(item) for item in composition_tuple]
-        IDLIST_tuple = [list(item) for item in IDLIST_tuple]
+        epoxide_ct = 0
+        EHC_ct = 0
+        for key in comp_summary:
+            for group in key[0]:
+                if group[0] == 'NH2' or group[0] == 'NH':
+                    amine_ct += comp_summary[key]
+                elif group[0] == 'COOH':
+                    acid_ct += comp_summary[key]
+                elif group[0] == 'POH' or group[0] == 'SOH':
+                    alcohol_ct += comp_summary[key]
+                elif group[0] == 'COC':
+                    epoxide_ct += comp_summary[key]
+                elif group[0] == 'C3OHCl':
+                    EHC_ct += comp_summary[key]
+        TAV = round((amine_ct * 56100) / (sum_comp), 2)
+        AV = round((acid_ct * 56100) / (sum_comp), 2)
+        OH = round((alcohol_ct * 56100) / (sum_comp), 2)
+        COC = round((epoxide_ct * 56100) / (sum_comp), 2)
+        EHC = round((EHC_ct * 35.453) / (sum_comp) * 100, 2)
+        print(EHC)
 
-        # runs the reaction
-        while emo_a > emr and running == True:
-            RC = random.choice(list(enumerate(IDLIST_tuple)))
-            RCR_temp = random.choice(list(enumerate(RC[1])))
-            RCR = RCR_temp[1]
-            RCR_index = RCR_temp[0]
-            RC2 = random.choice(list(enumerate(IDLIST_tuple)))
-            RCR2_temp = random.choice(list(enumerate(RC2[1])))
-            RCR2 = RCR2_temp[1]
-            RCR2_index = RCR2_temp[0]
-            while RCR == RCR2 and RC[0] == RC2[0]:
-                RC = random.choice(list(enumerate(IDLIST_tuple)))
-                RCR_temp = random.choice(list(enumerate(RC[1])))
-                RCR = RCR_temp[1]
-                RCR_index = RCR_temp[0]
-                RC2 = random.choice(list(enumerate(IDLIST_tuple)))
-                RCR2_temp = random.choice(list(enumerate(RC2[1])))
-                RCR2 = RCR2_temp[1]
-                RCR2_index = RCR2_temp[0]
-            # randomly select another value from RCR2_index other than RCR2_value
-            RCR2_other = random.choice(list(enumerate(RC2[1])))
-            while RCR2_other[0] == RCR2_index:
-                RCR2_other = random.choice(list(enumerate(RC2[1])))
-            RCR2_other_index = RCR2_other[0]
-            if RCR != RCR2 and RC[0] != RC2[0]:
-                composition_tuple[RC[0]][RCR_index] += (sum(composition_tuple[RC2[0]]) - rt.wl)
-                IDLIST_tuple[RC[0]][RCR_index] = IDLIST_tuple[RC2[0]][RCR2_other_index]
-                del composition_tuple[RC2[0]]
-                del IDLIST_tuple[RC2[0]]
-            else:
-                pass
-
-            # determines current status of reaction
-            composition_tuple_temp = list(itertools.chain(*composition_tuple))
-            IDLIST = [None] * len(composition_tuple_temp)
-            amine_ct = 0
-            acid_ct = 0
-            alcohol_ct = 0
-            for chain in composition_tuple_temp:
-                for chain_ID in range(0, len(chain_lengths_id)):
-                    if math.isclose(chain, chain_lengths_id[chain_ID][0][1], abs_tol=1):
-                        ID = chain_lengths_id[chain_ID][1]
-                        IDLIST.append(ID)
-                        if ID == "Amine":
-                            amine_ct += 1
-                        elif ID == "Acid":
-                            acid_ct += 1
-                        elif ID == "Alcohol":
-                            alcohol_ct += 1
-                        break
-            if emo == "Amine_Value":
-                emo_a = round((amine_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            elif emo == "Acid_Value":
-                emo_a = round((acid_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            elif emo == "OH_Value":
-                emo_a = round((alcohol_ct * 56100) / (sum(composition_tuple_temp)), 2)
-            progress['value'] = round((emr / emo_a) * 100, 1)
+        if end_metric_selection == 'Amine Value':
+            sim.progress['value'] = round(((end_metric_value / TAV ) * 100), 2)
+            if TAV <= end_metric_value:
+                running = False
+                RXN_Results(composition, TAV, AV, OH, EHC)
+                sim.progress['value'] = 100
+            window.update()
+        elif end_metric_selection == 'Acid Value':
+            sim.progress['value'] = round(((end_metric_value / AV) * 100), 2)
+            if AV <= end_metric_value:
+                running = False
+                RXN_Results(composition, TAV, AV, OH, EHC)
+                sim.progress['value'] = 100
+            window.update()
+        elif end_metric_selection == 'OH Value':
+            sim.progress['value'] = round(((end_metric_value / OH) * 100), 2)
+            if OH <= end_metric_value:
+                running = False
+                RXN_Results(composition, TAV, AV, OH, EHC)
+                sim.progress['value'] = 100
+            window.update()
+        elif end_metric_selection == 'Epoxide Value':
+            sim.progress['value'] = round(((end_metric_value / COC) * 100), 2)
+            if COC <= end_metric_value:
+                running = False
+                RXN_Results(composition, TAV, AV, OH, EHC)
+                sim.progress['value'] = 100
+            window.update()
+        elif end_metric_selection == '% EHC':
+            sim.progress['value'] = round(((EHC / end_metric_value) * 100), 2)
+            if EHC >= end_metric_value:
+                running = False
+                RXN_Results(composition, TAV, AV, OH, EHC)
+                sim.progress['value'] = 100
             window.update()
 
-        composition_tuple = [tuple(item) for item in composition_tuple]
+    while running:
+        weights = []
+        chemical = []
+        for i, chemicals in enumerate(composition):
+            index = 0
+            for group in chemicals[0]:
+                chemical.append([i, index, group[0]])
+                weights.append(group[1])
+                index += 1
+        groups = random.choices(chemical, weights, k=2)
+        while groups[0][0] == groups[1][0] or check_react(groups) is False:
+            groups = random.choices(chemical, weights, k=2)
+        update_comp(composition, groups)
 
-    # Tabulates final composition and converts to dataframe
-    rxn_summary = collections.Counter(composition_tuple)
+def RXN_Results(composition, TAV, AV, OH, EHC):
+    RM.entries[6].delete(0, tkinter.END)
+    RM.entries[6].insert(0, EHC)
+    RM.entries[7].delete(0, tkinter.END)
+    RM.entries[7].insert(0, round((3545.3 / EHC) - 36.4), 2)
+    RM.entries[8].delete(0, tkinter.END)
+    RM.entries[8].insert(0, AV)
+    RM.entries[9].delete(0, tkinter.END)
+    RM.entries[9].insert(0, TAV)
+    RM.entries[10].delete(0, tkinter.END)
+    RM.entries[10].insert(0, OH)
+    comp_summary = Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
     RS = []
-    for key in rxn_summary:
-        MS = sum(key)
-        for item in final_product_masses:
-            if math.isclose(MS, final_product_masses[item], abs_tol=1):
-                RS.append((item, rxn_summary[key], key))
-
-    # Convert RS to dataframe
-    rxn_summary_df = pandas.DataFrame(RS, columns=['Product', 'Count', 'Mass Distribution'])
-    rxn_summary_df.set_index('Product', inplace=True)
-    #rxn_summary_df.loc[f"{b.sn}"] = [unreacted, b.mw]
-
-    # print each value in each row from Mass Distribution
-    if rt.name == PolyCondensation:
-        for i in range(len(rxn_summary_df)):
-            amine_ct = 0
-            acid_ct = 0
-            alcohol_ct = 0
-            try:
-                for j in range(len(rxn_summary_df.iloc[i]['Mass Distribution'])):
-                    for chain_length in range(0, len(chain_lengths_id)):
-                        if math.isclose(rxn_summary_df.iloc[i]['Mass Distribution'][j],
-                                        chain_lengths_id[chain_length][0][1], abs_tol=1):
-                            chain_ID = chain_lengths_id[chain_length][1]
-                            if chain_ID == "Amine":
-                                amine_ct += 1
-                            if chain_ID == "Acid":
-                                acid_ct += 1
-                            if chain_ID == "Alcohol":
-                                alcohol_ct += 1
-                            break
-                amine_value = round((amine_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])), 2)
-                acid_value = round((acid_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])), 2)
-                alcohol_value = round((alcohol_ct * 56100) / sum((rxn_summary_df.iloc[i]['Mass Distribution'])), 2)
-                rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "Amine Value"] = amine_value
-                rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "Acid Value"] = acid_value
-                rxn_summary_df.loc[f"{rxn_summary_df.index[i]}", "OH Value"] = alcohol_value
-            except TypeError:
-                chain_ID = "Amine"
-                amine_ct += 1
-
-    global expanded_results
-    expanded_results = rxn_summary_df
-
-    # Add columns to dataframe
-    rxn_summary_df['Molar Mass'] = rxn_summary_df.index.map(final_product_masses.get)
-    rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
-    rxn_summary_df['Mass'] = rxn_summary_df['Molar Mass'] * rxn_summary_df['Count']
+    for key in comp_summary:
+        RS.append((key[0], str(key[1]), key[2], comp_summary[key]))
+    rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count'])
+    rxn_summary_df.set_index('Name', inplace=True)
+    rxn_summary_df['Mass'] = rxn_summary_df['MW'] * rxn_summary_df['Count']
     rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
     rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
-    try:
-        rxn_summary_df['OH Value'] = round(rxn_summary_df['OH Value'] * rxn_summary_df['Wt %'] / 100, 2)
-        rxn_summary_df['Amine Value'] = round(rxn_summary_df['Amine Value'] * rxn_summary_df['Wt %'] / 100, 2)
-        rxn_summary_df['Acid Value'] = round(rxn_summary_df['Acid Value'] * rxn_summary_df['Wt %'] / 100, 2)
-    except KeyError:
-        pass
-
-    # Add ehc to dataframe if rt == Etherification
-    if rt.name == Etherification:
-        print(rxn_summary_df)
-        ehc = []
-        for i in rxn_summary_df["Mass Distribution"]:
-            print(i)
-            try:
-                EHCCount = 0
-                EHCCount += sum(chain_weight > max(a.comp) for chain_weight in i)
-                ehc.append(((EHCCount * 35.453) / sum(i)) * 100)
-                print(ehc)
-            except TypeError:
-                try:
-                    ehc.append(35.453 / i * 100)
-                except TypeError:
-                    if sum(i) == a.mw:   ehc.append(0)
-                    else:
-                        ehc.append(35.453 / sum(i) * 100)
-        rxn_summary_df['ehc'] = ehc
-        rxn_summary_df['% ehc'] = (rxn_summary_df['ehc'] * rxn_summary_df['Wt %']) / 100
-        EHCp = round(rxn_summary_df['% ehc'].sum(), 4)
-        update_percent_EHC(round(EHCp, 2))
-        update_WPE(round((3545.3 / EHCp) - 36.4, 2))
-
-    # sum rxn_summary_df by product but keep Molar mass the same
-    rxn_summary_df = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum(numeric_only=True)
-    rxn_summary_df.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
-    rxn_summary_df_compact = rxn_summary_df.groupby(['Product', 'Molar Mass']).sum()
-    rxn_summary_df_compact.sort_values(by=['Molar Mass'], ascending=True, inplace=True)
-
-    if rt.name == PolyCondensation:
-        update_Acid_Value(round(rxn_summary_df['Acid Value'].sum(), 2))
-        update_Amine_Value(round(rxn_summary_df['Amine Value'].sum(), 2))
-        update_OH_Value(round(rxn_summary_df['OH Value'].sum(), 2))
+    rxn_summary_df.sort_values(by=['MW'], ascending=True, inplace=True)
+    rxn_summary_df['Groups'] = rxn_summary_df['Groups'].apply(lambda x: str(x)[1:-1])
+    rxn_summary_df_compact = rxn_summary_df
 
     show_results(rxn_summary_df_compact)
+
+
+    #
+    # # Add ehc to dataframe if rt == Etherification
+    # if rt.name == Etherification:
+    #     ehc = []
+    #     for i in rxn_summary_df["Mass Distribution"]:
+    #         try:
+    #             EHCCount = 0
+    #             EHCCount += sum(chain_weight > max(a.comp) for chain_weight in i)
+    #             ehc.append(((EHCCount * 35.453) / sum(i)) * 100)
+    #         except TypeError:
+    #             try:
+    #                 ehc.append(35.453 / i * 100)
+    #             except TypeError:
+    #                 if sum(i) == a.mw:
+    #                     ehc.append(0)
+    #                 else:
+    #                     ehc.append(35.453 / sum(i) * 100)
+    #     rxn_summary_df['ehc'] = ehc
+    #     rxn_summary_df['% ehc'] = (rxn_summary_df['ehc'] * rxn_summary_df['Wt %']) / 100
+    #     EHCp = round(rxn_summary_df['% ehc'].sum(), 4)
+    #     RM.update_EHC(round(EHCp, 2))
+    #     WPE = (3545.3 / EHCp) - 36.4
+    #     RM.update_WPE(round(WPE, 2))
+    #
+
 
 # -------------------------------------------Aux Functions---------------------------------#
 
@@ -329,7 +225,7 @@ def show_results(rxn_summary_df_compact):
         frame.destroy()
     except NameError:
         pass
-    frame = tkinter.Frame(window)
+    frame = tkinter.Frame(tab2)
     x = ((window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2) + 100
     y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
     frame.place(x=x, y=y, anchor='center')
@@ -352,47 +248,9 @@ def show_results_expanded():
                     height=y, align='center')
     results.show()
 
-def update_moles_A(self):
-    a = str_to_class(speciesA.get())()
-    Moles_of_A.delete(0, 'end')
-    molesA = float(Mass_of_A.get()) / float(a.mw)
-    Moles_of_A.insert(0, round(molesA, 4))
-
-def update_moles_B(self):
-    b = str_to_class(speciesB.get())()
-    molesB = float(Mass_of_B.get()) / float(b.mw)
-    Moles_of_B.delete(0, 'end')
-    Moles_of_B.insert(0, round(molesB, 4))
-
-def update_percent_EHC(Value):
-    Percent_EHC.delete(0, tkinter.END)
-    Percent_EHC.insert(0, Value)
-
-def update_WPE(Value):
-    Theoretical_WPE.delete(0, tkinter.END)
-    Theoretical_WPE.insert(0, Value)
-
-def update_Acid_Value(Value):
-    Acid_Value.delete(0, tkinter.END)
-    Acid_Value.insert(0, Value)
-
-def update_Amine_Value(Value):
-    Amine_Value.delete(0, tkinter.END)
-    Amine_Value.insert(0, Value)
-
-def update_OH_Value(Value):
-    OH_Value.delete(0, tkinter.END)
-    OH_Value.insert(0, Value)
-
-def clear_values():
-    Percent_EHC.delete(0, tkinter.END)
-    Theoretical_WPE.delete(0, tkinter.END)
-    Acid_Value.delete(0, tkinter.END)
-    Amine_Value.delete(0, tkinter.END)
-    OH_Value.delete(0, tkinter.END)
-
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
+
 
 def stop():
     global running
@@ -402,123 +260,462 @@ def stop():
         pass
 
 def sim_values():
+    cell = 15
+    index = 0
+    starting_materials = []
     try:
-        simulate(a=speciesA.get(), b=speciesB.get(), rt=reaction_type.get(), samples=Samples.get(), eor=EOR.get(),
-                 a_mass=Mass_of_A.get(), b_mass=Mass_of_B.get(), prgk=PRGk.get(), srgk=SRGk.get(), crgk=CGRk.get(),
-                 emr=End_Metric_Entry.get(), emo=End_Metric_Selection.get())
+        for i in range(RET.tableheight - 1):
+            if RET.entries[cell].get() != "" and RET.entries[cell + 1].get() != "":
+                str_to_class(RDE[index]).assign(name=str_to_class(Entry_Reactants[index].get())(),
+                                                mass=Entry_masses[index].get(),
+                                                moles=round(float(RET.entries[cell + 2].get()), 4),
+                                                prgID=RET.entries[cell + 3].get(), prgk=RET.entries[cell + 4].get(),
+                                                cprgID=RET.entries[cell + 5].get(), cprgk=RET.entries[cell + 6].get(),
+                                                srgID=RET.entries[cell + 7].get(), srgk=RET.entries[cell + 8].get(),
+                                                csrgID=RET.entries[cell + 9].get(), csrgk=RET.entries[cell + 10].get(),
+                                                trgID=RET.entries[cell + 11].get(), trgk=RET.entries[cell + 12].get(),
+                                                ctrgID=RET.entries[cell + 13].get(), ctrgk=RET.entries[cell + 14].get(),
+                                                ct=RXN_Samples.get())
+                cell = cell + RET.tablewidth
+                starting_materials.append(str_to_class(RDE[index]).comp)
+                index = index + 1
+            else:
+                break
     except AttributeError as e:
         messagebox.showerror("Exception raised", str(e))
         pass
+    simulate(starting_materials)
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
-
 window = tkinter.Tk()
+style = ttk.Style()
+style.configure('TNotebook.Tab', background="red")
 window.iconbitmap("testtube.ico")
 window.title("Monte Karlo")
 window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
-window.configure(background="#00BFFF")
-Mass_of_A = tkinter.Entry(window, width=20)
-Mass_of_A.insert(0, "100")
-Mass_of_A.grid(row=2, column=1)
-Moles_of_A = tkinter.Entry(window)
-Moles_of_A.grid(row=1, column=3)
-Mass_of_B = tkinter.Entry(window, width=20)
-Mass_of_B.insert(0, "100")
-Mass_of_B.grid(row=4, column=1)
-Moles_of_B = tkinter.Entry(window)
-Moles_of_B.grid(row=2, column=3)
-speciesA = tkinter.StringVar()
-speciesA.set("Reactant A")
-Reactant_A = tkinter.OptionMenu(window, speciesA, *reactantsA)
-Reactant_A.grid(row=1, column=1)
-speciesB = tkinter.StringVar()
-speciesB.set("Reactant B")
-Reactant_B = tkinter.OptionMenu(window, speciesB, *reactantsB)
-Reactant_B.grid(row=3, column=1)
-reaction_type = tkinter.StringVar()
-reaction_type.set("Reaction Type")
-Reaction_Type = tkinter.OptionMenu(window, reaction_type, *Reactions)
-Reaction_Type.grid(row=5, column=1)
-Samples = tkinter.Entry(window)
-Samples.insert(0, "1000")
-Samples.grid(row=6, column=1)
-EOR = tkinter.Entry(window)
-EOR.insert(0, 1)
-EOR.grid(row=7, column=1)
-Sim_status = tkinter.Entry(window)
-Sim_status.grid(row=1, column=5)
-Percent_EHC = tkinter.Entry(window)
-Percent_EHC.grid(row=15, column=1)
-Theoretical_WPE = tkinter.Entry(window)
-Theoretical_WPE.grid(row=16, column=1)
-Acid_Value = tkinter.Entry(window)
-Acid_Value.grid(row=17, column=1)
-Amine_Value = tkinter.Entry(window)
-Amine_Value.grid(row=18, column=1)
-OH_Value = tkinter.Entry(window)
-OH_Value.grid(row=19, column=1)
-End_Metric_Selection = tkinter.StringVar()
-End_Metric_Selection.set("Amine_Value")
-End_Metric_Options = tkinter.OptionMenu(window, End_Metric_Selection, *End_Metrics)
-End_Metric_Options.grid(row=21, column=1)
-End_Metric_Entry = tkinter.Entry(window)
-End_Metric_Entry.insert(0, "250")
-End_Metric_Entry.grid(row=22, column=1)
-PRGk = tkinter.Entry(window)
-PRGk.insert(0, 1)
-PRGk.grid(row=8, column=1)
-SRGk = tkinter.Entry(window)
-SRGk.insert(0, 0)
-SRGk.grid(row=9, column=1)
-CGRk = tkinter.Entry(window)
-CGRk.insert(0, 0)
-CGRk.grid(row=10, column=1)
+window.configure(background="#000000")
 
-# add button to simulate
-button = tkinter.Button(window, text="Simulate", command=sim_values, width=15, bg="Green")
-button.grid(row=11, column=1)
-
-# add a button to stop the simulation
-stop_button = tkinter.Button(window, text="Stop", command=stop, width=15, bg="Red")
-stop_button.grid(row=12, column=1)
-
-# add button to expand dataframe
-expand = tkinter.Button(window, text="Expand Data", command=show_results_expanded, width=15, bg="green")
-expand.grid(row=23, column=1)
-
-# Update moles when user changes the value of Mass_of_A or Mass_of_B
-Mass_of_A.bind("<KeyRelease>", update_moles_A)
-Mass_of_B.bind("<KeyRelease>", update_moles_B)
-
-# update moles when user changes the value of speciesA or speciesB
-Reactant_A.bind("<ButtonRelease-1>", update_moles_A)
-Reactant_B.bind("<ButtonRelease-1>", update_moles_B)
-
-# add a determinate progress bar to window using sim_status
-progress = ttk.Progressbar(window, orient="horizontal", length=300, mode="determinate")
-progress.grid(row=1, column=5)
+tab_control = ttk.Notebook(window)
+tab1 = ttk.Frame(tab_control, style='TNotebook.Tab')
+tab2 = ttk.Frame(tab_control, style='TNotebook.Tab')
+tab_control.add(tab1, text='Reactor')
+tab_control.add(tab2, text='Reaction Results')
+tkinter.Grid.rowconfigure(window, 0, weight=1)
+tkinter.Grid.columnconfigure(window, 0, weight=1)
+tab_control.grid(row=0, column=0, sticky=tkinter.E + tkinter.W + tkinter.N + tkinter.S)
 
 
-# ---------------------------------------------Labels for UI---------------------------------#
-bg_color = '#00BFFF'
-tkinter.Label(window, text="Grams of A: ", bg=bg_color).grid(row=2, column=0)
-tkinter.Label(window, text="Moles of A: ", bg=bg_color).grid(row=1, column=2, padx=10)
-tkinter.Label(window, text="Grams of B: ", bg=bg_color).grid(row=4, column=0)
-tkinter.Label(window, text="Moles of B: ", bg=bg_color).grid(row=2, column=2, padx=10)
-tkinter.Label(window, text="Reactant A: ", bg=bg_color).grid(row=1, column=0)
-tkinter.Label(window, text="Reactant B: ", bg=bg_color).grid(row=3, column=0)
-tkinter.Label(window, text="Reaction Type: ", bg=bg_color).grid(row=5, column=0)
-tkinter.Label(window, text="# of Samples: ", bg=bg_color).grid(row=6, column=0)
-tkinter.Label(window, text="Extent of Reaction (EOR): ", bg=bg_color).grid(row=7, column=0)
-tkinter.Label(window, text="Simulation Status: ", bg=bg_color).grid(row=1, column=4)
-tkinter.Label(window, text="% EHC: ", bg=bg_color).grid(row=15, column=0)
-tkinter.Label(window, text="Theoretical WPE: ", bg=bg_color).grid(row=16, column=0)
-tkinter.Label(window, text="Acid Value: ", bg=bg_color).grid(row=17, column=0)
-tkinter.Label(window, text="Amine Value: ", bg=bg_color).grid(row=18, column=0)
-tkinter.Label(window, text="OH Value: ", bg=bg_color).grid(row=19, column=0)
-tkinter.Label(window, text="End Metric: ", bg=bg_color).grid(row=21, column=0)
-tkinter.Label(window, text="Primary K: ", bg=bg_color).grid(row=8, column=0)
-tkinter.Label(window, text="Secondary k: ", bg=bg_color).grid(row=9, column=0)
-tkinter.Label(window, text="Child k: ", bg=bg_color).grid(row=10, column=0)
+Entry_Reactants = ['R1Reactant', 'R2Reactant', 'R3Reactant', 'R4Reactant', 'R5Reactant', 'R6Reactant', 'R7Reactant',
+                   'R8Reactant', 'R9Reactant', 'R10Reactant', 'R11Reactant', 'R12Reactant', 'R13Reactant',
+                   'R14Reactant']
+Entry_masses = ['R1mass', 'R2mass', 'R3mass', 'R4mass', 'R5mass', 'R6mass', 'R7mass', 'R8mass', 'R9mass', 'R10mass',
+                'R11mass', 'R12mass', 'R13mass', 'R14mass']
+RDE = ['R1Data', 'R2Data', 'R3Data', 'R4Data', 'R5Data', 'R6Data', 'R7Data', 'R8Data', 'R9Data', 'R10Data', 'R11Data',
+       'R12Data', 'R13Data', 'R14Data']
+
+global massA1, massB1, A1reactant, B1reactant, starting_cell
+starting_cell = 15
+
+def check_entry(entry, index, cell):
+    RET.entries[entry].get()
+    if RET.entries[entry].get() not in Reactants and RET.entries[entry].get() != "":
+        RET.entries[entry].delete(0, 'end')
+        messagebox.showerror("Error", "Please enter a valid reactant")
+    else:
+        RET.update_table(index, cell)
+        RET.update_rates(index, cell)
+
+class RxnEntryTable(tkinter.Frame):
+    def __init__(self, master=tab1):
+        tkinter.Frame.__init__(self, master)
+        self.tablewidth = 15
+        self.tableheight = 15
+        self.entries = None
+        self.grid(row=5, column=1, padx=10, pady=10)
+        self.create_table()
+
+    def create_table(self):
+        self.entries = {}
+        counter = 0
+        for row in range(self.tableheight):
+            for column in range(self.tablewidth):
+                self.entries[counter] = tkinter.Entry(self)
+                self.entries[counter].grid(row=row, column=column)
+                # self.entries[counter].insert(0, str(counter))
+                self.entries[counter].config(justify="center", width=10)
+                counter += 1
+        self.entries[0].config(width=27)
+        self.tabel_labels()
+
+    def tabel_labels(self):
+        offset = 0
+        self.entries[offset + 0].insert(0, "Reactant")
+        self.entries[offset + 0].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 1].insert(0, "Mass (g)")
+        self.entries[offset + 1].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 2].insert(0, "Moles")
+        self.entries[offset + 2].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 3].insert(0, "1° - ID")
+        self.entries[offset + 3].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 4].insert(0, "1° - K")
+        self.entries[offset + 4].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 5].insert(0, "C1° - ID")
+        self.entries[offset + 5].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 6].insert(0, "1° - Child K")
+        self.entries[offset + 6].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 7].insert(0, "2° - ID")
+        self.entries[offset + 7].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 8].insert(0, "2° - K")
+        self.entries[offset + 8].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 9].insert(0, "C2° - ID")
+        self.entries[offset + 9].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 10].insert(0, "2° - Child K")
+        self.entries[offset + 10].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 11].insert(0, "3° - ID")
+        self.entries[offset + 11].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 12].insert(0, "3° - K")
+        self.entries[offset + 12].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 13].insert(0, "C3° - ID")
+        self.entries[offset + 13].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.entries[offset + 14].insert(0, "3° - Child K")
+        self.entries[offset + 14].config(state="readonly", font=("Helvetica", 8, "bold"))
+        self.user_entry()
+
+    def user_entry(self):
+        cell = starting_cell
+        row = 1
+        index = 0
+        for species in range(self.tableheight - 1):
+            Entry_Reactants[index] = tkinter.StringVar()
+            self.entries[cell] = AutocompleteCombobox(self, completevalues=Reactants, width=24, textvariable=Entry_Reactants[index])
+            self.entries[cell].grid(row=row, column=0)
+            self.entries[cell].config(justify="center")
+            cell = cell + self.tablewidth
+            row = row + 1
+            index = index + 1
+        cell = starting_cell + 1
+        row = 1
+        index = 0
+        for species in range(self.tableheight - 1):
+            Entry_masses[index] = self.entries[cell]
+            cell = cell + self.tablewidth
+            row = row + 1
+            index = index + 1
+
+    def update_table(self, index, cell):
+        if self.entries[cell].get() == "Clear":
+            self.entries[cell].delete(0, tkinter.END)
+            self.entries[cell + 1].delete(0, tkinter.END)
+            self.entries[cell + 2].delete(0, tkinter.END)
+            self.entries[cell + 3].config(state="normal")
+            self.entries[cell + 3].delete(0, tkinter.END)
+            self.entries[cell + 4].delete(0, tkinter.END)
+            self.entries[cell + 5].config(state="normal")
+            self.entries[cell + 5].delete(0, tkinter.END)
+            self.entries[cell + 6].delete(0, tkinter.END)
+            self.entries[cell + 7].config(state="normal")
+            self.entries[cell + 7].delete(0, tkinter.END)
+            self.entries[cell + 8].delete(0, tkinter.END)
+            self.entries[cell + 9].config(state="normal")
+            self.entries[cell + 9].delete(0, tkinter.END)
+            self.entries[cell + 10].delete(0, tkinter.END)
+            self.entries[cell + 11].config(state="normal")
+            self.entries[cell + 11].delete(0, tkinter.END)
+            self.entries[cell + 12].delete(0, tkinter.END)
+            self.entries[cell + 13].config(state="normal")
+            self.entries[cell + 13].delete(0, tkinter.END)
+            self.entries[cell + 14].delete(0, tkinter.END)
+        else:
+            if self.entries[cell].get() != "" and self.entries[cell + 1].get() != "":
+                a = str_to_class(Entry_Reactants[index].get())()
+                molesA = float(Entry_masses[index].get()) / float(a.mw)
+                self.entries[cell + 2].delete(0, tkinter.END)
+                self.entries[cell + 2].insert(0, str(round(molesA, 4)))
+
+    def update_rates(self, index, cell):
+        if self.entries[cell].get() != "Clear" and self.entries[cell].get() != "":
+            a = str_to_class(Entry_Reactants[index].get())()
+            self.entries[cell + 3].config(state="normal")
+            self.entries[cell + 3].delete(0, tkinter.END)
+            self.entries[cell + 3].insert(0, str(a.prgID))
+            self.entries[cell + 3].config(state="readonly")
+            self.entries[cell + 4].delete(0, tkinter.END)
+            self.entries[cell + 4].insert(0, str(a.prgk))
+            self.entries[cell + 5].config(state="normal")
+            self.entries[cell + 5].delete(0, tkinter.END)
+            self.entries[cell + 5].insert(0, str(a.cprgID))
+            self.entries[cell + 5].config(state="readonly")
+            self.entries[cell + 6].delete(0, tkinter.END)
+            self.entries[cell + 6].insert(0, str(a.cprgk))
+            self.entries[cell + 7].config(state="normal")
+            self.entries[cell + 7].delete(0, tkinter.END)
+            self.entries[cell + 7].insert(0, str(a.srgID))
+            self.entries[cell + 7].config(state="readonly")
+            self.entries[cell + 8].delete(0, tkinter.END)
+            self.entries[cell + 8].insert(0, str(a.srgk))
+            self.entries[cell + 9].config(state="normal")
+            self.entries[cell + 9].delete(0, tkinter.END)
+            self.entries[cell + 9].insert(0, str(a.csrgID))
+            self.entries[cell + 9].config(state="readonly")
+            self.entries[cell + 10].delete(0, tkinter.END)
+            self.entries[cell + 10].insert(0, str(a.csrgk))
+            self.entries[cell + 11].config(state="normal")
+            self.entries[cell + 11].delete(0, tkinter.END)
+            self.entries[cell + 11].insert(0, str(a.trgID))
+            self.entries[cell + 11].config(state="readonly")
+            self.entries[cell + 12].delete(0, tkinter.END)
+            self.entries[cell + 12].insert(0, str(a.trgk))
+            self.entries[cell + 13].config(state="normal")
+            self.entries[cell + 13].delete(0, tkinter.END)
+            self.entries[cell + 13].insert(0, str(a.ctrgID))
+            self.entries[cell + 13].config(state="readonly")
+            self.entries[cell + 14].delete(0, tkinter.END)
+            self.entries[cell + 14].insert(0, str(a.ctrgk))
+        else:
+            pass
+
+
+global RXN_Type, RXN_Samples, RXN_EOR
+class RxnDetails(tkinter.Frame):
+    def __init__(self, master=tab1):
+        tkinter.Frame.__init__(self, master)
+        self.tableheight = None
+        self.tablewidth = None
+        self.entries = None
+        self.grid(row=0, column=0, padx=5, pady=(20, 5))
+        self.create_table()
+
+    def create_table(self):
+        self.entries = {}
+        self.tableheight = 3
+        self.tablewidth = 2
+        counter = 0
+        for column in range(self.tablewidth):
+            for row in range(self.tableheight):
+                self.entries[counter] = tkinter.Entry(self)
+                self.entries[counter].grid(row=row, column=column)
+                # self.entries[counter].insert(0, str(counter))
+                self.entries[counter].config(justify="center", width=18)
+                counter += 1
+        self.table_labels()
+
+    def table_labels(self):
+        self.entries[0].delete(0, tkinter.END)
+        self.entries[0].insert(0, "Reaction Type =")
+        self.entries[1].delete(0, tkinter.END)
+        self.entries[1].insert(0, "# of Samples =")
+        self.entries[1].config(state="readonly")
+        self.entries[2].delete(0, tkinter.END)
+        self.entries[2].insert(0, "Extent of Reaction =")
+        self.entries[5].delete(0, tkinter.END)
+        self.entries[5].insert(0, "1")
+        self.user_entry()
+
+    def user_entry(self):
+        global RXN_Type, RXN_Samples, RXN_EOR
+        RXN_Type = tkinter.StringVar()
+        RXN_Type_Entry = AutocompleteCombobox(self, completevalues=Reactions, width=15, textvariable=RXN_Type)
+        RXN_Type_Entry.grid(row=0, column=1)
+        RXN_Type_Entry.config(justify="center")
+        RXN_Samples = tkinter.StringVar()
+        RXN_Samples_Entry = AutocompleteCombobox(self, completevalues=Num_Samples, width=15, textvariable=RXN_Samples)
+        RXN_Samples_Entry.insert(0, "1000")
+        RXN_Samples_Entry.grid(row=1, column=1)
+        RXN_Samples_Entry.config(justify="center")
+        RXN_EOR = self.entries[5]
+
+
+global RXN_EM, RXN_EM_Value
+class RxnMetrics(tkinter.Frame):
+    def __init__(self, master=tab1):
+        tkinter.Frame.__init__(self, master)
+        self.tablewidth = None
+        self.tableheight = None
+        self.entries = None
+        self.grid(row=2, column=1, padx=5, pady=5)
+        self.create_table()
+
+    def create_table(self):
+        self.entries = {}
+        self.tableheight = 6
+        self.tablewidth = 2
+        counter = 0
+        for column in range(self.tablewidth):
+            for row in range(self.tableheight):
+                self.entries[counter] = tkinter.Entry(self)
+                self.entries[counter].grid(row=row, column=column)
+                # self.entries[counter].insert(0, str(counter))
+                self.entries[counter].config(justify="center", width=18)
+                counter += 1
+        self.table_labels()
+
+    def table_labels(self):
+        self.entries[0].delete(0, tkinter.END)
+        self.entries[0].insert(0, "EHC, % =")
+        self.entries[0].config(state="readonly")
+        self.entries[1].delete(0, tkinter.END)
+        self.entries[1].insert(0, "Theory WPE =")
+        self.entries[1].config(state="readonly")
+        self.entries[2].delete(0, tkinter.END)
+        self.entries[2].insert(0, "Acid Value =")
+        self.entries[2].config(state="readonly")
+        self.entries[3].delete(0, tkinter.END)
+        self.entries[3].insert(0, "Amine Value =")
+        self.entries[3].config(state="readonly")
+        self.entries[4].delete(0, tkinter.END)
+        self.entries[4].insert(0, "OH Value =")
+        self.entries[4].config(state="readonly")
+        self.user_entry()
+
+    def user_entry(self):
+        global RXN_EM, RXN_EM_Value
+        RXN_EM = tkinter.StringVar()
+        RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
+        RXN_EM_Entry.grid(row=5, column=0)
+        RXN_EM_Entry.config(justify="center")
+        RXN_EM_Entry.insert(0, "End Metric")
+        RXN_EM_Value = self.entries[11]
+
+    def update_EHC(self, EHCpercent):
+        self.entries[6].delete(0, tkinter.END)
+        self.entries[6].insert(0, EHCpercent)
+
+    def update_WPE(self, WPE):
+        self.entries[7].delete(0, tkinter.END)
+        self.entries[7].insert(0, WPE)
+
+    def updateAV(self, AV):
+        self.entries[8].delete(0, tkinter.END)
+        self.entries[8].insert(0, AV)
+
+    def updateTAV(self, TAV):
+        self.entries[9].delete(0, tkinter.END)
+        self.entries[9].insert(0, TAV)
+
+    def updateOHV(self, OHV):
+        self.entries[10].delete(0, tkinter.END)
+        self.entries[10].insert(0, OHV)
+
+
+class Buttons(tkinter.Frame):
+    def __init__(self, master=tab1):
+        tkinter.Frame.__init__(self, master)
+        self.tablewidth = None
+        self.tableheight = None
+        self.entries = None
+        self.grid(row=1, column=0, padx=5, pady=5)
+        self.create_table()
+
+    def create_table(self):
+        self.entries = {}
+        self.tableheight = 3
+        self.tablewidth = 1
+        counter = 0
+        for column in range(self.tablewidth):
+            for row in range(self.tableheight):
+                self.entries[counter] = tkinter.Entry(self)
+                self.entries[counter].grid(row=row, column=column)
+                self.entries[counter].insert(0, str(counter))
+                self.entries[counter].config(justify="center", width=18)
+                counter += 1
+        self.add_buttons()
+
+    def add_buttons(self):
+        Simulate = tkinter.Button(self, text="Simulate", command=sim_values, width=15, bg="Green")
+        Simulate.grid(row=0, column=0)
+        stop_button = tkinter.Button(self, text="Stop", command=stop, width=15, bg="Red")
+        stop_button.grid(row=1, column=0)
+        expand = tkinter.Button(self, text="Expand Data", command=show_results_expanded, width=15, bg="blue")
+        expand.grid(row=2, column=0)
+
+
+class SimStatus(tkinter.Frame):
+    def __init__(self, master=tab1):
+        tkinter.Frame.__init__(self, master)
+        self.tablewidth = None
+        self.tableheight = None
+        self.progress = None
+        self.entries = None
+        self.grid(row=0, column=1)
+        self.create_table()
+
+    def create_table(self):
+        self.entries = {}
+        self.tableheight = 1
+        self.tablewidth = 2
+        counter = 0
+        for column in range(self.tablewidth):
+            for row in range(self.tableheight):
+                self.entries[counter] = tkinter.Entry(self)
+                self.entries[counter].grid(row=row, column=column)
+                self.entries[counter].insert(0, str(counter))
+                self.entries[counter].config(justify="center", width=18)
+                counter += 1
+        self.tabel_labels()
+
+    def tabel_labels(self):
+        self.entries[0].delete(0, tkinter.END)
+        self.entries[0].insert(0, "Simulation Status")
+        self.entries[0].config(state="readonly")
+        self.add_buttons()
+
+    def add_buttons(self):
+        self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate")
+        self.progress.grid(row=0, column=1)
+
+
+RET = RxnEntryTable()
+RD = RxnDetails()
+RM = RxnMetrics()
+Buttons = Buttons()
+sim = SimStatus()
+
+# run update_table if user changes value in RET
+
+RET.entries[15].bind('<FocusOut>', lambda *args, entry=15, index=0, cell=15: check_entry(entry, index, cell))
+RET.entries[30].bind('<FocusOut>', lambda *args, entry=30, index=1, cell=30: check_entry(entry, index, cell))
+RET.entries[45].bind('<FocusOut>', lambda *args, entry=45, index=2, cell=45: check_entry(entry, index, cell))
+RET.entries[60].bind('<FocusOut>', lambda *args, entry=60, index=3, cell=60: check_entry(entry, index, cell))
+RET.entries[75].bind('<FocusOut>', lambda *args, entry=75, index=4, cell=75: check_entry(entry, index, cell))
+RET.entries[90].bind('<FocusOut>', lambda *args, entry=90, index=5, cell=90: check_entry(entry, index, cell))
+RET.entries[105].bind('<FocusOut>', lambda *args, entry=105, index=6, cell=105: check_entry(entry, index, cell))
+RET.entries[120].bind('<FocusOut>', lambda *args, entry=120, index=7, cell=120: check_entry(entry, index, cell))
+RET.entries[135].bind('<FocusOut>', lambda *args, entry=135, index=8, cell=135: check_entry(entry, index, cell))
+RET.entries[150].bind('<FocusOut>', lambda *args, entry=150, index=9, cell=150: check_entry(entry, index, cell))
+RET.entries[165].bind('<FocusOut>', lambda *args, entry=165, index=10, cell=165: check_entry(entry, index, cell))
+RET.entries[180].bind('<FocusOut>', lambda *args, entry=180, index=11, cell=180: check_entry(entry, index, cell))
+RET.entries[195].bind('<FocusOut>', lambda *args, entry=195, index=12, cell=195: check_entry(entry, index, cell))
+RET.entries[210].bind('<FocusOut>', lambda *args, entry=210, index=13, cell=210: check_entry(entry, index, cell))
+
+Entry_masses[0].bind("<KeyRelease>", lambda *args, index=0, cell=15: RET.update_table(index, cell))
+Entry_masses[1].bind("<KeyRelease>", lambda *args, index=1, cell=30: RET.update_table(index, cell))
+Entry_masses[2].bind("<KeyRelease>", lambda *args, index=2, cell=45: RET.update_table(index, cell))
+Entry_masses[3].bind("<KeyRelease>", lambda *args, index=3, cell=60: RET.update_table(index, cell))
+Entry_masses[4].bind("<KeyRelease>", lambda *args, index=4, cell=75: RET.update_table(index, cell))
+Entry_masses[5].bind("<KeyRelease>", lambda *args, index=5, cell=90: RET.update_table(index, cell))
+Entry_masses[6].bind("<KeyRelease>", lambda *args, index=6, cell=105: RET.update_table(index, cell))
+Entry_masses[7].bind("<KeyRelease>", lambda *args, index=7, cell=120: RET.update_table(index, cell))
+Entry_masses[8].bind("<KeyRelease>", lambda *args, index=8, cell=135: RET.update_table(index, cell))
+Entry_masses[9].bind("<KeyRelease>", lambda *args, index=9, cell=150: RET.update_table(index, cell))
+Entry_masses[10].bind("<KeyRelease>", lambda *args, index=10, cell=165: RET.update_table(index, cell))
+Entry_masses[11].bind("<KeyRelease>", lambda *args, index=11, cell=180: RET.update_table(index, cell))
+Entry_masses[12].bind("<KeyRelease>", lambda *args, index=12, cell=195: RET.update_table(index, cell))
+Entry_masses[13].bind("<KeyRelease>", lambda *args, index=13, cell=210: RET.update_table(index, cell))
+
+R1Data = R1Data()
+R2Data = R2Data()
+R3Data = R3Data()
+R4Data = R4Data()
+R5Data = R5Data()
+R6Data = R6Data()
+R7Data = R7Data()
+R8Data = R8Data()
+R9Data = R9Data()
+R10Data = R10Data()
+R11Data = R11Data()
+R12Data = R12Data()
+R13Data = R13Data()
+R14Data = R14Data()
+rg = reactive_groups()
 
 window.mainloop()
