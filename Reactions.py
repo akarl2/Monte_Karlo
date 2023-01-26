@@ -77,8 +77,6 @@ class POH:
         self.COOH_wl = Water().mw
         self.COC = 'C3OHCl'
         self.COC_wl = 0
-        self.C3OHCl = 'C3OHCl'
-        self.C3OHCl_wl = 0
 
 class SOH:
     def __init__(self):
@@ -86,17 +84,12 @@ class SOH:
         self.COOH_wl = Water().mw
         self.COC = 'C3OHCl'
         self.COC_wl = 0
-        self.C3OHCl = 'C3OHCl'
-        self.C3OHCl_wl = 0
 
 class C3OHCl:
     def __init__(self):
         self.COC = 'C3OHCl'
         self.COC_wl = 0
-        self.POH = 'C3OHCl'
-        self.POH_wl = 0
-        self.SOH = 'C3OHCl'
-        self.SOH_wl = 0
+
 
 
 
