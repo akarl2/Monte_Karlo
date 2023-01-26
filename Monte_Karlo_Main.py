@@ -285,12 +285,15 @@ def simulate(a, b, rt, samples, eor, a_mass, b_mass, prgk, srgk, crgk, emr, emo)
 
     # Add ehc to dataframe if rt == Etherification
     if rt.name == Etherification:
+        print(rxn_summary_df)
         ehc = []
         for i in rxn_summary_df["Mass Distribution"]:
+            print(i)
             try:
                 EHCCount = 0
                 EHCCount += sum(chain_weight > max(a.comp) for chain_weight in i)
                 ehc.append(((EHCCount * 35.453) / sum(i)) * 100)
+                print(ehc)
             except TypeError:
                 try:
                     ehc.append(35.453 / i * 100)

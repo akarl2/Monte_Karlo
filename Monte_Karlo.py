@@ -6,7 +6,7 @@ from tkinter import ttk, messagebox
 import pandas
 from ttkwidgets.autocomplete import AutocompleteCombobox
 from Database import *
-from Reactions import reactive_groups,NH2,NH,COOH,COC,OH
+from Reactions import reactive_groups,NH2,NH,COOH,COC,POH,SOH,C3OHCl
 from Reactions import *
 import itertools
 from pandastable import Table, TableModel, config
@@ -69,7 +69,7 @@ def simulate(starting_materials):
         NW = compoundA[2][0] + compoundB[2][0] - new_group(groupA, groupB)['WL']
         NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW,2)]]
         NC[0][groups[0][1]][0] = new_group(groupA, groupB)['NG']
-        NC[0][groups[0][1]][1] = 0.0
+        NC[0][groups[0][1]][1] = 0.06
         old_groups = compoundB[0]
         if len(old_groups) == 1:
             pass
@@ -92,6 +92,8 @@ def simulate(starting_materials):
         amine_ct = 0
         acid_ct = 0
         alcohol_ct = 0
+        epoxide_ct = 0
+        EHC_ct = 0
         for key in comp_summary:
             for group in key[0]:
                 if group[0] == 'NH2' or group[0] == 'NH':
@@ -100,9 +102,16 @@ def simulate(starting_materials):
                     acid_ct += comp_summary[key]
                 elif group[0] == 'OH':
                     alcohol_ct += comp_summary[key]
+                elif group[0] == 'COC':
+                    epoxide_ct += comp_summary[key]
+                elif group[0] == 'C3OHCl':
+                    EHC_ct += comp_summary[key]
+
         TAV = round((amine_ct * 56100) / (sum_comp), 2)
         AV = round((acid_ct * 56100) / (sum_comp), 2)
         OH = round((alcohol_ct * 56100) / (sum_comp), 2)
+        EHC = round((EHC_ct * 35.453) / (sum_comp) * 100, 2)
+        print(EHC)
 
         if end_metric_selection == 'Amine_Value':
             sim.progress['value'] = round(((end_metric_value / TAV ) * 100), 2)
@@ -127,6 +136,14 @@ def simulate(starting_materials):
                 RXN_Results(composition, TAV, AV, OH)
                 sim.progress['value'] = 100
                 window.update()
+        elif end_metric_selection == '%_EHC':
+            #sim.progress['value'] = round(((end_metric_value / EHC) * 100), 2)
+            window.update()
+            #if EHC >= end_metric_value:
+                # running = False
+                # RXN_Results(composition, TAV, AV, OH)
+                # sim.progress['value'] = 100
+                # window.update()
 
     while running:
         weights = []
@@ -200,7 +217,7 @@ def show_results(rxn_summary_df_compact):
         frame.destroy()
     except NameError:
         pass
-    frame = tkinter.Frame(window)
+    frame = tkinter.Frame(tab2)
     x = ((window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2) + 100
     y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
     frame.place(x=x, y=y, anchor='center')
@@ -263,10 +280,22 @@ def sim_values():
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
+style = ttk.Style()
+style.configure('TNotebook.Tab', background="red")
 window.iconbitmap("testtube.ico")
 window.title("Monte Karlo")
 window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
 window.configure(background="#000000")
+
+tab_control = ttk.Notebook(window)
+tab1 = ttk.Frame(tab_control, style='TNotebook.Tab')
+tab2 = ttk.Frame(tab_control, style='TNotebook.Tab')
+tab_control.add(tab1, text='Reactor')
+tab_control.add(tab2, text='Reaction Results')
+tkinter.Grid.rowconfigure(window, 0, weight=1)
+tkinter.Grid.columnconfigure(window, 0, weight=1)
+tab_control.grid(row=0, column=0, sticky=tkinter.E + tkinter.W + tkinter.N + tkinter.S)
+
 
 Entry_Reactants = ['R1Reactant', 'R2Reactant', 'R3Reactant', 'R4Reactant', 'R5Reactant', 'R6Reactant', 'R7Reactant',
                    'R8Reactant', 'R9Reactant', 'R10Reactant', 'R11Reactant', 'R12Reactant', 'R13Reactant',
@@ -289,12 +318,12 @@ def check_entry(entry, index, cell):
         RET.update_rates(index, cell)
 
 class RxnEntryTable(tkinter.Frame):
-    def __init__(self, master=window):
+    def __init__(self, master=tab1):
         tkinter.Frame.__init__(self, master)
         self.tablewidth = 15
         self.tableheight = 15
         self.entries = None
-        self.grid(row=5, column=0, padx=5, pady=5)
+        self.grid(row=5, column=1, padx=10, pady=10)
         self.create_table()
 
     def create_table(self):
@@ -440,7 +469,7 @@ class RxnEntryTable(tkinter.Frame):
 
 global RXN_Type, RXN_Samples, RXN_EOR
 class RxnDetails(tkinter.Frame):
-    def __init__(self, master=window):
+    def __init__(self, master=tab1):
         tkinter.Frame.__init__(self, master)
         self.tableheight = None
         self.tablewidth = None
@@ -490,12 +519,12 @@ class RxnDetails(tkinter.Frame):
 
 global RXN_EM, RXN_EM_Value
 class RxnMetrics(tkinter.Frame):
-    def __init__(self, master=window):
+    def __init__(self, master=tab1):
         tkinter.Frame.__init__(self, master)
         self.tablewidth = None
         self.tableheight = None
         self.entries = None
-        self.grid(row=3, column=0, padx=5, pady=5)
+        self.grid(row=2, column=1, padx=5, pady=5)
         self.create_table()
 
     def create_table(self):
@@ -561,7 +590,7 @@ class RxnMetrics(tkinter.Frame):
 
 
 class Buttons(tkinter.Frame):
-    def __init__(self, master=window):
+    def __init__(self, master=tab1):
         tkinter.Frame.__init__(self, master)
         self.tablewidth = None
         self.tableheight = None
@@ -593,13 +622,13 @@ class Buttons(tkinter.Frame):
 
 
 class SimStatus(tkinter.Frame):
-    def __init__(self, master=window):
+    def __init__(self, master=tab1):
         tkinter.Frame.__init__(self, master)
         self.tablewidth = None
         self.tableheight = None
         self.progress = None
         self.entries = None
-        self.grid(row=0, column=2)
+        self.grid(row=0, column=1)
         self.create_table()
 
     def create_table(self):

@@ -19,6 +19,19 @@ class Butanol:
         self.comp = self.mw
         self.mass = self.mw
         self.numgroups = 1
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
 
 class Glycerol:
     def __init__(self):
@@ -33,13 +46,19 @@ class Glycerol:
         self.mass = self.mw
         self.rg = "Alcohol"
         self.numgroups = len(set(self.comp))
+        self.prgID = "POH"
         self.prgk = 1
-        self.srgk = 1
-        self.crgk = 0
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = "SOH"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
         self.trgk = 0
-        self.prgID = "OH"
-        self.srgID = "OH"
-        self.trgID = "None"
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID], [self.prgID]]
 
 class PPG425:
     def __init__(self):
@@ -464,7 +483,18 @@ class Epichlorohydrin:
         self.comp = self.prgmw
         self.numgroups = 1
         self.prgID = "COC"
+        self.prgk = 1
+        self.cprgID = "C3OHCl"
+        self.cprgk = 0
         self.srgID = "Cl"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID]]
 
 class Clear:
     def __init__(self):
