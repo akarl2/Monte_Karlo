@@ -69,7 +69,7 @@ def simulate(starting_materials):
         NW = compoundA[2][0] + compoundB[2][0] - new_group(groupA, groupB)['WL']
         NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW,2)]]
         NC[0][groups[0][1]][0] = new_group(groupA, groupB)['NG']
-        NC[0][groups[0][1]][1] = 0.06
+        NC[0][groups[0][1]][1] = 0.00
         old_groups = compoundB[0]
         if len(old_groups) == 1:
             pass
@@ -111,7 +111,6 @@ def simulate(starting_materials):
         OH = round((alcohol_ct * 56100) / (sum_comp), 2)
         COC = round((epoxide_ct * 56100) / (sum_comp), 2)
         EHC = round((EHC_ct * 35.453) / (sum_comp) * 100, 2)
-        print(EHC)
 
         if end_metric_selection == 'Amine Value':
             sim.progress['value'] = round(((end_metric_value / TAV ) * 100), 2)
@@ -167,7 +166,10 @@ def RXN_Results(composition, TAV, AV, OH, EHC):
     RM.entries[6].delete(0, tkinter.END)
     RM.entries[6].insert(0, EHC)
     RM.entries[7].delete(0, tkinter.END)
-    RM.entries[7].insert(0, round((3545.3 / EHC) - 36.4), 2)
+    try:
+        RM.entries[7].insert(0, round((3545.3 / EHC) - 36.4), 2)
+    except ZeroDivisionError:
+        RM.entries[7].insert(0, 'N/A')
     RM.entries[8].delete(0, tkinter.END)
     RM.entries[8].insert(0, AV)
     RM.entries[9].delete(0, tkinter.END)
@@ -185,6 +187,7 @@ def RXN_Results(composition, TAV, AV, OH, EHC):
     rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
     rxn_summary_df.sort_values(by=['MW'], ascending=True, inplace=True)
     rxn_summary_df['Groups'] = rxn_summary_df['Groups'].apply(lambda x: str(x)[1:-1])
+    # combine groups with same name in groups column and count how many of each group
     rxn_summary_df_compact = rxn_summary_df
 
     show_results(rxn_summary_df_compact)

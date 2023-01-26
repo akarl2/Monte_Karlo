@@ -29,6 +29,7 @@ class reactive_groups:
         self.SOH = ['COOH', 'COC']
         self.COOH = ['NH2', 'POH', 'COC', 'SOH']
         self.COC = ['NH2', 'POH', 'SOH', 'COOH', 'NH', 'C3OHCl']
+        self.COOC = None
 
 class NH2:
     def __init__(self):
@@ -43,8 +44,10 @@ class COOH:
     def __init__(self):
         self.NH2 = "CONH"
         self.NH2_wl = Water().mw
-        self.OH = 'COOC'
-        self.OH_wl = Water().mw
+        self.POH = 'COOC'
+        self.POH_wl = Water().mw
+        self.SOH = 'COOC'
+        self.SOH_wl = Water().mw
         self.COC = 'COCOH'
         self.COC_wl = 0
 
