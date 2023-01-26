@@ -40,18 +40,13 @@ class Glycerol:
         self.formula = "C3H6O3"
         self.mw = 92.09382
         self.density = 1.26
-        self.prgmw = 31.03392
-        self.srgmw = 30.02598
-        self.comp = (self.prgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
-        self.rg = "Alcohol"
-        self.numgroups = len(set(self.comp))
         self.prgID = "POH"
         self.prgk = 1
         self.cprgID = None
         self.cprgk = 0
         self.srgID = "SOH"
-        self.srgk = 0
+        self.srgk = 1
         self.csrgID = None
         self.csrgk = 0
         self.trgID = None
@@ -93,18 +88,20 @@ class Sorbitol:
         self.formula = "C6H14O6"
         self.mw = 182.17
         self.density = 1.49
-        self.prgmw = 31.03392
-        self.srgmw = 30.02598
-        self.comp = (self.prgmw, self.srgmw, self.srgmw, self.srgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
-        self.numgroups = len(set(self.comp))
+        self.prgID = "POH"
         self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = "SOH"
         self.srgk = 1
-        self.crgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
         self.trgk = 0
-        self.prgID = "OH"
-        self.srgID = "OH"
-        self.trgID = "None"
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID], [self.srgID], [self.srgID], [self.srgID], [self.prgID]]
 
 class Propylene_Glycol:
     def __init__(self):

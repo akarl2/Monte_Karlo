@@ -106,44 +106,48 @@ def simulate(starting_materials):
                     epoxide_ct += comp_summary[key]
                 elif group[0] == 'C3OHCl':
                     EHC_ct += comp_summary[key]
-
         TAV = round((amine_ct * 56100) / (sum_comp), 2)
         AV = round((acid_ct * 56100) / (sum_comp), 2)
         OH = round((alcohol_ct * 56100) / (sum_comp), 2)
+        COC = round((epoxide_ct * 56100) / (sum_comp), 2)
         EHC = round((EHC_ct * 35.453) / (sum_comp) * 100, 2)
         print(EHC)
 
-        if end_metric_selection == 'Amine_Value':
+        if end_metric_selection == 'Amine Value':
             sim.progress['value'] = round(((end_metric_value / TAV ) * 100), 2)
             if TAV <= end_metric_value:
                 running = False
-                RXN_Results(composition, TAV, AV, OH)
+                RXN_Results(composition, TAV, AV, OH, EHC)
                 sim.progress['value'] = 100
             window.update()
-        elif end_metric_selection == 'Acid_Value':
+        elif end_metric_selection == 'Acid Value':
             sim.progress['value'] = round(((end_metric_value / AV) * 100), 2)
-            window.update()
             if AV <= end_metric_value:
                 running = False
-                RXN_Results(composition, TAV, AV, OH)
+                RXN_Results(composition, TAV, AV, OH, EHC)
                 sim.progress['value'] = 100
-                window.update()
-        elif end_metric_selection == 'OH_Value':
-            sim.progress['value'] = round(((end_metric_value / OH) * 100), 2)
             window.update()
+        elif end_metric_selection == 'OH Value':
+            sim.progress['value'] = round(((end_metric_value / OH) * 100), 2)
             if OH <= end_metric_value:
                 running = False
-                RXN_Results(composition, TAV, AV, OH)
+                RXN_Results(composition, TAV, AV, OH, EHC)
                 sim.progress['value'] = 100
-                window.update()
-        elif end_metric_selection == '%_EHC':
-            #sim.progress['value'] = round(((end_metric_value / EHC) * 100), 2)
             window.update()
-            #if EHC >= end_metric_value:
-                # running = False
-                # RXN_Results(composition, TAV, AV, OH)
-                # sim.progress['value'] = 100
-                # window.update()
+        elif end_metric_selection == 'Epoxide Value':
+            sim.progress['value'] = round(((end_metric_value / COC) * 100), 2)
+            if COC <= end_metric_value:
+                running = False
+                RXN_Results(composition, TAV, AV, OH, EHC)
+                sim.progress['value'] = 100
+            window.update()
+        elif end_metric_selection == '% EHC':
+            sim.progress['value'] = round(((EHC / end_metric_value) * 100), 2)
+            if EHC >= end_metric_value:
+                running = False
+                RXN_Results(composition, TAV, AV, OH, EHC)
+                sim.progress['value'] = 100
+            window.update()
 
     while running:
         weights = []
@@ -159,7 +163,11 @@ def simulate(starting_materials):
             groups = random.choices(chemical, weights, k=2)
         update_comp(composition, groups)
 
-def RXN_Results(composition, TAV, AV, OH):
+def RXN_Results(composition, TAV, AV, OH, EHC):
+    RM.entries[6].delete(0, tkinter.END)
+    RM.entries[6].insert(0, EHC)
+    RM.entries[7].delete(0, tkinter.END)
+    RM.entries[7].insert(0, (3545.3 / EHC) - 36.4)
     RM.entries[8].delete(0, tkinter.END)
     RM.entries[8].insert(0, AV)
     RM.entries[9].delete(0, tkinter.END)

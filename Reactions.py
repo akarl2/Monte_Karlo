@@ -16,17 +16,17 @@ class Etherification:
         self.name = Etherification
 
 Reactions = ["Condensation", "Etherification", "PolyCondensation"]
-End_Metrics = ["Amine_Value", "Acid_Value", "OH_Value", "COC_Value", '%_EHC']
+End_Metrics = ["Amine Value", "Acid Value", "OH Value", "Epoxide Value", '% EHC']
 Num_Samples = ["1000", "2500", "5000", "10000", "100000"]
 
 
 class reactive_groups:
     def __init__(self):
         self.NH2 = ['COOH', 'COC', 'Cl']
-        self.C3OHCl = ['COC', 'POH', 'SOH']
+        self.C3OHCl = ['COC']
         self.NH = ['COC']
-        self.POH = ['COOH', 'COC', 'C3OHCl']
-        self.SOH = ['COOH', 'COC', 'C3OHCl']
+        self.POH = ['COOH', 'COC']
+        self.SOH = ['COOH', 'COC']
         self.COOH = ['NH2', 'POH', 'COC', 'SOH']
         self.COC = ['NH2', 'POH', 'SOH', 'COOH', 'NH', 'C3OHCl']
 
