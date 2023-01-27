@@ -2,6 +2,7 @@ import collections
 import random
 import sys
 import tkinter
+from tkinter import *
 from tkinter import ttk, messagebox
 import pandas
 from ttkwidgets.autocomplete import AutocompleteCombobox
@@ -28,7 +29,11 @@ def simulate(starting_materials):
     running = True
     sim.progress['value'] = 0
     end_metric_selection = str(RXN_EM.get())
-    end_metric_value = float(RXN_EM_Value.get())
+    try:
+        end_metric_value = float(RXN_EM_Value.get())
+    except ValueError:
+        messagebox.showerror("Error", "Please enter a value for the end metric.")
+        return
     composition = []
     for compound in starting_materials:
         for i in range(compound[3][0]):
@@ -165,7 +170,6 @@ def RXN_Results(composition):
     rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
     rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
     rxn_summary_df.drop(columns=['Groups'], inplace=True)
-    print(rxn_summary_df)
     show_results(rxn_summary_df)
 
 def RXN_Results_Compact(composition):
@@ -182,8 +186,8 @@ def RXN_Results_Compact(composition):
     rxn_summary_df.drop(columns=['Groups'], inplace=True)
     rxn_summary_df.drop(columns=['Name'], inplace=True)
     rxn_summary_df.groupby(['MW']).sum()
-    #print(rxn_summary_df)
-    #show_results(rxn_summary_df)
+    print(rxn_summary_df)
+    show_results(rxn_summary_df)
 
 
 # -------------------------------------------Aux Functions---------------------------------#
@@ -202,21 +206,6 @@ def show_results(rxn_summary_df):
     results = Table(frame, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True,
                     width=x, height=y, align='center')
     results.show()
-
-# def show_results_expanded(rxn_summary_df_compact):
-#     global results, frame
-#     try:
-#         results.destroy()
-#         frame.destroy()
-#     except NameError:
-#         pass
-#     frame = tkinter.Frame(window)
-#     x = ((window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2) + 100
-#     y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
-#     frame.place(x=x, y=y, anchor='center')
-#     results = Table(frame, dataframe=rxn_summary_df_compact, showtoolbar=True, showstatusbar=True, showindex=True, width=x,
-#                     height=y, align='center')
-#     results.show()
 
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
@@ -540,8 +529,8 @@ class RxnMetrics(tkinter.Frame):
         RXN_EM = tkinter.StringVar()
         RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
         RXN_EM_Entry.grid(row=5, column=0)
-        RXN_EM_Entry.config(justify="center")
         RXN_EM_Entry.insert(0, "End Metric")
+        RXN_EM_Entry.config(justify="center", state="readonly")
         RXN_EM_Value = self.entries[11]
 
 

@@ -1,4 +1,11 @@
-test = [((('NH2', 1.0), ('NH', 0.0), ('NH2', 1.0)), "(('DETA', 1),)", 103.169, 13), ((('CONH', 0.0), ('NH', 0.0), ('NH2', 1.0)), "(('C181', 1), ('DETA', 1))", 367.62, 6), ((('COOH', 1.0),), "(('C181', 1),)", 282.47, 1)]
+t1 = [['C181', 1]]
 
-for i in test:
-    in i3
+t2 = [['DETA', 1]]
+
+t3 = [['C181(1)']]
+
+t4 = [['DETA(1)']]
+
+#combine t3 and t4 in letters before the number is in t3
+t5 = t3 + t4
+print(t5)

@@ -429,7 +429,7 @@ class AceticAcid:
 class C181:
     def __init__(self):
         self.name = "C181"
-        self.sn = "C181"
+        self.sn = "C18:1"
         self.formula = "C18H34O2"
         self.mw = 282.47
         self.prgmw = 282.47
