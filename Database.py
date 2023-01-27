@@ -55,6 +55,28 @@ class Glycerol:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.srgID], [self.prgID]]
 
+class Castor_Oil:
+    def __init__(self):
+        self.name = "Castor_Oil"
+        self.sn = "Castor_Oil"
+        self.formula = "C3H6O3"
+        self.mw = 1032.52
+        self.density = 1.26
+        self.mass = self.mw
+        self.prgID = "SOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 1
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID], [self.prgID]]
+
 class PPG425:
     def __init__(self):
         self.name = "PPG425"

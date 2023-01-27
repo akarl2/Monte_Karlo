@@ -1,4 +1,4 @@
-from collections import Counter
+import collections
 import random
 import sys
 import tkinter
@@ -85,7 +85,7 @@ def simulate(starting_materials):
 
     def RXN_Status(composition):
         global running
-        comp_summary = Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+        comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
         sum_comp = 0
         for key in comp_summary:
             sum_comp = sum_comp + (comp_summary[key] * key[2])
@@ -120,7 +120,8 @@ def simulate(starting_materials):
         if RXN_metric_value <= end_metric_value:
             running = False
             sim.progress['value'] = 100
-            RXN_Results(composition, TAV, AV, OH, EHC)
+            update_metrics(TAV, AV, OH, EHC)
+            RXN_Results(composition)
         window.update()
 
     while running:
@@ -137,7 +138,7 @@ def simulate(starting_materials):
             groups = random.choices(chemical, weights, k=2)
         update_comp(composition, groups)
 
-def RXN_Results(composition, TAV, AV, OH, EHC):
+def update_metrics(TAV,AV,OH,EHC):
     RM.entries[6].delete(0, tkinter.END)
     RM.entries[6].insert(0, EHC)
     RM.entries[7].delete(0, tkinter.END)
@@ -151,26 +152,43 @@ def RXN_Results(composition, TAV, AV, OH, EHC):
     RM.entries[9].insert(0, TAV)
     RM.entries[10].delete(0, tkinter.END)
     RM.entries[10].insert(0, OH)
-    comp_summary = Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+
+def RXN_Results(composition):
+    comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
     RS = []
     for key in comp_summary:
         RS.append((key[0], str(key[1]), key[2], comp_summary[key]))
+    rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count'])
+    rxn_summary_df.set_index('Name', inplace=True)
+    rxn_summary_df.sort_values(by=['MW'], ascending=True, inplace=True)
+    rxn_summary_df['Mass'] = rxn_summary_df['MW'] * rxn_summary_df['Count']
+    rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
+    rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
+    rxn_summary_df.drop(columns=['Groups'], inplace=True)
+    print(rxn_summary_df)
+    show_results(rxn_summary_df)
+
+def RXN_Results_Compact(composition):
+    comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+    RS = []
+    for key in comp_summary:
+        RS.append((key[0], str((key[1])), key[2], comp_summary[key]))
     rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count'])
     rxn_summary_df.set_index('Name', inplace=True)
     rxn_summary_df['Mass'] = rxn_summary_df['MW'] * rxn_summary_df['Count']
     rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
     rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
     rxn_summary_df.sort_values(by=['MW'], ascending=True, inplace=True)
-    rxn_summary_df['Groups'] = rxn_summary_df['Groups'].apply(lambda x: str(x)[1:-1])
-    # combine groups with same name in groups column and count how many of each group
-    rxn_summary_df_compact = rxn_summary_df
-
-    show_results(rxn_summary_df_compact)
+    rxn_summary_df.drop(columns=['Groups'], inplace=True)
+    rxn_summary_df.drop(columns=['Name'], inplace=True)
+    rxn_summary_df.groupby(['MW']).sum()
+    #print(rxn_summary_df)
+    #show_results(rxn_summary_df)
 
 
 # -------------------------------------------Aux Functions---------------------------------#
 
-def show_results(rxn_summary_df_compact):
+def show_results(rxn_summary_df):
     global results, frame
     try:
         results.destroy()
@@ -181,24 +199,24 @@ def show_results(rxn_summary_df_compact):
     x = ((window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2) + 100
     y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
     frame.place(x=x, y=y, anchor='center')
-    results = Table(frame, dataframe=rxn_summary_df_compact, showtoolbar=True, showstatusbar=True, showindex=True,
+    results = Table(frame, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True,
                     width=x, height=y, align='center')
     results.show()
 
-def show_results_expanded():
-    global results, frame
-    try:
-        results.destroy()
-        frame.destroy()
-    except NameError:
-        pass
-    frame = tkinter.Frame(window)
-    x = ((window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2) + 100
-    y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
-    frame.place(x=x, y=y, anchor='center')
-    results = Table(frame, dataframe=expanded_results, showtoolbar=True, showstatusbar=True, showindex=True, width=x,
-                    height=y, align='center')
-    results.show()
+# def show_results_expanded(rxn_summary_df_compact):
+#     global results, frame
+#     try:
+#         results.destroy()
+#         frame.destroy()
+#     except NameError:
+#         pass
+#     frame = tkinter.Frame(window)
+#     x = ((window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2) + 100
+#     y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
+#     frame.place(x=x, y=y, anchor='center')
+#     results = Table(frame, dataframe=rxn_summary_df_compact, showtoolbar=True, showstatusbar=True, showindex=True, width=x,
+#                     height=y, align='center')
+#     results.show()
 
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
@@ -555,7 +573,7 @@ class Buttons(tkinter.Frame):
         Simulate.grid(row=0, column=0)
         stop_button = tkinter.Button(self, text="Stop", command=stop, width=15, bg="Red")
         stop_button.grid(row=1, column=0)
-        expand = tkinter.Button(self, text="Expand Data", command=show_results_expanded, width=15, bg="blue")
+        expand = tkinter.Button(self, text="Expand Data", command=RXN_Results_Compact, width=15, bg="blue")
         expand.grid(row=2, column=0)
 
 
