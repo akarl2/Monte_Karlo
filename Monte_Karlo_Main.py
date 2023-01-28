@@ -179,7 +179,6 @@ def RXN_Results(composition):
     RS = []
     for key in comp_summary:
         RS.append((key[0], str(key[1]), key[2], comp_summary[key]))
-    print(RS)
     rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count'])
     rxn_summary_df['MW'] = round(rxn_summary_df['MW'], 2)
     rxn_summary_df.drop(columns=['Groups'], inplace=True)
@@ -263,7 +262,7 @@ def sim_values():
     simulate(starting_materials)
 
 def reset_entry_table():
-    for i in range(RET.tableheight -1 ):
+    for i in range(RET.tableheight - 1):
         for j in range(RET.tablewidth):
             RET.entries[(i+1) * RET.tablewidth + j].configure(state='normal')
             RET.entries[(i+1) * RET.tablewidth + j].delete(0, 'end')
