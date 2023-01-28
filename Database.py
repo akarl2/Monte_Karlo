@@ -233,12 +233,7 @@ class DETA:
         self.formula = "C4H13N3"
         self.mw = 103.169
         self.density = 0.955
-        self.prgmw = 51.5845
-        self.srgmw = 0
-        self.comp = (self.prgmw, self.srgmw, self.prgmw)
         self.mass = self.mw
-        self.rg = "Amine"
-        self.numgroups = len(set(self.comp))
         self.prgID = "NH₂"
         self.prgk = 1
         self.cprgID = "NH"
@@ -252,6 +247,118 @@ class DETA:
         self.ctrgID = None
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.srgID], [self.prgID]]
+
+class LTEPA:
+    def __init__(self):
+        self.name = "LTEPA"
+        self.sn = "LTEPA"
+        self.formula = "C4H13N3"
+        self.mw = 189.307
+        self.density = 0.955
+        self.mass = self.mw
+        self.prgID = "NH₂"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
+        self.srgID = "NH"
+        self.srgk = 0
+        self.csrgID = "N"
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID], [self.srgID], [self.srgID],[self.prgID]]
+
+class AETETA:
+    def __init__(self):
+        self.name = "AETETA"
+        self.sn = "AETETA"
+        self.formula = "C4H13N3"
+        self.mw = 189.307
+        self.density = 0.955
+        self.mass = self.mw
+        self.prgID = "NH₂"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
+        self.srgID = "NH"
+        self.srgk = 0
+        self.csrgID = "N"
+        self.csrgk = 0
+        self.trgID = "N"
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.trgID], [self.prgID], [self.srgID],[self.prgID]]
+
+class AEPEEDA:
+    def __init__(self):
+        self.name = "AEPEEDA"
+        self.sn = "AEPEEDA"
+        self.formula = "C4H13N3"
+        self.mw = 216.35
+        self.density = 0.955
+        self.mass = self.mw
+        self.prgID = "NH₂"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
+        self.srgID = "NH"
+        self.srgk = 0
+        self.csrgID = "N"
+        self.csrgk = 0
+        self.trgID = "N"
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.trgID], [self.trgID], [self.srgID],[self.prgID]]
+
+class PEDETA:
+    def __init__(self):
+        self.name = "PEDETA"
+        self.sn = "PEDETA"
+        self.formula = "C4H13N3"
+        self.mw = 216.35
+        self.density = 0.955
+        self.mass = self.mw
+        self.prgID = "NH₂"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
+        self.srgID = "NH"
+        self.srgk = 0
+        self.csrgID = "N"
+        self.csrgk = 0
+        self.trgID = "N"
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.srgID], [self.trgID], [self.srgID], [self.srgID],[self.prgID]]
+
+class PEHA:
+    def __init__(self):
+        self.name = "PEHA"
+        self.sn = "PEHA"
+        self.formula = "C10H26N6"
+        self.mw = 232.376
+        self.density = 0.955
+        self.mass = self.mw
+        self.prgID = "NH₂"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
+        self.srgID = "NH"
+        self.srgk = 0
+        self.csrgID = "N"
+        self.csrgk = 0
+        self.trgID = "N"
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID], [self.srgID], [self.srgID], [self.srgID], [self.prgID]]
+
+
 
 class LTETA:
     def __init__(self):
@@ -432,12 +539,203 @@ class C181:
         self.sn = "C18:1"
         self.formula = "C18H34O2"
         self.mw = 282.47
-        self.prgmw = 282.47
-        self.srgmw = 0
         self.density = 0.895
         self.mass = self.mw
-        self.comp = self.prgmw
-        self.rg = "Acid"
+        self.prgID = "COOH"
+        self.Nprg = 1
+        self.prgk = 1
+        self.cprgID = None
+        self.Ncprg = 0
+        self.cprgk = 0
+        self.srgID = None
+        self.Nsrg = 0
+        self.srgk = 0
+        self.csrgID = None
+        self.Ncsrg = 0
+        self.csrgk = 0
+        self.trgID = None
+        self.Ntrg = 0
+        self.trgk = 0
+        self.ctrgID = None
+        self.Nctrg = 0
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class C14:
+    def __init__(self):
+        self.name = "C14"
+        self.sn = "C14"
+        self.formula = "C14H28O2"
+        self.mw = 228.376
+        self.density = 0.895
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.Nprg = 1
+        self.prgk = 1
+        self.cprgID = None
+        self.Ncprg = 0
+        self.cprgk = 0
+        self.srgID = None
+        self.Nsrg = 0
+        self.srgk = 0
+        self.csrgID = None
+        self.Ncsrg = 0
+        self.csrgk = 0
+        self.trgID = None
+        self.Ntrg = 0
+        self.trgk = 0
+        self.ctrgID = None
+        self.Nctrg = 0
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class C16:
+    def __init__(self):
+        self.name = "C16"
+        self.sn = "C16"
+        self.formula = "C16H32O2"
+        self.mw = 256.43
+        self.density = 0.895
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.Nprg = 1
+        self.prgk = 1
+        self.cprgID = None
+        self.Ncprg = 0
+        self.cprgk = 0
+        self.srgID = None
+        self.Nsrg = 0
+        self.srgk = 0
+        self.csrgID = None
+        self.Ncsrg = 0
+        self.csrgk = 0
+        self.trgID = None
+        self.Ntrg = 0
+        self.trgk = 0
+        self.ctrgID = None
+        self.Nctrg = 0
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class C18:
+    def __init__(self):
+        self.name = "C18"
+        self.sn = "C18"
+        self.formula = "C18H36O2"
+        self.mw = 284.484
+        self.density = 0.895
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.Nprg = 1
+        self.prgk = 1
+        self.cprgID = None
+        self.Ncprg = 0
+        self.cprgk = 0
+        self.srgID = None
+        self.Nsrg = 0
+        self.srgk = 0
+        self.csrgID = None
+        self.Ncsrg = 0
+        self.csrgk = 0
+        self.trgID = None
+        self.Ntrg = 0
+        self.trgk = 0
+        self.ctrgID = None
+        self.Nctrg = 0
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class C18:
+    def __init__(self):
+        self.name = "C18"
+        self.sn = "C18"
+        self.formula = "C18H36O2"
+        self.mw = 284.484
+        self.density = 0.895
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.Nprg = 1
+        self.prgk = 1
+        self.cprgID = None
+        self.Ncprg = 0
+        self.cprgk = 0
+        self.srgID = None
+        self.Nsrg = 0
+        self.srgk = 0
+        self.csrgID = None
+        self.Ncsrg = 0
+        self.csrgk = 0
+        self.trgID = None
+        self.Ntrg = 0
+        self.trgk = 0
+        self.ctrgID = None
+        self.Nctrg = 0
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class C161:
+    def __init__(self):
+        self.name = "C161"
+        self.sn = "C16:1"
+        self.formula = "C16H30O2"
+        self.mw = 254.414
+        self.density = 0.895
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.Nprg = 1
+        self.prgk = 1
+        self.cprgID = None
+        self.Ncprg = 0
+        self.cprgk = 0
+        self.srgID = None
+        self.Nsrg = 0
+        self.srgk = 0
+        self.csrgID = None
+        self.Ncsrg = 0
+        self.csrgk = 0
+        self.trgID = None
+        self.Ntrg = 0
+        self.trgk = 0
+        self.ctrgID = None
+        self.Nctrg = 0
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class C182:
+    def __init__(self):
+        self.name = "C18"
+        self.sn = "C18:2"
+        self.formula = "C18H32O2"
+        self.mw = 280.452
+        self.density = 0.895
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.Nprg = 1
+        self.prgk = 1
+        self.cprgID = None
+        self.Ncprg = 0
+        self.cprgk = 0
+        self.srgID = None
+        self.Nsrg = 0
+        self.srgk = 0
+        self.csrgID = None
+        self.Ncsrg = 0
+        self.csrgk = 0
+        self.trgID = None
+        self.Ntrg = 0
+        self.trgk = 0
+        self.ctrgID = None
+        self.Nctrg = 0
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class C183:
+    def __init__(self):
+        self.name = "C18"
+        self.sn = "C18:3"
+        self.formula = "C18H30O2"
+        self.mw = 278.436
+        self.density = 0.9164
         self.mass = self.mw
         self.prgID = "COOH"
         self.Nprg = 1
