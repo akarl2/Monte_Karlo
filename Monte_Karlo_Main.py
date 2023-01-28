@@ -178,7 +178,17 @@ def RXN_Results(composition):
     comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
     RS = []
     for key in comp_summary:
-        RS.append((key[0], str(key[1]), key[2], comp_summary[key]))
+        RS.append((key[0], key[1], key[2], comp_summary[key]))
+    RS = [[[list(x) for x in i[0]], [list(y) for y in i[1]], i[2], i[3]] for i in RS]
+    for key in RS:
+        index = 0
+        for group in key[1]:
+            species = group[0]
+            count = group[1]
+            new_name = species + '(' + str(count) + ')'
+            key[1][index] = new_name
+            index += 1
+        key[1] = '_'.join(key[1])
     rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count'])
     rxn_summary_df['MW'] = round(rxn_summary_df['MW'], 2)
     rxn_summary_df.drop(columns=['Groups'], inplace=True)
@@ -188,22 +198,6 @@ def RXN_Results(composition):
     rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
     rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
-    show_results(rxn_summary_df)
-
-def RXN_Results_Compact(composition):
-    comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
-    RS = []
-    for key in comp_summary:
-        RS.append((key[0], str((key[1])), key[2], comp_summary[key]))
-    rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count'])
-    rxn_summary_df.set_index('Name', inplace=True)
-    rxn_summary_df['Mass'] = rxn_summary_df['MW'] * rxn_summary_df['Count']
-    rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
-    rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
-    rxn_summary_df.sort_values(by=['MW'], ascending=True, inplace=True)
-    rxn_summary_df.drop(columns=['Groups'], inplace=True)
-    rxn_summary_df.drop(columns=['Name'], inplace=True)
-    rxn_summary_df.groupby(['MW']).sum()
     show_results(rxn_summary_df)
 
 
@@ -327,7 +321,6 @@ class RxnEntryTable(tkinter.Frame):
                 counter += 1
         self.entries[0].config(width=27)
         self.tabel_labels()
-
 
     def tabel_labels(self):
         offset = 0
@@ -615,8 +608,8 @@ class Buttons(tkinter.Frame):
         Simulate.grid(row=0, column=0)
         stop_button = tkinter.Button(self, text="Stop", command=stop, width=15, bg="Red")
         stop_button.grid(row=1, column=0)
-        expand = tkinter.Button(self, text="Expand Data", command=RXN_Results_Compact, width=15, bg="blue")
-        expand.grid(row=2, column=0)
+        # expand = tkinter.Button(self, text="Expand Data", command=RXN_Results_Compact, width=15, bg="blue")
+        # expand.grid(row=2, column=0)
         Simulate = tkinter.Button(self, text="Reset", command=reset_entry_table, width=15, bg="Orange")
         Simulate.grid(row=3, column=0)
 
