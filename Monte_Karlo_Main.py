@@ -77,9 +77,9 @@ def simulate(starting_materials):
         new_name = [[group, count] for group, count in new_name.items()]
         new_name.sort(key=lambda x: x[0])
         NW = compoundA[2][0] + compoundB[2][0] - new_group(groupA, groupB)['WL']
-        NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW, 2)]]
+        NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW, 3)]]
         NC[0][groups[0][1]][0] = new_group(groupA, groupB)['NG']
-        NC[0][groups[0][1]][1] = 0.00
+        NC[0][groups[0][1]][1] = 0.06
         old_groups = compoundB[0]
         if len(old_groups) == 1:
             pass
@@ -176,20 +176,43 @@ def update_metrics(TAV,AV,OH,EHC):
 
 def RXN_Results(composition):
     comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+    sum_comp = 0
+    for key in comp_summary:
+        sum_comp = sum_comp + (comp_summary[key] * key[2])
     RS = []
     for key in comp_summary:
         RS.append((key[0], key[1], key[2], comp_summary[key]))
     RS = [[[list(x) for x in i[0]], [list(y) for y in i[1]], i[2], i[3]] for i in RS]
     for key in RS:
+        amine_ct = 0
+        acid_ct = 0
+        alcohol_ct = 0
+        epoxide_ct = 0
+        EHC_ct = 0
+        for group in key[0]:
+            if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
+                amine_ct += key[3]
+            elif group[0] == 'COOH':
+                acid_ct += key[3]
+            elif group[0] == 'POH' or group[0] == 'SOH':
+                alcohol_ct += key[3]
+            elif group[0] == 'COC':
+                epoxide_ct += key[3]
+            elif group[0] == 'C3OHCl':
+                EHC_ct += key[3]
+        key.append(round((amine_ct * 56100) / sum_comp, 2))
+        key.append(round((acid_ct * 56100) / sum_comp, 2))
+        key.append(round((alcohol_ct * 56100) / sum_comp, 2))
+        key.append(round((epoxide_ct * 56100) / sum_comp, 2))
+        key.append(round((EHC_ct * 35.453) / sum_comp * 100, 2))
+    for key in RS:
         index = 0
         for group in key[1]:
-            species = group[0]
-            count = group[1]
-            new_name = species + '(' + str(count) + ')'
+            new_name = group[0] + '(' + str(group[1]) + ')'
             key[1][index] = new_name
             index += 1
         key[1] = '_'.join(key[1])
-    rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count'])
+    rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', 'AV', 'OH', 'COC', 'EHC'])
     rxn_summary_df['MW'] = round(rxn_summary_df['MW'], 2)
     rxn_summary_df.drop(columns=['Groups'], inplace=True)
     rxn_summary_df.set_index('Name', inplace=True)
@@ -197,6 +220,7 @@ def RXN_Results(composition):
     rxn_summary_df['Mass'] = rxn_summary_df['MW'] * rxn_summary_df['Count']
     rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
     rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
+    rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol %', 'Wt %', 'MW', 'TAV', 'AV', 'OH', 'COC', 'EHC']]
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
     show_results(rxn_summary_df)
 
