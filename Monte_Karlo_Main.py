@@ -79,7 +79,7 @@ def simulate(starting_materials):
         NW = compoundA[2][0] + compoundB[2][0] - new_group(groupA, groupB)['WL']
         NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW, 3)]]
         NC[0][groups[0][1]][0] = new_group(groupA, groupB)['NG']
-        NC[0][groups[0][1]][1] = 0.06
+        NC[0][groups[0][1]][1] = 0.00
         old_groups = compoundB[0]
         if len(old_groups) == 1:
             pass
@@ -220,8 +220,26 @@ def RXN_Results(composition):
     rxn_summary_df['Mass'] = rxn_summary_df['MW'] * rxn_summary_df['Count']
     rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
     rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
+    sumNiMi = (rxn_summary_df['Wt %'] * rxn_summary_df['MW']).sum()
+    sumNiMi2 = (rxn_summary_df['Wt %'] * (rxn_summary_df['MW'])**2).sum()
+    sumNiMi3 = (rxn_summary_df['Wt %'] * (rxn_summary_df['MW']) ** 3).sum()
+    sumNiMi4 = (rxn_summary_df['Wt %'] * (rxn_summary_df['MW']) ** 4).sum()
+    sumNi = rxn_summary_df['Wt %'].sum()
     rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol %', 'Wt %', 'MW', 'TAV', 'AV', 'OH', 'COC', 'EHC']]
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
+    #sum of MW * wt%
+    Mn = sumNiMi/sumNi
+    Mw = sumNiMi2/sumNiMi
+    PDI = Mw/Mn
+    Mz = sumNiMi3/sumNiMi2
+    Mz1 = sumNiMi4/sumNiMi3
+    WD.entries[5].insert(0, round(Mn, 4))
+    WD.entries[6].insert(0, round(Mw, 4))
+    WD.entries[7].insert(0, round(PDI, 4))
+    WD.entries[8].insert(0, round(Mz, 4))
+    WD.entries[9].insert(0, round(Mz1, 4))
+
+
     show_results(rxn_summary_df)
 
 
@@ -603,6 +621,50 @@ class RxnMetrics(tkinter.Frame):
         RXN_EM_Entry.config(justify="center", state="readonly")
         RXN_EM_Value = self.entries[11]
 
+class weight_dist(tkinter.Frame):
+    def __init__(self, master=tab2):
+        tkinter.Frame.__init__(self, master)
+        self.tablewidth = None
+        self.tableheight = None
+        self.entries = None
+        self.grid(row=0, column=0, padx=15, pady=15)
+        self.create_table()
+
+    def create_table(self):
+        self.entries = {}
+        self.tableheight = 5
+        self.tablewidth = 2
+        counter = 0
+        for column in range(self.tablewidth):
+            for row in range(self.tableheight):
+                self.entries[counter] = tkinter.Entry(self)
+                self.entries[counter].grid(row=row, column=column)
+                # self.entries[counter].insert(0, str(counter))
+                self.entries[counter].config(justify="center", width=15)
+                counter += 1
+        self.table_labels()
+
+    def table_labels(self):
+        self.entries[0].delete(0, tkinter.END)
+        self.entries[0].insert(0, "Mn (Number Average) =")
+        self.entries[0].config(width=25)
+        self.entries[0].config(state="readonly")
+        self.entries[1].delete(0, tkinter.END)
+        self.entries[1].insert(0, "Mw (Weight Average) =")
+        self.entries[1].config(width=25)
+        self.entries[1].config(state="readonly")
+        self.entries[2].delete(0, tkinter.END)
+        self.entries[2].insert(0, "PDI (Dispersity Index) =")
+        self.entries[2].config(width=25)
+        self.entries[2].config(state="readonly")
+        self.entries[3].delete(0, tkinter.END)
+        self.entries[3].insert(0, "Mz =")
+        self.entries[3].config(width=25)
+        self.entries[3].config(state="readonly")
+        self.entries[4].delete(0, tkinter.END)
+        self.entries[4].insert(0, "Mz + 1 =")
+        self.entries[4].config(width=25)
+        self.entries[4].config(state="readonly")
 
 class Buttons(tkinter.Frame):
     def __init__(self, master=tab1):
@@ -673,6 +735,7 @@ class SimStatus(tkinter.Frame):
         self.progress.grid(row=0, column=1)
 
 RET = RxnEntryTable()
+WD = weight_dist()
 RD = RxnDetails()
 RM = RxnMetrics()
 Buttons = Buttons()
