@@ -220,11 +220,11 @@ def RXN_Results(composition):
     rxn_summary_df['Mass'] = rxn_summary_df['MW'] * rxn_summary_df['Count']
     rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
     rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
-    sumNiMi = (rxn_summary_df['Wt %'] * rxn_summary_df['MW']).sum()
-    sumNiMi2 = (rxn_summary_df['Wt %'] * (rxn_summary_df['MW'])**2).sum()
-    sumNiMi3 = (rxn_summary_df['Wt %'] * (rxn_summary_df['MW']) ** 3).sum()
-    sumNiMi4 = (rxn_summary_df['Wt %'] * (rxn_summary_df['MW']) ** 4).sum()
-    sumNi = rxn_summary_df['Wt %'].sum()
+    sumNiMi = (rxn_summary_df['Count'] * rxn_summary_df['MW']).sum()
+    sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**2).sum()
+    sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 3).sum()
+    sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 4).sum()
+    sumNi = rxn_summary_df['Count'].sum()
     rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol %', 'Wt %', 'MW', 'TAV', 'AV', 'OH', 'COC', 'EHC']]
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
     #sum of MW * wt%
