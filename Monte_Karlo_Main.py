@@ -24,7 +24,7 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results, frame, expanded_results, groupA, groupB, test_count, test_interval
+global running, emo_a, results, frame, expanded_results, groupA, groupB, test_count, test_interval, total_ct
 def simulate(starting_materials):
     global test_count, test_interval
     test_count = 0
@@ -35,8 +35,8 @@ def simulate(starting_materials):
     end_metric_selection = str(RXN_EM.get())
     try:
         end_metric_value = float(RXN_EM_Value.get())
-        end_metric_value_upper = end_metric_value * 1.10
-        end_metric_value_lower = end_metric_value * 0.90
+        end_metric_value_upper = end_metric_value * 1.20
+        end_metric_value_lower = end_metric_value * 0.80
     except ValueError:
         messagebox.showerror("Error", "Please enter a value for the end metric.")
         return
@@ -231,17 +231,18 @@ def RXN_Results(composition):
     PDI = Mw/Mn
     Mz = sumNiMi3/sumNiMi2
     Mz1 = sumNiMi4/sumNiMi3
-    WD.entries[5].delete(0, tkinter.END)
-    WD.entries[5].insert(0, round(Mn, 4))
     WD.entries[6].delete(0, tkinter.END)
-    WD.entries[6].insert(0, round(Mw, 4))
+    WD.entries[6].insert(0, round(Mn, 4))
     WD.entries[7].delete(0, tkinter.END)
-    WD.entries[7].insert(0, round(PDI, 4))
+    WD.entries[7].insert(0, round(Mw, 4))
     WD.entries[8].delete(0, tkinter.END)
-    WD.entries[8].insert(0, round(Mz, 4))
+    WD.entries[8].insert(0, round(PDI, 4))
     WD.entries[9].delete(0, tkinter.END)
-    WD.entries[9].insert(0, round(Mz1, 4))
-
+    WD.entries[9].insert(0, round(Mz, 4))
+    WD.entries[10].delete(0, tkinter.END)
+    WD.entries[10].insert(0, round(Mz1, 4))
+    WD.entries[11].delete(0, tkinter.END)
+    WD.entries[11].insert(0, round(total_ct/sumNi, 4))
 
     show_results(rxn_summary_df)
 
@@ -274,8 +275,10 @@ def stop():
         pass
 
 def sim_values():
+    global total_ct
     cell = 16
     index = 0
+    total_ct = 0
     starting_materials = []
     try:
         for i in range(RET.tableheight - 1):
@@ -290,6 +293,9 @@ def sim_values():
                                                 trgID=RET.entries[cell + 12].get(), trgk=RET.entries[cell + 13].get(),
                                                 ctrgID=RET.entries[cell + 14].get(), ctrgk=RET.entries[cell + 15].get(),
                                                 ct=RXN_Samples.get())
+                count = RXN_Samples.get()
+                moles_count = round(float(RET.entries[cell + 3].get()), 4)
+                total_ct = total_ct + (float(count) * float(moles_count))
                 cell = cell + RET.tablewidth
                 starting_materials.append(str_to_class(RDE[index]).comp)
                 index = index + 1
@@ -298,6 +304,7 @@ def sim_values():
     except AttributeError as e:
         messagebox.showerror("Exception raised", str(e))
         pass
+    print("Total count: ", total_ct)
     simulate(starting_materials)
 
 def reset_entry_table():
@@ -634,7 +641,7 @@ class WeightDist(tkinter.Frame):
 
     def create_table(self):
         self.entries = {}
-        self.tableheight = 5
+        self.tableheight = 6
         self.tablewidth = 2
         counter = 0
         for column in range(self.tablewidth):
@@ -667,6 +674,10 @@ class WeightDist(tkinter.Frame):
         self.entries[4].insert(0, "Mz + 1 =")
         self.entries[4].config(width=25)
         self.entries[4].config(state="readonly")
+        self.entries[5].delete(0, tkinter.END)
+        self.entries[5].insert(0, "Xn DOP = ")
+        self.entries[5].config(width=25)
+        self.entries[5].config(state="readonly")
 
 class Buttons(tkinter.Frame):
     def __init__(self, master=tab1):
