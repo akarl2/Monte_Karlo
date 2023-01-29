@@ -233,10 +233,15 @@ def RXN_Results(composition):
     PDI = Mw/Mn
     Mz = sumNiMi3/sumNiMi2
     Mz1 = sumNiMi4/sumNiMi3
+    WD.entries[5].delete(0, tkinter.END)
     WD.entries[5].insert(0, round(Mn, 4))
+    WD.entries[6].delete(0, tkinter.END)
     WD.entries[6].insert(0, round(Mw, 4))
+    WD.entries[7].delete(0, tkinter.END)
     WD.entries[7].insert(0, round(PDI, 4))
+    WD.entries[8].delete(0, tkinter.END)
     WD.entries[8].insert(0, round(Mz, 4))
+    WD.entries[9].delete(0, tkinter.END)
     WD.entries[9].insert(0, round(Mz1, 4))
 
 
