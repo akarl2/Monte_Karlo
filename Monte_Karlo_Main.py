@@ -24,9 +24,9 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results, frame, expanded_results, groupA, groupB, test_count, test_interval, total_ct
+global running, emo_a, results, frame, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist
 def simulate(starting_materials):
-    global test_count, test_interval
+    global test_count, test_interval,sn_dist
     test_count = 0
     test_interval = 40
     global running
@@ -282,10 +282,11 @@ def stop():
         pass
 
 def sim_values():
-    global total_ct
+    global total_ct, sn_dict
     cell = 16
     index = 0
     total_ct = 0
+    sn_dict = {}
     starting_materials = []
     try:
         for i in range(RET.tableheight - 1):
@@ -300,6 +301,7 @@ def sim_values():
                                                 trgID=RET.entries[cell + 12].get(), trgk=RET.entries[cell + 13].get(),
                                                 ctrgID=RET.entries[cell + 14].get(), ctrgk=RET.entries[cell + 15].get(),
                                                 ct=RXN_Samples.get())
+                sn_dict[str_to_class(RDE[index]).sn] = str_to_class(RDE[index])
                 count = RXN_Samples.get()
                 moles_count = round(float(RET.entries[cell + 3].get()), 4)
                 total_ct = total_ct + (float(count) * float(moles_count))

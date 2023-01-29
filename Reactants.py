@@ -5,7 +5,6 @@ class R1Data:
         self.comp = None
         self.mw = None
         self.name = None
-        self.species = None
         self.mass = None
         self.moles = None
         self.prgID = None
@@ -30,7 +29,6 @@ class R1Data:
 
     def assign(self, name, mass, moles, prgID, prgk, cprgID, cprgk, srgID, srgk, csrgID, csrgk, trgID, trgk, ctrgID, ctrgk, ct):
         self.name = name
-        self.species = name.name
         self.sn = name.sn
         self.mw = name.mw
         self.mass = mass
@@ -787,6 +785,8 @@ class R14Data:
             index += 1
         self.dist = [[j if type(j) != str else j.replace("NH₂", "NH2") for j in i] for i in self.dist]
         self.comp = [self.dist, [self.mw], [[self.sn, 1]], [self.ct]]
+
+
 
 
 
