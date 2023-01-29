@@ -35,6 +35,8 @@ def simulate(starting_materials):
     end_metric_selection = str(RXN_EM.get())
     try:
         end_metric_value = float(RXN_EM_Value.get())
+        end_metric_value_upper = end_metric_value * 1.10
+        end_metric_value_lower = end_metric_value * 0.90
     except ValueError:
         messagebox.showerror("Error", "Please enter a value for the end metric.")
         return
@@ -99,9 +101,7 @@ def simulate(starting_materials):
         global test_interval
         global running
         comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
-        sum_comp = 0
-        for key in comp_summary:
-            sum_comp = sum_comp + (comp_summary[key] * key[2])
+        sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
         amine_ct = 0
         acid_ct = 0
         alcohol_ct = 0
@@ -136,7 +136,7 @@ def simulate(starting_materials):
             update_metrics(TAV, AV, OH, EHC)
             RXN_Results(composition)
         window.update()
-        if end_metric_value * 1.02 >= RXN_metric_value >= end_metric_value * 0.98:
+        if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
             test_interval = 1
         update_metrics(TAV, AV, OH, EHC)
 
@@ -176,9 +176,7 @@ def update_metrics(TAV,AV,OH,EHC):
 
 def RXN_Results(composition):
     comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
-    sum_comp = 0
-    for key in comp_summary:
-        sum_comp = sum_comp + (comp_summary[key] * key[2])
+    sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
     RS = []
     for key in comp_summary:
         RS.append((key[0], key[1], key[2], comp_summary[key]))
@@ -220,11 +218,11 @@ def RXN_Results(composition):
     rxn_summary_df['Mass'] = rxn_summary_df['MW'] * rxn_summary_df['Count']
     rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
     rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
+    sumNi = rxn_summary_df['Count'].sum()
     sumNiMi = (rxn_summary_df['Count'] * rxn_summary_df['MW']).sum()
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**2).sum()
     sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 3).sum()
     sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 4).sum()
-    sumNi = rxn_summary_df['Count'].sum()
     rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol %', 'Wt %', 'MW', 'TAV', 'AV', 'OH', 'COC', 'EHC']]
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
     #sum of MW * wt%
@@ -525,7 +523,6 @@ class RxnEntryTable(tkinter.Frame):
         else:
             pass
 
-
 global RXN_Type, RXN_Samples, RXN_EOR
 class RxnDetails(tkinter.Frame):
     def __init__(self, master=tab1):
@@ -626,7 +623,7 @@ class RxnMetrics(tkinter.Frame):
         RXN_EM_Entry.config(justify="center", state="readonly")
         RXN_EM_Value = self.entries[11]
 
-class weight_dist(tkinter.Frame):
+class WeightDist(tkinter.Frame):
     def __init__(self, master=tab2):
         tkinter.Frame.__init__(self, master)
         self.tablewidth = None
@@ -704,7 +701,6 @@ class Buttons(tkinter.Frame):
         Simulate = tkinter.Button(self, text="Reset", command=reset_entry_table, width=15, bg="Orange")
         Simulate.grid(row=3, column=0)
 
-
 class SimStatus(tkinter.Frame):
     def __init__(self, master=tab1):
         tkinter.Frame.__init__(self, master)
@@ -740,7 +736,7 @@ class SimStatus(tkinter.Frame):
         self.progress.grid(row=0, column=1)
 
 RET = RxnEntryTable()
-WD = weight_dist()
+WD = WeightDist()
 RD = RxnDetails()
 RM = RxnMetrics()
 Buttons = Buttons()
