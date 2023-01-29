@@ -23,12 +23,13 @@ Num_Samples = ["1000", "2500", "5000", "10000", "100000"]
 class reactive_groups:
     def __init__(self):
         self.NH2 = ['COOH', 'COC', 'Cl']
-        self.C3OHCl = ['COC']
         self.NH = ['COC']
         self.POH = ['COOH', 'COC']
         self.SOH = ['COOH', 'COC']
         self.COOH = ['NH2', 'POH', 'COC', 'SOH']
-        self.COC = ['NH2', 'POH', 'SOH', 'COOH', 'NH', 'C3OHCl']
+        self.COC = ['NH2', 'POH', 'SOH', 'COOH', 'NH']
+        self.HPCOH = ['COC']
+        self.Cl = ['NH2']
         self.COOC = None
 
 class NH2:
@@ -60,35 +61,36 @@ class COC:
     def __init__(self):
         self.NH2 = 'COCNH'
         self.NH2_wl = 0
-        self.POH = 'C3OHCl'
+        self.POH = 'SOH'
         self.POH_wl = 0
-        self.SOH = 'C3OHCl'
+        self.SOH = 'SOH'
         self.SOH_wl = 0
-        self.C3OHCl = 'C3OHCl'
-        self.C3OHCl_wl = 0
         self.COOH = 'COCOH'
         self.COOH_wl = 0
         self.NH = 'COCN'
         self.NH_wl = 0
+        self.HPCOH = 'HPCOH'
+        self.HPCOH_wl = 0
 
 class POH:
     def __init__(self):
         self.COOH = 'COOC'
         self.COOH_wl = Water().mw
-        self.COC = 'C3OHCl'
+        self.COC = 'HPCOH'
         self.COC_wl = 0
 
 class SOH:
     def __init__(self):
         self.COOH = 'COOC'
         self.COOH_wl = Water().mw
-        self.COC = 'C3OHCl'
+        self.COC = 'HPCOH'
         self.COC_wl = 0
 
-class C3OHCl:
+class HPCOH:
     def __init__(self):
-        self.COC = 'C3OHCl'
+        self.COC = 'HPCOH'
         self.COC_wl = 0
+
 
 
 

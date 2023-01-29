@@ -8,7 +8,7 @@ from tkinter import ttk, messagebox
 import pandas
 from ttkwidgets.autocomplete import AutocompleteCombobox
 from Database import *
-from Reactions import reactive_groups,NH2,NH,COOH,COC,POH,SOH,C3OHCl
+from Reactions import reactive_groups,NH2,NH,COOH,COC,POH,SOH
 from Reactions import *
 import itertools
 from pandastable import Table, TableModel, config
@@ -28,7 +28,7 @@ global running, emo_a, results, frame, expanded_results, groupA, groupB, test_co
 def simulate(starting_materials):
     global test_count, test_interval
     test_count = 0
-    test_interval = 50
+    test_interval = 40
     global running
     running = True
     sim.progress['value'] = 0
@@ -64,10 +64,13 @@ def simulate(starting_materials):
         return {'NG': NG, 'WL': WL}
 
     def update_comp(composition, groups):
-        global test_count
+        global test_count, running
         NC = composition[groups[0][0]]
         compoundA = composition[groups[0][0]]
         compoundB = composition[groups[1][0]]
+        print(f'NC: {NC}')
+        print(f'compoundA: {compoundA}')
+        print(f'compoundB: {compoundB}')
         compoundAloc = groups[0][1]
         compoundBloc = groups[1][1]
         new_name = {}
@@ -81,7 +84,7 @@ def simulate(starting_materials):
         NW = compoundA[2][0] + compoundB[2][0] - new_group(groupA, groupB)['WL']
         NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW, 3)]]
         NC[0][groups[0][1]][0] = new_group(groupA, groupB)['NG']
-        NC[0][groups[0][1]][1] = 0.00
+        NC[0][groups[0][1]][1] = 0.06
         old_groups = compoundB[0]
         if len(old_groups) == 1:
             pass
@@ -90,6 +93,8 @@ def simulate(starting_materials):
             for sublist in old_groups:
                 NC[0].append(sublist)
         NC[0].sort(key=lambda x: x[0])
+        print(f'New NC: {NC}')
+        running = False
         composition[groups[0][0]] = NC
         del(composition[groups[1][0]])
         window.update()
@@ -117,7 +122,7 @@ def simulate(starting_materials):
                     alcohol_ct += comp_summary[key]
                 elif group[0] == 'COC':
                     epoxide_ct += comp_summary[key]
-                elif group[0] == 'C3OHCl':
+                elif group[0] == 'HPCOH':
                     EHC_ct += comp_summary[key]
         TAV = round((amine_ct * 56100) / sum_comp, 2)
         AV = round((acid_ct * 56100) / sum_comp, 2)
@@ -128,20 +133,24 @@ def simulate(starting_materials):
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_selection != '% EHC':
             sim.progress['value'] = round(((end_metric_value / RXN_metric_value) * 100), 2)
+            if RXN_metric_value <= end_metric_value:
+                running = False
+                sim.progress['value'] = 100
+                update_metrics(TAV, AV, OH, EHC)
+                RXN_Results(composition)
         else:
             sim.progress['value'] = round(((EHC / end_metric_value) * 100), 2)
-        if RXN_metric_value <= end_metric_value:
-            running = False
-            sim.progress['value'] = 100
-            update_metrics(TAV, AV, OH, EHC)
-            RXN_Results(composition)
+            if RXN_metric_value >= end_metric_value:
+                running = False
+                sim.progress['value'] = 100
+                update_metrics(TAV, AV, OH, EHC)
+                RXN_Results(composition)
         window.update()
         if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
             test_interval = 1
         update_metrics(TAV, AV, OH, EHC)
 
     while running:
-        start = time.time()
         test_count += 1
         weights = []
         chemical = []
@@ -154,12 +163,10 @@ def simulate(starting_materials):
         groups = random.choices(chemical, weights, k=2)
         while groups[0][0] == groups[1][0] or check_react(groups) is False:
             groups = random.choices(chemical, weights, k=2)
-        stop = time.time()
-        print("Time to select groups: " + str((stop - start) * 1000) + " ms")
         update_comp(composition, groups)
 
 
-def update_metrics(TAV,AV,OH,EHC):
+def update_metrics(TAV, AV, OH, EHC):
     RM.entries[6].delete(0, tkinter.END)
     RM.entries[6].insert(0, EHC)
     RM.entries[7].delete(0, tkinter.END)
@@ -196,7 +203,7 @@ def RXN_Results(composition):
                 alcohol_ct += key[3]
             elif group[0] == 'COC':
                 epoxide_ct += key[3]
-            elif group[0] == 'C3OHCl':
+            elif group[0] == 'HPCOH':
                 EHC_ct += key[3]
         key.append(round((amine_ct * 56100) / sum_comp, 2))
         key.append(round((acid_ct * 56100) / sum_comp, 2))
@@ -304,7 +311,6 @@ def sim_values():
     except AttributeError as e:
         messagebox.showerror("Exception raised", str(e))
         pass
-    print("Total count: ", total_ct)
     simulate(starting_materials)
 
 def reset_entry_table():

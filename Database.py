@@ -795,7 +795,7 @@ class Epichlorohydrin:
         self.numgroups = 1
         self.prgID = "COC"
         self.prgk = 1
-        self.cprgID = "C3OHCl"
+        self.cprgID = "HPCOH"
         self.cprgk = 0
         self.srgID = "Cl"
         self.srgk = 0
