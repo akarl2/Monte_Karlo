@@ -312,7 +312,7 @@ class AEPEEDA:
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
-        self.dist = [[self.prgID], [self.trgID], [self.trgID], [self.srgID],[self.prgID]]
+        self.dist = [[self.prgID], [self.trgID], [self.trgID], [self.srgID], [self.prgID]]
 
 class PEDETA:
     def __init__(self):
@@ -334,7 +334,7 @@ class PEDETA:
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
-        self.dist = [[self.srgID], [self.trgID], [self.srgID], [self.srgID],[self.prgID]]
+        self.dist = [[self.srgID], [self.trgID], [self.srgID], [self.srgID], [self.prgID]]
 
 class PEHA:
     def __init__(self):
