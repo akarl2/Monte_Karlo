@@ -351,6 +351,16 @@ tkinter.Grid.rowconfigure(window, 0, weight=1)
 tkinter.Grid.columnconfigure(window, 0, weight=1)
 tab_control.grid(row=0, column=0, sticky=tkinter.E + tkinter.W + tkinter.N + tkinter.S)
 
+menubar = tkinter.Menu(window, background="red")
+window.config(menu=menubar)
+filemenu1 = tkinter.Menu(menubar, tearoff=0)
+filemenu2 = tkinter.Menu(menubar, tearoff=0)
+menubar.add_cascade(label='File', menu=filemenu1)
+menubar.add_cascade(label='Options', menu=filemenu2)
+filemenu1.add_command(label='Exit', command=window.destroy)
+
+
+
 
 Entry_Reactants = ['R1Reactant', 'R2Reactant', 'R3Reactant', 'R4Reactant', 'R5Reactant', 'R6Reactant', 'R7Reactant',
                    'R8Reactant', 'R9Reactant', 'R10Reactant', 'R11Reactant', 'R12Reactant', 'R13Reactant',

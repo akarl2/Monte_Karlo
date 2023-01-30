@@ -359,7 +359,6 @@ class PEHA:
         self.dist = [[self.prgID], [self.srgID], [self.srgID], [self.srgID], [self.srgID], [self.prgID]]
 
 
-
 class LTETA:
     def __init__(self):
         self.name = "LTETA"
