@@ -710,6 +710,27 @@ class C183:
         self.ctrgk = 0
         self.dist = [[self.prgID]]
 
+class Azelaic_acid:
+    def __init__(self):
+        self.name = "Azelaic acid"
+        self.sn = "AzAc"
+        self.formula = "C9H16O4"
+        self.mw = 188.22
+        self.density = 1.443
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.prgk = 1
+        self.cprgID = "CONH"
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
 
 #-------------------------------------Other--------------------------------------#
 

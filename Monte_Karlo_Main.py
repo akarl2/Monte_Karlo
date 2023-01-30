@@ -83,15 +83,14 @@ def simulate(starting_materials):
         NG = new_group(groupA, groupB)['NG']
         NC[0][groups[0][1]][0] = NG
         for species in NC[1]:
-            try:
-                name = sn_dict[species[0]]
-            except KeyError:
-                pass
+            swapped = False
+            name = sn_dict[species[0]]
             if name.cprgID[0] == NG:
                 NC[0][groups[0][1]][1] = name.cprgID[1]
+                swapped = True
                 break
-            else:
-                pass
+        if not swapped:
+            NC[0][groups[0][1]][1] = 0
         old_groups = compoundB[0]
         if len(old_groups) == 1:
             pass
@@ -357,8 +356,8 @@ filemenu1 = tkinter.Menu(menubar, tearoff=0)
 filemenu2 = tkinter.Menu(menubar, tearoff=0)
 menubar.add_cascade(label='File', menu=filemenu1)
 menubar.add_cascade(label='Options', menu=filemenu2)
+filemenu1.add_command(label='Reset', command=reset_entry_table)
 filemenu1.add_command(label='Exit', command=window.destroy)
-
 
 
 
