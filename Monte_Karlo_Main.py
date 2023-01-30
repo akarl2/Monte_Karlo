@@ -24,9 +24,10 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results, frame, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, AV_list, count_list
+global running, emo_a, results, frame, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, AV_list, count_list, byproducts
 def simulate(starting_materials):
-    global test_count, test_interval, sn_dist, AV_list, count_list
+    global test_count, test_interval, sn_dist, AV_list, count_list, byproducts
+    byproducts = 0
     AV_list = []
     count_list = []
     test_count = 0
@@ -66,7 +67,7 @@ def simulate(starting_materials):
         return {'NG': NG, 'WL': WL}
 
     def update_comp(composition, groups):
-        global test_count, running
+        global test_count, running, byproducts
         NC = composition[groups[0][0]]
         compoundA = composition[groups[0][0]]
         compoundB = composition[groups[1][0]]
@@ -80,6 +81,7 @@ def simulate(starting_materials):
                 new_name[group] = count
         new_name = [[group, count] for group, count in new_name.items()]
         new_name.sort(key=lambda x: x[0])
+        byproducts = byproducts + float(new_group(groupA, groupB)['WL'])
         NW = compoundA[2][0] + compoundB[2][0] - new_group(groupA, groupB)['WL']
         NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW, 3)]]
         NG = new_group(groupA, groupB)['NG']
@@ -268,11 +270,11 @@ def RXN_Results(composition):
     WD.entries[10].insert(0, round(Mz1, 4))
     WD.entries[11].delete(0, tkinter.END)
     WD.entries[11].insert(0, round(total_ct/sumNi, 4))
-    # put AV_list and Count_list into a separate dataframe
+
     AV_df = pandas.DataFrame(AV_list, columns=['AV'])
     AV_df['Count'] = count_list
-
-
+    AV_df.set_index('AV', inplace=True)
+    print(byproducts)
     show_results(rxn_summary_df)
 
 
@@ -365,10 +367,13 @@ menubar = tkinter.Menu(window, background="red")
 window.config(menu=menubar)
 filemenu1 = tkinter.Menu(menubar, tearoff=0)
 filemenu2 = tkinter.Menu(menubar, tearoff=0)
+filemenu3 = tkinter.Menu(menubar, tearoff=0)
 menubar.add_cascade(label='File', menu=filemenu1)
 menubar.add_cascade(label='Options', menu=filemenu2)
+menubar.add_cascade(label='Help', menu=filemenu3)
 filemenu1.add_command(label='Reset', command=reset_entry_table)
 filemenu1.add_command(label='Exit', command=window.destroy)
+filemenu3.add_command(label='Help')
 
 
 
