@@ -24,7 +24,7 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results, frame, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist
+global running, emo_a, results, frame, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC
 def simulate(starting_materials):
     global test_count, test_interval,sn_dist
     test_count = 0
@@ -68,9 +68,6 @@ def simulate(starting_materials):
         NC = composition[groups[0][0]]
         compoundA = composition[groups[0][0]]
         compoundB = composition[groups[1][0]]
-        print(f'NC: {NC}')
-        print(f'compoundA: {compoundA}')
-        print(f'compoundB: {compoundB}')
         compoundAloc = groups[0][1]
         compoundBloc = groups[1][1]
         new_name = {}
@@ -83,8 +80,18 @@ def simulate(starting_materials):
         new_name.sort(key=lambda x: x[0])
         NW = compoundA[2][0] + compoundB[2][0] - new_group(groupA, groupB)['WL']
         NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW, 3)]]
-        NC[0][groups[0][1]][0] = new_group(groupA, groupB)['NG']
-        NC[0][groups[0][1]][1] = 0.06
+        NG = new_group(groupA, groupB)['NG']
+        NC[0][groups[0][1]][0] = NG
+        for species in NC[1]:
+            try:
+                name = sn_dict[species[0]]
+            except KeyError:
+                pass
+            if name.cprgID[0] == NG:
+                NC[0][groups[0][1]][1] = name.cprgID[1]
+                break
+            else:
+                pass
         old_groups = compoundB[0]
         if len(old_groups) == 1:
             pass
@@ -93,8 +100,6 @@ def simulate(starting_materials):
             for sublist in old_groups:
                 NC[0].append(sublist)
         NC[0].sort(key=lambda x: x[0])
-        print(f'New NC: {NC}')
-        running = False
         composition[groups[0][0]] = NC
         del(composition[groups[1][0]])
         window.update()
@@ -161,10 +166,18 @@ def simulate(starting_materials):
                 weights.append(group[1])
                 index += 1
         groups = random.choices(chemical, weights, k=2)
+        #set running to false after 3 seconds if no reaction occurs
+        start = time.time()
         while groups[0][0] == groups[1][0] or check_react(groups) is False:
             groups = random.choices(chemical, weights, k=2)
+            if time.time() - start > 3:
+                running = False
+                sim.progress['value'] = 100
+                RXN_Results(composition)
+                messagebox.showerror("Error", "Increase # of samples or End Metric is unattainable")
+                break
+        stop = time.time()
         update_comp(composition, groups)
-
 
 def update_metrics(TAV, AV, OH, EHC):
     RM.entries[6].delete(0, tkinter.END)
@@ -232,7 +245,6 @@ def RXN_Results(composition):
     sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 4).sum()
     rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol %', 'Wt %', 'MW', 'TAV', 'AV', 'OH', 'COC', 'EHC']]
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
-    #sum of MW * wt%
     Mn = sumNiMi/sumNi
     Mw = sumNiMi2/sumNiMi
     PDI = Mw/Mn

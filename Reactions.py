@@ -61,9 +61,9 @@ class COC:
     def __init__(self):
         self.NH2 = 'COCNH'
         self.NH2_wl = 0
-        self.POH = 'SOH'
+        self.POH = 'HPCOH'
         self.POH_wl = 0
-        self.SOH = 'SOH'
+        self.SOH = 'HPCOH'
         self.SOH_wl = 0
         self.COOH = 'COCOH'
         self.COOH_wl = 0
