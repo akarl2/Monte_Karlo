@@ -68,7 +68,7 @@ class Castor_Oil:
         self.cprgID = None
         self.cprgk = 0
         self.srgID = None
-        self.srgk = 1
+        self.srgk = 0
         self.csrgID = None
         self.csrgk = 0
         self.trgID = None
@@ -268,7 +268,7 @@ class LTEPA:
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
-        self.dist = [[self.prgID], [self.srgID], [self.srgID], [self.srgID],[self.prgID]]
+        self.dist = [[self.prgID], [self.srgID], [self.srgID], [self.srgID], [self.prgID]]
 
 class AETETA:
     def __init__(self):
@@ -290,7 +290,7 @@ class AETETA:
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
-        self.dist = [[self.prgID], [self.trgID], [self.prgID], [self.srgID],[self.prgID]]
+        self.dist = [[self.prgID], [self.trgID], [self.prgID], [self.srgID], [self.prgID]]
 
 class AEPEEDA:
     def __init__(self):
@@ -366,12 +366,6 @@ class LTETA:
         self.formula = "C6H18N4"
         self.mw = 146.234
         self.density = 0.982
-        self.prgmw = 30.049
-        self.srgmw = 43.068
-        self.comp = (self.prgmw, self.srgmw, self.srgmw,self.prgmw)
-        self.mass = self.mw
-        self.rg = "Amine"
-        self.numgroups = len(set(self.comp))
         self.prgID = "NH₂"
         self.prgk = 1
         self.cprgID = "NH"
@@ -384,7 +378,91 @@ class LTETA:
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID], [self.srgID], [self.prgID]]
 
+class Branched_TETA:
+    def __init__(self):
+        self.name = "Branched TETA"
+        self.sn = "BTETA"
+        self.formula = "C6H18N4"
+        self.mw = 146.234
+        self.density = 0.982
+        self.prgID = "NH₂"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
+        self.srgID = "NH"
+        self.srgk = 0
+        self.csrgID = "N"
+        self.csrgk = 0
+        self.trgID = "N"
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.trgID], [self.prgID], [self.prgID]]
+
+class Bis_AEP:
+    def __init__(self):
+        self.name = "Bis-AEP"
+        self.sn = "Bis-AEP"
+        self.formula = "C6H16N4"
+        self.mw = 168.24
+        self.density = 0.982
+        self.prgID = "NH₂"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
+        self.srgID = "NH"
+        self.srgk = 0
+        self.csrgID = "N"
+        self.csrgk = 0
+        self.trgID = "N"
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.trgID], [self.trgID], [self.prgID]]
+
+class PEEDA:
+    def __init__(self):
+        self.name = "PEEDA"
+        self.sn = "PEEDA"
+        self.formula = "C4H13N3"
+        self.mw = 168.24
+        self.density = 0.955
+        self.prgID = "NH₂"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
+        self.srgID = "NH"
+        self.srgk = 0
+        self.csrgID = "N"
+        self.csrgk = 0
+        self.trgID = "N"
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.srgID], [self.trgID], [self.srgID], [self.prgID]]
+
+class Hydroxyethylpiperazine:
+    def __init__(self):
+        self.name = "Hydroxyethylpiperazine"
+        self.sn = "HEP"
+        self.formula = "C6H14N2O"
+        self.mw = 130.1882
+        self.density = 0.955
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = "NH"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = "N"
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID], [self.trgID]]
 
 class DEA:
     def __init__(self):
@@ -780,6 +858,27 @@ class Epichlorohydrin:
         self.ctrgID = None
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.srgID]]
+
+class Propylene_oxide:
+    def __init__(self):
+        self.name = "Propylene oxide"
+        self.sn = "PO"
+        self.formula = "C3H6O2"
+        self.mw = 58.08
+        self.density = 0.859
+        self.prgID = "COC"
+        self.prgk = 1
+        self.cprgID = "SOH"
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
 
 class Clear:
     def __init__(self):

@@ -24,9 +24,11 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results, frame, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC
+global running, emo_a, results, frame, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, AV_list, count_list
 def simulate(starting_materials):
-    global test_count, test_interval,sn_dist
+    global test_count, test_interval, sn_dist, AV_list, count_list
+    AV_list = []
+    count_list = []
     test_count = 0
     test_interval = 40
     global running
@@ -82,8 +84,8 @@ def simulate(starting_materials):
         NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW, 3)]]
         NG = new_group(groupA, groupB)['NG']
         NC[0][groups[0][1]][0] = NG
+        swapped = False
         for species in NC[1]:
-            swapped = False
             name = sn_dict[species[0]]
             if name.cprgID[0] == NG:
                 NC[0][groups[0][1]][1] = name.cprgID[1]
@@ -107,10 +109,13 @@ def simulate(starting_materials):
             test_count = 0
 
     def RXN_Status(composition):
-        global test_interval
+        global test_interval, AV_list, count_list
         global running
         comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
         sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
+        total_ct_temp = 0
+        for key in comp_summary:
+            total_ct_temp += comp_summary[key]
         amine_ct = 0
         acid_ct = 0
         alcohol_ct = 0
@@ -133,6 +138,8 @@ def simulate(starting_materials):
         OH = round((alcohol_ct * 56100) / sum_comp, 2)
         COC = round((epoxide_ct * 56100) / sum_comp, 2)
         EHC = round((EHC_ct * 35.453) / sum_comp * 100, 2)
+        AV_list.append(AV)
+        count_list.append(round(total_ct/total_ct_temp, 2))
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC}
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_selection != '% EHC':
@@ -261,6 +268,10 @@ def RXN_Results(composition):
     WD.entries[10].insert(0, round(Mz1, 4))
     WD.entries[11].delete(0, tkinter.END)
     WD.entries[11].insert(0, round(total_ct/sumNi, 4))
+    # put AV_list and Count_list into a separate dataframe
+    AV_df = pandas.DataFrame(AV_list, columns=['AV'])
+    AV_df['Count'] = count_list
+
 
     show_results(rxn_summary_df)
 
