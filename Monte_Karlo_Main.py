@@ -65,22 +65,10 @@ def simulate(starting_materials):
         NG = getattr(eval(groupA + '()'), groupB)
         WL = getattr(eval(groupA + '()'), groupB + '_wl')
         WL_ID = getattr(eval(groupA + '()'), groupB + '_wl_id')
-
-        if len(byproducts) == 0:
-            byproducts.append([WL_ID, WL])
-        else:
-            for i in range(len(byproducts)):
-                if byproducts[i][0] == WL_ID:
-                    byproducts[i][1] = byproducts[i][1] + WL
-                    break
-                elif i == len(byproducts) - 1:
-                    byproducts.append([WL_ID, WL])
-                    break
-
         return {'NG': NG, 'WL': WL, 'WL_ID': WL_ID}
 
     def update_comp(composition, groups):
-        global test_count, running, byproducts_mass
+        global test_count, running, WL
         NC = composition[groups[0][0]]
         compoundA = composition[groups[0][0]]
         compoundB = composition[groups[1][0]]
@@ -94,6 +82,18 @@ def simulate(starting_materials):
                 new_name[group] = count
         new_name = [[group, count] for group, count in new_name.items()]
         new_name.sort(key=lambda x: x[0])
+        WL = new_group(groupA, groupB)['WL']
+        WL_ID = new_group(groupA, groupB)['WL_ID']
+        if len(byproducts) == 0:
+            byproducts.append([WL_ID, WL])
+        else:
+            for i in range(len(byproducts)):
+                if byproducts[i][0] == WL_ID:
+                    byproducts[i][1] = byproducts[i][1] + WL
+                    break
+                elif i == len(byproducts) - 1:
+                    byproducts.append([WL_ID, WL])
+                    break
         NW = compoundA[2][0] + compoundB[2][0] - new_group(groupA, groupB)['WL']
         NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW, 3)]]
         NG = new_group(groupA, groupB)['NG']
@@ -320,7 +320,7 @@ def show_byproducts(byproducts_df):
     except NameError:
         pass
     frame_byproducts = tkinter.Frame(tab2)
-    frame_byproducts.grid(row=0, column=3, padx=(115, 0))
+    frame_byproducts.grid(row=0, column=3, padx=(100, 0))
     byproducts_table = Table(frame_byproducts, dataframe=byproducts_df, showtoolbar=False, showstatusbar=True, showindex=True, width=600, height=100, align='center')
     byproducts_table.show()
 

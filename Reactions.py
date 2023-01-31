@@ -50,8 +50,10 @@ class COOH:
         self.NH2_wl_id = "Water"
         self.POH = 'COOC'
         self.POH_wl = Water().mw
+        self.POH_wl_id = 'Water'
         self.SOH = 'COOC'
         self.SOH_wl = Water().mw
+        self.SOH_wl_id = 'Water'
         self.COC = 'COCOH'
         self.COC_wl = 0
 
@@ -82,6 +84,7 @@ class POH:
     def __init__(self):
         self.COOH = 'COOC'
         self.COOH_wl = Water().mw
+        self.COOH_wl_id = 'Water'
         self.COC = 'HPCOH'
         self.COC_wl = 0
         self.COC_wl_id = 'None'
@@ -90,6 +93,7 @@ class SOH:
     def __init__(self):
         self.COOH = 'COOC'
         self.COOH_wl = Water().mw
+        self.COOH_wl_id = 'Water'
         self.COC = 'HPCOH'
         self.COC_wl = 0
         self.COC_wl_id = 'None'
