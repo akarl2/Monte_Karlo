@@ -24,14 +24,14 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, AV_list, count_list, byproducts_mass, frame_byproducts
+global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, AV_list, count_list, byproducts, frame_byproducts
 def simulate(starting_materials):
-    global test_count, test_interval, sn_dist, AV_list, count_list, byproducts_mass
-    byproducts_mass = 0
+    global test_count, test_interval, sn_dist, AV_list, count_list, byproducts
     AV_list = []
     count_list = []
     test_count = 0
     test_interval = 40
+    byproducts = []
     global running
     running = True
     sim.progress['value'] = 0
@@ -64,7 +64,20 @@ def simulate(starting_materials):
     def new_group(groupA, groupB):
         NG = getattr(eval(groupA + '()'), groupB)
         WL = getattr(eval(groupA + '()'), groupB + '_wl')
-        return {'NG': NG, 'WL': WL}
+        WL_ID = getattr(eval(groupA + '()'), groupB + '_wl_id')
+
+        if len(byproducts) == 0:
+            byproducts.append([WL_ID, WL])
+        else:
+            for i in range(len(byproducts)):
+                if byproducts[i][0] == WL_ID:
+                    byproducts[i][1] = byproducts[i][1] + WL
+                    break
+                elif i == len(byproducts) - 1:
+                    byproducts.append([WL_ID, WL])
+                    break
+
+        return {'NG': NG, 'WL': WL, 'WL_ID': WL_ID}
 
     def update_comp(composition, groups):
         global test_count, running, byproducts_mass
@@ -81,7 +94,6 @@ def simulate(starting_materials):
                 new_name[group] = count
         new_name = [[group, count] for group, count in new_name.items()]
         new_name.sort(key=lambda x: x[0])
-        byproducts_mass = byproducts_mass + float(new_group(groupA, groupB)['WL'])
         NW = compoundA[2][0] + compoundB[2][0] - new_group(groupA, groupB)['WL']
         NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW, 3)]]
         NG = new_group(groupA, groupB)['NG']
@@ -271,18 +283,24 @@ def RXN_Results(composition):
     WD.entries[11].delete(0, tkinter.END)
     WD.entries[11].insert(0, round(total_ct/sumNi, 4))
 
+    byproducts_df = pandas.DataFrame(byproducts, columns=['Name', 'Mass'])
+    byproducts_df.set_index('Name', inplace=True)
+    byproducts_df['Wt, % (Of byproducts)'] = round(byproducts_df['Mass'] / byproducts_df['Mass'].sum() * 100, 4)
+    byproducts_df['Wt, % (Of total)'] = round(byproducts_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
+
     AV_df = pandas.DataFrame(AV_list, columns=['AV'])
     AV_df['Count'] = count_list
     AV_df.set_index('AV', inplace=True)
     show_results(rxn_summary_df)
+    show_byproducts(byproducts_df)
 
 
 # -------------------------------------------Aux Functions---------------------------------#
 
 def show_results(rxn_summary_df):
-    global results, frame_results
+    global results_table, frame_results
     try:
-        results.destroy()
+        results_table.destroy()
         frame_results.destroy()
     except NameError:
         pass
@@ -290,21 +308,21 @@ def show_results(rxn_summary_df):
     x = ((window.winfo_screenwidth() - frame_results.winfo_reqwidth()) / 2) + 100
     y = (window.winfo_screenheight() - frame_results.winfo_reqheight()) / 2
     frame_results.place(x=x, y=y, anchor='center')
-    results = Table(frame_results, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True,
-                    width=x, height=y, align='center')
-    results.show()
+    results_table = Table(frame_results, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True,
+                          width=x, height=y, align='center')
+    results_table.show()
 
-def show_byproducts(byproducts):
-    global byproducts_mass, frame_byproducts
+def show_byproducts(byproducts_df):
+    global byproducts_table, frame_byproducts
     try:
-        byproducts_mass.destroy()
+        byproducts_table.destroy()
         frame_byproducts.destroy()
     except NameError:
         pass
     frame_byproducts = tkinter.Frame(tab2)
-    frame_byproducts.grid(row=0, column=3)
-    results = Table(frame_byproducts, dataframe=byproducts_mass, showtoolbar=False, showstatusbar=True, showindex=True)
-    results.show()
+    frame_byproducts.grid(row=0, column=3, padx=(115, 0))
+    byproducts_table = Table(frame_byproducts, dataframe=byproducts_df, showtoolbar=False, showstatusbar=True, showindex=True, width=600, height=100, align='center')
+    byproducts_table.show()
 
 
 def str_to_class(classname):
@@ -369,8 +387,10 @@ window.configure(background="#000000")
 tab_control = ttk.Notebook(window)
 tab1 = ttk.Frame(tab_control, style='TNotebook.Tab')
 tab2 = ttk.Frame(tab_control, style='TNotebook.Tab')
+tab3 = ttk.Frame(tab_control, style='TNotebook.Tab')
 tab_control.add(tab1, text='Reactor')
 tab_control.add(tab2, text='Reaction Results')
+tab_control.add(tab3, text='Polymer Results')
 tkinter.Grid.rowconfigure(window, 0, weight=1)
 tkinter.Grid.columnconfigure(window, 0, weight=1)
 tab_control.grid(row=0, column=0, sticky=tkinter.E + tkinter.W + tkinter.N + tkinter.S)
@@ -397,7 +417,7 @@ Entry_masses = ['R1mass', 'R2mass', 'R3mass', 'R4mass', 'R5mass', 'R6mass', 'R7m
 RDE = ['R1Data', 'R2Data', 'R3Data', 'R4Data', 'R5Data', 'R6Data', 'R7Data', 'R8Data', 'R9Data', 'R10Data', 'R11Data',
        'R12Data', 'R13Data', 'R14Data']
 
-global massA1, massB1, A1reactant, B1reactant, starting_cell
+global starting_cell
 starting_cell = 16
 
 def check_entry(entry, index, cell):
