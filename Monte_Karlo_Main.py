@@ -262,7 +262,6 @@ def RXN_Results(composition):
             key[1][index] = new_name
             index += 1
         key[1] = '_'.join(key[1])
-    print(RS)
     rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV", 'AV', 'OH', 'COC', 'EHC'])
     rxn_summary_df['MW'] = round(rxn_summary_df['MW'], 2)
     rxn_summary_df.drop(columns=['Groups'], inplace=True)
