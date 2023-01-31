@@ -223,6 +223,9 @@ def RXN_Results(composition):
     RS = [[[list(x) for x in i[0]], [list(y) for y in i[1]], i[2], i[3]] for i in RS]
     for key in RS:
         amine_ct = 0
+        pTAV_ct = 0
+        sTAV_ct = 0
+        tTAV_ct = 0
         acid_ct = 0
         alcohol_ct = 0
         epoxide_ct = 0
@@ -230,6 +233,12 @@ def RXN_Results(composition):
         for group in key[0]:
             if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
                 amine_ct += key[3]
+                if group[0] == 'NH2':
+                    pTAV_ct += key[3]
+                elif group[0] == 'NH':
+                    sTAV_ct += key[3]
+                elif group[0] == 'N':
+                    tTAV_ct += key[3]
             elif group[0] == 'COOH':
                 acid_ct += key[3]
             elif group[0] == 'POH' or group[0] == 'SOH':
@@ -239,6 +248,9 @@ def RXN_Results(composition):
             elif group[0] == 'HPCOH':
                 EHC_ct += key[3]
         key.append(round((amine_ct * 56100) / sum_comp, 2))
+        key.append(round((pTAV_ct * 56100) / sum_comp, 2))
+        key.append(round((sTAV_ct * 56100) / sum_comp, 2))
+        key.append(round((tTAV_ct * 56100) / sum_comp, 2))
         key.append(round((acid_ct * 56100) / sum_comp, 2))
         key.append(round((alcohol_ct * 56100) / sum_comp, 2))
         key.append(round((epoxide_ct * 56100) / sum_comp, 2))
@@ -250,7 +262,8 @@ def RXN_Results(composition):
             key[1][index] = new_name
             index += 1
         key[1] = '_'.join(key[1])
-    rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', 'AV', 'OH', 'COC', 'EHC'])
+    print(RS)
+    rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV", 'AV', 'OH', 'COC', 'EHC'])
     rxn_summary_df['MW'] = round(rxn_summary_df['MW'], 2)
     rxn_summary_df.drop(columns=['Groups'], inplace=True)
     rxn_summary_df.set_index('Name', inplace=True)
@@ -263,7 +276,7 @@ def RXN_Results(composition):
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**2).sum()
     sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 3).sum()
     sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 4).sum()
-    rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol %', 'Wt %', 'MW', 'TAV', 'AV', 'OH', 'COC', 'EHC']]
+    rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol %', 'Wt %', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC']]
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
     Mn = sumNiMi/sumNi
     Mw = sumNiMi2/sumNiMi
@@ -850,6 +863,7 @@ RET.entries[176].bind('<FocusOut>', lambda *args, entry=176, index=10, cell=176:
 RET.entries[192].bind('<FocusOut>', lambda *args, entry=192, index=11, cell=192: check_entry(entry, index, cell))
 RET.entries[208].bind('<FocusOut>', lambda *args, entry=208, index=12, cell=208: check_entry(entry, index, cell))
 RET.entries[224].bind('<FocusOut>', lambda *args, entry=224, index=13, cell=224: check_entry(entry, index, cell))
+
 
 
 Entry_masses[0].bind("<KeyRelease>", lambda *args, index=0, cell=16: RET.update_table(index, cell))

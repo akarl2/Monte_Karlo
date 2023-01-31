@@ -61,6 +61,7 @@ class NH:
     def __init__(self):
         self.COC = 'COCN'
         self.COC_wl = 0
+        self.COC_wl_id = 'None'
 
 class COC:
     def __init__(self):
