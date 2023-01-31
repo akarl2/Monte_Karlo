@@ -286,11 +286,13 @@ def RXN_Results(composition):
     byproducts_df = pandas.DataFrame(byproducts, columns=['Name', 'Mass'])
     byproducts_df.set_index('Name', inplace=True)
     byproducts_df['Wt, % (Of byproducts)'] = round(byproducts_df['Mass'] / byproducts_df['Mass'].sum() * 100, 4)
-    byproducts_df['Wt, % (Of total)'] = round(byproducts_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
+    byproducts_df['Wt, % (Of Final)'] = round(byproducts_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
+    byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / starting_mass * 100, 4)
 
     AV_df = pandas.DataFrame(AV_list, columns=['AV'])
     AV_df['Count'] = count_list
     AV_df.set_index('AV', inplace=True)
+    #messagebox.showinfo('Results', 'Results are ready!')
     show_results(rxn_summary_df)
     show_byproducts(byproducts_df)
 
@@ -321,7 +323,7 @@ def show_byproducts(byproducts_df):
         pass
     frame_byproducts = tkinter.Frame(tab2)
     frame_byproducts.grid(row=0, column=3, padx=(100, 0))
-    byproducts_table = Table(frame_byproducts, dataframe=byproducts_df, showtoolbar=False, showstatusbar=True, showindex=True, width=600, height=100, align='center')
+    byproducts_table = Table(frame_byproducts, dataframe=byproducts_df, showtoolbar=False, showstatusbar=True, showindex=True, width=600, height=100, align='center', maxcellwidth=1000)
     byproducts_table.show()
 
 
@@ -336,7 +338,8 @@ def stop():
         pass
 
 def sim_values():
-    global total_ct, sn_dict
+    global total_ct, sn_dict, starting_mass
+    starting_mass = 0
     cell = 16
     index = 0
     total_ct = 0
@@ -358,6 +361,7 @@ def sim_values():
                 sn_dict[str_to_class(RDE[index]).sn] = str_to_class(RDE[index])
                 count = RXN_Samples.get()
                 moles_count = round(float(RET.entries[cell + 3].get()), 4)
+                starting_mass = starting_mass + float(float(Entry_masses[index].get()) * float(count))
                 total_ct = total_ct + (float(count) * float(moles_count))
                 cell = cell + RET.tablewidth
                 starting_materials.append(str_to_class(RDE[index]).comp)
