@@ -24,10 +24,10 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results, frame, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, AV_list, count_list, byproducts
+global running, emo_a, results, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, AV_list, count_list, byproducts_mass, frame_byproducts
 def simulate(starting_materials):
-    global test_count, test_interval, sn_dist, AV_list, count_list, byproducts
-    byproducts = 0
+    global test_count, test_interval, sn_dist, AV_list, count_list, byproducts_mass
+    byproducts_mass = 0
     AV_list = []
     count_list = []
     test_count = 0
@@ -67,7 +67,7 @@ def simulate(starting_materials):
         return {'NG': NG, 'WL': WL}
 
     def update_comp(composition, groups):
-        global test_count, running, byproducts
+        global test_count, running, byproducts_mass
         NC = composition[groups[0][0]]
         compoundA = composition[groups[0][0]]
         compoundB = composition[groups[1][0]]
@@ -81,7 +81,7 @@ def simulate(starting_materials):
                 new_name[group] = count
         new_name = [[group, count] for group, count in new_name.items()]
         new_name.sort(key=lambda x: x[0])
-        byproducts = byproducts + float(new_group(groupA, groupB)['WL'])
+        byproducts_mass = byproducts_mass + float(new_group(groupA, groupB)['WL'])
         NW = compoundA[2][0] + compoundB[2][0] - new_group(groupA, groupB)['WL']
         NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW, 3)]]
         NG = new_group(groupA, groupB)['NG']
@@ -274,26 +274,38 @@ def RXN_Results(composition):
     AV_df = pandas.DataFrame(AV_list, columns=['AV'])
     AV_df['Count'] = count_list
     AV_df.set_index('AV', inplace=True)
-    print(byproducts)
     show_results(rxn_summary_df)
 
 
 # -------------------------------------------Aux Functions---------------------------------#
 
 def show_results(rxn_summary_df):
-    global results, frame
+    global results, frame_results
     try:
         results.destroy()
-        frame.destroy()
+        frame_results.destroy()
     except NameError:
         pass
-    frame = tkinter.Frame(tab2)
-    x = ((window.winfo_screenwidth() - frame.winfo_reqwidth()) / 2) + 100
-    y = (window.winfo_screenheight() - frame.winfo_reqheight()) / 2
-    frame.place(x=x, y=y, anchor='center')
-    results = Table(frame, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True,
+    frame_results = tkinter.Frame(tab2)
+    x = ((window.winfo_screenwidth() - frame_results.winfo_reqwidth()) / 2) + 100
+    y = (window.winfo_screenheight() - frame_results.winfo_reqheight()) / 2
+    frame_results.place(x=x, y=y, anchor='center')
+    results = Table(frame_results, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True,
                     width=x, height=y, align='center')
     results.show()
+
+def show_byproducts(byproducts):
+    global byproducts_mass, frame_byproducts
+    try:
+        byproducts_mass.destroy()
+        frame_byproducts.destroy()
+    except NameError:
+        pass
+    frame_byproducts = tkinter.Frame(tab2)
+    frame_byproducts.grid(row=0, column=3)
+    results = Table(frame_byproducts, dataframe=byproducts_mass, showtoolbar=False, showstatusbar=True, showindex=True)
+    results.show()
+
 
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
