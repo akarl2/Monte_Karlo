@@ -38,8 +38,8 @@ def simulate(starting_materials):
     end_metric_selection = str(RXN_EM.get())
     try:
         end_metric_value = float(RXN_EM_Value.get())
-        end_metric_value_upper = end_metric_value * 1.20
-        end_metric_value_lower = end_metric_value * 0.80
+        end_metric_value_upper = end_metric_value + 15
+        end_metric_value_lower = end_metric_value - 15
     except ValueError:
         messagebox.showerror("Error", "Please enter a value for the end metric.")
         return

@@ -225,6 +225,28 @@ class Methanol:
         self.mass = self.mw
         self.numgroups = 1
 
+class Bisphenol_A:
+    def __init__(self):
+        self.name = "Bisphenol_A"
+        self.sn = "BPA"
+        self.formula = "C15H16O2"
+        self.mw = 228.29
+        self.density = 1.2
+        self.mass = self.mw
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
 #-------------------------------------------Amines----------------------------#
 class DETA:
     def __init__(self):
