@@ -80,6 +80,7 @@ class COC:
         self.NH_wl = 0
         self.HPCOH = 'HPCOH'
         self.HPCOH_wl = 0
+        self.HPCOH_wl_id = 'None'
 
 class POH:
     def __init__(self):
@@ -103,6 +104,7 @@ class HPCOH:
     def __init__(self):
         self.COC = 'HPCOH'
         self.COC_wl = 0
+        self.COC_wl_id = 'None'
 
 
 
