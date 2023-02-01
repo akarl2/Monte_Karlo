@@ -72,7 +72,6 @@ while seconds < minutes * 60:
     print(seconds, conC)
     seconds += 1
 
-
 def plot_conc():
     plt.figure("Concentration")
     plt.xlabel("Time (seconds)")
@@ -80,7 +79,6 @@ def plot_conc():
     plt.xlim(0, minutes * 60), plt.ylim(0, 8)
     plt.plot(con_A), plt.plot(con_B), plt.plot(con_C), plt.plot(con_D)
     plt.show()
-
 
 def plot_watts():
     plt.figure("Reaction Watts")
@@ -91,4 +89,4 @@ def plot_watts():
     plt.show()
 
 
-plot_watts()
+plot_conc()

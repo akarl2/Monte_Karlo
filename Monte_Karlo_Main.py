@@ -8,10 +8,16 @@ from tkinter import ttk, messagebox
 import pandas
 from ttkwidgets.autocomplete import AutocompleteCombobox
 from Database import *
-from Reactions import reactive_groups,NH2,NH,COOH,COC,POH,SOH
+from Reactions import reactive_groups, NH2, NH, COOH, COC, POH, SOH
 from Reactions import *
 import itertools
 from pandastable import Table, TableModel, config
+import matplotlib
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.interpolate import make_interp_spline
 import statsmodels
 import math
 from Reactants import *
@@ -24,11 +30,12 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, AV_list, count_list, byproducts, frame_byproducts
+global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, AV_list, Xn_list, byproducts, frame_byproducts, Mw_list
 def simulate(starting_materials):
-    global test_count, test_interval, sn_dist, AV_list, count_list, byproducts
+    global test_count, test_interval, sn_dist, AV_list, Xn_list, byproducts, Mw_list
     AV_list = []
-    count_list = []
+    Xn_list = []
+    Mw_list = []
     test_count = 0
     test_interval = 40
     byproducts = []
@@ -123,7 +130,7 @@ def simulate(starting_materials):
             test_count = 0
 
     def RXN_Status(composition):
-        global test_interval, AV_list, count_list
+        global test_interval, AV_list, Xn_list
         global running
         comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
         sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
@@ -153,7 +160,7 @@ def simulate(starting_materials):
         COC = round((epoxide_ct * 56100) / sum_comp, 2)
         EHC = round((EHC_ct * 35.453) / sum_comp * 100, 2)
         AV_list.append(AV)
-        count_list.append(round(total_ct/total_ct_temp, 2))
+        Xn_list.append(round(total_ct / total_ct_temp, 4))
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC}
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_selection != '% EHC':
@@ -273,8 +280,8 @@ def RXN_Results(composition):
     sumNi = rxn_summary_df['Count'].sum()
     sumNiMi = (rxn_summary_df['Count'] * rxn_summary_df['MW']).sum()
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**2).sum()
-    sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 3).sum()
-    sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 4).sum()
+    sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**3).sum()
+    sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**4).sum()
     rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol %', 'Wt %', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC']]
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
     Mn = sumNiMi/sumNi
@@ -301,12 +308,13 @@ def RXN_Results(composition):
     byproducts_df['Wt, % (Of Final)'] = round(byproducts_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
     byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / starting_mass * 100, 4)
 
-    AV_df = pandas.DataFrame(AV_list, columns=['AV'])
-    AV_df['Count'] = count_list
-    AV_df.set_index('AV', inplace=True)
+    Xn = pandas.DataFrame(AV_list, columns=['Acid Value'])
+    Xn['Xn'] = Xn_list
+    Xn['P'] = -(1/Xn['Xn']) + 1
     #messagebox.showinfo('Results', 'Results are ready!')
     show_results(rxn_summary_df)
     show_byproducts(byproducts_df)
+    show_Xn(Xn)
 
 
 # -------------------------------------------Aux Functions---------------------------------#
@@ -338,6 +346,17 @@ def show_byproducts(byproducts_df):
     byproducts_table = Table(frame_byproducts, dataframe=byproducts_df, showtoolbar=False, showstatusbar=True, showindex=True, width=600, height=100, align='center', maxcellwidth=1000)
     byproducts_table.show()
 
+def show_Xn(Xn):
+    global Xn_table, frame_Xn
+    try:
+        Xn_table.destroy()
+        frame_Xn.destroy()
+    except NameError:
+        pass
+    frame_Xn = tkinter.Frame(tab3)
+    frame_Xn.pack()
+    Xn_table = Table(frame_Xn, dataframe=Xn, showtoolbar=True, showstatusbar=True, showindex=True, width=2000, height=1000, align='center', maxcellwidth=1000)
+    Xn_table.show()
 
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
