@@ -28,7 +28,6 @@ class reactive_groups:
         self.SOH = ['COOH', 'COC']
         self.COOH = ['NH2', 'POH', 'COC', 'SOH']
         self.COC = ['NH2', 'POH', 'SOH', 'COOH', 'NH']
-        self.HPCOH = ['COC']
         self.Cl = ['NH2']
         self.COOC = None
 
@@ -37,7 +36,7 @@ class NH2:
         self.COOH = "CONH"
         self.COOH_wl = Water().mw
         self.COOH_wl_id = "Water"
-        self.COC = 'COCNH'
+        self.COC = 'NH'
         self.COC_wl = 0
         self.COC_wl_id = 'None'
         self.Cl = 'NH'
@@ -60,7 +59,7 @@ class COOH:
 
 class NH:
     def __init__(self):
-        self.COC = 'CONH'
+        self.COC = 'N'
         self.COC_wl = 0
         self.COC_wl_id = 'None'
         self.Cl = 'N'
@@ -69,29 +68,27 @@ class NH:
 
 class COC:
     def __init__(self):
-        self.NH2 = 'COCNH'
+        self.NH2 = 'NH'
         self.NH2_wl = 0
         self.NH2_wl_id = 'None'
-        self.POH = 'HPCOH'
+        self.POH = 'SOH'
         self.POH_wl = 0
         self.POH_wl_id = 'None'
-        self.SOH = 'HPCOH'
+        self.SOH = 'SOH'
         self.SOH_wl = 0
         self.SOH_wl_id = 'None'
         self.COOH = 'COCOH'
         self.COOH_wl = 0
-        self.NH = 'COCN'
+        self.NH = 'N'
         self.NH_wl = 0
-        self.HPCOH = 'HPCOH'
-        self.HPCOH_wl = 0
-        self.HPCOH_wl_id = 'None'
+        self.NH_wl_id = 'None'
 
 class POH:
     def __init__(self):
         self.COOH = 'COOC'
         self.COOH_wl = Water().mw
         self.COOH_wl_id = 'Water'
-        self.COC = 'HPCOH'
+        self.COC = 'SOH'
         self.COC_wl = 0
         self.COC_wl_id = 'None'
 
@@ -100,15 +97,18 @@ class SOH:
         self.COOH = 'COOC'
         self.COOH_wl = Water().mw
         self.COOH_wl_id = 'Water'
-        self.COC = 'HPCOH'
+        self.COC = 'SOH'
         self.COC_wl = 0
         self.COC_wl_id = 'None'
 
-class HPCOH:
+class Cl:
     def __init__(self):
-        self.COC = 'HPCOH'
-        self.COC_wl = 0
-        self.COC_wl_id = 'None'
+        self.NH2 = 'NH'
+        self.NH2_wl = 36.458
+        self.NH2_wl_id = 'HCl'
+        self.NH = 'N'
+        self.NH_wl = 36.458
+        self.NH_wl_id = 'HCl'
 
 
 

@@ -864,7 +864,7 @@ class Epichlorohydrin:
         self.density = 1.18
         self.prgID = "COC"
         self.prgk = 1
-        self.cprgID = "HPCOH"
+        self.cprgID = "SOH"
         self.cprgk = 0
         self.srgID = "Cl"
         self.srgk = 0

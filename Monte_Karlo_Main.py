@@ -79,6 +79,9 @@ def simulate(starting_materials):
         NC = composition[groups[0][0]]
         compoundA = composition[groups[0][0]]
         compoundB = composition[groups[1][0]]
+        # print(f'Groups: {groups}')
+        # print(f'Initial NC: {NC}')
+        # print(f'Initial compoundB: {compoundB}')
         new_name = {}
         for group, count in compoundA[1] + compoundB[1]:
             if group in new_name:
@@ -122,6 +125,7 @@ def simulate(starting_materials):
         NC[0].sort(key=lambda x: x[0])
         composition[groups[0][0]] = NC
         del(composition[groups[1][0]])
+        # print(f'Final NC: {NC}')
         window.update()
         if test_count >= test_interval:
             RXN_Status(composition)
@@ -141,6 +145,7 @@ def simulate(starting_materials):
         epoxide_ct = 0
         EHC_ct = 0
         for key in comp_summary:
+            key_names = [i[0] for i in key[0]]
             for group in key[0]:
                 if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
                     amine_ct += comp_summary[key]
@@ -150,7 +155,7 @@ def simulate(starting_materials):
                     alcohol_ct += comp_summary[key]
                 elif group[0] == 'COC':
                     epoxide_ct += comp_summary[key]
-                elif group[0] == 'HPCOH':
+                elif group[0] == 'Cl' and "SOH" in key_names:
                     EHC_ct += comp_summary[key]
         TAV = round((amine_ct * 56100) / sum_comp, 2)
         AV = round((acid_ct * 56100) / sum_comp, 2)
@@ -267,20 +272,20 @@ def RXN_Results(composition):
             key[1][index] = new_name
             index += 1
         key[1] = '_'.join(key[1])
-    rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV", 'AV', 'OH', 'COC', 'EHC'])
+    rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV", 'AV', 'OH', 'COC', 'EHC,%'])
     rxn_summary_df['MW'] = round(rxn_summary_df['MW'], 2)
     rxn_summary_df.drop(columns=['Groups'], inplace=True)
     rxn_summary_df.set_index('Name', inplace=True)
     rxn_summary_df.sort_values(by=['MW'], ascending=True, inplace=True)
     rxn_summary_df['Mass'] = rxn_summary_df['MW'] * rxn_summary_df['Count']
-    rxn_summary_df['Mol %'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
-    rxn_summary_df['Wt %'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
+    rxn_summary_df['Mol,%'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
+    rxn_summary_df['Wt,%'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
     sumNi = rxn_summary_df['Count'].sum()
     sumNiMi = (rxn_summary_df['Count'] * rxn_summary_df['MW']).sum()
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**2).sum()
     sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**3).sum()
     sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**4).sum()
-    rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol %', 'Wt %', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC']]
+    rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%']]
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
     Mn = sumNiMi/sumNi
     Mw = sumNiMi2/sumNiMi
