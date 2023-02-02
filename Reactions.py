@@ -40,8 +40,9 @@ class NH2:
         self.COC = 'COCNH'
         self.COC_wl = 0
         self.COC_wl_id = 'None'
-        self.Cl = 'ClNH'
-        self.Cl_wl = 0
+        self.Cl = 'NH'
+        self.Cl_wl = 36.458
+        self.COC_wl_id = "HCl"
 
 class COOH:
     def __init__(self):
@@ -59,9 +60,12 @@ class COOH:
 
 class NH:
     def __init__(self):
-        self.COC = 'COCN'
+        self.COC = 'CONH'
         self.COC_wl = 0
         self.COC_wl_id = 'None'
+        self.Cl = 'N'
+        self.Cl_wl = 36.458
+        self.Cl_wl_id = "HCl"
 
 class COC:
     def __init__(self):

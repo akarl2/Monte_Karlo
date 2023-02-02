@@ -79,8 +79,6 @@ def simulate(starting_materials):
         NC = composition[groups[0][0]]
         compoundA = composition[groups[0][0]]
         compoundB = composition[groups[1][0]]
-        compoundAloc = groups[0][1]
-        compoundBloc = groups[1][1]
         new_name = {}
         for group, count in compoundA[1] + compoundB[1]:
             if group in new_name:
@@ -118,7 +116,7 @@ def simulate(starting_materials):
         if len(old_groups) == 1:
             pass
         else:
-            del(old_groups[compoundBloc])
+            del(old_groups[groups[1][1]])
             for sublist in old_groups:
                 NC[0].append(sublist)
         NC[0].sort(key=lambda x: x[0])
@@ -148,7 +146,7 @@ def simulate(starting_materials):
                     amine_ct += comp_summary[key]
                 elif group[0] == 'COOH':
                     acid_ct += comp_summary[key]
-                elif group[0] == 'POH' or group[0] == 'SOH':
+                elif group[0] == 'POH' or group[0] == 'SOH' or group[0] == 'HPCOH':
                     alcohol_ct += comp_summary[key]
                 elif group[0] == 'COC':
                     epoxide_ct += comp_summary[key]
@@ -248,7 +246,7 @@ def RXN_Results(composition):
                     tTAV_ct += key[3]
             elif group[0] == 'COOH':
                 acid_ct += key[3]
-            elif group[0] == 'POH' or group[0] == 'SOH':
+            elif group[0] == 'POH' or group[0] == 'SOH' or group[0] == 'HPCOH':
                 alcohol_ct += key[3]
             elif group[0] == 'COC':
                 epoxide_ct += key[3]

@@ -529,18 +529,19 @@ class Lysine:
         self.mw = 146.19
         self.formula = "C6H14N2O2"
         self.density = 1.28
-        self.prgmw = 72.1289
-        self.srgmw = 21.04122
-        self.trgmw = 45.01744
-        self.comp = (self.prgmw,self.srgmw,self.trgmw)
-        self.mass = self.mw
-        self.prgk = 1
-        self.srgk = 1
-        self.trgk = 0
-        self.crgk = 0
         self.prgID = "NH₂"
-        self.srgID = "NH₂"
-        self.trgID = "COOH"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
+        self.srgID = "COOH"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID], [self.prgID]]
 
 
 #---------------------------------------------------------Acids------------------------------------------------#
@@ -548,7 +549,7 @@ class Lysine:
 class Adipic_Acid:
     def __init__(self):
         self.name = "Adipic Acid"
-        self.sn = "AA"
+        self.sn = "AdAc"
         self.formula = "C6H10O4"
         self.mw = 146.14
         self.density = 1.36
@@ -642,7 +643,7 @@ class C181:
         self.mass = self.mw
         self.prgID = "COOH"
         self.prgk = 1
-        self.cprgID = "CONH"
+        self.cprgID = None
         self.cprgk = 0
         self.srgID = None
         self.srgk = 0
@@ -664,7 +665,7 @@ class C14:
         self.mass = self.mw
         self.prgID = "COOH"
         self.prgk = 1
-        self.cprgID = "CONH"
+        self.cprgID = None
         self.cprgk = 0
         self.srgID = None
         self.srgk = 0
@@ -685,11 +686,8 @@ class C16:
         self.density = 0.895
         self.mass = self.mw
         self.prgID = "COOH"
-        self.Nprg = 1
         self.prgk = 1
-        self.prgID = "COOH"
-        self.prgk = 1
-        self.cprgID = "CONH"
+        self.cprgID = None
         self.cprgk = 0
         self.srgID = None
         self.srgk = 0
@@ -711,7 +709,7 @@ class C18:
         self.mass = self.mw
         self.prgID = "COOH"
         self.prgk = 1
-        self.cprgID = "CONH"
+        self.cprgID = None
         self.cprgk = 0
         self.srgID = None
         self.srgk = 0
@@ -722,6 +720,7 @@ class C18:
         self.ctrgID = None
         self.ctrgk = 0
         self.dist = [[self.prgID]]
+
 class C18:
     def __init__(self):
         self.name = "C18"
@@ -732,7 +731,7 @@ class C18:
         self.mass = self.mw
         self.prgID = "COOH"
         self.prgk = 1
-        self.cprgID = "CONH"
+        self.cprgID = None
         self.cprgk = 0
         self.srgID = None
         self.srgk = 0
@@ -754,7 +753,7 @@ class C161:
         self.mass = self.mw
         self.prgID = "COOH"
         self.prgk = 1
-        self.cprgID = "CONH"
+        self.cprgID = None
         self.cprgk = 0
         self.srgID = None
         self.srgk = 0
@@ -776,7 +775,7 @@ class C182:
         self.mass = self.mw
         self.prgID = "COOH"
         self.prgk = 1
-        self.cprgID = "CONH"
+        self.cprgID = None
         self.cprgk = 0
         self.srgID = None
         self.srgk = 0
@@ -798,7 +797,7 @@ class C183:
         self.mass = self.mw
         self.prgID = "COOH"
         self.prgk = 1
-        self.cprgID = "CONH"
+        self.cprgID = None
         self.cprgk = 0
         self.srgID = None
         self.srgk = 0
@@ -820,7 +819,7 @@ class Azelaic_acid:
         self.mass = self.mw
         self.prgID = "COOH"
         self.prgk = 1
-        self.cprgID = "CONH"
+        self.cprgID = None
         self.cprgk = 0
         self.srgID = None
         self.srgk = 0
@@ -863,10 +862,6 @@ class Epichlorohydrin:
         self.formula = "C3H5ClO"
         self.mw = 92.52
         self.density = 1.18
-        self.prgmw = 92.52
-        self.srgmw = 0
-        self.comp = self.prgmw
-        self.numgroups = 1
         self.prgID = "COC"
         self.prgk = 1
         self.cprgID = "HPCOH"
