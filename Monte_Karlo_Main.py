@@ -30,10 +30,10 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, AV_list, Xn_list, byproducts, frame_byproducts, Mw_list
+global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, Xn_list, byproducts, frame_byproducts, Mw_list
 def simulate(starting_materials):
-    global test_count, test_interval, sn_dist, AV_list, Xn_list, byproducts, Mw_list
-    AV_list = []
+    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list
+    in_situ_values = []
     Xn_list = []
     Mw_list = []
     test_count = 0
@@ -80,13 +80,13 @@ def simulate(starting_materials):
             NG2_WL_ID = getattr(eval(groupA + '()'), groupB + '_wl_id')
         except AttributeError:
             NG2 = False
-        if NG2 == False:
-            new_group_dict = {'NG': NG, 'WL': WL, 'WL_ID': WL_ID}
-        else:
+        if NG2:
             new_group_dict = {'NG': NG, 'WL': WL, 'WL_ID': WL_ID, 'NG2': NG2, 'NG2_WL': NG2_WL, 'NG2_WL_ID': NG2_WL_ID}
+        else:
+            new_group_dict = {'NG': NG, 'WL': WL, 'WL_ID': WL_ID}
 
     def update_comp(composition, groups):
-        global test_count, running, WL, NG2, new_group_dict
+        global test_count, running, WL, NG2, new_group_dict, byproducts
         NC = composition[groups[0][0]]
         compoundA = composition[groups[0][0]]
         compoundB = composition[groups[1][0]]
@@ -141,6 +141,7 @@ def simulate(starting_materials):
                     NC[0].append([NG2, 0])
         NC[0].sort(key=lambda x: x[0])
         composition[groups[0][0]] = NC
+        #print(f'NC {NC}')
         del(composition[groups[1][0]])
         window.update()
         if test_count >= test_interval:
@@ -148,7 +149,7 @@ def simulate(starting_materials):
             test_count = 0
 
     def RXN_Status(composition):
-        global test_interval, AV_list, Xn_list
+        global test_interval, in_situ_values, Xn_list
         global running
         comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
         sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
@@ -162,6 +163,7 @@ def simulate(starting_materials):
         EHC_ct = 0
         for key in comp_summary:
             key_names = [i[0] for i in key[0]]
+            print(key_names)
             for group in key[0]:
                 if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
                     amine_ct += comp_summary[key]
@@ -178,7 +180,7 @@ def simulate(starting_materials):
         OH = round((alcohol_ct * 56100) / sum_comp, 2)
         COC = round((epoxide_ct * 56100) / sum_comp, 2)
         EHC = round((EHC_ct * 35.453) / sum_comp * 100, 2)
-        AV_list.append(AV)
+        in_situ_values.append(AV)
         Xn_list.append(round(total_ct / total_ct_temp, 4))
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC}
         RXN_metric_value = metrics[end_metric_selection]
@@ -187,19 +189,19 @@ def simulate(starting_materials):
             if RXN_metric_value <= end_metric_value:
                 running = False
                 sim.progress['value'] = 100
-                update_metrics(TAV, AV, OH, EHC)
+                update_metrics(TAV, AV, OH, EHC, COC)
                 RXN_Results(composition)
         else:
             sim.progress['value'] = round(((EHC / end_metric_value) * 100), 2)
             if RXN_metric_value >= end_metric_value:
                 running = False
                 sim.progress['value'] = 100
-                update_metrics(TAV, AV, OH, EHC)
+                update_metrics(TAV, AV, OH, EHC, COC)
                 RXN_Results(composition)
         window.update()
         if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
             test_interval = 1
-        update_metrics(TAV, AV, OH, EHC)
+        update_metrics(TAV, AV, OH, EHC, COC)
 
     while running:
         test_count += 1
@@ -225,20 +227,22 @@ def simulate(starting_materials):
         stop = time.time()
         update_comp(composition, groups)
 
-def update_metrics(TAV, AV, OH, EHC):
-    RM.entries[6].delete(0, tkinter.END)
-    RM.entries[6].insert(0, EHC)
+def update_metrics(TAV, AV, OH, EHC, COC):
     RM.entries[7].delete(0, tkinter.END)
-    try:
-        RM.entries[7].insert(0, round((3545.3 / EHC) - 36.4, 2))
-    except ZeroDivisionError:
-        RM.entries[7].insert(0, 'N/A')
+    RM.entries[7].insert(0, EHC)
     RM.entries[8].delete(0, tkinter.END)
-    RM.entries[8].insert(0, AV)
+    try:
+        RM.entries[8].insert(0, round((3545.3 / EHC) - 36.4, 2))
+    except ZeroDivisionError:
+        RM.entries[8].insert(0, 'N/A')
     RM.entries[9].delete(0, tkinter.END)
-    RM.entries[9].insert(0, TAV)
+    RM.entries[9].insert(0, AV)
     RM.entries[10].delete(0, tkinter.END)
-    RM.entries[10].insert(0, OH)
+    RM.entries[10].insert(0, TAV)
+    RM.entries[11].delete(0, tkinter.END)
+    RM.entries[11].insert(0, OH)
+    RM.entries[12].delete(0, tkinter.END)
+    RM.entries[12].insert(0, COC)
 
 def RXN_Results(composition):
     comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
@@ -328,7 +332,7 @@ def RXN_Results(composition):
     byproducts_df['Wt, % (Of Final)'] = round(byproducts_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
     byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / starting_mass * 100, 4)
 
-    Xn = pandas.DataFrame(AV_list, columns=['Acid Value'])
+    Xn = pandas.DataFrame(in_situ_values, columns=['Acid Value'])
     Xn['Xn'] = Xn_list
     Xn['P'] = -(1/Xn['Xn']) + 1
     #messagebox.showinfo('Results', 'Results are ready!')
@@ -723,7 +727,7 @@ class RxnMetrics(tkinter.Frame):
 
     def create_table(self):
         self.entries = {}
-        self.tableheight = 6
+        self.tableheight = 7
         self.tablewidth = 2
         counter = 0
         for column in range(self.tablewidth):
@@ -751,16 +755,19 @@ class RxnMetrics(tkinter.Frame):
         self.entries[4].delete(0, tkinter.END)
         self.entries[4].insert(0, "OH Value =")
         self.entries[4].config(state="readonly")
+        self.entries[5].delete(0, tkinter.END)
+        self.entries[5].insert(0, "COC Value =")
+        self.entries[5].config(state="readonly")
         self.user_entry()
 
     def user_entry(self):
         global RXN_EM, RXN_EM_Value
         RXN_EM = tkinter.StringVar()
         RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
-        RXN_EM_Entry.grid(row=5, column=0)
+        RXN_EM_Entry.grid(row=6, column=0)
         RXN_EM_Entry.insert(0, "End Metric")
         RXN_EM_Entry.config(justify="center", state="readonly")
-        RXN_EM_Value = self.entries[11]
+        RXN_EM_Value = self.entries[13]
 
 class WeightDist(tkinter.Frame):
     def __init__(self, master=tab2):

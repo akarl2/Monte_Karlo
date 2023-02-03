@@ -171,11 +171,19 @@ class Trimethylolpropane:
         self.formula = "C6H14O3"
         self.mw = 134.17
         self.density = 1.08
-        self.prgmw = 44.723
-        self.srgmw = 44.722
-        self.comp = (self.prgmw, self.srgmw, self.prgmw)
-        self.mass = self.mw
-        self.numgroups = len(set(self.comp))
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID], [self.prgID]]
 
 class Cyclohexanedimethanol:
     def __init__(self):

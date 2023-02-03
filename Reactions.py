@@ -30,6 +30,7 @@ class reactive_groups:
         self.COC = ['NH2', 'POH', 'SOH', 'COOH', 'NH']
         self.Cl = ['NH2', 'NH']
         self.COOC = None
+        self.CONH = None
 
 class NH2:
     def __init__(self):
