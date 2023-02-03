@@ -35,7 +35,7 @@ class reactive_groups:
 class NH2:
     def __init__(self):
         self.COOH = "CONH"
-        self.COOH_wl = Water().mw
+        self.COOH_wl = 18.01528
         self.COOH_wl_id = "Water"
         self.COC = 'NH'
         self.COC_wl = 0
@@ -50,13 +50,13 @@ class NH2:
 class COOH:
     def __init__(self):
         self.NH2 = "CONH"
-        self.NH2_wl = Water().mw
+        self.NH2_wl = 18.01528
         self.NH2_wl_id = "Water"
         self.POH = 'COOC'
-        self.POH_wl = Water().mw
+        self.POH_wl = 18.01528
         self.POH_wl_id = 'Water'
         self.SOH = 'COOC'
-        self.SOH_wl = Water().mw
+        self.SOH_wl = 18.01528
         self.SOH_wl_id = 'Water'
         self.COC = 'COCOH'
         self.COC_wl = 0
@@ -100,7 +100,7 @@ class COC:
 class POH:
     def __init__(self):
         self.COOH = 'COOC'
-        self.COOH_wl = Water().mw
+        self.COOH_wl = 18.01528
         self.COOH_wl_id = 'Water'
         self.COC = 'SOH'
         self.COC_wl = 0
@@ -109,7 +109,7 @@ class POH:
 class SOH:
     def __init__(self):
         self.COOH = 'COOC'
-        self.COOH_wl = Water().mw
+        self.COOH_wl = 18.01528
         self.COOH_wl_id = 'Water'
         self.COC = 'SOH'
         self.COC_wl = 0
