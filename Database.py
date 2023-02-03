@@ -862,9 +862,9 @@ class Epichlorohydrin:
         self.formula = "C3H5ClO"
         self.mw = 92.52
         self.density = 1.18
-        self.prgID = "COC"
+        self.prgID = "eCOC"
         self.prgk = 1
-        self.cprgID = "SOH"
+        self.cprgID = "eSOH"
         self.cprgk = 0
         self.srgID = "Cl"
         self.srgk = 0
