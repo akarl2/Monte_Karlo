@@ -69,19 +69,27 @@ def simulate(starting_materials):
             return False
 
     def new_group(groupA, groupB):
+        global NG2, new_group_dict
+        NG2 = True
         NG = getattr(eval(groupA + '()'), groupB)
         WL = getattr(eval(groupA + '()'), groupB + '_wl')
         WL_ID = getattr(eval(groupA + '()'), groupB + '_wl_id')
-        return {'NG': NG, 'WL': WL, 'WL_ID': WL_ID}
+        try:
+            NG2 = getattr(eval(groupA + '()'), groupB + '_2')
+            NG2_WL = getattr(eval(groupA + '()'), groupB + '_wl')
+            NG2_WL_ID = getattr(eval(groupA + '()'), groupB + '_wl_id')
+        except AttributeError:
+            NG2 = False
+        if NG2 == False:
+            new_group_dict = {'NG': NG, 'WL': WL, 'WL_ID': WL_ID}
+        else:
+            new_group_dict = {'NG': NG, 'WL': WL, 'WL_ID': WL_ID, 'NG2': NG2, 'NG2_WL': NG2_WL, 'NG2_WL_ID': NG2_WL_ID}
 
     def update_comp(composition, groups):
-        global test_count, running, WL
+        global test_count, running, WL, NG2, new_group_dict
         NC = composition[groups[0][0]]
         compoundA = composition[groups[0][0]]
         compoundB = composition[groups[1][0]]
-        # print(f'Groups: {groups}')
-        # print(f'Initial NC: {NC}')
-        # print(f'Initial compoundB: {compoundB}')
         new_name = {}
         for group, count in compoundA[1] + compoundB[1]:
             if group in new_name:
@@ -90,8 +98,8 @@ def simulate(starting_materials):
                 new_name[group] = count
         new_name = [[group, count] for group, count in new_name.items()]
         new_name.sort(key=lambda x: x[0])
-        WL = new_group(groupA, groupB)['WL']
-        WL_ID = new_group(groupA, groupB)['WL_ID']
+        WL = new_group_dict['WL']
+        WL_ID = new_group_dict['WL_ID']
         if len(byproducts) == 0:
             byproducts.append([WL_ID, WL])
         else:
@@ -102,9 +110,9 @@ def simulate(starting_materials):
                 elif i == len(byproducts) - 1:
                     byproducts.append([WL_ID, WL])
                     break
-        NW = compoundA[2][0] + compoundB[2][0] - new_group(groupA, groupB)['WL']
+        NW = compoundA[2][0] + compoundB[2][0] - new_group_dict['WL']
         NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW, 3)]]
-        NG = new_group(groupA, groupB)['NG']
+        NG = new_group_dict['NG']
         NC[0][groups[0][1]][0] = NG
         swapped = False
         for species in NC[1]:
@@ -122,10 +130,18 @@ def simulate(starting_materials):
             del(old_groups[groups[1][1]])
             for sublist in old_groups:
                 NC[0].append(sublist)
+        if NG2 is not False:
+            NG2 = new_group_dict['NG2']
+            for species in NC[1]:
+                name = sn_dict[species[0]]
+                if name.cprgID[0] == NG2:
+                    NC[0].append([NG2, name.cprgID[1]])
+                    break
+                else:
+                    NC[0].append([NG2, 0])
         NC[0].sort(key=lambda x: x[0])
         composition[groups[0][0]] = NC
         del(composition[groups[1][0]])
-        # print(f'Final NC: {NC}')
         window.update()
         if test_count >= test_interval:
             RXN_Status(composition)
@@ -240,6 +256,7 @@ def RXN_Results(composition):
         alcohol_ct = 0
         epoxide_ct = 0
         EHC_ct = 0
+        key_names = [i[0] for i in key[0]]
         for group in key[0]:
             if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
                 amine_ct += key[3]
@@ -255,7 +272,7 @@ def RXN_Results(composition):
                 alcohol_ct += key[3]
             elif group[0] == 'COC':
                 epoxide_ct += key[3]
-            elif group[0] == 'HPCOH':
+            elif group[0] == 'Cl' and 'SOH' in key_names:
                 EHC_ct += key[3]
         key.append(round((amine_ct * 56100) / sum_comp, 2))
         key.append(round((pTAV_ct * 56100) / sum_comp, 2))
