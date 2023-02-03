@@ -22,13 +22,12 @@ Num_Samples = ["1000", "2500", "5000", "10000", "100000"]
 
 class reactive_groups:
     def __init__(self):
-        self.NH2 = ['COOH', 'COC', 'Cl', 'eCOC']
-        self.NH = ['COC', 'eCOC', 'Cl']
-        self.POH = ['COOH', 'COC', 'eCOC']
-        self.SOH = ['COOH', 'COC', 'eCOC']
+        self.NH2 = ['COOH', 'COC', 'Cl']
+        self.NH = ['COC', 'Cl']
+        self.POH = ['COOH', 'COC']
+        self.SOH = ['COOH', 'COC']
         self.COOH = ['NH2', 'POH', 'COC', 'SOH']
-        self.COC = ['NH2', 'POH', 'SOH', 'COOH', 'NH', 'eSOH']
-        self.eCOC = ['NH2', 'POH', 'SOH', 'COOH', 'NH', 'eSOH']
+        self.COC = ['NH2', 'POH', 'SOH', 'COOH', 'NH']
         self.Cl = ['NH2', 'NH']
         self.COOC = None
 
@@ -40,18 +39,9 @@ class NH2:
         self.COC = 'NH'
         self.COC_wl = 0
         self.COC_wl_id = 'None'
-        self.COC_2 = 'SOH'
-        self.COC_2_wl = 0
-        self.COC_2_wl_id = 'None'
-        self.eCOC = 'NH'
-        self.eCOC_wl = 0
-        self.eCOC_wl_id = 'None'
-        self.eCOC_2 = 'eSOH'
-        self.eCOC_2_wl = 0
-        self.eCOC_2_wl_id = 'None'
         self.Cl = 'NH'
         self.Cl_wl = 36.458
-        self.Cl_wl_id = "HCl"
+        self.COC_wl_id = "HCl"
 
 class COOH:
     def __init__(self):
@@ -72,15 +62,6 @@ class NH:
         self.COC = 'N'
         self.COC_wl = 0
         self.COC_wl_id = 'None'
-        self.COC_2 = 'SOH'
-        self.COC_2_wl = 0
-        self.COC_2_wl_id = 'None'
-        self.eCOC = 'N'
-        self.eCOC_wl = 0
-        self.eCOC_wl_id = 'None'
-        self.eCOC_2 = 'eSOH'
-        self.eCOC_2_wl = 0
-        self.eCOC_2_wl_id = 'None'
         self.Cl = 'N'
         self.Cl_wl = 36.458
         self.Cl_wl_id = "HCl"
@@ -90,53 +71,17 @@ class COC:
         self.NH2 = 'NH'
         self.NH2_wl = 0
         self.NH2_wl_id = 'None'
-        self.NH2_2 = 'SOH'
-        self.NH2_2_wl = 0
-        self.NH2_2_wl_id = 'None'
         self.POH = 'SOH'
         self.POH_wl = 0
         self.POH_wl_id = 'None'
         self.SOH = 'SOH'
         self.SOH_wl = 0
         self.SOH_wl_id = 'None'
-        self.eSOH = 'eSOH'
-        self.eSOH_wl = 0
-        self.eSOH_wl_id = 'None'
         self.COOH = 'COCOH'
         self.COOH_wl = 0
         self.NH = 'N'
         self.NH_wl = 0
         self.NH_wl_id = 'None'
-        self.NH_2 = 'SOH'
-        self.NH_2_wl = 0
-        self.NH_2_wl_id = 'None'
-
-class eCOC:
-    def __init__(self):
-        self.NH2 = 'NH'
-        self.NH2_wl = 0
-        self.NH2_wl_id = 'None'
-        self.NH2_2 = 'eSOH'
-        self.NH2_2_wl = 0
-        self.NH2_2_wl_id = 'None'
-        self.POH = 'eSOH'
-        self.POH_wl = 0
-        self.POH_wl_id = 'None'
-        self.SOH = 'eSOH'
-        self.SOH_wl = 0
-        self.SOH_wl_id = 'None'
-        self.eSOH = 'eSOH'
-        self.eSOH_wl = 0
-        self.eSOH_wl_id = 'None'
-        self.COOH = 'COCOH'
-        self.COOH_wl = 0
-        self.NH = 'N'
-        self.NH_wl = 0
-        self.NH_wl_id = 'None'
-        self.NH_2 = 'eSOH'
-        self.NH_2_wl = 0
-        self.NH_2_wl_id = 'None'
-
 
 class POH:
     def __init__(self):
@@ -146,10 +91,6 @@ class POH:
         self.COC = 'SOH'
         self.COC_wl = 0
         self.COC_wl_id = 'None'
-        self.eCOC = 'eSOH'
-        self.eCOC_wl = 0
-        self.eCOC_wl_id = 'None'
-
 
 class SOH:
     def __init__(self):
@@ -159,21 +100,6 @@ class SOH:
         self.COC = 'SOH'
         self.COC_wl = 0
         self.COC_wl_id = 'None'
-        self.eCOC = 'eSOH'
-        self.eCOC_wl = 0
-        self.eCOC_wl_id = 'None'
-
-class eSOH:
-    def __init__(self):
-        self.COOH = 'COOC'
-        self.COOH_wl = Water().mw
-        self.COOH_wl_id = 'Water'
-        self.COC = 'eSOH'
-        self.COC_wl = 0
-        self.COC_wl_id = 'None'
-        self.eCOC = 'eSOH'
-        self.eCOC_wl = 0
-        self.eCOC_wl_id = 'None'
 
 class Cl:
     def __init__(self):
