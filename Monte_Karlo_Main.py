@@ -437,7 +437,9 @@ def reset_entry_table():
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
 style = ttk.Style()
-style.configure('TNotebook.Tab', background="red")
+style.theme_use('classic')
+style.configure('TNotebook.Tab', background='blue', foreground='#FFFFFF')
+style.map('TNotebook.Tab', background=[('selected', 'green3')], foreground=[('selected', '#FFFFFF')])
 window.iconbitmap("testtube.ico")
 window.title("Monte Karlo")
 window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
