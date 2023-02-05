@@ -1,4 +1,5 @@
 import collections
+import os
 import random
 import sys
 import tkinter
@@ -436,9 +437,9 @@ def reset_entry_table():
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
-style = ttk.Style()
-style.theme_use('classic')
-style.configure('TNotebook.Tab', background='blue', foreground='#FFFFFF')
+style = ttk.Style(window)
+style.theme_use('winnative')
+style.configure('TNotebook.Tab', background='#6897bb', foreground='#FFFFFF')
 style.map('TNotebook.Tab', background=[('selected', 'green3')], foreground=[('selected', '#FFFFFF')])
 window.iconbitmap("testtube.ico")
 window.title("Monte Karlo")
@@ -712,7 +713,7 @@ class RxnDetails(tkinter.Frame):
         RXN_Type_Entry.config(justify="center")
         RXN_Samples = tkinter.StringVar()
         RXN_Samples_Entry = AutocompleteCombobox(self, completevalues=Num_Samples, width=15, textvariable=RXN_Samples)
-        RXN_Samples_Entry.insert(0, "1000")
+        RXN_Samples_Entry.insert(0, "2500")
         RXN_Samples_Entry.grid(row=1, column=1)
         RXN_Samples_Entry.config(justify="center")
         RXN_EOR = self.entries[5]
@@ -927,6 +928,9 @@ Entry_masses[10].bind("<KeyRelease>", lambda *args, index=10, cell=176: RET.upda
 Entry_masses[11].bind("<KeyRelease>", lambda *args, index=11, cell=192: RET.update_table(index, cell))
 Entry_masses[12].bind("<KeyRelease>", lambda *args, index=12, cell=208: RET.update_table(index, cell))
 Entry_masses[13].bind("<KeyRelease>", lambda *args, index=13, cell=224: RET.update_table(index, cell))
+
+
+window.bind('<Return>', lambda *args: sim_values())
 
 
 
