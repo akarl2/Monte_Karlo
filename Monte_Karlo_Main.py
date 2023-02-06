@@ -5,6 +5,7 @@ import sys
 import tkinter
 import time
 from tkinter import *
+import customtkinter
 from tkinter import ttk, messagebox
 import pandas
 from ttkwidgets.autocomplete import AutocompleteCombobox
@@ -38,7 +39,7 @@ def simulate(starting_materials):
     Xn_list = []
     Mw_list = []
     test_count = 0
-    test_interval = 40
+    test_interval = 1
     byproducts = []
     global running
     running = True
@@ -153,6 +154,7 @@ def simulate(starting_materials):
         global test_interval, in_situ_values, Xn_list
         global running
         comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+        print(comp_summary)
         sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
         total_ct_temp = 0
         for key in comp_summary:
@@ -162,9 +164,9 @@ def simulate(starting_materials):
         alcohol_ct = 0
         epoxide_ct = 0
         EHC_ct = 0
+        IV_ct = 0
         for key in comp_summary:
             key_names = [i[0] for i in key[0]]
-            print(key_names)
             for group in key[0]:
                 if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
                     amine_ct += comp_summary[key]
@@ -176,33 +178,36 @@ def simulate(starting_materials):
                     epoxide_ct += comp_summary[key]
                 elif group[0] == 'Cl' and "SOH" in key_names:
                     EHC_ct += comp_summary[key]
+                elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
+                    IV_ct += comp_summary[key]
         TAV = round((amine_ct * 56100) / sum_comp, 2)
         AV = round((acid_ct * 56100) / sum_comp, 2)
         OH = round((alcohol_ct * 56100) / sum_comp, 2)
         COC = round((epoxide_ct * 56100) / sum_comp, 2)
         EHC = round((EHC_ct * 35.453) / sum_comp * 100, 2)
+        IV = round(((IV_ct * 2) * (127 / sum_comp) * 100), 2)
         in_situ_values.append(AV)
         Xn_list.append(round(total_ct / total_ct_temp, 4))
-        metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC}
+        metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC, 'Iodine Value': IV}
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_selection != '% EHC':
             sim.progress['value'] = round(((end_metric_value / RXN_metric_value) * 100), 2)
             if RXN_metric_value <= end_metric_value:
                 running = False
                 sim.progress['value'] = 100
-                update_metrics(TAV, AV, OH, EHC, COC)
+                update_metrics(TAV, AV, OH, EHC, COC, IV)
                 RXN_Results(composition)
         else:
             sim.progress['value'] = round(((EHC / end_metric_value) * 100), 2)
             if RXN_metric_value >= end_metric_value:
                 running = False
                 sim.progress['value'] = 100
-                update_metrics(TAV, AV, OH, EHC, COC)
+                update_metrics(TAV, AV, OH, EHC, COC, IV)
                 RXN_Results(composition)
         window.update()
         if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
             test_interval = 1
-        update_metrics(TAV, AV, OH, EHC, COC)
+        update_metrics(TAV, AV, OH, EHC, COC, IV)
 
     while running:
         test_count += 1
@@ -228,22 +233,24 @@ def simulate(starting_materials):
         stop = time.time()
         update_comp(composition, groups)
 
-def update_metrics(TAV, AV, OH, EHC, COC):
-    RM.entries[7].delete(0, tkinter.END)
-    RM.entries[7].insert(0, EHC)
+def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[8].delete(0, tkinter.END)
-    try:
-        RM.entries[8].insert(0, round((3545.3 / EHC) - 36.4, 2))
-    except ZeroDivisionError:
-        RM.entries[8].insert(0, 'N/A')
+    RM.entries[8].insert(0, EHC)
     RM.entries[9].delete(0, tkinter.END)
-    RM.entries[9].insert(0, AV)
+    try:
+        RM.entries[9].insert(0, round((3545.3 / EHC) - 36.4, 2))
+    except ZeroDivisionError:
+        RM.entries[9].insert(0, 'N/A')
     RM.entries[10].delete(0, tkinter.END)
-    RM.entries[10].insert(0, TAV)
+    RM.entries[10].insert(0, AV)
     RM.entries[11].delete(0, tkinter.END)
-    RM.entries[11].insert(0, OH)
+    RM.entries[11].insert(0, TAV)
     RM.entries[12].delete(0, tkinter.END)
-    RM.entries[12].insert(0, COC)
+    RM.entries[12].insert(0, OH)
+    RM.entries[13].delete(0, tkinter.END)
+    RM.entries[13].insert(0, COC)
+    RM.entries[14].delete(0, tkinter.END)
+    RM.entries[14].insert(0, IV)
 
 def RXN_Results(composition):
     comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
@@ -261,6 +268,7 @@ def RXN_Results(composition):
         alcohol_ct = 0
         epoxide_ct = 0
         EHC_ct = 0
+        IV_ct = 0
         key_names = [i[0] for i in key[0]]
         for group in key[0]:
             if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
@@ -279,6 +287,8 @@ def RXN_Results(composition):
                 epoxide_ct += key[3]
             elif group[0] == 'Cl' and 'SOH' in key_names:
                 EHC_ct += key[3]
+            elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
+                IV_ct += key[3]
         key.append(round((amine_ct * 56100) / sum_comp, 2))
         key.append(round((pTAV_ct * 56100) / sum_comp, 2))
         key.append(round((sTAV_ct * 56100) / sum_comp, 2))
@@ -287,6 +297,7 @@ def RXN_Results(composition):
         key.append(round((alcohol_ct * 56100) / sum_comp, 2))
         key.append(round((epoxide_ct * 56100) / sum_comp, 2))
         key.append(round((EHC_ct * 35.453) / sum_comp * 100, 2))
+        key.append(round(((IV_ct * 2) * (127 / sum_comp) * 100), 2))
     for key in RS:
         index = 0
         for group in key[1]:
@@ -294,7 +305,7 @@ def RXN_Results(composition):
             key[1][index] = new_name
             index += 1
         key[1] = '_'.join(key[1])
-    rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV", 'AV', 'OH', 'COC', 'EHC,%'])
+    rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV", 'AV', 'OH', 'COC', 'EHC,%', 'IV'])
     rxn_summary_df['MW'] = round(rxn_summary_df['MW'], 2)
     rxn_summary_df.drop(columns=['Groups'], inplace=True)
     rxn_summary_df.set_index('Name', inplace=True)
@@ -307,7 +318,7 @@ def RXN_Results(composition):
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**2).sum()
     sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**3).sum()
     sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**4).sum()
-    rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%']]
+    rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
     Mn = sumNiMi/sumNi
     Mw = sumNiMi2/sumNiMi
@@ -438,9 +449,9 @@ def reset_entry_table():
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
 style = ttk.Style(window)
-style.theme_use('winnative')
-style.configure('TNotebook.Tab', background='#6897bb', foreground='#FFFFFF')
-style.map('TNotebook.Tab', background=[('selected', 'green3')], foreground=[('selected', '#FFFFFF')])
+style.theme_use('clam')
+style.configure('TNotebook.Tab', background='#355C7D', foreground='#ffffff')
+style.map('TNotebook.Tab', background=[('selected', 'green3')], foreground=[('selected', '#000000')])
 window.iconbitmap("testtube.ico")
 window.title("Monte Karlo")
 window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
@@ -730,14 +741,14 @@ class RxnMetrics(tkinter.Frame):
 
     def create_table(self):
         self.entries = {}
-        self.tableheight = 7
+        self.tableheight = 8
         self.tablewidth = 2
         counter = 0
         for column in range(self.tablewidth):
             for row in range(self.tableheight):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                # self.entries[counter].insert(0, str(counter))
+                #self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=18)
                 counter += 1
         self.table_labels()
@@ -761,16 +772,19 @@ class RxnMetrics(tkinter.Frame):
         self.entries[5].delete(0, tkinter.END)
         self.entries[5].insert(0, "COC Value =")
         self.entries[5].config(state="readonly")
+        self.entries[6].delete(0, tkinter.END)
+        self.entries[6].insert(0, "Iodine Value =")
+        self.entries[6].config(state="readonly")
         self.user_entry()
 
     def user_entry(self):
         global RXN_EM, RXN_EM_Value
         RXN_EM = tkinter.StringVar()
         RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
-        RXN_EM_Entry.grid(row=6, column=0)
+        RXN_EM_Entry.grid(row=7, column=0)
         RXN_EM_Entry.insert(0, "End Metric")
         RXN_EM_Entry.config(justify="center", state="readonly")
-        RXN_EM_Value = self.entries[13]
+        RXN_EM_Value = self.entries[15]
 
 class WeightDist(tkinter.Frame):
     def __init__(self, master=tab2):

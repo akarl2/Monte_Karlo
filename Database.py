@@ -551,6 +551,27 @@ class Lysine:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.srgID], [self.prgID]]
 
+class PACM:
+    def __init__(self):
+        self.name = "PACM"
+        self.sn = "PACM"
+        self.formula = "C13H14N2"
+        self.mw = 198.269
+        self.density = 1.05
+        self.prgID = "NH₂"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
 
 #---------------------------------------------------------Acids------------------------------------------------#
 
@@ -653,7 +674,7 @@ class C181:
         self.prgk = 1
         self.cprgID = None
         self.cprgk = 0
-        self.srgID = None
+        self.srgID = "CC_1"
         self.srgk = 0
         self.csrgID = None
         self.csrgk = 0
@@ -661,7 +682,7 @@ class C181:
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
-        self.dist = [[self.prgID]]
+        self.dist = [[self.prgID], [self.srgID]]
 
 class C14:
     def __init__(self):
@@ -691,28 +712,6 @@ class C16:
         self.sn = "C16"
         self.formula = "C16H32O2"
         self.mw = 256.43
-        self.density = 0.895
-        self.mass = self.mw
-        self.prgID = "COOH"
-        self.prgk = 1
-        self.cprgID = None
-        self.cprgk = 0
-        self.srgID = None
-        self.srgk = 0
-        self.csrgID = None
-        self.csrgk = 0
-        self.trgID = None
-        self.trgk = 0
-        self.ctrgID = None
-        self.ctrgk = 0
-        self.dist = [[self.prgID]]
-
-class C18:
-    def __init__(self):
-        self.name = "C18"
-        self.sn = "C18"
-        self.formula = "C18H36O2"
-        self.mw = 284.484
         self.density = 0.895
         self.mass = self.mw
         self.prgID = "COOH"
@@ -785,15 +784,15 @@ class C182:
         self.prgk = 1
         self.cprgID = None
         self.cprgk = 0
-        self.srgID = None
+        self.srgID = "CC_2"
         self.srgk = 0
         self.csrgID = None
         self.csrgk = 0
-        self.trgID = None
+        self.trgID = "CC_1"
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
-        self.dist = [[self.prgID]]
+        self.dist = [[self.prgID], [self.srgID], [self.trgID]]
 
 class C183:
     def __init__(self):
@@ -807,15 +806,15 @@ class C183:
         self.prgk = 1
         self.cprgID = None
         self.cprgk = 0
-        self.srgID = None
+        self.srgID = "CC_3"
         self.srgk = 0
         self.csrgID = None
         self.csrgk = 0
-        self.trgID = None
+        self.trgID = "CC_2"
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
-        self.dist = [[self.prgID]]
+        self.dist = [[self.prgID], [self.srgID], [self.trgID]]
 
 class Azelaic_acid:
     def __init__(self):
@@ -838,6 +837,28 @@ class Azelaic_acid:
         self.ctrgID = None
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.prgID]]
+
+class Diethyl_maleate:
+    def __init__(self):
+        self.name = "Diethyl maleate"
+        self.sn = "DEM"
+        self.formula = "C8H12O4"
+        self.mw = 172.108
+        self.density = 1.01
+        self.mass = self.mw
+        self.prgID = "aB_unsat"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = "COO"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.srgID], [self.prgID], [self.srgID]]
 
 #-------------------------------------Other--------------------------------------#
 

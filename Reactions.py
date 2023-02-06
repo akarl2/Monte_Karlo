@@ -16,19 +16,23 @@ class Etherification:
         self.name = Etherification
 
 Reactions = ["Condensation", "Etherification", "PolyCondensation"]
-End_Metrics = ["Amine Value", "Acid Value", "OH Value", "Epoxide Value", '% EHC']
+End_Metrics = ["Amine Value", "Acid Value", "OH Value", "Epoxide Value", '% EHC', 'Iodine Value']
 Num_Samples = ["1000", "2500", "5000", "10000", "100000"]
 
 
 class reactive_groups:
     def __init__(self):
-        self.NH2 = ['COOH', 'COC', 'Cl']
+        self.NH2 = ['COOH', 'COC', 'Cl','aB_unsat']
         self.NH = ['COC', 'Cl']
         self.POH = ['COOH', 'COC']
         self.SOH = ['COOH', 'COC']
         self.COOH = ['NH2', 'POH', 'COC', 'SOH']
         self.COC = ['NH2', 'POH', 'SOH', 'COOH', 'NH']
         self.Cl = ['NH2', 'NH']
+        self.aB_unsat = ['NH2']
+        self.CC_3 = None
+        self.CC_2 = None
+        self.CC_1 = None
         self.COOC = None
         self.CONH = None
 
@@ -46,6 +50,15 @@ class NH2:
         self.Cl = 'NH'
         self.Cl_wl = 36.458
         self.Cl_wl_id = "HCl"
+        self.aB_unsat = 'NH'
+        self.aB_unsat_wl = 0
+        self.aB_unsat_wl_id = 'None'
+
+class aB_unsat:
+    def __init__(self):
+        self.NH2 = 'NH'
+        self.NH2_wl = 0
+        self.NH2_wl_id = 'None'
 
 class COOH:
     def __init__(self):
