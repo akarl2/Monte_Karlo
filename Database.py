@@ -572,6 +572,27 @@ class PACM:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.prgID]]
 
+class MXDA:
+    def __init__(self):
+        self.name = "MXDA"
+        self.sn = "MXDA"
+        self.formula = "C8H12N2"
+        self.mw = 136.198
+        self.density = 1.032
+        self.prgID = "NH₂"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
 
 #---------------------------------------------------------Acids------------------------------------------------#
 
@@ -956,7 +977,7 @@ class CM67:
         self.density = 1.12
         self.prgID = "COC"
         self.prgk = 1
-        self.cprgID = None
+        self.cprgID = "SOH"
         self.cprgk = 0
         self.srgID = None
         self.srgk = 0
@@ -967,6 +988,29 @@ class CM67:
         self.ctrgID = None
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.prgID]]
+
+class BPADGE:
+    def __init__(self):
+        self.name = "BPADGE"
+        self.sn = "BPADGE"
+        self.formula = "C12H18O4"
+        self.mw = 372
+        self.density = 1.12
+        self.prgID = "COC"
+        self.prgk = 1
+        self.cprgID = "SOH"
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
+
 
 class Clear:
     def __init__(self):

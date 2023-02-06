@@ -318,7 +318,10 @@ def RXN_Results(composition):
     sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**3).sum()
     sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**4).sum()
     rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
+    rxn_summary_df.loc['Sum'] = round(rxn_summary_df.sum(), 3)
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
+    #create a row at the end to sum the values of the columns
+
     Mn = sumNiMi/sumNi
     Mw = sumNiMi2/sumNiMi
     PDI = Mw/Mn
