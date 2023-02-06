@@ -366,7 +366,13 @@ def show_results(rxn_summary_df):
     y = (window.winfo_screenheight() - frame_results.winfo_reqheight()) / 2
     frame_results.place(x=x, y=y, anchor='center')
     results_table = Table(frame_results, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True,
-                          width=x, height=y, align='center')
+                          width=x, height=y, align='center',)
+    #adjust results_table if it is too big
+    if results_table.winfo_reqwidth() > window.winfo_screenwidth():
+        results_table.width = window.winfo_screenwidth() - 100
+    if results_table.winfo_reqheight() > window.winfo_screenheight():
+        results_table.height = window.winfo_screenheight() - 100
+
     results_table.show()
 
 def show_byproducts(byproducts_df):

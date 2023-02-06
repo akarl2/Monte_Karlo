@@ -926,6 +926,48 @@ class Propylene_oxide:
         self.ctrgk = 0
         self.dist = [[self.prgID]]
 
+class HDODA:
+    def __init__(self):
+        self.name = "HDODA"
+        self.sn = "HDODA"
+        self.formula = "C12H18O4"
+        self.mw = 226.27
+        self.density = 1.12
+        self.prgID = "aB_unsat"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
+class CM67:
+    def __init__(self):
+        self.name = "CM67"
+        self.sn = "CM67"
+        self.formula = "C12H18O4"
+        self.mw = 270
+        self.density = 1.12
+        self.prgID = "COC"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
 class Clear:
     def __init__(self):
         self.name = "Clear"
