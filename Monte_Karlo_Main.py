@@ -39,7 +39,7 @@ def simulate(starting_materials):
     Xn_list = []
     Mw_list = []
     test_count = 0
-    test_interval = 1
+    test_interval = 40
     byproducts = []
     global running
     running = True
@@ -154,7 +154,6 @@ def simulate(starting_materials):
         global test_interval, in_situ_values, Xn_list
         global running
         comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
-        print(comp_summary)
         sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
         total_ct_temp = 0
         for key in comp_summary:
