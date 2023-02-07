@@ -89,9 +89,8 @@ def simulate(starting_materials):
 
     def update_comp(composition, groups):
         global test_count, running, WL, NG2, new_group_dict, byproducts
-        NC = composition[groups[0][0]]
-        compoundA = composition[groups[0][0]]
-        compoundB = composition[groups[1][0]]
+        NC, compoundA, compoundB = composition[groups[0][0]], composition[groups[0][0]], composition[groups[1][0]]
+        swapped = False
         new_name = {}
         for group, count in compoundA[1] + compoundB[1]:
             if group in new_name:
@@ -100,8 +99,7 @@ def simulate(starting_materials):
                 new_name[group] = count
         new_name = [[group, count] for group, count in new_name.items()]
         new_name.sort(key=lambda x: x[0])
-        WL = new_group_dict['WL']
-        WL_ID = new_group_dict['WL_ID']
+        NG, WL, WL_ID = new_group_dict['NG'], new_group_dict['WL'], new_group_dict['WL_ID']
         if len(byproducts) == 0:
             byproducts.append([WL_ID, WL])
         else:
@@ -112,11 +110,9 @@ def simulate(starting_materials):
                 elif i == len(byproducts) - 1:
                     byproducts.append([WL_ID, WL])
                     break
-        NW = compoundA[2][0] + compoundB[2][0] - new_group_dict['WL']
+        NW = compoundA[2][0] + compoundB[2][0] - WL
         NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW, 3)]]
-        NG = new_group_dict['NG']
         NC[0][groups[0][1]][0] = NG
-        swapped = False
         for species in NC[1]:
             name = sn_dict[species[0]]
             if name.cprgID[0] == NG:
@@ -463,12 +459,18 @@ def reset_entry_table():
         for j in range(RET.tablewidth):
             RET.entries[(i+1) * RET.tablewidth + j].configure(state='normal')
             RET.entries[(i+1) * RET.tablewidth + j].delete(0, 'end')
+    sim.progress['value'] = 0
+    for i in range(8, 15):
+        RM.entries[i].delete(0, 'end')
+
+
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
 style = ttk.Style(window)
 style.theme_use('clam')
 style.configure('TNotebook.Tab', background='#355C7D', foreground='#ffffff')
+style.configure("red.Horizontal.TProgressbar", troughcolor='green')
 style.map('TNotebook.Tab', background=[('selected', 'green3')], foreground=[('selected', '#000000')])
 window.iconbitmap("testtube.ico")
 window.title("Monte Karlo")
@@ -908,7 +910,7 @@ class SimStatus(tkinter.Frame):
         self.add_buttons()
 
     def add_buttons(self):
-        self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate")
+        self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate",style="red.Horizontal.TProgressbar")
         self.progress.grid(row=0, column=1)
 
 RET = RxnEntryTable()
