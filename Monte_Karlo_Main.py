@@ -35,7 +35,7 @@ pandas.set_option('display.width', 100)
 global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, Xn_list, byproducts, frame_byproducts, Mw_list
 def simulate(starting_materials):
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list
-    in_situ_values = []
+    in_situ_values = [[], [], [], [], [], [], []]
     Xn_list = []
     Mw_list = []
     test_count = 0
@@ -185,7 +185,12 @@ def simulate(starting_materials):
         COC = round((epoxide_ct * 56100) / sum_comp, 2)
         EHC = round((EHC_ct * 35.453) / sum_comp * 100, 2)
         IV = round(((IV_ct * 2) * (127 / sum_comp) * 100), 2)
-        in_situ_values.append(AV)
+        in_situ_values[0].append(TAV)
+        in_situ_values[1].append(AV)
+        in_situ_values[2].append(OH)
+        in_situ_values[3].append(COC)
+        in_situ_values[4].append(EHC)
+        in_situ_values[5].append(IV)
         Xn_list.append(round(total_ct / total_ct_temp, 4))
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC, 'Iodine Value': IV}
         RXN_metric_value = metrics[end_metric_selection]
@@ -346,7 +351,12 @@ def RXN_Results(composition):
     byproducts_df['Wt, % (Of Final)'] = round(byproducts_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
     byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / starting_mass * 100, 4)
 
-    Xn = pandas.DataFrame(in_situ_values, columns=['Acid Value'])
+    Xn = pandas.DataFrame(in_situ_values[0], columns=['TAV'])
+    Xn['AV'] = in_situ_values[1]
+    Xn['OH'] = in_situ_values[2]
+    Xn['COC'] = in_situ_values[3]
+    Xn['EHC, %'] = in_situ_values[4]
+    Xn['IV'] = in_situ_values[5]
     Xn['Xn'] = Xn_list
     Xn['P'] = -(1/Xn['Xn']) + 1
     #messagebox.showinfo('Results', 'Results are ready!')
@@ -688,7 +698,7 @@ class RxnEntryTable(tkinter.Frame):
         else:
             pass
 
-global RXN_Type, RXN_Samples, RXN_EOR
+global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value
 class RxnDetails(tkinter.Frame):
     def __init__(self, master=tab1):
         tkinter.Frame.__init__(self, master)
@@ -713,8 +723,8 @@ class RxnDetails(tkinter.Frame):
         self.table_labels()
 
     def table_labels(self):
-        self.entries[0].delete(0, tkinter.END)
-        self.entries[0].insert(0, "Reaction Type =")
+        # self.entries[0].delete(0, tkinter.END)
+        # self.entries[0].insert(0, "Reaction Type =")
         self.entries[1].delete(0, tkinter.END)
         self.entries[1].insert(0, "# of Samples =")
         self.entries[1].config(state="readonly")
@@ -725,11 +735,13 @@ class RxnDetails(tkinter.Frame):
         self.user_entry()
 
     def user_entry(self):
-        global RXN_Type, RXN_Samples, RXN_EOR
-        RXN_Type = tkinter.StringVar()
-        RXN_Type_Entry = AutocompleteCombobox(self, completevalues=Reactions, width=15, textvariable=RXN_Type)
-        RXN_Type_Entry.grid(row=0, column=1)
-        RXN_Type_Entry.config(justify="center")
+        global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value
+        RXN_EM = tkinter.StringVar()
+        RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
+        RXN_EM_Entry.grid(row=0, column=0)
+        RXN_EM_Entry.insert(0, "End Metric")
+        RXN_EM_Entry.config(justify="center", state="readonly")
+        RXN_EM_Value = self.entries[3]
         RXN_Samples = tkinter.StringVar()
         RXN_Samples_Entry = AutocompleteCombobox(self, completevalues=Num_Samples, width=15, textvariable=RXN_Samples)
         RXN_Samples_Entry.insert(0, "2500")
@@ -783,16 +795,6 @@ class RxnMetrics(tkinter.Frame):
         self.entries[6].delete(0, tkinter.END)
         self.entries[6].insert(0, "Iodine Value =")
         self.entries[6].config(state="readonly")
-        self.user_entry()
-
-    def user_entry(self):
-        global RXN_EM, RXN_EM_Value
-        RXN_EM = tkinter.StringVar()
-        RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
-        RXN_EM_Entry.grid(row=7, column=0)
-        RXN_EM_Entry.insert(0, "End Metric")
-        RXN_EM_Entry.config(justify="center", state="readonly")
-        RXN_EM_Value = self.entries[15]
 
 class WeightDist(tkinter.Frame):
     def __init__(self, master=tab2):
