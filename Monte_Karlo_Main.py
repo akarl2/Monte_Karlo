@@ -499,7 +499,6 @@ filemenu1.add_command(label='Exit', command=window.destroy)
 filemenu3.add_command(label='Help')
 
 
-
 Entry_Reactants = ['R1Reactant', 'R2Reactant', 'R3Reactant', 'R4Reactant', 'R5Reactant', 'R6Reactant', 'R7Reactant',
                    'R8Reactant', 'R9Reactant', 'R10Reactant', 'R11Reactant', 'R12Reactant', 'R13Reactant',
                    'R14Reactant']
