@@ -32,7 +32,7 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, Xn_list, byproducts, frame_byproducts, Mw_list
+global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, Xn_list, byproducts, frame_byproducts, Mw_list, low_group
 def simulate(starting_materials):
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list
     in_situ_values = [[], [], [], [], [], [], []]
@@ -88,7 +88,7 @@ def simulate(starting_materials):
             new_group_dict = {'NG': NG, 'WL': WL, 'WL_ID': WL_ID}
 
     def update_comp(composition, groups):
-        global test_count, running, WL, NG2, new_group_dict, byproducts
+        global test_count, running, WL, NG2, new_group_dict, byproducts, low_group
         NC, compoundA, compoundB = composition[groups[0][0]], composition[groups[0][0]], composition[groups[1][0]]
         swapped = False
         new_name = {}
@@ -138,8 +138,8 @@ def simulate(starting_materials):
                 else:
                     NC[0].append([NG2, 0])
         NC[0].sort(key=lambda x: x[0])
+        low_group = min([groups[0][0], groups[1][0]])
         composition[groups[0][0]] = NC
-        #print(f'NC {NC}')
         del(composition[groups[1][0]])
         window.update()
         if test_count >= test_interval:
@@ -220,7 +220,6 @@ def simulate(starting_materials):
                 weights.append(group[1])
                 index += 1
         groups = random.choices(chemical, weights, k=2)
-        #set running to false after 3 seconds if no reaction occurs
         start = time.time()
         while groups[0][0] == groups[1][0] or check_react(groups) is False:
             groups = random.choices(chemical, weights, k=2)
