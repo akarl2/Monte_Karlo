@@ -138,7 +138,6 @@ def simulate(starting_materials):
                 else:
                     NC[0].append([NG2, 0])
         NC[0].sort(key=lambda x: x[0])
-        low_group = min([groups[0][0], groups[1][0]])
         composition[groups[0][0]] = NC
         del(composition[groups[1][0]])
         window.update()
