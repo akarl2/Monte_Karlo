@@ -321,7 +321,6 @@ def RXN_Results(composition):
     rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
     rxn_summary_df.loc['Sum'] = round(rxn_summary_df.sum(), 3)
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
-    #create a row at the end to sum the values of the columns
 
     Mn = sumNiMi/sumNi
     Mw = sumNiMi2/sumNiMi
@@ -355,13 +354,12 @@ def RXN_Results(composition):
     Xn['IV'] = in_situ_values[5]
     Xn['Xn'] = Xn_list
     Xn['P'] = -(1/Xn['Xn']) + 1
-    #messagebox.showinfo('Results', 'Results are ready!')
+    #messagebox.showinfo('Results', 'Simulation Successful!')
     show_results(rxn_summary_df)
     show_byproducts(byproducts_df)
     show_Xn(Xn)
 
-
-# -------------------------------------------Aux Functions---------------------------------#
+# -------------------------------------------Aux Functions---------------------------------------------------#
 
 def show_results(rxn_summary_df):
     global results_table, frame_results
@@ -392,7 +390,7 @@ def show_byproducts(byproducts_df):
     except NameError:
         pass
     frame_byproducts = tkinter.Frame(tab2)
-    frame_byproducts.grid(row=0, column=3, padx=(100, 0))
+    frame_byproducts.grid(row=0, column=3, padx=(100, 0), pady=(20, 0))
     byproducts_table = Table(frame_byproducts, dataframe=byproducts_df, showtoolbar=False, showstatusbar=True, showindex=True, width=600, height=100, align='center', maxcellwidth=1000)
     byproducts_table.show()
 
@@ -462,8 +460,6 @@ def reset_entry_table():
     sim.progress['value'] = 0
     for i in range(8, 15):
         RM.entries[i].delete(0, 'end')
-
-
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
@@ -750,7 +746,6 @@ class RxnDetails(tkinter.Frame):
         RXN_Samples_Entry.config(justify="center")
         RXN_EOR = self.entries[5]
 
-global RXN_EM, RXN_EM_Value
 class RxnMetrics(tkinter.Frame):
     def __init__(self, master=tab1):
         tkinter.Frame.__init__(self, master)
@@ -937,8 +932,6 @@ RET.entries[192].bind('<FocusOut>', lambda *args, entry=192, index=11, cell=192:
 RET.entries[208].bind('<FocusOut>', lambda *args, entry=208, index=12, cell=208: check_entry(entry, index, cell))
 RET.entries[224].bind('<FocusOut>', lambda *args, entry=224, index=13, cell=224: check_entry(entry, index, cell))
 
-
-
 Entry_masses[0].bind("<KeyRelease>", lambda *args, index=0, cell=16: RET.update_table(index, cell))
 Entry_masses[1].bind("<KeyRelease>", lambda *args, index=1, cell=32: RET.update_table(index, cell))
 Entry_masses[2].bind("<KeyRelease>", lambda *args, index=2, cell=48: RET.update_table(index, cell))
@@ -954,10 +947,7 @@ Entry_masses[11].bind("<KeyRelease>", lambda *args, index=11, cell=192: RET.upda
 Entry_masses[12].bind("<KeyRelease>", lambda *args, index=12, cell=208: RET.update_table(index, cell))
 Entry_masses[13].bind("<KeyRelease>", lambda *args, index=13, cell=224: RET.update_table(index, cell))
 
-
 window.bind('<Return>', lambda *args: sim_values())
-
-
 
 R1Data = R1Data()
 R2Data = R2Data()
