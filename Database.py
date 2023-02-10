@@ -55,6 +55,28 @@ class Glycerol:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.srgID], [self.prgID]]
 
+class Neopentyl_glycol:
+    def __init__(self):
+        self.name = "Neopentyl_glycol"
+        self.sn = "NPG"
+        self.formula = "C5H12O2"
+        self.mw = 104.148
+        self.density = 1.26
+        self.mass = self.mw
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
 class Castor_Oil:
     def __init__(self):
         self.name = "Castor_Oil"
@@ -836,6 +858,50 @@ class C183:
         self.ctrgID = None
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.srgID], [self.trgID]]
+
+class Dimer:
+    def __init__(self):
+        self.name = "Dimer"
+        self.sn = "Dimer"
+        self.formula = "C18H30O2"
+        self.mw = 581.347
+        self.density = 0.9164
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
+class Trimer:
+    def __init__(self):
+        self.name = "Timer"
+        self.sn = "Timer"
+        self.formula = "C18H30O2"
+        self.mw = 872.021
+        self.density = 0.9164
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID], [self.prgID]]
 
 class Azelaic_acid:
     def __init__(self):

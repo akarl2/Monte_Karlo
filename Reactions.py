@@ -40,7 +40,7 @@ class NH2:
     def __init__(self):
         self.COOH = "CONH"
         self.COOH_wl = 18.01528
-        self.COOH_wl_id = "Water"
+        self.COOH_wl_id = "H2O"
         self.COC = 'NH'
         self.COC_wl = 0
         self.COC_wl_id = 'None'
@@ -64,13 +64,13 @@ class COOH:
     def __init__(self):
         self.NH2 = "CONH"
         self.NH2_wl = 18.01528
-        self.NH2_wl_id = "Water"
+        self.NH2_wl_id = "H2O"
         self.POH = 'COOC'
         self.POH_wl = 18.01528
-        self.POH_wl_id = 'Water'
+        self.POH_wl_id = "H2O"
         self.SOH = 'COOC'
         self.SOH_wl = 18.01528
-        self.SOH_wl_id = 'Water'
+        self.SOH_wl_id = "H2O"
         self.COC = 'COCOH'
         self.COC_wl = 0
 
@@ -109,21 +109,21 @@ class COC:
         self.NH_2_wl = 0
         self.NH_2_wl_id = 'None'
 
-
 class POH:
     def __init__(self):
         self.COOH = 'COOC'
         self.COOH_wl = 18.01528
-        self.COOH_wl_id = 'Water'
+        self.COOH_wl_id = "H2O"
         self.COC = 'SOH'
         self.COC_wl = 0
         self.COC_wl_id = 'None'
+
 
 class SOH:
     def __init__(self):
         self.COOH = 'COOC'
         self.COOH_wl = 18.01528
-        self.COOH_wl_id = 'Water'
+        self.COOH_wl_id = "H2O"
         self.COC = 'SOH'
         self.COC_wl = 0
         self.COC_wl_id = 'None'
@@ -136,6 +136,8 @@ class Cl:
         self.NH = 'N'
         self.NH_wl = 36.458
         self.NH_wl_id = 'HCl'
+
+
 
 
 

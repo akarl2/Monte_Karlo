@@ -34,15 +34,14 @@ pandas.set_option('display.width', 100)
 # Runs the simulation
 global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, Xn_list, byproducts, frame_byproducts, Mw_list, low_group
 def simulate(starting_materials):
-    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list
+    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running
     in_situ_values = [[], [], [], [], [], [], []]
+    running = True
     Xn_list = []
     Mw_list = []
     test_count = 0
     test_interval = 40
     byproducts = []
-    global running
-    running = True
     sim.progress['value'] = 0
     end_metric_selection = str(RXN_EM.get())
     try:
@@ -148,30 +147,29 @@ def simulate(starting_materials):
     def RXN_Status(composition):
         global test_interval, in_situ_values, Xn_list
         global running
+        if 'Epi' in sn_dict:
+            sOHk = sn_dict['Epi'].cprgID[1]
         comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
         sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
         total_ct_temp = 0
         for key in comp_summary:
             total_ct_temp += comp_summary[key]
-        amine_ct = 0
-        acid_ct = 0
-        alcohol_ct = 0
-        epoxide_ct = 0
-        EHC_ct = 0
-        IV_ct = 0
+        amine_ct, amine_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct = 0, 0, 0, 0, 0, 0, 0
         for key in comp_summary:
             key_names = [i[0] for i in key[0]]
+            Cl_ct = key_names.count('Cl')
             for group in key[0]:
                 if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
                     amine_ct += comp_summary[key]
                 elif group[0] == 'COOH':
                     acid_ct += comp_summary[key]
-                elif group[0] == 'POH' or group[0] == 'SOH' or group[0] == 'HPCOH':
+                elif group[0] == 'POH' or group[0] == 'SOH':
                     alcohol_ct += comp_summary[key]
+                    if group[0] == 'SOH' and group[1] == sOHk and Cl_ct > 0:
+                        Cl_ct -= 1
+                        EHC_ct += comp_summary[key]
                 elif group[0] == 'COC':
                     epoxide_ct += comp_summary[key]
-                elif group[0] == 'Cl' and "SOH" in key_names:
-                    EHC_ct += comp_summary[key]
                 elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
                     IV_ct += comp_summary[key]
         TAV = round((amine_ct * 56100) / sum_comp, 2)
@@ -252,22 +250,17 @@ def update_metrics(TAV, AV, OH, EHC, COC, IV):
 
 def RXN_Results(composition):
     comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+    if 'Epi' in sn_dict:
+        sOHk = sn_dict['Epi'].cprgID[1]
     sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
     RS = []
     for key in comp_summary:
         RS.append((key[0], key[1], key[2], comp_summary[key]))
     RS = [[[list(x) for x in i[0]], [list(y) for y in i[1]], i[2], i[3]] for i in RS]
     for key in RS:
-        amine_ct = 0
-        pTAV_ct = 0
-        sTAV_ct = 0
-        tTAV_ct = 0
-        acid_ct = 0
-        alcohol_ct = 0
-        epoxide_ct = 0
-        EHC_ct = 0
-        IV_ct = 0
+        amine_ct, pTAV_ct, sTAV_ct, tTAV_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0
         key_names = [i[0] for i in key[0]]
+        Cl_ct = key_names.count('Cl')
         for group in key[0]:
             if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
                 amine_ct += key[3]
@@ -279,12 +272,15 @@ def RXN_Results(composition):
                     tTAV_ct += key[3]
             elif group[0] == 'COOH':
                 acid_ct += key[3]
-            elif group[0] == 'POH' or group[0] == 'SOH' or group[0] == 'HPCOH':
+            elif group[0] == 'POH' or group[0] == 'SOH':
                 alcohol_ct += key[3]
+                if group[0] == 'SOH' and group[1] == sOHk and Cl_ct > 0:
+                    Cl_ct -= 1
+                    EHC_ct += key[3]
             elif group[0] == 'COC':
                 epoxide_ct += key[3]
-            elif group[0] == 'Cl' and 'SOH' in key_names:
-                EHC_ct += key[3]
+            #elif group[0] == 'Cl' and 'SOH' in key_names:
+                #EHC_ct += key[3]
             elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
                 IV_ct += key[3]
         key.append(round((amine_ct * 56100) / sum_comp, 2))
