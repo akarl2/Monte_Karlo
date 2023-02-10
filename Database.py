@@ -214,11 +214,19 @@ class Cyclohexanedimethanol:
         self.formula = "C8H16O2"
         self.mw = 144.21
         self.density = 1.02
-        self.prgmw = 72.105
-        self.srgmw = 0
-        self.comp = (self.prgmw, self.prgmw)
-        self.mass = self.mw
-        self.numgroups = len(set(self.comp))
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
 
 class Ethylhexanol:
     def __init__(self):
