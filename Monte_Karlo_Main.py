@@ -32,7 +32,7 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, Xn_list, byproducts, frame_byproducts, Mw_list, low_group
+global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, Xn_list, byproducts, frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_lis
 def simulate(starting_materials):
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running
     in_situ_values = [[], [], [], [], [], [], []]
@@ -147,8 +147,6 @@ def simulate(starting_materials):
     def RXN_Status(composition):
         global test_interval, in_situ_values, Xn_list
         global running
-        if 'Epi' in sn_dict:
-            sOHk = sn_dict['Epi'].cprgID[1]
         comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
         sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
         total_ct_temp = 0
@@ -165,9 +163,11 @@ def simulate(starting_materials):
                     acid_ct += comp_summary[key]
                 elif group[0] == 'POH' or group[0] == 'SOH':
                     alcohol_ct += comp_summary[key]
-                    if group[0] == 'SOH' and group[1] == sOHk and Cl_ct > 0:
-                        Cl_ct -= 1
-                        EHC_ct += comp_summary[key]
+                    if 'Epi' in sn_dict:
+                        sOHk = sn_dict['Epi'].cprgID[1]
+                        if group[0] == 'SOH' and group[1] == sOHk and Cl_ct > 0:
+                            Cl_ct -= 1
+                            EHC_ct += comp_summary[key]
                 elif group[0] == 'COC':
                     epoxide_ct += comp_summary[key]
                 elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
@@ -250,8 +250,6 @@ def update_metrics(TAV, AV, OH, EHC, COC, IV):
 
 def RXN_Results(composition):
     comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
-    if 'Epi' in sn_dict:
-        sOHk = sn_dict['Epi'].cprgID[1]
     sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
     RS = []
     for key in comp_summary:
@@ -274,9 +272,11 @@ def RXN_Results(composition):
                 acid_ct += key[3]
             elif group[0] == 'POH' or group[0] == 'SOH':
                 alcohol_ct += key[3]
-                if group[0] == 'SOH' and group[1] == sOHk and Cl_ct > 0:
-                    Cl_ct -= 1
-                    EHC_ct += key[3]
+                if 'Epi' in sn_dict:
+                    sOHk = sn_dict['Epi'].cprgID[1]
+                    if group[0] == 'SOH' and group[1] == sOHk and Cl_ct > 0:
+                        Cl_ct -= 1
+                        EHC_ct += key[3]
             elif group[0] == 'COC':
                 epoxide_ct += key[3]
             #elif group[0] == 'Cl' and 'SOH' in key_names:
@@ -438,7 +438,7 @@ def sim_values():
                 total_ct = total_ct + (float(count) * float(moles_count))
                 cell = cell + RET.tablewidth
                 starting_materials.append(str_to_class(RDE[index]).comp)
-                index = index + 1
+                index += 1
             else:
                 break
     except AttributeError as e:
@@ -535,7 +535,7 @@ class RxnEntryTable(tkinter.Frame):
 
     def tabel_labels(self):
         offset = 0
-        self.entries[offset + 0].insert(0, "Reactant")
+        self.entries[offset + 0].insert(0, "Component")
         self.entries[offset + 0].config(state="readonly", font=("Helvetica", 8, "bold"))
         self.entries[offset + 1].insert(0, "Mass (g)")
         self.entries[offset + 1].config(state="readonly", font=("Helvetica", 8, "bold"))
@@ -708,37 +708,55 @@ class RxnDetails(tkinter.Frame):
             for row in range(self.tableheight):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                # self.entries[counter].insert(0, str(counter))
+                #self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=18)
                 counter += 1
         self.table_labels()
 
     def table_labels(self):
-        # self.entries[0].delete(0, tkinter.END)
-        # self.entries[0].insert(0, "Reaction Type =")
-        self.entries[1].delete(0, tkinter.END)
-        self.entries[1].insert(0, "# of Samples =")
-        self.entries[1].config(state="readonly")
         self.entries[2].delete(0, tkinter.END)
-        self.entries[2].insert(0, "Extent of Reaction =")
-        self.entries[5].delete(0, tkinter.END)
-        self.entries[5].insert(0, "1")
+        self.entries[2].insert(0, "# of samples =")
+        self.entries[2].config(state="readonly")
         self.user_entry()
 
     def user_entry(self):
-        global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value
+        global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR
         RXN_EM = tkinter.StringVar()
         RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
         RXN_EM_Entry.grid(row=0, column=0)
-        RXN_EM_Entry.insert(0, "End Metric")
+        RXN_EM_Entry.insert(0, "1º End Metric")
         RXN_EM_Entry.config(justify="center", state="readonly")
         RXN_EM_Value = self.entries[3]
+        RXN_EM_2 = tkinter.StringVar()
+        RXN_EM_Entry_2 = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM_2)
+        RXN_EM_Entry_2.grid(row=1, column=0)
+        RXN_EM_Entry_2.insert(0, "2º End Metric")
+        RXN_EM_Entry_2.config(justify="center", state="readonly")
+        RXN_EM_Value_2 = self.entries[4]
         RXN_Samples = tkinter.StringVar()
         RXN_Samples_Entry = AutocompleteCombobox(self, completevalues=Num_Samples, width=15, textvariable=RXN_Samples)
         RXN_Samples_Entry.insert(0, "2500")
-        RXN_Samples_Entry.grid(row=1, column=1)
+        RXN_Samples_Entry.grid(row=2, column=1)
         RXN_Samples_Entry.config(justify="center")
         RXN_EOR = self.entries[5]
+        self.get_reactants()
+
+    def get_reactants(self):
+        global reactants_list, RXN_EM_2_SR
+        reactants_list = []
+        cell = 16
+        for i in range(RET.tableheight - 1):
+            if RET.entries[cell].get() == "":
+                cell += RET.tablewidth
+                pass
+            else:
+                reactants_list.append(RET.entries[cell].get())
+                cell += RET.tablewidth
+        RXN_EM_2_SR = tkinter.StringVar()
+        RXN_EM_Entry_2_SR = AutocompleteCombobox(self, completevalues=reactants_list, width=15, textvariable=RXN_EM_2_SR)
+        RXN_EM_Entry_2_SR.grid(row=1, column=2)
+        RXN_EM_Entry_2_SR.insert(0, "Starting Component")
+        RXN_EM_Entry_2_SR.config(justify="center", state="readonly")
 
 class RxnMetrics(tkinter.Frame):
     def __init__(self, master=tab1):
@@ -747,6 +765,52 @@ class RxnMetrics(tkinter.Frame):
         self.tableheight = None
         self.entries = None
         self.grid(row=2, column=1, padx=5, pady=5)
+        self.create_table()
+
+    def create_table(self):
+        self.entries = {}
+        self.tableheight = 8
+        self.tablewidth = 2
+        counter = 0
+        for column in range(self.tablewidth):
+            for row in range(self.tableheight):
+                self.entries[counter] = tkinter.Entry(self)
+                self.entries[counter].grid(row=row, column=column)
+                #self.entries[counter].insert(0, str(counter))
+                self.entries[counter].config(justify="center", width=18)
+                counter += 1
+        self.table_labels()
+
+    def table_labels(self):
+        self.entries[0].delete(0, tkinter.END)
+        self.entries[0].insert(0, "EHC, % =")
+        self.entries[0].config(state="readonly")
+        self.entries[1].delete(0, tkinter.END)
+        self.entries[1].insert(0, "Theory WPE =")
+        self.entries[1].config(state="readonly")
+        self.entries[2].delete(0, tkinter.END)
+        self.entries[2].insert(0, "Acid Value =")
+        self.entries[2].config(state="readonly")
+        self.entries[3].delete(0, tkinter.END)
+        self.entries[3].insert(0, "Amine Value =")
+        self.entries[3].config(state="readonly")
+        self.entries[4].delete(0, tkinter.END)
+        self.entries[4].insert(0, "OH Value =")
+        self.entries[4].config(state="readonly")
+        self.entries[5].delete(0, tkinter.END)
+        self.entries[5].insert(0, "COC Value =")
+        self.entries[5].config(state="readonly")
+        self.entries[6].delete(0, tkinter.END)
+        self.entries[6].insert(0, "Iodine Value =")
+        self.entries[6].config(state="readonly")
+
+class RxnMetrics_2(tkinter.Frame):
+    def __init__(self, master=tab1):
+        tkinter.Frame.__init__(self, master)
+        self.tablewidth = None
+        self.tableheight = None
+        self.entries = None
+        self.grid(row=2, column=2, padx=5, pady=5)
         self.create_table()
 
     def create_table(self):
@@ -863,8 +927,6 @@ class Buttons(tkinter.Frame):
         Simulate.grid(row=0, column=0)
         stop_button = tkinter.Button(self, text="Stop", command=stop, width=15, bg="Red")
         stop_button.grid(row=1, column=0)
-        # expand = tkinter.Button(self, text="Expand Data", command=RXN_Results_Compact, width=15, bg="blue")
-        # expand.grid(row=2, column=0)
         Simulate = tkinter.Button(self, text="Reset", command=reset_entry_table, width=15, bg="Orange")
         Simulate.grid(row=3, column=0)
 
@@ -906,6 +968,7 @@ RET = RxnEntryTable()
 WD = WeightDist()
 RD = RxnDetails()
 RM = RxnMetrics()
+RM2 = RxnMetrics_2()
 Buttons = Buttons()
 sim = SimStatus()
 
@@ -942,6 +1005,8 @@ Entry_masses[12].bind("<KeyRelease>", lambda *args, index=12, cell=208: RET.upda
 Entry_masses[13].bind("<KeyRelease>", lambda *args, index=13, cell=224: RET.update_table(index, cell))
 
 window.bind('<Return>', lambda *args: sim_values())
+
+window.bind('<Home>', lambda *args: RD.get_reactants())
 
 R1Data = R1Data()
 R2Data = R2Data()
