@@ -32,24 +32,33 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct_prim, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, Xn_list, byproducts, frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, frame_results_2, byproducts_table_2, frame_byproducts_2
+global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct_prim, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, byproducts_sec, frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary
 def simulate(starting_materials):
-    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running
+    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, total_ct_prim, total_ct_sec
     in_situ_values = [[], [], [], [], [], [], []]
+    in_situ_values_sec = [[], [], [], [], [], [], []]
     running = True
+    in_primary = True
     Xn_list = []
+    Xn_list_sec = []
     Mw_list = []
     test_count = 0
     test_interval = 40
     byproducts = []
+    byproducts_sec = []
     sim.progress['value'] = 0
     end_metric_selection = str(RXN_EM.get())
+    end_metric_selection_sec = str(RXN_EM_2.get())
     try:
         end_metric_value = float(RXN_EM_Value.get())
         end_metric_value_upper = end_metric_value + 15
         end_metric_value_lower = end_metric_value - 15
+        if RXN_EM_2_Active.get() == True:
+            end_metric_value_sec = float(RXN_EM_Value_2.get())
+            end_metric_value_upper_sec = end_metric_value_sec + 15
+            end_metric_value_lower_sec = end_metric_value_sec - 15
     except ValueError:
-        messagebox.showerror("Error", "Please enter a value for the end metric.")
+        messagebox.showerror("Error", "Please enter a value for the end metric(s).")
         return
     composition = []
     for compound in starting_materials:
@@ -87,7 +96,7 @@ def simulate(starting_materials):
             new_group_dict = {'NG': NG, 'WL': WL, 'WL_ID': WL_ID}
 
     def update_comp(composition, groups):
-        global test_count, running, WL, NG2, new_group_dict, byproducts, low_group
+        global test_count, running, WL, NG2, new_group_dict, byproducts, low_group, in_primary
         NC, compoundA, compoundB = composition[groups[0][0]], composition[groups[0][0]], composition[groups[1][0]]
         swapped = False
         new_name = {}
@@ -141,12 +150,14 @@ def simulate(starting_materials):
         del(composition[groups[1][0]])
         window.update()
         if test_count >= test_interval:
-            RXN_Status(composition)
+            if in_primary:
+                RXN_Status(composition)
+            else:
+                RXN_Status_sec(composition)
             test_count = 0
 
     def RXN_Status(composition):
-        global test_interval, in_situ_values, Xn_list
-        global running
+        global test_interval, in_situ_values, Xn_list, running, in_primary
         comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
         sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
         total_ct_temp = 0
@@ -190,22 +201,97 @@ def simulate(starting_materials):
         if end_metric_selection != '% EHC':
             sim.progress['value'] = round(((end_metric_value / RXN_metric_value) * 100), 2)
             if RXN_metric_value <= end_metric_value:
-                running = False
-                sim.progress['value'] = 100
-                update_metrics(TAV, AV, OH, EHC, COC, IV)
-                RXN_Results(composition)
-                RXN_Results_sec(composition)
+                if RXN_EM_2_Active.get() == False:
+                    running = False
+                    sim.progress['value'] = 100
+                    update_metrics(TAV, AV, OH, EHC, COC, IV)
+                    RXN_Results(composition)
+                else:
+                    in_primary = False
+                    sim.progress['value'] = 100
+                    update_metrics(TAV, AV, OH, EHC, COC, IV)
+                    RXN_Results(composition)
+
         else:
             sim.progress['value'] = round(((EHC / end_metric_value) * 100), 2)
             if RXN_metric_value >= end_metric_value:
-                running = False
-                sim.progress['value'] = 100
-                update_metrics(TAV, AV, OH, EHC, COC, IV)
-                RXN_Results(composition)
+                if RXN_EM_2_Active.get() == False:
+                    running = False
+                    sim.progress['value'] = 100
+                    update_metrics(TAV, AV, OH, EHC, COC, IV)
+                    RXN_Results(composition)
+                else:
+                    in_primary = False
+                    sim.progress['value'] = 100
+                    update_metrics(TAV, AV, OH, EHC, COC, IV)
+                    RXN_Results(composition)
+
         window.update()
         if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
             test_interval = 1
-        update_metrics(TAV, AV, OH, EHC, COC, IV)
+        if in_primary:
+            update_metrics(TAV, AV, OH, EHC, COC, IV)
+
+    def RXN_Status_sec(composition):
+        global test_interval, in_situ_values_sec, Xn_list_sec, running
+        comp_summary_2 = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+        sum_comp_2 = sum([comp_summary_2[key] * key[2] for key in comp_summary_2])
+        total_ct_temp_2 = 0
+        for key in comp_summary_2:
+            total_ct_temp_2 += comp_summary_2[key]
+        amine_ct, amine_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct = 0, 0, 0, 0, 0, 0, 0
+        for key in comp_summary_2:
+            key_names = [i[0] for i in key[0]]
+            Cl_ct = key_names.count('Cl')
+            for group in key[0]:
+                if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
+                    amine_ct += comp_summary_2[key]
+                elif group[0] == 'COOH':
+                    acid_ct += comp_summary_2[key]
+                elif group[0] == 'POH' or group[0] == 'SOH':
+                    alcohol_ct += comp_summary_2[key]
+                    if 'Epi' in sn_dict:
+                        sOHk = sn_dict['Epi'].cprgID[1]
+                        if group[0] == 'SOH' and group[1] == sOHk and Cl_ct > 0:
+                            Cl_ct -= 1
+                            EHC_ct += comp_summary_2[key]
+                elif group[0] == 'COC':
+                    epoxide_ct += comp_summary_2[key]
+                elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
+                    IV_ct += comp_summary_2[key]
+        TAV = round((amine_ct * 56100) / sum_comp_2, 2)
+        AV = round((acid_ct * 56100) / sum_comp_2, 2)
+        OH = round((alcohol_ct * 56100) / sum_comp_2, 2)
+        COC = round((epoxide_ct * 56100) / sum_comp_2, 2)
+        EHC = round((EHC_ct * 35.453) / sum_comp_2 * 100, 2)
+        IV = round(((IV_ct * 2) * (127 / sum_comp_2) * 100), 2)
+        in_situ_values_sec[0].append(TAV)
+        in_situ_values_sec[1].append(AV)
+        in_situ_values_sec[2].append(OH)
+        in_situ_values_sec[3].append(COC)
+        in_situ_values_sec[4].append(EHC)
+        in_situ_values_sec[5].append(IV)
+        Xn_list_sec.append(round(total_ct_sec / total_ct_temp_2, 4))
+        metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC, 'Iodine Value': IV}
+        RXN_metric_value_2 = metrics[end_metric_selection_sec]
+        if end_metric_selection_sec != '% EHC':
+            sim.progress_2['value'] = round(((end_metric_value_sec / RXN_metric_value_2) * 100), 2)
+            if RXN_metric_value_2 <= end_metric_value_sec:
+                    running = False
+                    sim.progress['value'] = 100
+                    update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
+                    RXN_Results_sec(composition)
+        else:
+            sim.progress_2['value'] = round(((EHC / end_metric_value_sec) * 100), 2)
+            if RXN_metric_value_2 >= end_metric_value_sec:
+                    running = False
+                    sim.progress['value'] = 100
+                    update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
+                    RXN_Results_sec(composition)
+        window.update()
+        if end_metric_value_upper_sec >= RXN_metric_value_2 >= end_metric_value_lower_sec:
+            test_interval = 1
+        update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
 
     while running:
         test_count += 1
@@ -248,6 +334,25 @@ def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[13].insert(0, COC)
     RM.entries[14].delete(0, tkinter.END)
     RM.entries[14].insert(0, IV)
+
+def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
+    RM2.entries[8].delete(0, tkinter.END)
+    RM2.entries[8].insert(0, EHC)
+    RM2.entries[9].delete(0, tkinter.END)
+    try:
+        RM2.entries[9].insert(0, round((3545.3 / EHC) - 36.4, 2))
+    except ZeroDivisionError:
+        RM2.entries[9].insert(0, 'N/A')
+    RM2.entries[10].delete(0, tkinter.END)
+    RM2.entries[10].insert(0, AV)
+    RM2.entries[11].delete(0, tkinter.END)
+    RM2.entries[11].insert(0, TAV)
+    RM2.entries[12].delete(0, tkinter.END)
+    RM2.entries[12].insert(0, OH)
+    RM2.entries[13].delete(0, tkinter.END)
+    RM2.entries[13].insert(0, COC)
+    RM2.entries[14].delete(0, tkinter.END)
+    RM2.entries[14].insert(0, IV)
 
 def RXN_Results(composition):
     comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
@@ -877,7 +982,7 @@ class RxnDetails(tkinter.Frame):
         self.user_entry()
 
     def user_entry(self):
-        global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, RXN_EM_Entry_2_SR
+        global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, RXN_EM_Entry_2_SR, RXN_EM_2_Active, RXN_EM_2_Check,  RXN_EM_Value_2
         RXN_EM = tkinter.StringVar()
         reactants_list = []
         RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
@@ -885,6 +990,9 @@ class RxnDetails(tkinter.Frame):
         RXN_EM_Entry.insert(0, "1º End Metric")
         RXN_EM_Entry.config(justify="center", state="readonly")
         RXN_EM_Value = self.entries[3]
+        RXN_EM_2_Active = tkinter.BooleanVar()
+        RXN_EM_2_Check = tkinter.Checkbutton(self, text="2º Active?", variable=RXN_EM_2_Active, onvalue=True, offvalue=False)
+        RXN_EM_2_Check.grid(row=0, column=2)
         RXN_EM_2 = tkinter.StringVar()
         RXN_EM_Entry_2 = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM_2)
         RXN_EM_Entry_2.grid(row=1, column=0)
@@ -965,7 +1073,7 @@ class RxnMetrics(tkinter.Frame):
         self.entries[6].insert(0, "Iodine Value =")
         self.entries[6].config(state="readonly")
 
-class RxnMetrics_2(tkinter.Frame):
+class RxnMetrics_sec(tkinter.Frame):
     def __init__(self, master=tab1):
         tkinter.Frame.__init__(self, master)
         self.tablewidth = None
@@ -1152,7 +1260,7 @@ class SimStatus(tkinter.Frame):
 
     def create_table(self):
         self.entries = {}
-        self.tableheight = 1
+        self.tableheight = 2
         self.tablewidth = 2
         counter = 0
         for column in range(self.tablewidth):
@@ -1166,20 +1274,26 @@ class SimStatus(tkinter.Frame):
 
     def tabel_labels(self):
         self.entries[0].delete(0, tkinter.END)
-        self.entries[0].insert(0, "Simulation Status")
+        self.entries[0].insert(0, "1º Simulation Status")
         self.entries[0].config(state="readonly")
+        self.entries[1].delete(0, tkinter.END)
+        self.entries[1].insert(0, "2º Simulation Status")
+        self.entries[1].config(state="readonly")
         self.add_buttons()
 
     def add_buttons(self):
         self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate",style="red.Horizontal.TProgressbar")
         self.progress.grid(row=0, column=1)
+        self.progress_2 = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate",style="red.Horizontal.TProgressbar")
+        self.progress_2.grid(row=1, column=1)
+
 
 RET = RxnEntryTable()
 WD = WeightDist()
 WD2 = WeightDist_2()
 RD = RxnDetails()
 RM = RxnMetrics()
-RM2 = RxnMetrics_2()
+RM2 = RxnMetrics_sec()
 Buttons = Buttons()
 sim = SimStatus()
 
