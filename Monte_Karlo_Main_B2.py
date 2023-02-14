@@ -550,13 +550,13 @@ def RXN_Results_sec(composition):
     byproducts_df_2['Wt, % (Of Final)'] = round(byproducts_df_2['Mass'] / rxn_summary_df_2['Mass'].sum() * 100, 4)
     byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / starting_mass * 100, 4)
 
-    Xn_2 = pandas.DataFrame(in_situ_values[0], columns=['TAV'])
-    Xn_2['AV'] = in_situ_values[1]
-    Xn_2['OH'] = in_situ_values[2]
-    Xn_2['COC'] = in_situ_values[3]
-    Xn_2['EHC, %'] = in_situ_values[4]
-    Xn_2['IV'] = in_situ_values[5]
-    Xn_2['Xn'] = Xn_list
+    Xn_2 = pandas.DataFrame(in_situ_values_sec[0], columns=['TAV'])
+    Xn_2['AV'] = in_situ_values_sec[1]
+    Xn_2['OH'] = in_situ_values_sec[2]
+    Xn_2['COC'] = in_situ_values_sec[3]
+    Xn_2['EHC, %'] = in_situ_values_sec[4]
+    Xn_2['IV'] = in_situ_values_sec[5]
+    Xn_2['Xn'] = Xn_list_sec
     Xn_2['P'] = -(1/Xn_2['Xn']) + 1
     #messagebox.showinfo('Results', 'Simulation Successful!')
     show_results_sec(rxn_summary_df_2)
@@ -675,6 +675,7 @@ def sim_values():
     total_ct_sec = 0
     sn_dict = {}
     starting_materials = []
+    starting_materials_sec = []
     try:
         for i in range(RET.tableheight - 1):
             if RET.entries[cell].get() != "" and RET.entries[cell + 1].get() != "":
@@ -1028,6 +1029,7 @@ class RxnDetails(tkinter.Frame):
                 reactants_list.append(RET.entries[cell].get())
                 cell += RET.tablewidth
         RXN_EM_Entry_2_SR.config(completevalues=reactants_list)
+
 
 class RxnMetrics(tkinter.Frame):
     def __init__(self, master=tab1):
