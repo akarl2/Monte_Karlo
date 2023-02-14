@@ -32,7 +32,7 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, Xn_list, byproducts, frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_lis
+global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, Xn_list, byproducts, frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR
 def simulate(starting_materials):
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running
     in_situ_values = [[], [], [], [], [], [], []]
@@ -720,8 +720,9 @@ class RxnDetails(tkinter.Frame):
         self.user_entry()
 
     def user_entry(self):
-        global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR
+        global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, RXN_EM_Entry_2_SR
         RXN_EM = tkinter.StringVar()
+        reactants_list = []
         RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
         RXN_EM_Entry.grid(row=0, column=0)
         RXN_EM_Entry.insert(0, "1º End Metric")
@@ -733,6 +734,13 @@ class RxnDetails(tkinter.Frame):
         RXN_EM_Entry_2.insert(0, "2º End Metric")
         RXN_EM_Entry_2.config(justify="center", state="readonly")
         RXN_EM_Value_2 = self.entries[4]
+        RXN_EM_2_SR = tkinter.StringVar()
+        RXN_EM_Entry_2_SR = AutocompleteCombobox(self, completevalues=reactants_list, width=15,
+                                                 textvariable=RXN_EM_2_SR)
+        RXN_EM_Entry_2_SR.grid(row=1, column=2)
+        if RXN_EM_Entry_2_SR.get() == "":
+            RXN_EM_Entry_2_SR.insert(0, "Starting Component")
+        RXN_EM_Entry_2_SR.config(justify="center")
         RXN_Samples = tkinter.StringVar()
         RXN_Samples_Entry = AutocompleteCombobox(self, completevalues=Num_Samples, width=15, textvariable=RXN_Samples)
         RXN_Samples_Entry.insert(0, "2500")
@@ -742,21 +750,17 @@ class RxnDetails(tkinter.Frame):
         self.get_reactants()
 
     def get_reactants(self):
-        global reactants_list, RXN_EM_2_SR
+        global reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR
         reactants_list = []
         cell = 16
         for i in range(RET.tableheight - 1):
-            if RET.entries[cell].get() == "":
+            if RET.entries[cell].get() == "" or RET.entries[cell].get() == "Clear":
                 cell += RET.tablewidth
                 pass
             else:
                 reactants_list.append(RET.entries[cell].get())
                 cell += RET.tablewidth
-        RXN_EM_2_SR = tkinter.StringVar()
-        RXN_EM_Entry_2_SR = AutocompleteCombobox(self, completevalues=reactants_list, width=15, textvariable=RXN_EM_2_SR)
-        RXN_EM_Entry_2_SR.grid(row=1, column=2)
-        RXN_EM_Entry_2_SR.insert(0, "Starting Component")
-        RXN_EM_Entry_2_SR.config(justify="center", state="readonly")
+        RXN_EM_Entry_2_SR.config(completevalues=reactants_list)
 
 class RxnMetrics(tkinter.Frame):
     def __init__(self, master=tab1):
@@ -1006,7 +1010,7 @@ Entry_masses[13].bind("<KeyRelease>", lambda *args, index=13, cell=224: RET.upda
 
 window.bind('<Return>', lambda *args: sim_values())
 
-window.bind('<Home>', lambda *args: RD.get_reactants())
+RXN_EM_Entry_2_SR.bind('<Enter>', lambda *args: RD.get_reactants())
 
 R1Data = R1Data()
 R2Data = R2Data()
