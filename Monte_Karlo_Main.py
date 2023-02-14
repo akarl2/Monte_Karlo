@@ -739,7 +739,7 @@ class RxnDetails(tkinter.Frame):
                                                  textvariable=RXN_EM_2_SR)
         RXN_EM_Entry_2_SR.grid(row=1, column=2)
         if RXN_EM_Entry_2_SR.get() == "":
-            RXN_EM_Entry_2_SR.insert(0, "Starting Component")
+            RXN_EM_Entry_2_SR.insert(0, "2º Start")
         RXN_EM_Entry_2_SR.config(justify="center")
         RXN_Samples = tkinter.StringVar()
         RXN_Samples_Entry = AutocompleteCombobox(self, completevalues=Num_Samples, width=15, textvariable=RXN_Samples)
@@ -977,7 +977,6 @@ Buttons = Buttons()
 sim = SimStatus()
 
 # run update_table if user changes value in RET
-
 RET.entries[16].bind('<FocusOut>', lambda *args, entry=16, index=0, cell=16: check_entry(entry, index, cell))
 RET.entries[32].bind('<FocusOut>', lambda *args, entry=32, index=1, cell=32: check_entry(entry, index, cell))
 RET.entries[48].bind('<FocusOut>', lambda *args, entry=48, index=2, cell=48: check_entry(entry, index, cell))
