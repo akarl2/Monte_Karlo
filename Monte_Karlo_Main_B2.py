@@ -710,8 +710,10 @@ def reset_entry_table():
             RET.entries[(i+1) * RET.tablewidth + j].configure(state='normal')
             RET.entries[(i+1) * RET.tablewidth + j].delete(0, 'end')
     sim.progress['value'] = 0
+    sim.progress_2['value'] = 0
     for i in range(8, 15):
         RM.entries[i].delete(0, 'end')
+        RM2.entries[i].delete(0, 'end')
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
