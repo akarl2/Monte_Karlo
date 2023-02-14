@@ -32,7 +32,7 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct_prim, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, Xn_list, byproducts, frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR
+global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct_prim, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, Xn_list, byproducts, frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, frame_results_2, byproducts_table_2, frame_byproducts_2
 def simulate(starting_materials):
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running
     in_situ_values = [[], [], [], [], [], [], []]
@@ -194,6 +194,7 @@ def simulate(starting_materials):
                 sim.progress['value'] = 100
                 update_metrics(TAV, AV, OH, EHC, COC, IV)
                 RXN_Results(composition)
+                RXN_Results_sec(composition)
         else:
             sim.progress['value'] = round(((EHC / end_metric_value) * 100), 2)
             if RXN_metric_value >= end_metric_value:
@@ -333,6 +334,7 @@ def RXN_Results(composition):
     WD.entries[10].insert(0, round(Mz1, 4))
     WD.entries[11].delete(0, tkinter.END)
     WD.entries[11].insert(0, round(total_ct_prim / sumNi, 4))
+
     byproducts_df = pandas.DataFrame(byproducts, columns=['Name', 'Mass'])
     byproducts_df.set_index('Name', inplace=True)
     byproducts_df['Wt, % (Of byproducts)'] = round(byproducts_df['Mass'] / byproducts_df['Mass'].sum() * 100, 4)
@@ -351,6 +353,110 @@ def RXN_Results(composition):
     show_results(rxn_summary_df)
     show_byproducts(byproducts_df)
     show_Xn(Xn)
+
+def RXN_Results_sec(composition):
+    comp_summary_2 = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+    sum_comp_2 = sum([comp_summary_2[key] * key[2] for key in comp_summary_2])
+    RS_2 = []
+    for key in comp_summary_2:
+        RS_2.append((key[0], key[1], key[2], comp_summary_2[key]))
+    RS_2 = [[[list(x) for x in i[0]], [list(y) for y in i[1]], i[2], i[3]] for i in RS_2]
+    for key in RS_2:
+        amine_ct, pTAV_ct, sTAV_ct, tTAV_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0
+        key_names = [i[0] for i in key[0]]
+        Cl_ct = key_names.count('Cl')
+        for group in key[0]:
+            if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
+                amine_ct += key[3]
+                if group[0] == 'NH2':
+                    pTAV_ct += key[3]
+                elif group[0] == 'NH':
+                    sTAV_ct += key[3]
+                elif group[0] == 'N':
+                    tTAV_ct += key[3]
+            elif group[0] == 'COOH':
+                acid_ct += key[3]
+            elif group[0] == 'POH' or group[0] == 'SOH':
+                alcohol_ct += key[3]
+                if 'Epi' in sn_dict:
+                    sOHk = sn_dict['Epi'].cprgID[1]
+                    if group[0] == 'SOH' and group[1] == sOHk and Cl_ct > 0:
+                        Cl_ct -= 1
+                        EHC_ct += key[3]
+            elif group[0] == 'COC':
+                epoxide_ct += key[3]
+            #elif group[0] == 'Cl' and 'SOH' in key_names:
+                #EHC_ct += key[3]
+            elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
+                IV_ct += key[3]
+        key.append(round((amine_ct * 56100) / sum_comp_2, 2))
+        key.append(round((pTAV_ct * 56100) / sum_comp_2, 2))
+        key.append(round((sTAV_ct * 56100) / sum_comp_2, 2))
+        key.append(round((tTAV_ct * 56100) / sum_comp_2, 2))
+        key.append(round((acid_ct * 56100) / sum_comp_2, 2))
+        key.append(round((alcohol_ct * 56100) / sum_comp_2, 2))
+        key.append(round((epoxide_ct * 56100) / sum_comp_2, 2))
+        key.append(round((EHC_ct * 35.453) / sum_comp_2 * 100, 2))
+        key.append(round(((IV_ct * 2) * (127 / sum_comp_2) * 100), 2))
+    for key in RS_2:
+        index = 0
+        for group in key[1]:
+            new_name = group[0] + '(' + str(group[1]) + ')'
+            key[1][index] = new_name
+            index += 1
+        key[1] = '_'.join(key[1])
+    rxn_summary_df_2 = pandas.DataFrame(RS_2, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV", 'AV', 'OH', 'COC', 'EHC,%', 'IV'])
+    rxn_summary_df_2['MW'] = round(rxn_summary_df_2['MW'], 2)
+    rxn_summary_df_2.drop(columns=['Groups'], inplace=True)
+    rxn_summary_df_2.set_index('Name', inplace=True)
+    rxn_summary_df_2.sort_values(by=['MW'], ascending=True, inplace=True)
+    rxn_summary_df_2['Mass'] = rxn_summary_df_2['MW'] * rxn_summary_df_2['Count']
+    rxn_summary_df_2['Mol,%'] = round(rxn_summary_df_2['Count'] / rxn_summary_df_2['Count'].sum() * 100, 4)
+    rxn_summary_df_2['Wt,%'] = round(rxn_summary_df_2['Mass'] / rxn_summary_df_2['Mass'].sum() * 100, 4)
+    sumNi = rxn_summary_df_2['Count'].sum()
+    sumNiMi = (rxn_summary_df_2['Count'] * rxn_summary_df_2['MW']).sum()
+    sumNiMi2 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW'])**2).sum()
+    sumNiMi3 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW'])**3).sum()
+    sumNiMi4 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW'])**4).sum()
+    rxn_summary_df_2 = rxn_summary_df_2[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
+    rxn_summary_df_2.loc['Sum'] = round(rxn_summary_df_2.sum(), 3)
+    rxn_summary_df_2 = rxn_summary_df_2.groupby(['MW', 'Name']).sum()
+    Mn = sumNiMi/sumNi
+    Mw = sumNiMi2/sumNiMi
+    PDI = Mw/Mn
+    Mz = sumNiMi3/sumNiMi2
+    Mz1 = sumNiMi4/sumNiMi3
+    WD2.entries[6].delete(0, tkinter.END)
+    WD2.entries[6].insert(0, round(Mn, 4))
+    WD2.entries[7].delete(0, tkinter.END)
+    WD2.entries[7].insert(0, round(Mw, 4))
+    WD2.entries[8].delete(0, tkinter.END)
+    WD2.entries[8].insert(0, round(PDI, 4))
+    WD2.entries[9].delete(0, tkinter.END)
+    WD2.entries[9].insert(0, round(Mz, 4))
+    WD2.entries[10].delete(0, tkinter.END)
+    WD2.entries[10].insert(0, round(Mz1, 4))
+    WD2.entries[11].delete(0, tkinter.END)
+    WD2.entries[11].insert(0, round(total_ct_sec / sumNi, 4))
+
+    byproducts_df_2 = pandas.DataFrame(byproducts, columns=['Name', 'Mass'])
+    byproducts_df_2.set_index('Name', inplace=True)
+    byproducts_df_2['Wt, % (Of byproducts)'] = round(byproducts_df_2['Mass'] / byproducts_df_2['Mass'].sum() * 100, 4)
+    byproducts_df_2['Wt, % (Of Final)'] = round(byproducts_df_2['Mass'] / rxn_summary_df_2['Mass'].sum() * 100, 4)
+    byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / starting_mass * 100, 4)
+
+    Xn_2 = pandas.DataFrame(in_situ_values[0], columns=['TAV'])
+    Xn_2['AV'] = in_situ_values[1]
+    Xn_2['OH'] = in_situ_values[2]
+    Xn_2['COC'] = in_situ_values[3]
+    Xn_2['EHC, %'] = in_situ_values[4]
+    Xn_2['IV'] = in_situ_values[5]
+    Xn_2['Xn'] = Xn_list
+    Xn_2['P'] = -(1/Xn_2['Xn']) + 1
+    #messagebox.showinfo('Results', 'Simulation Successful!')
+    show_results_sec(rxn_summary_df_2)
+    show_byproducts_sec(byproducts_df_2)
+    show_Xn_sec(Xn_2)
 
 # -------------------------------------------Aux Functions---------------------------------------------------#
 
@@ -375,6 +481,28 @@ def show_results(rxn_summary_df):
 
     results_table.show()
 
+def show_results_sec(rxn_summary_df_2):
+    global results_table_2, frame_results_2
+    try:
+        results_table_2.destroy()
+        frame_results_2.destroy()
+    except NameError:
+        pass
+    frame_results_2 = tkinter.Frame(tab4)
+    x = ((window.winfo_screenwidth() - frame_results_2.winfo_reqwidth()) / 2) + 100
+    y = (window.winfo_screenheight() - frame_results_2.winfo_reqheight()) / 2
+    frame_results_2.place(x=x, y=y, anchor='center')
+    results_table_2 = Table(frame_results_2, dataframe=rxn_summary_df_2, showtoolbar=True, showstatusbar=True, showindex=True,
+                          width=x, height=y, align='center',)
+    #adjust results_table if it is too big
+    if results_table_2.winfo_reqwidth() > window.winfo_screenwidth():
+        results_table_2.width = window.winfo_screenwidth() - 100
+    if results_table_2.winfo_reqheight() > window.winfo_screenheight():
+        results_table_2.height = window.winfo_screenheight() - 100
+
+    results_table_2.show()
+
+
 def show_byproducts(byproducts_df):
     global byproducts_table, frame_byproducts
     try:
@@ -386,6 +514,18 @@ def show_byproducts(byproducts_df):
     frame_byproducts.grid(row=0, column=3, padx=(100, 0), pady=(20, 0))
     byproducts_table = Table(frame_byproducts, dataframe=byproducts_df, showtoolbar=False, showstatusbar=True, showindex=True, width=600, height=100, align='center', maxcellwidth=1000)
     byproducts_table.show()
+
+def show_byproducts_sec(byproducts_df_2):
+    global byproducts_table_2, frame_byproducts_2
+    try:
+        byproducts_table_2.destroy()
+        frame_byproducts_2.destroy()
+    except NameError:
+        pass
+    frame_byproducts_2 = tkinter.Frame(tab4)
+    frame_byproducts_2.grid(row=0, column=3, padx=(100, 0), pady=(20, 0))
+    byproducts_table_2 = Table(frame_byproducts_2, dataframe=byproducts_df_2, showtoolbar=False, showstatusbar=True, showindex=True, width=600, height=100, align='center', maxcellwidth=1000)
+    byproducts_table_2.show()
 
 def show_Xn(Xn):
     global Xn_table, frame_Xn
@@ -399,6 +539,18 @@ def show_Xn(Xn):
     Xn_table = Table(frame_Xn, dataframe=Xn, showtoolbar=True, showstatusbar=True, showindex=True, width=2000, height=1000, align='center', maxcellwidth=1000)
     Xn_table.show()
 
+def show_Xn_sec(Xn_2):
+    global Xn_table_2, frame_Xn_2
+    try:
+        Xn_table_2.destroy()
+        frame_Xn_2.destroy()
+    except NameError:
+        pass
+    frame_Xn_2 = tkinter.Frame(tab5)
+    frame_Xn_2.pack()
+    Xn_table_2 = Table(frame_Xn_2, dataframe=Xn_2, showtoolbar=True, showstatusbar=True, showindex=True, width=2000, height=1000, align='center', maxcellwidth=1000)
+    Xn_table_2.show()
+
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
@@ -410,11 +562,12 @@ def stop():
         pass
 
 def sim_values():
-    global total_ct_prim, sn_dict, starting_mass
+    global total_ct_prim, sn_dict, starting_mass, total_ct_sec
     starting_mass = 0
     cell = 16
     index = 0
-    total_ct = 0
+    total_ct_prim = 0
+    total_ct_sec = 0
     sn_dict = {}
     starting_materials = []
     try:
@@ -434,7 +587,8 @@ def sim_values():
                 count = RXN_Samples.get()
                 moles_count = round(float(RET.entries[cell + 3].get()), 4)
                 starting_mass = starting_mass + float(float(Entry_masses[index].get()) * float(count))
-                total_ct = total_ct + (float(count) * float(moles_count))
+                total_ct_prim = total_ct_prim + (float(count) * float(moles_count))
+                total_ct_sec = total_ct_sec + (float(count) * float(moles_count))
                 cell = cell + RET.tablewidth
                 starting_materials.append(str_to_class(RDE[index]).comp)
                 index += 1
@@ -470,9 +624,13 @@ tab_control = ttk.Notebook(window)
 tab1 = ttk.Frame(tab_control, style='TNotebook.Tab')
 tab2 = ttk.Frame(tab_control, style='TNotebook.Tab')
 tab3 = ttk.Frame(tab_control, style='TNotebook.Tab')
+tab4 = ttk.Frame(tab_control, style='TNotebook.Tab')
+tab5 = ttk.Frame(tab_control, style='TNotebook.Tab')
 tab_control.add(tab1, text='Reactor')
-tab_control.add(tab2, text='Reaction Results')
-tab_control.add(tab3, text='In-Situ Results')
+tab_control.add(tab2, text='1° Reaction Results')
+tab_control.add(tab3, text='1° In-Situ Results')
+tab_control.add(tab4, text='2° Reaction Results')
+tab_control.add(tab5, text='2° In-Situ Results')
 tkinter.Grid.rowconfigure(window, 0, weight=1)
 tkinter.Grid.columnconfigure(window, 0, weight=1)
 tab_control.grid(row=0, column=0, sticky=tkinter.E + tkinter.W + tkinter.N + tkinter.S)
@@ -902,6 +1060,55 @@ class WeightDist(tkinter.Frame):
         self.entries[5].config(width=25)
         self.entries[5].config(state="readonly")
 
+class WeightDist_2(tkinter.Frame):
+    def __init__(self, master=tab4):
+        tkinter.Frame.__init__(self, master)
+        self.tablewidth = None
+        self.tableheight = None
+        self.entries = None
+        self.grid(row=0, column=0, padx=15, pady=15)
+        self.create_table()
+
+    def create_table(self):
+        self.entries = {}
+        self.tableheight = 6
+        self.tablewidth = 2
+        counter = 0
+        for column in range(self.tablewidth):
+            for row in range(self.tableheight):
+                self.entries[counter] = tkinter.Entry(self)
+                self.entries[counter].grid(row=row, column=column)
+                # self.entries[counter].insert(0, str(counter))
+                self.entries[counter].config(justify="center", width=15)
+                counter += 1
+        self.table_labels()
+
+    def table_labels(self):
+        self.entries[0].delete(0, tkinter.END)
+        self.entries[0].insert(0, "Mn (Number Average) =")
+        self.entries[0].config(width=25)
+        self.entries[0].config(state="readonly")
+        self.entries[1].delete(0, tkinter.END)
+        self.entries[1].insert(0, "Mw (Weight Average) =")
+        self.entries[1].config(width=25)
+        self.entries[1].config(state="readonly")
+        self.entries[2].delete(0, tkinter.END)
+        self.entries[2].insert(0, "PDI (Dispersity Index) =")
+        self.entries[2].config(width=25)
+        self.entries[2].config(state="readonly")
+        self.entries[3].delete(0, tkinter.END)
+        self.entries[3].insert(0, "Mz =")
+        self.entries[3].config(width=25)
+        self.entries[3].config(state="readonly")
+        self.entries[4].delete(0, tkinter.END)
+        self.entries[4].insert(0, "Mz + 1 =")
+        self.entries[4].config(width=25)
+        self.entries[4].config(state="readonly")
+        self.entries[5].delete(0, tkinter.END)
+        self.entries[5].insert(0, "Xn DOP = ")
+        self.entries[5].config(width=25)
+        self.entries[5].config(state="readonly")
+
 class Buttons(tkinter.Frame):
     def __init__(self, master=tab1):
         tkinter.Frame.__init__(self, master)
@@ -969,6 +1176,7 @@ class SimStatus(tkinter.Frame):
 
 RET = RxnEntryTable()
 WD = WeightDist()
+WD2 = WeightDist_2()
 RD = RxnDetails()
 RM = RxnMetrics()
 RM2 = RxnMetrics_2()
