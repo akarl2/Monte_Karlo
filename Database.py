@@ -933,6 +933,28 @@ class Azelaic_acid:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.prgID]]
 
+class Itaconic_acid:
+    def __init__(self):
+        self.name = "Itaconic acid"
+        self.sn = "ItAc"
+        self.formula = "C5H6O4"
+        self.mw = 130.099
+        self.density = 11.63
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = "aB_unsat"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID], [self.prgID]]
+
 class Diethyl_maleate:
     def __init__(self):
         self.name = "Diethyl maleate"

@@ -319,12 +319,19 @@ def simulate(starting_materials, starting_materials_sec):
         start = time.time()
         while groups[0][0] == groups[1][0] or check_react(groups) is False:
             groups = random.choices(chemical, weights, k=2)
-            if time.time() - start > 3:
+            if time.time() - start > 3 and in_primary:
                 running = False
                 sim.progress['value'] = 100
                 RXN_Results(composition)
                 messagebox.showerror("Error", "Increase # of samples or End Metric is unattainable")
                 break
+            else:
+                if time.time() - start > 3 and in_primary == False:
+                    running = False
+                    sim.progress_2['value'] = 100
+                    RXN_Results_sec(composition)
+                    messagebox.showerror("Error", "Increase # of samples or End Metric is unattainable")
+                    break
         stop = time.time()
         update_comp(composition, groups)
 
@@ -1097,7 +1104,7 @@ class RxnMetrics_sec(tkinter.Frame):
         self.tablewidth = None
         self.tableheight = None
         self.entries = None
-        self.grid(row=2, column=2, padx=5, pady=5)
+        self.grid(row=2, column=1, padx=(500,0), pady=5)
         self.create_table()
 
     def create_table(self):
