@@ -1028,7 +1028,8 @@ class RxnDetails(tkinter.Frame):
             else:
                 reactants_list.append(RET.entries[cell].get())
                 cell += RET.tablewidth
-        RXN_EM_Entry_2_SR.config(completevalues=reactants_list)
+        #reactants_list = [[index+1, reactant] for index, reactant in enumerate(reactants_list)]
+        RXN_EM_Entry_2_SR.config(completevalues=reactants_list, state="readonly")
 
 
 class RxnMetrics(tkinter.Frame):
