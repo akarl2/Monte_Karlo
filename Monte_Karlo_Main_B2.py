@@ -560,7 +560,7 @@ def RXN_Results_sec(composition):
     byproducts_df_2.set_index('Name', inplace=True)
     byproducts_df_2['Wt, % (Of byproducts)'] = round(byproducts_df_2['Mass'] / byproducts_df_2['Mass'].sum() * 100, 4)
     byproducts_df_2['Wt, % (Of Final)'] = round(byproducts_df_2['Mass'] / rxn_summary_df_2['Mass'].sum() * 100, 4)
-    byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / starting_mass * 100, 4)
+    byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / starting_mass_sec * 100, 4)
 
     Xn_2 = pandas.DataFrame(in_situ_values_sec[0], columns=['TAV'])
     Xn_2['AV'] = in_situ_values_sec[1]
@@ -676,9 +676,10 @@ def stop():
         pass
 
 def sim_values():
-    global total_ct_prim, sn_dict, starting_mass, total_ct_sec
+    global total_ct_prim, sn_dict, starting_mass, total_ct_sec, starting_mass_sec
     row_for_sec = RXN_EM_Entry_2_SR.current()
     starting_mass = 0
+    starting_mass_sec = 0
     cell = 16
     index = 0
     total_ct_prim = 0
@@ -702,12 +703,13 @@ def sim_values():
                 sn_dict[str_to_class(RDE[index]).sn] = str_to_class(RDE[index])
                 count = RXN_Samples.get()
                 moles_count = round(float(RET.entries[cell + 3].get()), 4)
-                starting_mass = starting_mass + float(float(Entry_masses[index].get()) * float(count))
+                starting_mass_sec += float(float(Entry_masses[index].get()) * float(count))
                 cell = cell + RET.tablewidth
                 total_ct_sec += (float(count) * float(moles_count))
                 if i >= row_for_sec and RXN_EM_2_Active.get() == True:
                     starting_materials_sec.append(str_to_class(RDE[index]).comp)
                 else:
+                    starting_mass += float(float(Entry_masses[index].get()) * float(count))
                     total_ct_prim += (float(count) * float(moles_count))
                     starting_materials.append(str_to_class(RDE[index]).comp)
                 index += 1

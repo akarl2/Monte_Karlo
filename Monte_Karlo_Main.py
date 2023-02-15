@@ -813,7 +813,7 @@ class RxnMetrics_2(tkinter.Frame):
         self.tablewidth = None
         self.tableheight = None
         self.entries = None
-        self.grid(row=2, column=2, padx=5, pady=5)
+        self.grid(row=2 , column=2, padx=5, pady=5)
         self.create_table()
 
     def create_table(self):
