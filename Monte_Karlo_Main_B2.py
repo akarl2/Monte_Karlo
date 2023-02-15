@@ -234,7 +234,9 @@ def simulate(starting_materials, starting_materials_sec):
                     sim.progress['value'] = 100
                     update_metrics(TAV, AV, OH, EHC, COC, IV)
                     RXN_Results(composition)
-                    composition.append(composition_sec)
+                    for species in composition_sec:
+                        composition.append(species)
+
         window.update()
         if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
             test_interval = 1
