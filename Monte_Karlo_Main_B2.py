@@ -47,6 +47,7 @@ def simulate(starting_materials, starting_materials_sec):
     byproducts = []
     byproducts_sec = []
     sim.progress['value'] = 0
+    sim.progress_2['value'] = 0
     end_metric_selection = str(RXN_EM.get())
     end_metric_selection_sec = str(RXN_EM_2.get())
     try:
@@ -702,12 +703,12 @@ def sim_values():
                 count = RXN_Samples.get()
                 moles_count = round(float(RET.entries[cell + 3].get()), 4)
                 starting_mass = starting_mass + float(float(Entry_masses[index].get()) * float(count))
-                total_ct_prim = total_ct_prim + (float(count) * float(moles_count))
-                total_ct_sec = total_ct_sec + (float(count) * float(moles_count))
                 cell = cell + RET.tablewidth
+                total_ct_sec += (float(count) * float(moles_count))
                 if i >= row_for_sec and RXN_EM_2_Active.get() == True:
                     starting_materials_sec.append(str_to_class(RDE[index]).comp)
                 else:
+                    total_ct_prim += (float(count) * float(moles_count))
                     starting_materials.append(str_to_class(RDE[index]).comp)
                 index += 1
             else:

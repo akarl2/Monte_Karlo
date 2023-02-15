@@ -73,6 +73,7 @@ class COOH:
         self.SOH_wl_id = "H2O"
         self.COC = 'COCOH'
         self.COC_wl = 0
+        self.COC_wl_id = 'None'
 
 class NH:
     def __init__(self):
@@ -102,6 +103,7 @@ class COC:
         self.SOH_wl_id = 'None'
         self.COOH = 'COCOH'
         self.COOH_wl = 0
+        self.COOH_wl_id = 'None'
         self.NH = 'N'
         self.NH_wl = 0
         self.NH_wl_id = 'None'
