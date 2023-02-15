@@ -668,6 +668,8 @@ def stop():
 
 def sim_values():
     global total_ct_prim, sn_dict, starting_mass, total_ct_sec
+    row_for_sec = RXN_EM_Entry_2_SR.current() + 1
+    print(row_for_sec)
     starting_mass = 0
     cell = 16
     index = 0
@@ -1028,9 +1030,8 @@ class RxnDetails(tkinter.Frame):
             else:
                 reactants_list.append(RET.entries[cell].get())
                 cell += RET.tablewidth
-        #reactants_list = [[index+1, reactant] for index, reactant in enumerate(reactants_list)]
+        reactants_list = [f'{index+1}: {reactant}' for index, reactant in enumerate(reactants_list)]
         RXN_EM_Entry_2_SR.config(completevalues=reactants_list, state="readonly")
-
 
 class RxnMetrics(tkinter.Frame):
     def __init__(self, master=tab1):
