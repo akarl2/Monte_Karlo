@@ -33,7 +33,7 @@ pandas.set_option('display.width', 100)
 
 # Runs the simulation
 global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct_prim, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, byproducts_sec, frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary
-def simulate(starting_materials):
+def simulate(starting_materials, starting_materials_sec):
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, total_ct_prim, total_ct_sec
     in_situ_values = [[], [], [], [], [], [], []]
     in_situ_values_sec = [[], [], [], [], [], [], []]
@@ -67,6 +67,14 @@ def simulate(starting_materials):
             for group in compound[0]:
                 inner_result.append([group[0], group[1]])
             composition.append([inner_result, compound[2], compound[1]])
+
+    composition_sec = []
+    for compound in starting_materials_sec:
+        for i in range(compound[3][0]):
+            inner_result = []
+            for group in compound[0]:
+                inner_result.append([group[0], group[1]])
+            composition_sec.append([inner_result, compound[2], compound[1]])
 
     def check_react(groups):
         global groupA, groupB
@@ -211,7 +219,8 @@ def simulate(starting_materials):
                     sim.progress['value'] = 100
                     update_metrics(TAV, AV, OH, EHC, COC, IV)
                     RXN_Results(composition)
-
+                    for species in composition_sec:
+                        composition.append(species)
         else:
             sim.progress['value'] = round(((EHC / end_metric_value) * 100), 2)
             if RXN_metric_value >= end_metric_value:
@@ -225,7 +234,7 @@ def simulate(starting_materials):
                     sim.progress['value'] = 100
                     update_metrics(TAV, AV, OH, EHC, COC, IV)
                     RXN_Results(composition)
-
+                    composition.append(composition_sec)
         window.update()
         if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
             test_interval = 1
@@ -583,7 +592,6 @@ def show_results(rxn_summary_df):
         results_table.width = window.winfo_screenwidth() - 100
     if results_table.winfo_reqheight() > window.winfo_screenheight():
         results_table.height = window.winfo_screenheight() - 100
-
     results_table.show()
 
 def show_results_sec(rxn_summary_df_2):
@@ -604,9 +612,7 @@ def show_results_sec(rxn_summary_df_2):
         results_table_2.width = window.winfo_screenwidth() - 100
     if results_table_2.winfo_reqheight() > window.winfo_screenheight():
         results_table_2.height = window.winfo_screenheight() - 100
-
     results_table_2.show()
-
 
 def show_byproducts(byproducts_df):
     global byproducts_table, frame_byproducts
@@ -668,8 +674,7 @@ def stop():
 
 def sim_values():
     global total_ct_prim, sn_dict, starting_mass, total_ct_sec
-    row_for_sec = RXN_EM_Entry_2_SR.current() + 1
-    print(row_for_sec)
+    row_for_sec = RXN_EM_Entry_2_SR.current()
     starting_mass = 0
     cell = 16
     index = 0
@@ -698,14 +703,17 @@ def sim_values():
                 total_ct_prim = total_ct_prim + (float(count) * float(moles_count))
                 total_ct_sec = total_ct_sec + (float(count) * float(moles_count))
                 cell = cell + RET.tablewidth
-                starting_materials.append(str_to_class(RDE[index]).comp)
+                if i >= row_for_sec and RXN_EM_2_Active.get() == True:
+                    starting_materials_sec.append(str_to_class(RDE[index]).comp)
+                else:
+                    starting_materials.append(str_to_class(RDE[index]).comp)
                 index += 1
             else:
                 break
     except AttributeError as e:
         messagebox.showerror("Exception raised", str(e))
         pass
-    simulate(starting_materials)
+    simulate(starting_materials, starting_materials_sec)
 
 def reset_entry_table():
     for i in range(RET.tableheight - 1):
@@ -911,7 +919,6 @@ class RxnEntryTable(tkinter.Frame):
                     self.entries[cell+1].config(state="readonly")
                 cell = cell + self.tablewidth
                 index = index + 1
-
         weight_percent()
 
     def update_rates(self, index, cell):
