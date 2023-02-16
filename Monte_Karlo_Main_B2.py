@@ -31,7 +31,7 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct_prim, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, byproducts_sec, frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary, quick_add, quick_add_comp
+global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct_prim, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, byproducts_sec, frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary, quick_add, quick_add_comp, RXN_EM_Value, RXN_EM_Entry
 def simulate(starting_materials, starting_materials_sec):
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, total_ct_prim, total_ct_sec, quick_add
     in_situ_values = [[], [], [], [], [], [], []]
@@ -736,6 +736,14 @@ def reset_entry_table():
     for i in range(8, 15):
         RM.entries[i].delete(0, 'end')
         RM2.entries[i].delete(0, 'end')
+    RXN_EM_2_Active.set(False)
+    RXN_EM_Entry_2_SR.set("2° Start")
+    RXN_EM_Value_2.delete(0, 'end')
+    RXN_EM_Entry_2.insert(0, "")
+    RXN_EM_Entry_2.set("2° End Metric")
+    RXN_EM_Entry.set("1° End Metric")
+    RXN_EM_Value.delete(0, 'end')
+    RXN_EM_Entry.insert(0, "")
 
 def quick_add():
     cell = 16
@@ -1050,7 +1058,7 @@ class RxnDetails(tkinter.Frame):
         self.user_entry()
 
     def user_entry(self):
-        global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, RXN_EM_Entry_2_SR, RXN_EM_2_Active, RXN_EM_2_Check,  RXN_EM_Value_2
+        global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, RXN_EM_Entry_2_SR, RXN_EM_2_Active, RXN_EM_2_Check,  RXN_EM_Value_2, RXN_EM_Entry
         RXN_EM = tkinter.StringVar()
         reactants_list = []
         RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
