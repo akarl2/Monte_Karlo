@@ -739,7 +739,6 @@ def reset_entry_table():
 
 def quick_add():
     d = QuickAddWindow(window)
-    print(quick_add_comp)
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
@@ -814,9 +813,23 @@ class QuickAddWindow(simpledialog.Dialog):
         self.e1.grid(row=0, column=1)
         self.e2.grid(row=1, column=1)
         return self.e1
-    def apply(self):
+    def buttonbox(self):
+        box = Frame(self)
+        w = Button(box, text="Submit", width=10, command=self.ok)
+        w.pack(side=LEFT, padx=5, pady=5)
+        w = Button(box, text="Cancel", width=10, command=self.cancel)
+        w.pack(side=LEFT, padx=5, pady=5)
+        self.bind("<Return>", self.ok)
+        self.bind("<Escape>", self.cancel)
+        box.pack()
+    def cancel(self):
+        global quick_add_comp
+        quick_add_comp = None
+        self.destroy()
+    def ok(self):
         global quick_add_comp
         quick_add_comp = [self.e1.get(), float(self.e2.get())]
+        self.destroy()
 
 class RxnEntryTable(tkinter.Frame):
     def __init__(self, master=tab1):

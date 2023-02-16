@@ -1106,7 +1106,7 @@ class BPADGE:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.prgID]]
 
-
+Dimer_1017 = [["C18", 2], ["Dimer", 78], ["Trimer", 2]]
 
 class Clear:
     def __init__(self):
