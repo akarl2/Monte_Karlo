@@ -1107,8 +1107,9 @@ class BPADGE:
         self.dist = [[self.prgID], [self.prgID]]
 
 quick_add_dict = {
-    "Dimer_1017": [["C18", .02], ["Dimer", .78], ["Trimer", .2]],
-    "TOFA": [["C18", 2], ["Dimer", 78], ["Trimer", 2]],
+    "Dimer 1017": [["C18", .02], ["Dimer", .78], ["Trimer", .2]],
+    "TOFA": [["C14", .03], ["C16", .05], ["C161", 0.05], ["C18", 0.02], ["C181", 0.70], ["C182", 0.13], ["C183", 0.02]],
+    "Linseed FA": [["C16", .0658], ["C18", 0.0443], ["C181", 0.1851], ["C182", 0.1725], ["C183", 0.5324]],
 }
 
 class Clear:
@@ -1117,7 +1118,9 @@ class Clear:
 
 Reactants = [x for x in dir(Database) if isclass(getattr(Database, x))]
 
-quick_adds = ["TOFA", "Dimer_1017"]
+
+
+quick_adds = ["TOFA", "Dimer 1017", "Linseed FA"]
 
 
 

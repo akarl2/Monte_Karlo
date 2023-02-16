@@ -1398,11 +1398,12 @@ Entry_masses[11].bind("<KeyRelease>", lambda *args, index=11, cell=192: RET.upda
 Entry_masses[12].bind("<KeyRelease>", lambda *args, index=12, cell=208: RET.update_table(index, cell))
 Entry_masses[13].bind("<KeyRelease>", lambda *args, index=13, cell=224: RET.update_table(index, cell))
 
-window.bind('<Return>', lambda *args: sim_values())
+window.bind('<Control-s>', lambda *args: sim_values())
 
 RXN_EM_Entry_2_SR.bind('<Enter>', lambda *args: RD.get_reactants())
 
 window.bind('<Control-q>', lambda *args: quick_add())
+window.bind('<Control-e>', lambda *args: reset_entry_table() )
 
 R1Data = R1Data()
 R2Data = R2Data()
