@@ -1114,6 +1114,8 @@ class Clear:
 
 Reactants = [x for x in dir(Database) if isclass(getattr(Database, x))]
 
+quick_adds = ["TOFA", "Dimer_1017"]
+
 
 
 

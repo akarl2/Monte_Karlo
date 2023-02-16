@@ -416,7 +416,8 @@ def sim_values():
     index = 0
     total_ct = 0
     sn_dict = {}
-    starting_materials = []
+    starting_materials_prim = []
+    starting_materials_sec = []
     try:
         for i in range(RET.tableheight - 1):
             if RET.entries[cell].get() != "" and RET.entries[cell + 1].get() != "":
@@ -436,14 +437,14 @@ def sim_values():
                 starting_mass = starting_mass + float(float(Entry_masses[index].get()) * float(count))
                 total_ct = total_ct + (float(count) * float(moles_count))
                 cell = cell + RET.tablewidth
-                starting_materials.append(str_to_class(RDE[index]).comp)
+                starting_materials_prim.append(str_to_class(RDE[index]).comp)
                 index += 1
             else:
                 break
     except AttributeError as e:
         messagebox.showerror("Exception raised", str(e))
         pass
-    simulate(starting_materials)
+    simulate(starting_materials_prim)
 
 def reset_entry_table():
     for i in range(RET.tableheight - 1):

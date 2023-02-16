@@ -6,7 +6,7 @@ import tkinter
 import time
 from tkinter import *
 import customtkinter
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, simpledialog
 import pandas
 from ttkwidgets.autocomplete import AutocompleteCombobox
 from Database import *
@@ -18,7 +18,6 @@ import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
-import numpy as np
 from scipy.interpolate import make_interp_spline
 import statsmodels
 import math
@@ -32,9 +31,9 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct_prim, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, byproducts_sec, frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary
+global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct_prim, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, byproducts_sec, frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary, quick_add, quick_add_comp
 def simulate(starting_materials, starting_materials_sec):
-    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, total_ct_prim, total_ct_sec
+    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, total_ct_prim, total_ct_sec, quick_add
     in_situ_values = [[], [], [], [], [], [], []]
     in_situ_values_sec = [[], [], [], [], [], [], []]
     running = True
@@ -738,6 +737,10 @@ def reset_entry_table():
         RM.entries[i].delete(0, 'end')
         RM2.entries[i].delete(0, 'end')
 
+def quick_add():
+    d = QuickAddWindow(window)
+    print(quick_add_comp)
+
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
 style = ttk.Style(window)
@@ -775,6 +778,7 @@ menubar.add_cascade(label='Options', menu=filemenu2)
 menubar.add_cascade(label='Help', menu=filemenu3)
 filemenu1.add_command(label='Reset', command=reset_entry_table)
 filemenu1.add_command(label='Exit', command=window.destroy)
+filemenu2.add_command(label='Quick Add', command=quick_add)
 filemenu3.add_command(label='Help')
 
 
@@ -797,6 +801,22 @@ def check_entry(entry, index, cell):
     else:
         RET.update_table(index, cell)
         RET.update_rates(index, cell)
+
+
+class QuickAddWindow(simpledialog.Dialog):
+    def body(self, master):
+        self.title("Quick Add")
+        Label(master, text="Reactant:").grid(row=0, column=0)
+        Label(master, text="Mass (g):").grid(row=1, column=0)
+        comp_to_add = tkinter.StringVar()
+        self.e1 = AutocompleteCombobox(master, completevalues=quick_adds, textvariable=comp_to_add, width=15)
+        self.e2 = Entry(master, width=18)
+        self.e1.grid(row=0, column=1)
+        self.e2.grid(row=1, column=1)
+        return self.e1
+    def apply(self):
+        global quick_add_comp
+        quick_add_comp = [self.e1.get(), float(self.e2.get())]
 
 class RxnEntryTable(tkinter.Frame):
     def __init__(self, master=tab1):
@@ -1356,6 +1376,8 @@ Entry_masses[13].bind("<KeyRelease>", lambda *args, index=13, cell=224: RET.upda
 window.bind('<Return>', lambda *args: sim_values())
 
 RXN_EM_Entry_2_SR.bind('<Enter>', lambda *args: RD.get_reactants())
+
+window.bind('<Control-q>', lambda *args: quick_add())
 
 R1Data = R1Data()
 R2Data = R2Data()
