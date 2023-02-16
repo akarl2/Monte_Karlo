@@ -544,7 +544,7 @@ class DEA:
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
-        self.dist = [[self.prgID], [self.srgID], [self.prgID]]
+        self.dist = [[self.srgID], [self.prgID], [self.srgID]]
 
 class Lysinol:
     def __init__(self):
@@ -1110,6 +1110,7 @@ quick_add_dict = {
     "Dimer 1017": [["C18", .02], ["Dimer", .78], ["Trimer", .2]],
     "TOFA": [["C14", .03], ["C16", .05], ["C161", 0.05], ["C18", 0.02], ["C181", 0.70], ["C182", 0.13], ["C183", 0.02]],
     "Linseed FA": [["C16", .0658], ["C18", 0.0443], ["C181", 0.1851], ["C182", 0.1725], ["C183", 0.5324]],
+    "TETA (Dist)": [["C16", .0658], ["C18", 0.0443], ["C181", 0.1851], ["C182", 0.1725], ["C183", 0.5324]],
 }
 
 class Clear:
