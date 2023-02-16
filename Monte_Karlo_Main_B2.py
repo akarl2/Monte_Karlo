@@ -738,7 +738,19 @@ def reset_entry_table():
         RM2.entries[i].delete(0, 'end')
 
 def quick_add():
+    cell = 16
     d = QuickAddWindow(window)
+    if quick_add_comp is None:
+        pass
+    else:
+        for i in range(len(quick_add_dict[quick_add_comp[0]])):
+            RET.entries[cell].delete(0, 'end')
+            RET.entries[cell + 1].delete(0, 'end')
+            RET.entries[cell].insert(0, quick_add_dict[quick_add_comp[0]][i][0])
+            new_mass = round(float(quick_add_dict[quick_add_comp[0]][i][1]) * float(quick_add_comp[1]), 4)
+            RET.entries[cell + 1].insert(0, new_mass)
+            check_entry(entry=cell, index=i, cell=cell)
+            cell += RET.tablewidth
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
@@ -800,7 +812,6 @@ def check_entry(entry, index, cell):
     else:
         RET.update_table(index, cell)
         RET.update_rates(index, cell)
-
 
 class QuickAddWindow(simpledialog.Dialog):
     def body(self, master):
@@ -1370,6 +1381,7 @@ RET.entries[176].bind('<FocusOut>', lambda *args, entry=176, index=10, cell=176:
 RET.entries[192].bind('<FocusOut>', lambda *args, entry=192, index=11, cell=192: check_entry(entry, index, cell))
 RET.entries[208].bind('<FocusOut>', lambda *args, entry=208, index=12, cell=208: check_entry(entry, index, cell))
 RET.entries[224].bind('<FocusOut>', lambda *args, entry=224, index=13, cell=224: check_entry(entry, index, cell))
+
 
 Entry_masses[0].bind("<KeyRelease>", lambda *args, index=0, cell=16: RET.update_table(index, cell))
 Entry_masses[1].bind("<KeyRelease>", lambda *args, index=1, cell=32: RET.update_table(index, cell))
