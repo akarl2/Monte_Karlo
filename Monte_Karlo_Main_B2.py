@@ -747,6 +747,13 @@ def reset_entry_table():
 
 def quick_add():
     cell = 16
+    for i in range(RET.tableheight - 1):
+        if RET.entries[cell].get() != "" and RET.entries[cell + 1].get() != "":
+            cell = cell + RET.tablewidth
+        else:
+            print(cell)
+            start_index = i
+            break
     d = QuickAddWindow(window)
     if quick_add_comp is None:
         pass
@@ -757,7 +764,7 @@ def quick_add():
             RET.entries[cell].insert(0, quick_add_dict[quick_add_comp[0]][i][0])
             new_mass = round(float(quick_add_dict[quick_add_comp[0]][i][1]) * float(quick_add_comp[1]), 4)
             RET.entries[cell + 1].insert(0, new_mass)
-            check_entry(entry=cell, index=i, cell=cell)
+            check_entry(entry=cell, index=i+start_index, cell=cell)
             cell += RET.tablewidth
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
@@ -1407,11 +1414,10 @@ Entry_masses[12].bind("<KeyRelease>", lambda *args, index=12, cell=208: RET.upda
 Entry_masses[13].bind("<KeyRelease>", lambda *args, index=13, cell=224: RET.update_table(index, cell))
 
 window.bind('<Control-s>', lambda *args: sim_values())
-
 RXN_EM_Entry_2_SR.bind('<Enter>', lambda *args: RD.get_reactants())
-
-window.bind('<Control-q>', lambda *args: quick_add())
-window.bind('<Control-e>', lambda *args: reset_entry_table() )
+window.bind('<Control-a>', lambda *args: quick_add())
+window.bind('<Control-e>', lambda *args: reset_entry_table())
+window.bind('<Control-q>', lambda *args: quit())
 
 R1Data = R1Data()
 R2Data = R2Data()
