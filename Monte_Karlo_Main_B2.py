@@ -127,7 +127,7 @@ def simulate(starting_materials, starting_materials_sec):
                     byproducts.append([WL_ID, WL])
                     break
         NW = compoundA[2][0] + compoundB[2][0] - WL
-        NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW, 3)]]
+        NC = [[[group[0], group[1]] for group in NC[0]], new_name, [round(NW, 4)]]
         NC[0][groups[0][1]][0] = NG
         for species in NC[1]:
             name = sn_dict[species[0]]
@@ -424,7 +424,7 @@ def RXN_Results(composition):
             index += 1
         key[1] = '_'.join(key[1])
     rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV", 'AV', 'OH', 'COC', 'EHC,%', 'IV'])
-    rxn_summary_df['MW'] = round(rxn_summary_df['MW'], 2)
+    rxn_summary_df['MW'] = round(rxn_summary_df['MW'], 4)
     rxn_summary_df.drop(columns=['Groups'], inplace=True)
     rxn_summary_df.set_index('Name', inplace=True)
     rxn_summary_df.sort_values(by=['MW'], ascending=True, inplace=True)
@@ -437,6 +437,7 @@ def RXN_Results(composition):
     sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**3).sum()
     sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**4).sum()
     rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
+    rxn_summary_df['Mass'] = rxn_summary_df['Mass'] / float(RXN_Samples.get())
     rxn_summary_df.loc['Sum'] = round(rxn_summary_df.sum(), 3)
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
 
@@ -460,9 +461,10 @@ def RXN_Results(composition):
 
     byproducts_df = pandas.DataFrame(byproducts, columns=['Name', 'Mass'])
     byproducts_df.set_index('Name', inplace=True)
+    byproducts_df['Mass'] = byproducts_df['Mass'] / float(RXN_Samples.get())
     byproducts_df['Wt, % (Of byproducts)'] = round(byproducts_df['Mass'] / byproducts_df['Mass'].sum() * 100, 4)
     byproducts_df['Wt, % (Of Final)'] = round(byproducts_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
-    byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / starting_mass * 100, 4)
+    byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / (starting_mass / float(RXN_Samples.get())) * 100, 4)
 
     Xn = pandas.DataFrame(in_situ_values[0], columns=['TAV'])
     Xn['AV'] = in_situ_values[1]
@@ -529,7 +531,7 @@ def RXN_Results_sec(composition):
             index += 1
         key[1] = '_'.join(key[1])
     rxn_summary_df_2 = pandas.DataFrame(RS_2, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV", 'AV', 'OH', 'COC', 'EHC,%', 'IV'])
-    rxn_summary_df_2['MW'] = round(rxn_summary_df_2['MW'], 2)
+    rxn_summary_df_2['MW'] = round(rxn_summary_df_2['MW'], 4)
     rxn_summary_df_2.drop(columns=['Groups'], inplace=True)
     rxn_summary_df_2.set_index('Name', inplace=True)
     rxn_summary_df_2.sort_values(by=['MW'], ascending=True, inplace=True)
@@ -542,6 +544,7 @@ def RXN_Results_sec(composition):
     sumNiMi3 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW'])**3).sum()
     sumNiMi4 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW'])**4).sum()
     rxn_summary_df_2 = rxn_summary_df_2[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
+    rxn_summary_df_2['Mass'] = rxn_summary_df_2['Mass'] / float(RXN_Samples.get())
     rxn_summary_df_2.loc['Sum'] = round(rxn_summary_df_2.sum(), 3)
     rxn_summary_df_2 = rxn_summary_df_2.groupby(['MW', 'Name']).sum()
     Mn = sumNiMi/sumNi
@@ -564,9 +567,10 @@ def RXN_Results_sec(composition):
 
     byproducts_df_2 = pandas.DataFrame(byproducts, columns=['Name', 'Mass'])
     byproducts_df_2.set_index('Name', inplace=True)
+    byproducts_df_2['Mass'] = byproducts_df_2['Mass'] / float(RXN_Samples.get())
     byproducts_df_2['Wt, % (Of byproducts)'] = round(byproducts_df_2['Mass'] / byproducts_df_2['Mass'].sum() * 100, 4)
     byproducts_df_2['Wt, % (Of Final)'] = round(byproducts_df_2['Mass'] / rxn_summary_df_2['Mass'].sum() * 100, 4)
-    byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / starting_mass_sec * 100, 4)
+    byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / (starting_mass / float(RXN_Samples.get())) * 100, 4)
 
     Xn_2 = pandas.DataFrame(in_situ_values_sec[0], columns=['TAV'])
     Xn_2['AV'] = in_situ_values_sec[1]
@@ -686,6 +690,7 @@ def sim_values():
     row_for_sec = RXN_EM_Entry_2_SR.current()
     starting_mass = 0
     starting_mass_sec = 0
+    value_for_mass_adjust = 0
     cell = 16
     index = 0
     total_ct_prim = 0
@@ -698,7 +703,7 @@ def sim_values():
             if RET.entries[cell].get() != "" and RET.entries[cell + 1].get() != "":
                 str_to_class(RDE[index]).assign(name=str_to_class(Entry_Reactants[index].get())(),
                                                 mass=Entry_masses[index].get(),
-                                                moles=round(float(RET.entries[cell + 3].get()), 4),
+                                                moles=round(float(RET.entries[cell + 3].get()), 6),
                                                 prgID=RET.entries[cell + 4].get(), prgk=RET.entries[cell + 5].get(),
                                                 cprgID=RET.entries[cell + 6].get(), cprgk=RET.entries[cell + 7].get(),
                                                 srgID=RET.entries[cell + 8].get(), srgk=RET.entries[cell + 9].get(),
@@ -708,7 +713,8 @@ def sim_values():
                                                 ct=RXN_Samples.get())
                 sn_dict[str_to_class(RDE[index]).sn] = str_to_class(RDE[index])
                 count = RXN_Samples.get()
-                moles_count = round(float(RET.entries[cell + 3].get()), 4)
+                #value_for_mass_adjust += float(count) * RET.entries[cell + 3].get()
+                moles_count = round(float(RET.entries[cell + 3].get()), 6)
                 starting_mass_sec += float(float(Entry_masses[index].get()) * float(count))
                 cell = cell + RET.tablewidth
                 total_ct_sec += (float(count) * float(moles_count))
@@ -751,7 +757,6 @@ def quick_add():
         if RET.entries[cell].get() != "" and RET.entries[cell + 1].get() != "":
             cell = cell + RET.tablewidth
         else:
-            print(cell)
             start_index = i
             break
     d = QuickAddWindow(window)
@@ -970,7 +975,7 @@ class RxnEntryTable(tkinter.Frame):
                 a = str_to_class(Entry_Reactants[index].get())()
                 molesA = float(Entry_masses[index].get()) / float(a.mw)
                 self.entries[cell + 3].delete(0, tkinter.END)
-                self.entries[cell + 3].insert(0, str(round(molesA, 4)))
+                self.entries[cell + 3].insert(0, str(round(molesA, 6)))
 
         def sum_mass():
             total = 0
