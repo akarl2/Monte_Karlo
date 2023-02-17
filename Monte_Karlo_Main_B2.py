@@ -36,7 +36,7 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
     total_ct_prim, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, byproducts_sec, \
     frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, \
     frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary, quick_add, quick_add_comp, \
-    RXN_EM_Value, RXN_EM_Entry, rxn_summary_df, rxn_summary_df_2
+    RXN_EM_Value, RXN_EM_Entry, rxn_summary_df, rxn_summary_df_2, Xn, Xn_2
 def simulate(starting_materials, starting_materials_sec):
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, total_ct_prim, total_ct_sec, quick_add
     in_situ_values = [[], [], [], [], [], [], []]
@@ -378,7 +378,7 @@ def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
     RM2.entries[14].insert(0, IV)
 
 def RXN_Results(composition):
-    global rxn_summary_df
+    global rxn_summary_df, Xn
     comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
     sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
     RS = []
@@ -486,7 +486,7 @@ def RXN_Results(composition):
     show_Xn(Xn)
 
 def RXN_Results_sec(composition):
-    global rxn_summary_df_2
+    global rxn_summary_df_2, Xn_2
     comp_summary_2 = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
     sum_comp_2 = sum([comp_summary_2[key] * key[2] for key in comp_summary_2])
     RS_2 = []
@@ -789,12 +789,22 @@ def quick_add():
             cell += RET.tablewidth
 
 def export_primary():
-    with filedialog.asksaveasfile(mode='wb', defaultextension='.csv', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")]) as file:
-        rxn_summary_df.to_excel(file, sheet_name='1_Summary', index=True)
+    filepath = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
+    if filepath == "":
+        return
+    else:
+        with pandas.ExcelWriter(filepath) as writer:
+            rxn_summary_df.to_excel(writer, sheet_name='1_Summary', index=True)
+            Xn.to_excel(writer, sheet_name='1_In_Situ', index=True)
 
 def export_secondary():
-    with filedialog.asksaveasfile(mode='wb', defaultextension='.csv', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")]) as file:
-        rxn_summary_df_2.to_excel(file, sheet_name='2_Summary', index=True)
+    filepath = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
+    if filepath == "":
+        return
+    else:
+        with pandas.ExcelWriter(filepath) as writer:
+            rxn_summary_df_2.to_excel(writer, sheet_name='2_Summary', index=True)
+            Xn_2.to_excel(writer, sheet_name='2_In_Situ', index=True)
 
 def export_all():
     filepath = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
@@ -803,7 +813,9 @@ def export_all():
     else:
         with pandas.ExcelWriter(filepath) as writer:
             rxn_summary_df.to_excel(writer, sheet_name='1_Summary', index=True)
+            Xn.to_excel(writer, sheet_name='1_In_Situ', index=True)
             rxn_summary_df_2.to_excel(writer, sheet_name='2_Summary', index=True)
+            Xn_2.to_excel(writer, sheet_name='2_In_Situ', index=True)
 
 
 
