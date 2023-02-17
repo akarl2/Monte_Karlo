@@ -163,15 +163,23 @@ class Propylene_Glycol:
 class Pentaerythritol:
     def __init__(self):
         self.name = "Pentaerythritol"
-        self.sn = "Pen"
+        self.sn = "PE"
         self.formula = "C5H12O4"
         self.mw = 136.15
-        self.prgmw = 34.0375
-        self.srgmw = 0
-        self.density = 1.40
-        self.comp = (self.prgmw,self.prgmw,self.prgmw,self.prgmw)
-        self.mass = self.mw
-        self.numgroups = len(set(self.comp))
+        self.density = 1.396
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID], [self.prgID], [self.prgID]]
 
 class Butanediol:
     def __init__(self):

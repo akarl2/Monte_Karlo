@@ -5,8 +5,9 @@ import sys
 import tkinter
 import time
 from tkinter import *
+import openpyxl
 import customtkinter
-from tkinter import ttk, messagebox, simpledialog
+from tkinter import ttk, messagebox, simpledialog, filedialog
 import pandas
 from ttkwidgets.autocomplete import AutocompleteCombobox
 from Database import *
@@ -31,7 +32,11 @@ pandas.set_option('display.max_rows', None)
 pandas.set_option('display.width', 100)
 
 # Runs the simulation
-global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, total_ct_prim, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, byproducts_sec, frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary, quick_add, quick_add_comp, RXN_EM_Value, RXN_EM_Entry
+global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, \
+    total_ct_prim, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, byproducts_sec, \
+    frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, \
+    frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary, quick_add, quick_add_comp, \
+    RXN_EM_Value, RXN_EM_Entry, rxn_summary_df, rxn_summary_df_2
 def simulate(starting_materials, starting_materials_sec):
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, total_ct_prim, total_ct_sec, quick_add
     in_situ_values = [[], [], [], [], [], [], []]
@@ -373,6 +378,7 @@ def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
     RM2.entries[14].insert(0, IV)
 
 def RXN_Results(composition):
+    global rxn_summary_df
     comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
     sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
     RS = []
@@ -480,6 +486,7 @@ def RXN_Results(composition):
     show_Xn(Xn)
 
 def RXN_Results_sec(composition):
+    global rxn_summary_df_2
     comp_summary_2 = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
     sum_comp_2 = sum([comp_summary_2[key] * key[2] for key in comp_summary_2])
     RS_2 = []
@@ -751,6 +758,15 @@ def reset_entry_table():
     RXN_EM_Value.delete(0, 'end')
     RXN_EM_Entry.insert(0, "")
 
+def check_entry(entry, index, cell):
+    RET.entries[entry].get()
+    if RET.entries[entry].get() not in Reactants and RET.entries[entry].get() != "":
+        RET.entries[entry].delete(0, 'end')
+        messagebox.showerror("Error", "Please enter a valid reactant")
+    else:
+        RET.update_table(index, cell)
+        RET.update_rates(index, cell)
+
 def quick_add():
     cell = 16
     for i in range(RET.tableheight - 1):
@@ -771,6 +787,25 @@ def quick_add():
             RET.entries[cell + 1].insert(0, new_mass)
             check_entry(entry=cell, index=i+start_index, cell=cell)
             cell += RET.tablewidth
+
+def export_primary():
+    with filedialog.asksaveasfile(mode='wb', defaultextension='.csv', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")]) as file:
+        rxn_summary_df.to_excel(file, sheet_name='1_Summary', index=True)
+
+def export_secondary():
+    with filedialog.asksaveasfile(mode='wb', defaultextension='.csv', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")]) as file:
+        rxn_summary_df_2.to_excel(file, sheet_name='2_Summary', index=True)
+
+def export_all():
+    filepath = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
+    if filepath == "":
+        return
+    else:
+        with pandas.ExcelWriter(filepath) as writer:
+            rxn_summary_df.to_excel(writer, sheet_name='1_Summary', index=True)
+            rxn_summary_df_2.to_excel(writer, sheet_name='2_Summary', index=True)
+
+
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 window = tkinter.Tk()
@@ -802,11 +837,17 @@ tab_control.grid(row=0, column=0, sticky=tkinter.E + tkinter.W + tkinter.N + tki
 menubar = tkinter.Menu(window, background="red")
 window.config(menu=menubar)
 filemenu1 = tkinter.Menu(menubar, tearoff=0)
+export_menu = tkinter.Menu(filemenu1, tearoff=0)
 filemenu2 = tkinter.Menu(menubar, tearoff=0)
 filemenu3 = tkinter.Menu(menubar, tearoff=0)
 menubar.add_cascade(label='File', menu=filemenu1)
 menubar.add_cascade(label='Options', menu=filemenu2)
 menubar.add_cascade(label='Help', menu=filemenu3)
+filemenu1.add_cascade(label="Export", menu=export_menu)
+export_menu.add_command(label='1° Reaction Results', command=export_primary)
+export_menu.add_command(label='2° Reaction Results', command=export_secondary)
+export_menu.add_command(label='All Reaction Results', command=export_all)
+filemenu1.add_separator()
 filemenu1.add_command(label='Reset', command=reset_entry_table)
 filemenu1.add_command(label='Exit', command=window.destroy)
 filemenu2.add_command(label='Quick Add', command=quick_add)
@@ -823,15 +864,6 @@ RDE = ['R1Data', 'R2Data', 'R3Data', 'R4Data', 'R5Data', 'R6Data', 'R7Data', 'R8
 
 global starting_cell
 starting_cell = 16
-
-def check_entry(entry, index, cell):
-    RET.entries[entry].get()
-    if RET.entries[entry].get() not in Reactants and RET.entries[entry].get() != "":
-        RET.entries[entry].delete(0, 'end')
-        messagebox.showerror("Error", "Please enter a valid reactant")
-    else:
-        RET.update_table(index, cell)
-        RET.update_rates(index, cell)
 
 class QuickAddWindow(simpledialog.Dialog):
     def body(self, master):
