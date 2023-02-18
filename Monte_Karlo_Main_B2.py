@@ -806,7 +806,7 @@ def quick_add():
             cell += RET.tablewidth
 
 def export_primary():
-    filepath = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
+    filepath = filedialog.asksaveasfilename(defaultextension='.xlsx', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
     if filepath == "":
         return
     else:
@@ -815,7 +815,7 @@ def export_primary():
             Xn.to_excel(writer, sheet_name='1_In_Situ', index=True)
 
 def export_secondary():
-    filepath = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
+    filepath = filedialog.asksaveasfilename(defaultextension='.xlsx', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
     if filepath == "":
         return
     else:
@@ -824,7 +824,7 @@ def export_secondary():
             Xn_2.to_excel(writer, sheet_name='2_In_Situ', index=True)
 
 def export_all():
-    filepath = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
+    filepath = filedialog.asksaveasfilename(defaultextension='.xlsx', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
     if filepath == "":
         return
     else:
