@@ -692,6 +692,23 @@ def stop():
     else:
         pass
 
+def clear_last():
+    cell = 16
+    for i in range(RET.tableheight - 1):
+        if RET.entries[16].get() == "":
+            tkinter.messagebox.showinfo("Error", "Table is already empty")
+            return
+        else:
+            if RET.entries[cell].get() != "":
+                cell = cell + RET.tablewidth
+            else:
+                clear_index = i - 1
+                clear_cell = cell - RET.tablewidth
+                break
+    RET.entries[clear_cell].delete(0, 'end')
+    RET.entries[clear_cell].insert(0, "Clear")
+    check_entry(entry=clear_cell, index=clear_index, cell=clear_cell)
+
 def sim_values():
     global total_ct_prim, sn_dict, starting_mass, total_ct_sec, starting_mass_sec
     row_for_sec = RXN_EM_Entry_2_SR.current()
@@ -1140,7 +1157,7 @@ class RxnDetails(tkinter.Frame):
         RXN_EM_Entry_2_SR.config(justify="center")
         RXN_Samples = tkinter.StringVar()
         RXN_Samples_Entry = AutocompleteCombobox(self, completevalues=Num_Samples, width=15, textvariable=RXN_Samples)
-        RXN_Samples_Entry.insert(0, "2500")
+        RXN_Samples_Entry.insert(0, "5000")
         RXN_Samples_Entry.grid(row=2, column=1)
         RXN_Samples_Entry.config(justify="center")
         RXN_EOR = self.entries[5]
@@ -1378,6 +1395,8 @@ class Buttons(tkinter.Frame):
         Simulate.grid(row=0, column=0)
         stop_button = tkinter.Button(self, text="Stop", command=stop, width=15, bg="Red")
         stop_button.grid(row=1, column=0)
+        clear_last_row = tkinter.Button(self, text="Clear Last", command=clear_last, width=15, bg="Yellow")
+        clear_last_row.grid(row=2, column=0)
         Simulate = tkinter.Button(self, text="Reset", command=reset_entry_table, width=15, bg="Orange")
         Simulate.grid(row=3, column=0)
 
@@ -1467,6 +1486,10 @@ RXN_EM_Entry_2_SR.bind('<Enter>', lambda *args: RD.get_reactants())
 window.bind('<Control-a>', lambda *args: quick_add())
 window.bind('<Control-e>', lambda *args: reset_entry_table())
 window.bind('<Control-q>', lambda *args: quit())
+window.bind('<Control-r>', lambda *args: reset_entry_table())
+window.bind('<Control-l>', lambda *args: clear_last())
+RXN_EM_Entry.bind('<KeyRelease>', lambda *args: RXN_EM_Value.focus())
+RXN_EM_Entry_2.bind('<KeyRelease>', lambda *args: RXN_EM_Value_2.focus())
 
 R1Data = R1Data()
 R2Data = R2Data()
