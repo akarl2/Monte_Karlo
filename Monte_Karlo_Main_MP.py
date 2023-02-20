@@ -4,11 +4,13 @@ import random
 import sys
 import tkinter
 import time
+from multiprocessing import freeze_support
 from tkinter import *
 import openpyxl
 import customtkinter
 from tkinter import ttk, messagebox, simpledialog, filedialog
 import pandas
+import multiprocessing
 import concurrent.futures
 from ttkwidgets.autocomplete import AutocompleteCombobox
 from Database import *
@@ -48,7 +50,7 @@ def simulate(starting_materials, starting_materials_sec):
     running, in_primary = True, True
     test_count = 0
     test_interval = 40
-    sim.progress['value'], sim.progress_2['value'] = 0, 0
+    #sim.progress['value'], sim.progress_2['value'] = 0, 0
     try:
         end_metric_value_upper = end_metric_value + 15
         end_metric_value_lower = end_metric_value - 15
@@ -330,7 +332,7 @@ def simulate(starting_materials, starting_materials_sec):
                     break
         stop = time.time()
         update_comp(composition, groups)
-
+    print(composition)
 def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[8].delete(0, tkinter.END)
     RM.entries[8].insert(0, EHC)
@@ -707,7 +709,7 @@ def sim_values():
     starting_mass, starting_mass_sec, total_ct, total_ct_sec = 0, 0, 0, 0
     end_metric_value = float(RXN_EM_Value.get())
     RXN_EM_2_Active_status = RXN_EM_2_Active.get()
-    if RXN_EM_2_Active_status == True:
+    if RXN_EM_2_Active_status:
         end_metric_value_sec = float(RXN_EM_Value_2.get())
     end_metric_selection, end_metric_selection_sec = str(RXN_EM.get()), str(RXN_EM_Entry_2.get())
     cell = 16
@@ -746,6 +748,7 @@ def sim_values():
     except AttributeError as e:
         messagebox.showerror("Exception raised", str(e))
         pass
+
     simulate(starting_materials, starting_materials_sec)
 
 def reset_entry_table():
@@ -825,7 +828,6 @@ def export_all():
             Xn.to_excel(writer, sheet_name='1_In_Situ', index=True)
             rxn_summary_df_2.to_excel(writer, sheet_name='2_Summary', index=True)
             Xn_2.to_excel(writer, sheet_name='2_In_Situ', index=True)
-
 
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
