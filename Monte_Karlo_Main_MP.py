@@ -45,29 +45,23 @@ def simulate(starting_materials, starting_materials_sec):
     in_situ_values_sec = [[], [], [], [], [], [], []]
     running = True
     in_primary = True
-    Xn_list = []
-    Xn_list_sec = []
-    Mw_list = []
+    Xn_list, Xn_list_sec, Mw_list, byproducts, byproducts_sec, composition, composition_sec = [], [], [], [], [], [], []
     test_count = 0
     test_interval = 40
-    byproducts = []
-    byproducts_sec = []
-    sim.progress['value'] = 0
-    sim.progress_2['value'] = 0
-    end_metric_selection = str(RXN_EM.get())
-    end_metric_selection_sec = str(RXN_EM_2.get())
+    sim.progress['value'], sim.progress_2['value'] = 0, 0
+    end_metric_selection, end_metric_selection_sec = str(RXN_EM.get()), str(RXN_EM_2.get())
     try:
         end_metric_value = float(RXN_EM_Value.get())
         end_metric_value_upper = end_metric_value + 15
         end_metric_value_lower = end_metric_value - 15
-        if RXN_EM_2_Active.get() == True:
+        if RXN_EM_2_Active.get():
             end_metric_value_sec = float(RXN_EM_Value_2.get())
             end_metric_value_upper_sec = end_metric_value_sec + 15
             end_metric_value_lower_sec = end_metric_value_sec - 15
     except ValueError:
         messagebox.showerror("Error", "Please enter a value for the end metric(s).")
         return
-    composition = []
+
     for compound in starting_materials:
         for i in range(compound[3][0]):
             inner_result = []
@@ -75,7 +69,6 @@ def simulate(starting_materials, starting_materials_sec):
                 inner_result.append([group[0], group[1]])
             composition.append([inner_result, compound[2], compound[1]])
 
-    composition_sec = []
     for compound in starting_materials_sec:
         for i in range(compound[3][0]):
             inner_result = []
@@ -216,7 +209,7 @@ def simulate(starting_materials, starting_materials_sec):
         if end_metric_selection != '% EHC':
             sim.progress['value'] = round(((end_metric_value / RXN_metric_value) * 100), 2)
             if RXN_metric_value <= end_metric_value:
-                if RXN_EM_2_Active.get() == False:
+                if not RXN_EM_2_Active.get():
                     running = False
                     sim.progress['value'] = 100
                     update_metrics(TAV, AV, OH, EHC, COC, IV)
@@ -340,7 +333,8 @@ def simulate(starting_materials, starting_materials_sec):
                     break
         stop = time.time()
         update_comp(composition, groups)
-    print(composition)
+    return composition
+
 
 def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[8].delete(0, tkinter.END)
@@ -757,7 +751,15 @@ def sim_values():
     except AttributeError as e:
         messagebox.showerror("Exception raised", str(e))
         pass
-    simulate(starting_materials, starting_materials_sec)
+
+    run_simulations = 1
+    if __name__ == '__main__':
+        results = []
+        with concurrent.futures.ProcessPoolExecutor(max_workers=run_simulations) as executor:
+            results = [executor.submit(simulate, starting_materials, starting_materials_sec) for i in range(run_simulations)]
+            for f in concurrent.futures.as_completed(results):
+                print(f.result())
+    #simulate(starting_materials, starting_materials_sec)
 
 def reset_entry_table():
     for i in range(RET.tableheight - 1):
