@@ -34,13 +34,13 @@ pandas.set_option('display.width', 100)
 
 # Runs the simulation
 global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, \
-    total_ct_prim, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, byproducts_sec, \
+    total_ct, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, byproducts_sec, \
     frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, \
     frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary, quick_add, quick_add_comp, \
     RXN_EM_Value, RXN_EM_Entry, rxn_summary_df, rxn_summary_df_2, Xn, Xn_2
 
 def simulate(starting_materials, starting_materials_sec):
-    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, total_ct_prim, total_ct_sec, quick_add
+    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, total_ct, total_ct_sec, quick_add
     in_situ_values = [[], [], [], [], [], [], []]
     in_situ_values_sec = [[], [], [], [], [], [], []]
     running = True
@@ -466,7 +466,7 @@ def RXN_Results(composition):
     WD.entries[10].delete(0, tkinter.END)
     WD.entries[10].insert(0, round(Mz1, 4))
     WD.entries[11].delete(0, tkinter.END)
-    WD.entries[11].insert(0, round(total_ct_prim / sumNi, 4))
+    WD.entries[11].insert(0, round(total_ct / sumNi, 4))
 
     byproducts_df = pandas.DataFrame(byproducts, columns=['Name', 'Mass'])
     byproducts_df.set_index('Name', inplace=True)
@@ -713,7 +713,7 @@ def clear_last():
     check_entry(entry=clear_cell, index=clear_index, cell=clear_cell)
 
 def sim_values():
-    global total_ct_prim, sn_dict, starting_mass, total_ct_sec, starting_mass_sec
+    global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec
     row_for_sec = RXN_EM_Entry_2_SR.current()
     starting_mass = 0
     starting_mass_sec = 0
