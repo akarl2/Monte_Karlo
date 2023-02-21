@@ -37,37 +37,29 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
     total_ct, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, byproducts_sec, \
     frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, \
     frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary, quick_add, quick_add_comp, \
-    RXN_EM_Value, RXN_EM_Entry, rxn_summary_df, rxn_summary_df_2, Xn, Xn_2
+    RXN_EM_Value, RXN_EM_Entry, rxn_summary_df, rxn_summary_df_2, Xn, Xn_2, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, \
+    end_metric_selection_sec
+
 
 def simulate(starting_materials, starting_materials_sec):
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, total_ct, total_ct_sec, quick_add
     in_situ_values = [[], [], [], [], [], [], []]
     in_situ_values_sec = [[], [], [], [], [], [], []]
-    running = True
-    in_primary = True
-    Xn_list = []
-    Xn_list_sec = []
-    Mw_list = []
+    Xn_list, Xn_list_sec, byproducts, byproducts_sec, Mw_list, composition, composition_sec = [], [], [], [], [], [], []
+    running, in_primary = True, True
     test_count = 0
     test_interval = 40
-    byproducts = []
-    byproducts_sec = []
-    sim.progress['value'] = 0
-    sim.progress_2['value'] = 0
-    end_metric_selection = str(RXN_EM.get())
-    end_metric_selection_sec = str(RXN_EM_2.get())
+    sim.progress['value'], sim.progress_2['value'] = 0, 0
     try:
-        end_metric_value = float(RXN_EM_Value.get())
         end_metric_value_upper = end_metric_value + 15
         end_metric_value_lower = end_metric_value - 15
-        if RXN_EM_2_Active.get() == True:
-            end_metric_value_sec = float(RXN_EM_Value_2.get())
+        if RXN_EM_2_Active_status:
             end_metric_value_upper_sec = end_metric_value_sec + 15
             end_metric_value_lower_sec = end_metric_value_sec - 15
     except ValueError:
         messagebox.showerror("Error", "Please enter a value for the end metric(s).")
         return
-    composition = []
+
     for compound in starting_materials:
         for i in range(compound[3][0]):
             inner_result = []
@@ -75,7 +67,6 @@ def simulate(starting_materials, starting_materials_sec):
                 inner_result.append([group[0], group[1]])
             composition.append([inner_result, compound[2], compound[1]])
 
-    composition_sec = []
     for compound in starting_materials_sec:
         for i in range(compound[3][0]):
             inner_result = []
@@ -148,7 +139,7 @@ def simulate(starting_materials, starting_materials_sec):
         if len(old_groups) == 1:
             pass
         else:
-            del(old_groups[groups[1][1]])
+            del (old_groups[groups[1][1]])
             for sublist in old_groups:
                 NC[0].append(sublist)
         if NG2 is not False:
@@ -162,7 +153,7 @@ def simulate(starting_materials, starting_materials_sec):
                     NC[0].append([NG2, 0])
         NC[0].sort(key=lambda x: x[0])
         composition[groups[0][0]] = NC
-        del(composition[groups[1][0]])
+        del (composition[groups[1][0]])
         window.update()
         if test_count >= test_interval:
             if in_primary:
@@ -173,7 +164,9 @@ def simulate(starting_materials, starting_materials_sec):
 
     def RXN_Status(composition):
         global test_interval, in_situ_values, Xn_list, running, in_primary
-        comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+        comp_summary = collections.Counter(
+            [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
+             composition])
         sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
         total_ct_temp = 0
         for key in comp_summary:
@@ -210,8 +203,9 @@ def simulate(starting_materials, starting_materials_sec):
         in_situ_values[3].append(COC)
         in_situ_values[4].append(EHC)
         in_situ_values[5].append(IV)
-        Xn_list.append(round(total_ct_prim / total_ct_temp, 4))
-        metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC, 'Iodine Value': IV}
+        Xn_list.append(round(total_ct / total_ct_temp, 4))
+        metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
+                   'Iodine Value': IV}
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_selection != '% EHC':
             sim.progress['value'] = round(((end_metric_value / RXN_metric_value) * 100), 2)
@@ -252,7 +246,9 @@ def simulate(starting_materials, starting_materials_sec):
 
     def RXN_Status_sec(composition):
         global test_interval, in_situ_values_sec, Xn_list_sec, running
-        comp_summary_2 = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+        comp_summary_2 = collections.Counter(
+            [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
+             composition])
         sum_comp_2 = sum([comp_summary_2[key] * key[2] for key in comp_summary_2])
         total_ct_temp_2 = 0
         for key in comp_summary_2:
@@ -290,22 +286,23 @@ def simulate(starting_materials, starting_materials_sec):
         in_situ_values_sec[4].append(EHC)
         in_situ_values_sec[5].append(IV)
         Xn_list_sec.append(round(total_ct_sec / total_ct_temp_2, 4))
-        metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC, 'Iodine Value': IV}
+        metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
+                   'Iodine Value': IV}
         RXN_metric_value_2 = metrics[end_metric_selection_sec]
         if end_metric_selection_sec != '% EHC':
             sim.progress_2['value'] = round(((end_metric_value_sec / RXN_metric_value_2) * 100), 2)
             if RXN_metric_value_2 <= end_metric_value_sec:
-                    running = False
-                    sim.progress['value'] = 100
-                    update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
-                    RXN_Results_sec(composition)
+                running = False
+                sim.progress['value'] = 100
+                update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
+                RXN_Results_sec(composition)
         else:
             sim.progress_2['value'] = round(((EHC / end_metric_value_sec) * 100), 2)
             if RXN_metric_value_2 >= end_metric_value_sec:
-                    running = False
-                    sim.progress['value'] = 100
-                    update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
-                    RXN_Results_sec(composition)
+                running = False
+                sim.progress['value'] = 100
+                update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
+                RXN_Results_sec(composition)
         window.update()
         if end_metric_value_upper_sec >= RXN_metric_value_2 >= end_metric_value_lower_sec:
             test_interval = 1
@@ -340,6 +337,8 @@ def simulate(starting_materials, starting_materials_sec):
                     break
         stop = time.time()
         update_comp(composition, groups)
+    print(composition)
+
 
 def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[8].delete(0, tkinter.END)
@@ -360,6 +359,7 @@ def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[14].delete(0, tkinter.END)
     RM.entries[14].insert(0, IV)
 
+
 def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
     RM2.entries[8].delete(0, tkinter.END)
     RM2.entries[8].insert(0, EHC)
@@ -379,9 +379,12 @@ def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
     RM2.entries[14].delete(0, tkinter.END)
     RM2.entries[14].insert(0, IV)
 
+
 def RXN_Results(composition):
     global rxn_summary_df, Xn
-    comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+    comp_summary = collections.Counter(
+        [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
+         composition])
     sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
     RS = []
     for key in comp_summary:
@@ -411,8 +414,8 @@ def RXN_Results(composition):
                         EHC_ct += key[3]
             elif group[0] == 'COC':
                 epoxide_ct += key[3]
-            #elif group[0] == 'Cl' and 'SOH' in key_names:
-                #EHC_ct += key[3]
+            # elif group[0] == 'Cl' and 'SOH' in key_names:
+            # EHC_ct += key[3]
             elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
                 IV_ct += key[3]
         key.append(round((amine_ct * 56100) / sum_comp, 2))
@@ -431,7 +434,8 @@ def RXN_Results(composition):
             key[1][index] = new_name
             index += 1
         key[1] = '_'.join(key[1])
-    rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV", 'AV', 'OH', 'COC', 'EHC,%', 'IV'])
+    rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV",
+                                                   'AV', 'OH', 'COC', 'EHC,%', 'IV'])
     rxn_summary_df['MW'] = round(rxn_summary_df['MW'], 4)
     rxn_summary_df.drop(columns=['Groups'], inplace=True)
     rxn_summary_df.set_index('Name', inplace=True)
@@ -441,19 +445,20 @@ def RXN_Results(composition):
     rxn_summary_df['Wt,%'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
     sumNi = rxn_summary_df['Count'].sum()
     sumNiMi = (rxn_summary_df['Count'] * rxn_summary_df['MW']).sum()
-    sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**2).sum()
-    sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**3).sum()
-    sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW'])**4).sum()
-    rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
+    sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 2).sum()
+    sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 3).sum()
+    sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 4).sum()
+    rxn_summary_df = rxn_summary_df[
+        ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
     rxn_summary_df['Mass'] = rxn_summary_df['Mass'] / float(RXN_Samples.get())
     rxn_summary_df.loc['Sum'] = round(rxn_summary_df.sum(), 3)
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
 
-    Mn = sumNiMi/sumNi
-    Mw = sumNiMi2/sumNiMi
-    PDI = Mw/Mn
-    Mz = sumNiMi3/sumNiMi2
-    Mz1 = sumNiMi4/sumNiMi3
+    Mn = sumNiMi / sumNi
+    Mw = sumNiMi2 / sumNiMi
+    PDI = Mw / Mn
+    Mz = sumNiMi3 / sumNiMi2
+    Mz1 = sumNiMi4 / sumNiMi3
     WD.entries[6].delete(0, tkinter.END)
     WD.entries[6].insert(0, round(Mn, 4))
     WD.entries[7].delete(0, tkinter.END)
@@ -472,7 +477,8 @@ def RXN_Results(composition):
     byproducts_df['Mass'] = byproducts_df['Mass'] / float(RXN_Samples.get())
     byproducts_df['Wt, % (Of byproducts)'] = round(byproducts_df['Mass'] / byproducts_df['Mass'].sum() * 100, 4)
     byproducts_df['Wt, % (Of Final)'] = round(byproducts_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
-    byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / (starting_mass / float(RXN_Samples.get())) * 100, 4)
+    byproducts_df['Wt, % (Of Initial)'] = round(
+        byproducts_df['Mass'] / (starting_mass / float(RXN_Samples.get())) * 100, 4)
 
     Xn = pandas.DataFrame(in_situ_values[0], columns=['TAV'])
     Xn['AV'] = in_situ_values[1]
@@ -481,15 +487,18 @@ def RXN_Results(composition):
     Xn['EHC, %'] = in_situ_values[4]
     Xn['IV'] = in_situ_values[5]
     Xn['Xn'] = Xn_list
-    Xn['P'] = -(1/Xn['Xn']) + 1
-    #messagebox.showinfo('Results', 'Simulation Successful!')
+    Xn['P'] = -(1 / Xn['Xn']) + 1
+    # messagebox.showinfo('Results', 'Simulation Successful!')
     show_results(rxn_summary_df)
     show_byproducts(byproducts_df)
     show_Xn(Xn)
 
+
 def RXN_Results_sec(composition):
     global rxn_summary_df_2, Xn_2
-    comp_summary_2 = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+    comp_summary_2 = collections.Counter(
+        [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
+         composition])
     sum_comp_2 = sum([comp_summary_2[key] * key[2] for key in comp_summary_2])
     RS_2 = []
     for key in comp_summary_2:
@@ -519,8 +528,8 @@ def RXN_Results_sec(composition):
                         EHC_ct += key[3]
             elif group[0] == 'COC':
                 epoxide_ct += key[3]
-            #elif group[0] == 'Cl' and 'SOH' in key_names:
-                #EHC_ct += key[3]
+            # elif group[0] == 'Cl' and 'SOH' in key_names:
+            # EHC_ct += key[3]
             elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
                 IV_ct += key[3]
         key.append(round((amine_ct * 56100) / sum_comp_2, 2))
@@ -539,7 +548,9 @@ def RXN_Results_sec(composition):
             key[1][index] = new_name
             index += 1
         key[1] = '_'.join(key[1])
-    rxn_summary_df_2 = pandas.DataFrame(RS_2, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV", 'AV', 'OH', 'COC', 'EHC,%', 'IV'])
+    rxn_summary_df_2 = pandas.DataFrame(RS_2,
+                                        columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV",
+                                                 'AV', 'OH', 'COC', 'EHC,%', 'IV'])
     rxn_summary_df_2['MW'] = round(rxn_summary_df_2['MW'], 4)
     rxn_summary_df_2.drop(columns=['Groups'], inplace=True)
     rxn_summary_df_2.set_index('Name', inplace=True)
@@ -549,18 +560,19 @@ def RXN_Results_sec(composition):
     rxn_summary_df_2['Wt,%'] = round(rxn_summary_df_2['Mass'] / rxn_summary_df_2['Mass'].sum() * 100, 4)
     sumNi = rxn_summary_df_2['Count'].sum()
     sumNiMi = (rxn_summary_df_2['Count'] * rxn_summary_df_2['MW']).sum()
-    sumNiMi2 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW'])**2).sum()
-    sumNiMi3 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW'])**3).sum()
-    sumNiMi4 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW'])**4).sum()
-    rxn_summary_df_2 = rxn_summary_df_2[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
+    sumNiMi2 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW']) ** 2).sum()
+    sumNiMi3 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW']) ** 3).sum()
+    sumNiMi4 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW']) ** 4).sum()
+    rxn_summary_df_2 = rxn_summary_df_2[
+        ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
     rxn_summary_df_2['Mass'] = rxn_summary_df_2['Mass'] / float(RXN_Samples.get())
     rxn_summary_df_2.loc['Sum'] = round(rxn_summary_df_2.sum(), 3)
     rxn_summary_df_2 = rxn_summary_df_2.groupby(['MW', 'Name']).sum()
-    Mn = sumNiMi/sumNi
-    Mw = sumNiMi2/sumNiMi
-    PDI = Mw/Mn
-    Mz = sumNiMi3/sumNiMi2
-    Mz1 = sumNiMi4/sumNiMi3
+    Mn = sumNiMi / sumNi
+    Mw = sumNiMi2 / sumNiMi
+    PDI = Mw / Mn
+    Mz = sumNiMi3 / sumNiMi2
+    Mz1 = sumNiMi4 / sumNiMi3
     WD2.entries[6].delete(0, tkinter.END)
     WD2.entries[6].insert(0, round(Mn, 4))
     WD2.entries[7].delete(0, tkinter.END)
@@ -579,7 +591,8 @@ def RXN_Results_sec(composition):
     byproducts_df_2['Mass'] = byproducts_df_2['Mass'] / float(RXN_Samples.get())
     byproducts_df_2['Wt, % (Of byproducts)'] = round(byproducts_df_2['Mass'] / byproducts_df_2['Mass'].sum() * 100, 4)
     byproducts_df_2['Wt, % (Of Final)'] = round(byproducts_df_2['Mass'] / rxn_summary_df_2['Mass'].sum() * 100, 4)
-    byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / (starting_mass / float(RXN_Samples.get())) * 100, 4)
+    byproducts_df_2['Wt, % (Of Initial)'] = round(
+        byproducts_df_2['Mass'] / (starting_mass / float(RXN_Samples.get())) * 100, 4)
 
     Xn_2 = pandas.DataFrame(in_situ_values_sec[0], columns=['TAV'])
     Xn_2['AV'] = in_situ_values_sec[1]
@@ -588,13 +601,14 @@ def RXN_Results_sec(composition):
     Xn_2['EHC, %'] = in_situ_values_sec[4]
     Xn_2['IV'] = in_situ_values_sec[5]
     Xn_2['Xn'] = Xn_list_sec
-    Xn_2['P'] = -(1/Xn_2['Xn']) + 1
-    #messagebox.showinfo('Results', 'Simulation Successful!')
+    Xn_2['P'] = -(1 / Xn_2['Xn']) + 1
+    # messagebox.showinfo('Results', 'Simulation Successful!')
     show_results_sec(rxn_summary_df_2)
     show_byproducts_sec(byproducts_df_2)
     show_Xn_sec(Xn_2)
 
-# -------------------------------------------Aux Functions---------------------------------------------------#
+
+# -------------------------------------------Display Results---------------------------------------------------#
 
 def show_results(rxn_summary_df):
     global results_table, frame_results
@@ -608,13 +622,14 @@ def show_results(rxn_summary_df):
     y = (window.winfo_screenheight() - frame_results.winfo_reqheight()) / 2
     frame_results.place(x=x, y=y, anchor='center')
     results_table = Table(frame_results, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True,
-                          width=x, height=y, align='center',)
-    #adjust results_table if it is too big
+                          width=x, height=y, align='center', )
+    # adjust results_table if it is too big
     if results_table.winfo_reqwidth() > window.winfo_screenwidth():
         results_table.width = window.winfo_screenwidth() - 100
     if results_table.winfo_reqheight() > window.winfo_screenheight():
         results_table.height = window.winfo_screenheight() - 100
     results_table.show()
+
 
 def show_results_sec(rxn_summary_df_2):
     global results_table_2, frame_results_2
@@ -627,14 +642,16 @@ def show_results_sec(rxn_summary_df_2):
     x = ((window.winfo_screenwidth() - frame_results_2.winfo_reqwidth()) / 2) + 100
     y = (window.winfo_screenheight() - frame_results_2.winfo_reqheight()) / 2
     frame_results_2.place(x=x, y=y, anchor='center')
-    results_table_2 = Table(frame_results_2, dataframe=rxn_summary_df_2, showtoolbar=True, showstatusbar=True, showindex=True,
-                          width=x, height=y, align='center',)
-    #adjust results_table if it is too big
+    results_table_2 = Table(frame_results_2, dataframe=rxn_summary_df_2, showtoolbar=True, showstatusbar=True,
+                            showindex=True,
+                            width=x, height=y, align='center', )
+    # adjust results_table if it is too big
     if results_table_2.winfo_reqwidth() > window.winfo_screenwidth():
         results_table_2.width = window.winfo_screenwidth() - 100
     if results_table_2.winfo_reqheight() > window.winfo_screenheight():
         results_table_2.height = window.winfo_screenheight() - 100
     results_table_2.show()
+
 
 def show_byproducts(byproducts_df):
     global byproducts_table, frame_byproducts
@@ -645,8 +662,10 @@ def show_byproducts(byproducts_df):
         pass
     frame_byproducts = tkinter.Frame(tab2)
     frame_byproducts.grid(row=0, column=3, padx=(100, 0), pady=(20, 0))
-    byproducts_table = Table(frame_byproducts, dataframe=byproducts_df, showtoolbar=False, showstatusbar=True, showindex=True, width=600, height=100, align='center', maxcellwidth=1000)
+    byproducts_table = Table(frame_byproducts, dataframe=byproducts_df, showtoolbar=False, showstatusbar=True,
+                             showindex=True, width=600, height=100, align='center', maxcellwidth=1000)
     byproducts_table.show()
+
 
 def show_byproducts_sec(byproducts_df_2):
     global byproducts_table_2, frame_byproducts_2
@@ -657,8 +676,10 @@ def show_byproducts_sec(byproducts_df_2):
         pass
     frame_byproducts_2 = tkinter.Frame(tab4)
     frame_byproducts_2.grid(row=0, column=3, padx=(100, 0), pady=(20, 0))
-    byproducts_table_2 = Table(frame_byproducts_2, dataframe=byproducts_df_2, showtoolbar=False, showstatusbar=True, showindex=True, width=600, height=100, align='center', maxcellwidth=1000)
+    byproducts_table_2 = Table(frame_byproducts_2, dataframe=byproducts_df_2, showtoolbar=False, showstatusbar=True,
+                               showindex=True, width=600, height=100, align='center', maxcellwidth=1000)
     byproducts_table_2.show()
+
 
 def show_Xn(Xn):
     global Xn_table, frame_Xn
@@ -669,8 +690,10 @@ def show_Xn(Xn):
         pass
     frame_Xn = tkinter.Frame(tab3)
     frame_Xn.pack()
-    Xn_table = Table(frame_Xn, dataframe=Xn, showtoolbar=True, showstatusbar=True, showindex=True, width=2000, height=1000, align='center', maxcellwidth=1000)
+    Xn_table = Table(frame_Xn, dataframe=Xn, showtoolbar=True, showstatusbar=True, showindex=True, width=2000,
+                     height=1000, align='center', maxcellwidth=1000)
     Xn_table.show()
+
 
 def show_Xn_sec(Xn_2):
     global Xn_table_2, frame_Xn_2
@@ -681,11 +704,16 @@ def show_Xn_sec(Xn_2):
         pass
     frame_Xn_2 = tkinter.Frame(tab5)
     frame_Xn_2.pack()
-    Xn_table_2 = Table(frame_Xn_2, dataframe=Xn_2, showtoolbar=True, showstatusbar=True, showindex=True, width=2000, height=1000, align='center', maxcellwidth=1000)
+    Xn_table_2 = Table(frame_Xn_2, dataframe=Xn_2, showtoolbar=True, showstatusbar=True, showindex=True, width=2000,
+                       height=1000, align='center', maxcellwidth=1000)
     Xn_table_2.show()
+
+
+# -------------------------------------------Auxiliary Functions---------------------------------------------------#
 
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
+
 
 def stop():
     global running
@@ -693,6 +721,7 @@ def stop():
         running = False
     else:
         pass
+
 
 def clear_last():
     cell = 16
@@ -711,19 +740,20 @@ def clear_last():
     RET.entries[clear_cell].insert(0, "Clear")
     check_entry(entry=clear_cell, index=clear_index, cell=clear_cell)
 
+
 def sim_values():
-    global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec
+    global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, end_metric_selection_sec
     row_for_sec = RXN_EM_Entry_2_SR.current()
-    starting_mass = 0
-    starting_mass_sec = 0
-    value_for_mass_adjust = 0
+    starting_mass, starting_mass_sec, total_ct, total_ct_sec = 0, 0, 0, 0
+    end_metric_value = float(RXN_EM_Value.get())
+    RXN_EM_2_Active_status = RXN_EM_2_Active.get()
+    if RXN_EM_2_Active_status:
+        end_metric_value_sec = float(RXN_EM_Value_2.get())
+    end_metric_selection, end_metric_selection_sec = str(RXN_EM.get()), str(RXN_EM_Entry_2.get())
     cell = 16
     index = 0
-    total_ct_prim = 0
-    total_ct_sec = 0
     sn_dict = {}
-    starting_materials = []
-    starting_materials_sec = []
+    starting_materials, starting_materials_sec = [], []
     try:
         for i in range(RET.tableheight - 1):
             if RET.entries[cell].get() != "" and RET.entries[cell + 1].get() != "":
@@ -739,7 +769,7 @@ def sim_values():
                                                 ct=RXN_Samples.get())
                 sn_dict[str_to_class(RDE[index]).sn] = str_to_class(RDE[index])
                 count = RXN_Samples.get()
-                #value_for_mass_adjust += float(count) * RET.entries[cell + 3].get()
+                # value_for_mass_adjust += float(count) * RET.entries[cell + 3].get()
                 moles_count = round(float(RET.entries[cell + 3].get()), 6)
                 starting_mass_sec += float(float(Entry_masses[index].get()) * float(count))
                 cell = cell + RET.tablewidth
@@ -748,7 +778,7 @@ def sim_values():
                     starting_materials_sec.append(str_to_class(RDE[index]).comp)
                 else:
                     starting_mass += float(float(Entry_masses[index].get()) * float(count))
-                    total_ct_prim += (float(count) * float(moles_count))
+                    total_ct += (float(count) * float(moles_count))
                     starting_materials.append(str_to_class(RDE[index]).comp)
                 index += 1
             else:
@@ -756,13 +786,15 @@ def sim_values():
     except AttributeError as e:
         messagebox.showerror("Exception raised", str(e))
         pass
+
     simulate(starting_materials, starting_materials_sec)
+
 
 def reset_entry_table():
     for i in range(RET.tableheight - 1):
         for j in range(RET.tablewidth):
-            RET.entries[(i+1) * RET.tablewidth + j].configure(state='normal')
-            RET.entries[(i+1) * RET.tablewidth + j].delete(0, 'end')
+            RET.entries[(i + 1) * RET.tablewidth + j].configure(state='normal')
+            RET.entries[(i + 1) * RET.tablewidth + j].delete(0, 'end')
     sim.progress['value'] = 0
     sim.progress_2['value'] = 0
     for i in range(8, 15):
@@ -777,6 +809,7 @@ def reset_entry_table():
     RXN_EM_Value.delete(0, 'end')
     RXN_EM_Entry.insert(0, "")
 
+
 def check_entry(entry, index, cell):
     RET.entries[entry].get()
     if RET.entries[entry].get() not in Reactants and RET.entries[entry].get() != "":
@@ -785,6 +818,7 @@ def check_entry(entry, index, cell):
     else:
         RET.update_table(index, cell)
         RET.update_rates(index, cell)
+
 
 def quick_add():
     cell = 16
@@ -804,20 +838,25 @@ def quick_add():
             RET.entries[cell].insert(0, quick_add_dict[quick_add_comp[0]][i][0])
             new_mass = round(float(quick_add_dict[quick_add_comp[0]][i][1]) * float(quick_add_comp[1]), 4)
             RET.entries[cell + 1].insert(0, new_mass)
-            check_entry(entry=cell, index=i+start_index, cell=cell)
+            check_entry(entry=cell, index=i + start_index, cell=cell)
             cell += RET.tablewidth
 
+
+# -------------------------------------------------Export Data Functions-------------------------------------------------#
 def export_primary():
-    filepath = filedialog.asksaveasfilename(defaultextension='.xlsx', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
+    filepath = filedialog.asksaveasfilename(defaultextension='.xlsx',
+                                            filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
     if filepath == "":
         return
     else:
         with pandas.ExcelWriter(filepath) as writer:
             rxn_summary_df.to_excel(writer, sheet_name='1_Summary', index=True)
             Xn.to_excel(writer, sheet_name='1_In_Situ', index=True)
+
 
 def export_secondary():
-    filepath = filedialog.asksaveasfilename(defaultextension='.xlsx', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
+    filepath = filedialog.asksaveasfilename(defaultextension='.xlsx',
+                                            filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
     if filepath == "":
         return
     else:
@@ -825,8 +864,10 @@ def export_secondary():
             rxn_summary_df_2.to_excel(writer, sheet_name='2_Summary', index=True)
             Xn_2.to_excel(writer, sheet_name='2_In_Situ', index=True)
 
+
 def export_all():
-    filepath = filedialog.asksaveasfilename(defaultextension='.xlsx', filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
+    filepath = filedialog.asksaveasfilename(defaultextension='.xlsx',
+                                            filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
     if filepath == "":
         return
     else:
@@ -835,7 +876,6 @@ def export_all():
             Xn.to_excel(writer, sheet_name='1_In_Situ', index=True)
             rxn_summary_df_2.to_excel(writer, sheet_name='2_Summary', index=True)
             Xn_2.to_excel(writer, sheet_name='2_In_Situ', index=True)
-
 
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
@@ -884,7 +924,6 @@ filemenu1.add_command(label='Exit', command=window.destroy)
 filemenu2.add_command(label='Quick Add', command=quick_add)
 filemenu3.add_command(label='Help')
 
-
 Entry_Reactants = ['R1Reactant', 'R2Reactant', 'R3Reactant', 'R4Reactant', 'R5Reactant', 'R6Reactant', 'R7Reactant',
                    'R8Reactant', 'R9Reactant', 'R10Reactant', 'R11Reactant', 'R12Reactant', 'R13Reactant',
                    'R14Reactant']
@@ -895,6 +934,7 @@ RDE = ['R1Data', 'R2Data', 'R3Data', 'R4Data', 'R5Data', 'R6Data', 'R7Data', 'R8
 
 global starting_cell
 starting_cell = 16
+
 
 class QuickAddWindow(simpledialog.Dialog):
     def body(self, master):
@@ -907,6 +947,7 @@ class QuickAddWindow(simpledialog.Dialog):
         self.e1.grid(row=0, column=1)
         self.e2.grid(row=1, column=1)
         return self.e1
+
     def buttonbox(self):
         box = Frame(self)
         w = Button(box, text="Submit", width=10, command=self.ok)
@@ -916,14 +957,17 @@ class QuickAddWindow(simpledialog.Dialog):
         self.bind("<Return>", self.ok)
         self.bind("<Escape>", self.cancel)
         box.pack()
+
     def cancel(self):
         global quick_add_comp
         quick_add_comp = None
         self.destroy()
+
     def ok(self):
         global quick_add_comp
         quick_add_comp = [self.e1.get(), float(self.e2.get())]
         self.destroy()
+
 
 class RxnEntryTable(tkinter.Frame):
     def __init__(self, master=tab1):
@@ -941,7 +985,7 @@ class RxnEntryTable(tkinter.Frame):
             for column in range(self.tablewidth):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                #self.entries[counter].insert(0, str(counter))
+                # self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=10)
                 counter += 1
         self.entries[0].config(width=27)
@@ -989,7 +1033,8 @@ class RxnEntryTable(tkinter.Frame):
         index = 0
         for species in range(self.tableheight - 1):
             Entry_Reactants[index] = tkinter.StringVar()
-            self.entries[cell] = AutocompleteCombobox(self, completevalues=Reactants, width=24, textvariable=Entry_Reactants[index])
+            self.entries[cell] = AutocompleteCombobox(self, completevalues=Reactants, width=24,
+                                                      textvariable=Entry_Reactants[index])
             self.entries[cell].grid(row=row, column=0)
             self.entries[cell].config(justify="center")
             cell = cell + self.tablewidth
@@ -1052,12 +1097,14 @@ class RxnEntryTable(tkinter.Frame):
             index = 0
             for i in range(self.tableheight - 1):
                 if Entry_masses[index].get() != "":
-                    self.entries[cell+1].config(state="normal")
-                    self.entries[cell+1].delete(0, tkinter.END)
-                    self.entries[cell+1].insert(0, str(round((float(Entry_masses[index].get()) / sum_mass()) * 100, 3)))
-                    self.entries[cell+1].config(state="readonly")
+                    self.entries[cell + 1].config(state="normal")
+                    self.entries[cell + 1].delete(0, tkinter.END)
+                    self.entries[cell + 1].insert(0,
+                                                  str(round((float(Entry_masses[index].get()) / sum_mass()) * 100, 3)))
+                    self.entries[cell + 1].config(state="readonly")
                 cell = cell + self.tablewidth
                 index = index + 1
+
         weight_percent()
 
     def update_rates(self, index, cell):
@@ -1102,7 +1149,10 @@ class RxnEntryTable(tkinter.Frame):
         else:
             pass
 
+
 global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value
+
+
 class RxnDetails(tkinter.Frame):
     def __init__(self, master=tab1):
         tkinter.Frame.__init__(self, master)
@@ -1121,7 +1171,7 @@ class RxnDetails(tkinter.Frame):
             for row in range(self.tableheight):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                #self.entries[counter].insert(0, str(counter))
+                # self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=18)
                 counter += 1
         self.table_labels()
@@ -1133,7 +1183,7 @@ class RxnDetails(tkinter.Frame):
         self.user_entry()
 
     def user_entry(self):
-        global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, RXN_EM_Entry_2_SR, RXN_EM_2_Active, RXN_EM_2_Check,  RXN_EM_Value_2, RXN_EM_Entry
+        global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, RXN_EM_Entry_2_SR, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, RXN_EM_Entry
         RXN_EM = tkinter.StringVar()
         reactants_list = []
         RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
@@ -1142,7 +1192,8 @@ class RxnDetails(tkinter.Frame):
         RXN_EM_Entry.config(justify="center", state="readonly")
         RXN_EM_Value = self.entries[3]
         RXN_EM_2_Active = tkinter.BooleanVar()
-        RXN_EM_2_Check = tkinter.Checkbutton(self, text="2º Active?", variable=RXN_EM_2_Active, onvalue=True, offvalue=False)
+        RXN_EM_2_Check = tkinter.Checkbutton(self, text="2º Active?", variable=RXN_EM_2_Active, onvalue=True,
+                                             offvalue=False)
         RXN_EM_2_Check.grid(row=0, column=2)
         RXN_EM_2 = tkinter.StringVar()
         RXN_EM_Entry_2 = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM_2)
@@ -1176,8 +1227,9 @@ class RxnDetails(tkinter.Frame):
             else:
                 reactants_list.append(RET.entries[cell].get())
                 cell += RET.tablewidth
-        reactants_list = [f'{index+1}: {reactant}' for index, reactant in enumerate(reactants_list)]
+        reactants_list = [f'{index + 1}: {reactant}' for index, reactant in enumerate(reactants_list)]
         RXN_EM_Entry_2_SR.config(completevalues=reactants_list, state="readonly")
+
 
 class RxnMetrics(tkinter.Frame):
     def __init__(self, master=tab1):
@@ -1197,7 +1249,7 @@ class RxnMetrics(tkinter.Frame):
             for row in range(self.tableheight):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                #self.entries[counter].insert(0, str(counter))
+                # self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=18)
                 counter += 1
         self.table_labels()
@@ -1225,13 +1277,14 @@ class RxnMetrics(tkinter.Frame):
         self.entries[6].insert(0, "Iodine Value =")
         self.entries[6].config(state="readonly")
 
+
 class RxnMetrics_sec(tkinter.Frame):
     def __init__(self, master=tab1):
         tkinter.Frame.__init__(self, master)
         self.tablewidth = None
         self.tableheight = None
         self.entries = None
-        self.grid(row=2, column=1, padx=(500,0), pady=5)
+        self.grid(row=2, column=1, padx=(500, 0), pady=5)
         self.create_table()
 
     def create_table(self):
@@ -1243,7 +1296,7 @@ class RxnMetrics_sec(tkinter.Frame):
             for row in range(self.tableheight):
                 self.entries[counter] = tkinter.Entry(self)
                 self.entries[counter].grid(row=row, column=column)
-                #self.entries[counter].insert(0, str(counter))
+                # self.entries[counter].insert(0, str(counter))
                 self.entries[counter].config(justify="center", width=18)
                 counter += 1
         self.table_labels()
@@ -1270,6 +1323,7 @@ class RxnMetrics_sec(tkinter.Frame):
         self.entries[6].delete(0, tkinter.END)
         self.entries[6].insert(0, "Iodine Value =")
         self.entries[6].config(state="readonly")
+
 
 class WeightDist(tkinter.Frame):
     def __init__(self, master=tab2):
@@ -1320,6 +1374,7 @@ class WeightDist(tkinter.Frame):
         self.entries[5].config(width=25)
         self.entries[5].config(state="readonly")
 
+
 class WeightDist_2(tkinter.Frame):
     def __init__(self, master=tab4):
         tkinter.Frame.__init__(self, master)
@@ -1369,6 +1424,7 @@ class WeightDist_2(tkinter.Frame):
         self.entries[5].config(width=25)
         self.entries[5].config(state="readonly")
 
+
 class Buttons(tkinter.Frame):
     def __init__(self, master=tab1):
         tkinter.Frame.__init__(self, master)
@@ -1401,6 +1457,7 @@ class Buttons(tkinter.Frame):
         clear_last_row.grid(row=2, column=0)
         Simulate = tkinter.Button(self, text="Reset", command=reset_entry_table, width=15, bg="Orange")
         Simulate.grid(row=3, column=0)
+
 
 class SimStatus(tkinter.Frame):
     def __init__(self, master=tab1):
@@ -1436,9 +1493,11 @@ class SimStatus(tkinter.Frame):
         self.add_buttons()
 
     def add_buttons(self):
-        self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate",style="red.Horizontal.TProgressbar")
+        self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate",
+                                        style="red.Horizontal.TProgressbar")
         self.progress.grid(row=0, column=1)
-        self.progress_2 = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate",style="red.Horizontal.TProgressbar")
+        self.progress_2 = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate",
+                                          style="red.Horizontal.TProgressbar")
         self.progress_2.grid(row=1, column=1)
 
 
@@ -1466,7 +1525,6 @@ RET.entries[176].bind('<FocusOut>', lambda *args, entry=176, index=10, cell=176:
 RET.entries[192].bind('<FocusOut>', lambda *args, entry=192, index=11, cell=192: check_entry(entry, index, cell))
 RET.entries[208].bind('<FocusOut>', lambda *args, entry=208, index=12, cell=208: check_entry(entry, index, cell))
 RET.entries[224].bind('<FocusOut>', lambda *args, entry=224, index=13, cell=224: check_entry(entry, index, cell))
-
 
 Entry_masses[0].bind("<KeyRelease>", lambda *args, index=0, cell=16: RET.update_table(index, cell))
 Entry_masses[1].bind("<KeyRelease>", lambda *args, index=1, cell=32: RET.update_table(index, cell))
