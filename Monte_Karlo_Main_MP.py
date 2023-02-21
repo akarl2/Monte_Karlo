@@ -27,18 +27,13 @@ from Reactants import *
 from Reactants import R1Data, R2Data, R3Data, R4Data, R5Data, R6Data, R7Data, R8Data, R9Data, R10Data, R11Data, R12Data, \
     R13Data, R14Data
 
-# Set pandas dataframe display
-pandas.set_option('display.max_columns', None)
-pandas.set_option('display.max_rows', None)
-pandas.set_option('display.width', 100)
-
 # Runs the simulation
 global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, \
     total_ct, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, byproducts_sec, \
     frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, \
     frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary, quick_add, quick_add_comp, \
     RXN_EM_Value, RXN_EM_Entry, rxn_summary_df, rxn_summary_df_2, Xn, Xn_2, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, \
-    end_metric_selection_sec
+    end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict
 
 
 def simulate(starting_materials, starting_materials_sec):
@@ -49,7 +44,8 @@ def simulate(starting_materials, starting_materials_sec):
     running, in_primary = True, True
     test_count = 0
     test_interval = 40
-    sim.progress['value'], sim.progress_2['value'] = 0, 0
+    if __name__ == '__main__':
+        sim.progress['value'], sim.progress_2['value'] = 0, 0
     try:
         end_metric_value_upper = end_metric_value + 15
         end_metric_value_lower = end_metric_value - 15
@@ -154,7 +150,8 @@ def simulate(starting_materials, starting_materials_sec):
         NC[0].sort(key=lambda x: x[0])
         composition[groups[0][0]] = NC
         del (composition[groups[1][0]])
-        window.update()
+        if __name__ == '__main__':
+            window.update()
         if test_count >= test_interval:
             if in_primary:
                 RXN_Status(composition)
@@ -208,40 +205,46 @@ def simulate(starting_materials, starting_materials_sec):
                    'Iodine Value': IV}
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_selection != '% EHC':
-            sim.progress['value'] = round(((end_metric_value / RXN_metric_value) * 100), 2)
+            if __name__ == '__main__':
+                sim.progress['value'] = round(((end_metric_value / RXN_metric_value) * 100), 2)
             if RXN_metric_value <= end_metric_value:
-                if RXN_EM_2_Active.get() == False:
+                if RXN_EM_2_Active_status == False:
                     running = False
-                    sim.progress['value'] = 100
-                    update_metrics(TAV, AV, OH, EHC, COC, IV)
+                    if __name__ == '__main__':
+                        sim.progress['value'] = 100
+                        update_metrics(TAV, AV, OH, EHC, COC, IV)
                     RXN_Results(composition)
                 else:
                     in_primary = False
-                    sim.progress['value'] = 100
-                    update_metrics(TAV, AV, OH, EHC, COC, IV)
+                    if __name__ == '__main__':
+                        sim.progress['value'] = 100
+                        update_metrics(TAV, AV, OH, EHC, COC, IV)
                     RXN_Results(composition)
                     for species in composition_sec:
                         composition.append(species)
         else:
-            sim.progress['value'] = round(((EHC / end_metric_value) * 100), 2)
+            if __name__ == '__main__':
+                sim.progress['value'] = round(((EHC / end_metric_value) * 100), 2)
             if RXN_metric_value >= end_metric_value:
-                if RXN_EM_2_Active.get() == False:
+                if RXN_EM_2_Active_status == False:
                     running = False
-                    sim.progress['value'] = 100
-                    update_metrics(TAV, AV, OH, EHC, COC, IV)
+                    if __name__ == '__main__':
+                        sim.progress['value'] = 100
+                        update_metrics(TAV, AV, OH, EHC, COC, IV)
                     RXN_Results(composition)
                 else:
                     in_primary = False
-                    sim.progress['value'] = 100
-                    update_metrics(TAV, AV, OH, EHC, COC, IV)
+                    if __name__ == '__main__':
+                        sim.progress['value'] = 100
+                        update_metrics(TAV, AV, OH, EHC, COC, IV)
                     RXN_Results(composition)
                     for species in composition_sec:
                         composition.append(species)
-
-        window.update()
+        if __name__ == '__main__':
+            window.update()
         if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
             test_interval = 1
-        if in_primary:
+        if in_primary and __name__ == '__main__':
             update_metrics(TAV, AV, OH, EHC, COC, IV)
 
     def RXN_Status_sec(composition):
@@ -290,23 +293,28 @@ def simulate(starting_materials, starting_materials_sec):
                    'Iodine Value': IV}
         RXN_metric_value_2 = metrics[end_metric_selection_sec]
         if end_metric_selection_sec != '% EHC':
-            sim.progress_2['value'] = round(((end_metric_value_sec / RXN_metric_value_2) * 100), 2)
+            if __name__ == '__main__':
+                sim.progress_2['value'] = round(((end_metric_value_sec / RXN_metric_value_2) * 100), 2)
             if RXN_metric_value_2 <= end_metric_value_sec:
                 running = False
-                sim.progress['value'] = 100
-                update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
+                if __name__ == '__main__':
+                    sim.progress['value'] = 100
+                    update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
                 RXN_Results_sec(composition)
         else:
-            sim.progress_2['value'] = round(((EHC / end_metric_value_sec) * 100), 2)
+            if __name__ == '__main__':
+                sim.progress_2['value'] = round(((EHC / end_metric_value_sec) * 100), 2)
             if RXN_metric_value_2 >= end_metric_value_sec:
                 running = False
-                sim.progress['value'] = 100
-                update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
+                if __name__ == '__main__':
+                    sim.progress['value'] = 100
+                    update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
                 RXN_Results_sec(composition)
-        window.update()
         if end_metric_value_upper_sec >= RXN_metric_value_2 >= end_metric_value_lower_sec:
             test_interval = 1
-        update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
+        if __name__ == '__main__':
+            update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
+            window.update()
 
     while running:
         test_count += 1
@@ -742,7 +750,7 @@ def clear_last():
 
 
 def sim_values():
-    global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, end_metric_selection_sec
+    global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, end_metric_selection_sec, starting_materials, starting_materials_sec
     row_for_sec = RXN_EM_Entry_2_SR.current()
     starting_mass, starting_mass_sec, total_ct, total_ct_sec = 0, 0, 0, 0
     end_metric_value = float(RXN_EM_Value.get())
@@ -787,7 +795,14 @@ def sim_values():
         messagebox.showerror("Exception raised", str(e))
         pass
 
-    simulate(starting_materials, starting_materials_sec)
+def multiprocessing():
+    if __name__ == "__main__":
+        #get the number of cores
+        workers = os.cpu_count()
+        with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
+            results = [executor.submit(simulate, starting_materials, starting_materials_sec) for _ in range(1)]
+            for f in concurrent.futures.as_completed(results):
+                print(f.result())
 
 
 def reset_entry_table():
@@ -879,692 +894,696 @@ def export_all():
 
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
-window = tkinter.Tk()
-style = ttk.Style(window)
-style.theme_use('clam')
-style.configure('TNotebook.Tab', background='#355C7D', foreground='#ffffff')
-style.configure("red.Horizontal.TProgressbar", troughcolor='green')
-style.map('TNotebook.Tab', background=[('selected', 'green3')], foreground=[('selected', '#000000')])
-window.iconbitmap("testtube.ico")
-window.title("Monte Karlo")
-window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
-window.configure(background="#000000")
+if __name__ == "__main__":
+    window = tkinter.Tk()
+    style = ttk.Style(window)
+    style.theme_use('clam')
+    style.configure('TNotebook.Tab', background='#355C7D', foreground='#ffffff')
+    style.configure("red.Horizontal.TProgressbar", troughcolor='green')
+    style.map('TNotebook.Tab', background=[('selected', 'green3')], foreground=[('selected', '#000000')])
+    window.iconbitmap("testtube.ico")
+    window.title("Monte Karlo")
+    window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
+    window.configure(background="#000000")
 
-tab_control = ttk.Notebook(window)
-tab1 = ttk.Frame(tab_control, style='TNotebook.Tab')
-tab2 = ttk.Frame(tab_control, style='TNotebook.Tab')
-tab3 = ttk.Frame(tab_control, style='TNotebook.Tab')
-tab4 = ttk.Frame(tab_control, style='TNotebook.Tab')
-tab5 = ttk.Frame(tab_control, style='TNotebook.Tab')
-tab_control.add(tab1, text='Reactor')
-tab_control.add(tab2, text='1° Reaction Results')
-tab_control.add(tab3, text='1° In-Situ Results')
-tab_control.add(tab4, text='2° Reaction Results')
-tab_control.add(tab5, text='2° In-Situ Results')
-tkinter.Grid.rowconfigure(window, 0, weight=1)
-tkinter.Grid.columnconfigure(window, 0, weight=1)
-tab_control.grid(row=0, column=0, sticky=tkinter.E + tkinter.W + tkinter.N + tkinter.S)
+    tab_control = ttk.Notebook(window)
+    tab1 = ttk.Frame(tab_control, style='TNotebook.Tab')
+    tab2 = ttk.Frame(tab_control, style='TNotebook.Tab')
+    tab3 = ttk.Frame(tab_control, style='TNotebook.Tab')
+    tab4 = ttk.Frame(tab_control, style='TNotebook.Tab')
+    tab5 = ttk.Frame(tab_control, style='TNotebook.Tab')
+    tab_control.add(tab1, text='Reactor')
+    tab_control.add(tab2, text='1° Reaction Results')
+    tab_control.add(tab3, text='1° In-Situ Results')
+    tab_control.add(tab4, text='2° Reaction Results')
+    tab_control.add(tab5, text='2° In-Situ Results')
+    tkinter.Grid.rowconfigure(window, 0, weight=1)
+    tkinter.Grid.columnconfigure(window, 0, weight=1)
+    tab_control.grid(row=0, column=0, sticky=tkinter.E + tkinter.W + tkinter.N + tkinter.S)
 
-menubar = tkinter.Menu(window, background="red")
-window.config(menu=menubar)
-filemenu1 = tkinter.Menu(menubar, tearoff=0)
-export_menu = tkinter.Menu(filemenu1, tearoff=0)
-filemenu2 = tkinter.Menu(menubar, tearoff=0)
-filemenu3 = tkinter.Menu(menubar, tearoff=0)
-menubar.add_cascade(label='File', menu=filemenu1)
-menubar.add_cascade(label='Options', menu=filemenu2)
-menubar.add_cascade(label='Help', menu=filemenu3)
-filemenu1.add_cascade(label="Export", menu=export_menu)
-export_menu.add_command(label='1° Reaction Results', command=export_primary)
-export_menu.add_command(label='2° Reaction Results', command=export_secondary)
-export_menu.add_command(label='All Reaction Results', command=export_all)
-filemenu1.add_separator()
-filemenu1.add_command(label='Reset', command=reset_entry_table)
-filemenu1.add_command(label='Exit', command=window.destroy)
-filemenu2.add_command(label='Quick Add', command=quick_add)
-filemenu3.add_command(label='Help')
+    menubar = tkinter.Menu(window, background="red")
+    window.config(menu=menubar)
+    filemenu1 = tkinter.Menu(menubar, tearoff=0)
+    export_menu = tkinter.Menu(filemenu1, tearoff=0)
+    filemenu2 = tkinter.Menu(menubar, tearoff=0)
+    filemenu3 = tkinter.Menu(menubar, tearoff=0)
+    menubar.add_cascade(label='File', menu=filemenu1)
+    menubar.add_cascade(label='Options', menu=filemenu2)
+    menubar.add_cascade(label='Help', menu=filemenu3)
+    filemenu1.add_cascade(label="Export", menu=export_menu)
+    export_menu.add_command(label='1° Reaction Results', command=export_primary)
+    export_menu.add_command(label='2° Reaction Results', command=export_secondary)
+    export_menu.add_command(label='All Reaction Results', command=export_all)
+    filemenu1.add_separator()
+    filemenu1.add_command(label='Reset', command=reset_entry_table)
+    filemenu1.add_command(label='Exit', command=window.destroy)
+    filemenu2.add_command(label='Quick Add', command=quick_add)
+    filemenu3.add_command(label='Help')
 
-Entry_Reactants = ['R1Reactant', 'R2Reactant', 'R3Reactant', 'R4Reactant', 'R5Reactant', 'R6Reactant', 'R7Reactant',
-                   'R8Reactant', 'R9Reactant', 'R10Reactant', 'R11Reactant', 'R12Reactant', 'R13Reactant',
-                   'R14Reactant']
-Entry_masses = ['R1mass', 'R2mass', 'R3mass', 'R4mass', 'R5mass', 'R6mass', 'R7mass', 'R8mass', 'R9mass', 'R10mass',
-                'R11mass', 'R12mass', 'R13mass', 'R14mass']
-RDE = ['R1Data', 'R2Data', 'R3Data', 'R4Data', 'R5Data', 'R6Data', 'R7Data', 'R8Data', 'R9Data', 'R10Data', 'R11Data',
-       'R12Data', 'R13Data', 'R14Data']
+    Entry_Reactants = ['R1Reactant', 'R2Reactant', 'R3Reactant', 'R4Reactant', 'R5Reactant', 'R6Reactant', 'R7Reactant',
+                       'R8Reactant', 'R9Reactant', 'R10Reactant', 'R11Reactant', 'R12Reactant', 'R13Reactant',
+                       'R14Reactant']
+    Entry_masses = ['R1mass', 'R2mass', 'R3mass', 'R4mass', 'R5mass', 'R6mass', 'R7mass', 'R8mass', 'R9mass', 'R10mass',
+                    'R11mass', 'R12mass', 'R13mass', 'R14mass']
+    RDE = ['R1Data', 'R2Data', 'R3Data', 'R4Data', 'R5Data', 'R6Data', 'R7Data', 'R8Data', 'R9Data', 'R10Data',
+           'R11Data',
+           'R12Data', 'R13Data', 'R14Data']
 
-global starting_cell
-starting_cell = 16
-
-
-class QuickAddWindow(simpledialog.Dialog):
-    def body(self, master):
-        self.title("Quick Add")
-        Label(master, text="Reactant:").grid(row=0, column=0)
-        Label(master, text="Mass (g):").grid(row=1, column=0)
-        comp_to_add = tkinter.StringVar()
-        self.e1 = AutocompleteCombobox(master, completevalues=quick_adds, textvariable=comp_to_add, width=15)
-        self.e2 = Entry(master, width=18)
-        self.e1.grid(row=0, column=1)
-        self.e2.grid(row=1, column=1)
-        return self.e1
-
-    def buttonbox(self):
-        box = Frame(self)
-        w = Button(box, text="Submit", width=10, command=self.ok)
-        w.pack(side=LEFT, padx=5, pady=5)
-        w = Button(box, text="Cancel", width=10, command=self.cancel)
-        w.pack(side=LEFT, padx=5, pady=5)
-        self.bind("<Return>", self.ok)
-        self.bind("<Escape>", self.cancel)
-        box.pack()
-
-    def cancel(self):
-        global quick_add_comp
-        quick_add_comp = None
-        self.destroy()
-
-    def ok(self):
-        global quick_add_comp
-        quick_add_comp = [self.e1.get(), float(self.e2.get())]
-        self.destroy()
+    global starting_cell
+    starting_cell = 16
 
 
-class RxnEntryTable(tkinter.Frame):
-    def __init__(self, master=tab1):
-        tkinter.Frame.__init__(self, master)
-        self.tablewidth = 16
-        self.tableheight = 15
-        self.entries = None
-        self.grid(row=5, column=1, padx=10, pady=10)
-        self.create_table()
+    class QuickAddWindow(simpledialog.Dialog):
+        def body(self, master):
+            self.title("Quick Add")
+            Label(master, text="Reactant:").grid(row=0, column=0)
+            Label(master, text="Mass (g):").grid(row=1, column=0)
+            comp_to_add = tkinter.StringVar()
+            self.e1 = AutocompleteCombobox(master, completevalues=quick_adds, textvariable=comp_to_add, width=15)
+            self.e2 = Entry(master, width=18)
+            self.e1.grid(row=0, column=1)
+            self.e2.grid(row=1, column=1)
+            return self.e1
 
-    def create_table(self):
-        self.entries = {}
-        counter = 0
-        for row in range(self.tableheight):
-            for column in range(self.tablewidth):
-                self.entries[counter] = tkinter.Entry(self)
-                self.entries[counter].grid(row=row, column=column)
-                # self.entries[counter].insert(0, str(counter))
-                self.entries[counter].config(justify="center", width=10)
-                counter += 1
-        self.entries[0].config(width=27)
-        self.tabel_labels()
+        def buttonbox(self):
+            box = Frame(self)
+            w = Button(box, text="Submit", width=10, command=self.ok)
+            w.pack(side=LEFT, padx=5, pady=5)
+            w = Button(box, text="Cancel", width=10, command=self.cancel)
+            w.pack(side=LEFT, padx=5, pady=5)
+            self.bind("<Return>", self.ok)
+            self.bind("<Escape>", self.cancel)
+            box.pack()
 
-    def tabel_labels(self):
-        offset = 0
-        self.entries[offset + 0].insert(0, "Component")
-        self.entries[offset + 0].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset + 1].insert(0, "Mass (g)")
-        self.entries[offset + 1].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset + 2].insert(0, "wt, %")
-        self.entries[offset + 2].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset + 3].insert(0, "Moles")
-        self.entries[offset + 3].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset + 4].insert(0, "1° - ID")
-        self.entries[offset + 4].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset + 5].insert(0, "1° - K")
-        self.entries[offset + 5].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset + 6].insert(0, "C1° - ID")
-        self.entries[offset + 6].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset + 7].insert(0, "1° - Child K")
-        self.entries[offset + 7].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset + 8].insert(0, "2° - ID")
-        self.entries[offset + 8].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset + 9].insert(0, "2° - K")
-        self.entries[offset + 9].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset + 10].insert(0, "C2° - ID")
-        self.entries[offset + 10].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset + 11].insert(0, "2° - Child K")
-        self.entries[offset + 11].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset + 12].insert(0, "3° - ID")
-        self.entries[offset + 12].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset + 13].insert(0, "3° - K")
-        self.entries[offset + 13].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset + 14].insert(0, "C3° - ID")
-        self.entries[offset + 14].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.entries[offset + 15].insert(0, "3° - Child K")
-        self.entries[offset + 15].config(state="readonly", font=("Helvetica", 8, "bold"))
-        self.user_entry()
+        def cancel(self):
+            global quick_add_comp
+            quick_add_comp = None
+            self.destroy()
 
-    def user_entry(self):
-        cell = starting_cell
-        row = 1
-        index = 0
-        for species in range(self.tableheight - 1):
-            Entry_Reactants[index] = tkinter.StringVar()
-            self.entries[cell] = AutocompleteCombobox(self, completevalues=Reactants, width=24,
-                                                      textvariable=Entry_Reactants[index])
-            self.entries[cell].grid(row=row, column=0)
-            self.entries[cell].config(justify="center")
-            cell = cell + self.tablewidth
-            row = row + 1
-            index = index + 1
-        cell = starting_cell + 1
-        row = 1
-        index = 0
-        for species in range(self.tableheight - 1):
-            Entry_masses[index] = self.entries[cell]
-            cell = cell + self.tablewidth
-            row = row + 1
-            index = index + 1
+        def ok(self):
+            global quick_add_comp
+            quick_add_comp = [self.e1.get(), float(self.e2.get())]
+            self.destroy()
 
-    def update_table(self, index, cell):
-        if self.entries[cell + 1].get() == "" or self.entries[cell + 1].get() == "0":
-            self.entries[cell + 1].delete(0, tkinter.END)
-            self.entries[cell + 2].config(state="normal")
-            self.entries[cell + 2].delete(0, tkinter.END)
-        if self.entries[cell].get() == "Clear":
-            self.entries[cell].delete(0, tkinter.END)
-            self.entries[cell + 1].delete(0, tkinter.END)
-            self.entries[cell + 2].config(state="normal")
-            self.entries[cell + 2].delete(0, tkinter.END)
-            self.entries[cell + 3].delete(0, tkinter.END)
-            self.entries[cell + 4].config(state="normal")
-            self.entries[cell + 4].delete(0, tkinter.END)
-            self.entries[cell + 5].delete(0, tkinter.END)
-            self.entries[cell + 6].config(state="normal")
-            self.entries[cell + 6].delete(0, tkinter.END)
-            self.entries[cell + 7].delete(0, tkinter.END)
-            self.entries[cell + 8].config(state="normal")
-            self.entries[cell + 8].delete(0, tkinter.END)
-            self.entries[cell + 9].delete(0, tkinter.END)
-            self.entries[cell + 10].config(state="normal")
-            self.entries[cell + 10].delete(0, tkinter.END)
-            self.entries[cell + 11].delete(0, tkinter.END)
-            self.entries[cell + 12].config(state="normal")
-            self.entries[cell + 12].delete(0, tkinter.END)
-            self.entries[cell + 13].delete(0, tkinter.END)
-            self.entries[cell + 14].config(state="normal")
-            self.entries[cell + 14].delete(0, tkinter.END)
-            self.entries[cell + 15].delete(0, tkinter.END)
-        else:
-            if self.entries[cell].get() != "" and self.entries[cell + 1].get() != "":
-                a = str_to_class(Entry_Reactants[index].get())()
-                molesA = float(Entry_masses[index].get()) / float(a.mw)
-                self.entries[cell + 3].delete(0, tkinter.END)
-                self.entries[cell + 3].insert(0, str(round(molesA, 6)))
 
-        def sum_mass():
-            total = 0
-            for entry in Entry_masses:
-                if entry.get() != "":
-                    total = total + float(entry.get())
-            return total
+    class RxnEntryTable(tkinter.Frame):
+        def __init__(self, master=tab1):
+            tkinter.Frame.__init__(self, master)
+            self.tablewidth = 16
+            self.tableheight = 15
+            self.entries = None
+            self.grid(row=5, column=1, padx=10, pady=10)
+            self.create_table()
 
-        def weight_percent():
-            cell = 17
+        def create_table(self):
+            self.entries = {}
+            counter = 0
+            for row in range(self.tableheight):
+                for column in range(self.tablewidth):
+                    self.entries[counter] = tkinter.Entry(self)
+                    self.entries[counter].grid(row=row, column=column)
+                    # self.entries[counter].insert(0, str(counter))
+                    self.entries[counter].config(justify="center", width=10)
+                    counter += 1
+            self.entries[0].config(width=27)
+            self.tabel_labels()
+
+        def tabel_labels(self):
+            offset = 0
+            self.entries[offset + 0].insert(0, "Component")
+            self.entries[offset + 0].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[offset + 1].insert(0, "Mass (g)")
+            self.entries[offset + 1].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[offset + 2].insert(0, "wt, %")
+            self.entries[offset + 2].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[offset + 3].insert(0, "Moles")
+            self.entries[offset + 3].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[offset + 4].insert(0, "1° - ID")
+            self.entries[offset + 4].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[offset + 5].insert(0, "1° - K")
+            self.entries[offset + 5].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[offset + 6].insert(0, "C1° - ID")
+            self.entries[offset + 6].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[offset + 7].insert(0, "1° - Child K")
+            self.entries[offset + 7].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[offset + 8].insert(0, "2° - ID")
+            self.entries[offset + 8].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[offset + 9].insert(0, "2° - K")
+            self.entries[offset + 9].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[offset + 10].insert(0, "C2° - ID")
+            self.entries[offset + 10].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[offset + 11].insert(0, "2° - Child K")
+            self.entries[offset + 11].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[offset + 12].insert(0, "3° - ID")
+            self.entries[offset + 12].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[offset + 13].insert(0, "3° - K")
+            self.entries[offset + 13].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[offset + 14].insert(0, "C3° - ID")
+            self.entries[offset + 14].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[offset + 15].insert(0, "3° - Child K")
+            self.entries[offset + 15].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.user_entry()
+
+        def user_entry(self):
+            cell = starting_cell
+            row = 1
             index = 0
-            for i in range(self.tableheight - 1):
-                if Entry_masses[index].get() != "":
-                    self.entries[cell + 1].config(state="normal")
-                    self.entries[cell + 1].delete(0, tkinter.END)
-                    self.entries[cell + 1].insert(0,
-                                                  str(round((float(Entry_masses[index].get()) / sum_mass()) * 100, 3)))
-                    self.entries[cell + 1].config(state="readonly")
+            for species in range(self.tableheight - 1):
+                Entry_Reactants[index] = tkinter.StringVar()
+                self.entries[cell] = AutocompleteCombobox(self, completevalues=Reactants, width=24,
+                                                          textvariable=Entry_Reactants[index])
+                self.entries[cell].grid(row=row, column=0)
+                self.entries[cell].config(justify="center")
                 cell = cell + self.tablewidth
+                row = row + 1
+                index = index + 1
+            cell = starting_cell + 1
+            row = 1
+            index = 0
+            for species in range(self.tableheight - 1):
+                Entry_masses[index] = self.entries[cell]
+                cell = cell + self.tablewidth
+                row = row + 1
                 index = index + 1
 
-        weight_percent()
-
-    def update_rates(self, index, cell):
-        if self.entries[cell].get() != "Clear" and self.entries[cell].get() != "":
-            a = str_to_class(Entry_Reactants[index].get())()
-            self.entries[cell + 4].config(state="normal")
-            self.entries[cell + 4].delete(0, tkinter.END)
-            self.entries[cell + 4].insert(0, str(a.prgID))
-            self.entries[cell + 4].config(state="readonly")
-            self.entries[cell + 5].delete(0, tkinter.END)
-            self.entries[cell + 5].insert(0, str(a.prgk))
-            self.entries[cell + 6].config(state="normal")
-            self.entries[cell + 6].delete(0, tkinter.END)
-            self.entries[cell + 6].insert(0, str(a.cprgID))
-            self.entries[cell + 6].config(state="readonly")
-            self.entries[cell + 7].delete(0, tkinter.END)
-            self.entries[cell + 7].insert(0, str(a.cprgk))
-            self.entries[cell + 8].config(state="normal")
-            self.entries[cell + 8].delete(0, tkinter.END)
-            self.entries[cell + 8].insert(0, str(a.srgID))
-            self.entries[cell + 8].config(state="readonly")
-            self.entries[cell + 9].delete(0, tkinter.END)
-            self.entries[cell + 9].insert(0, str(a.srgk))
-            self.entries[cell + 10].config(state="normal")
-            self.entries[cell + 10].delete(0, tkinter.END)
-            self.entries[cell + 10].insert(0, str(a.csrgID))
-            self.entries[cell + 10].config(state="readonly")
-            self.entries[cell + 11].delete(0, tkinter.END)
-            self.entries[cell + 11].insert(0, str(a.csrgk))
-            self.entries[cell + 12].config(state="normal")
-            self.entries[cell + 12].delete(0, tkinter.END)
-            self.entries[cell + 12].insert(0, str(a.trgID))
-            self.entries[cell + 12].config(state="readonly")
-            self.entries[cell + 13].delete(0, tkinter.END)
-            self.entries[cell + 13].insert(0, str(a.trgk))
-            self.entries[cell + 14].config(state="normal")
-            self.entries[cell + 14].delete(0, tkinter.END)
-            self.entries[cell + 14].insert(0, str(a.ctrgID))
-            self.entries[cell + 14].config(state="readonly")
-            self.entries[cell + 15].delete(0, tkinter.END)
-            self.entries[cell + 15].insert(0, str(a.ctrgk))
-        else:
-            pass
-
-
-global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value
-
-
-class RxnDetails(tkinter.Frame):
-    def __init__(self, master=tab1):
-        tkinter.Frame.__init__(self, master)
-        self.tableheight = None
-        self.tablewidth = None
-        self.entries = None
-        self.grid(row=0, column=0, padx=5, pady=(20, 5))
-        self.create_table()
-
-    def create_table(self):
-        self.entries = {}
-        self.tableheight = 3
-        self.tablewidth = 2
-        counter = 0
-        for column in range(self.tablewidth):
-            for row in range(self.tableheight):
-                self.entries[counter] = tkinter.Entry(self)
-                self.entries[counter].grid(row=row, column=column)
-                # self.entries[counter].insert(0, str(counter))
-                self.entries[counter].config(justify="center", width=18)
-                counter += 1
-        self.table_labels()
-
-    def table_labels(self):
-        self.entries[2].delete(0, tkinter.END)
-        self.entries[2].insert(0, "# of samples =")
-        self.entries[2].config(state="readonly")
-        self.user_entry()
-
-    def user_entry(self):
-        global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, RXN_EM_Entry_2_SR, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, RXN_EM_Entry
-        RXN_EM = tkinter.StringVar()
-        reactants_list = []
-        RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
-        RXN_EM_Entry.grid(row=0, column=0)
-        RXN_EM_Entry.insert(0, "1º End Metric")
-        RXN_EM_Entry.config(justify="center", state="readonly")
-        RXN_EM_Value = self.entries[3]
-        RXN_EM_2_Active = tkinter.BooleanVar()
-        RXN_EM_2_Check = tkinter.Checkbutton(self, text="2º Active?", variable=RXN_EM_2_Active, onvalue=True,
-                                             offvalue=False)
-        RXN_EM_2_Check.grid(row=0, column=2)
-        RXN_EM_2 = tkinter.StringVar()
-        RXN_EM_Entry_2 = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM_2)
-        RXN_EM_Entry_2.grid(row=1, column=0)
-        RXN_EM_Entry_2.insert(0, "2º End Metric")
-        RXN_EM_Entry_2.config(justify="center", state="readonly")
-        RXN_EM_Value_2 = self.entries[4]
-        RXN_EM_2_SR = tkinter.StringVar()
-        RXN_EM_Entry_2_SR = AutocompleteCombobox(self, completevalues=reactants_list, width=15,
-                                                 textvariable=RXN_EM_2_SR)
-        RXN_EM_Entry_2_SR.grid(row=1, column=2)
-        if RXN_EM_Entry_2_SR.get() == "":
-            RXN_EM_Entry_2_SR.insert(0, "2º Start")
-        RXN_EM_Entry_2_SR.config(justify="center")
-        RXN_Samples = tkinter.StringVar()
-        RXN_Samples_Entry = AutocompleteCombobox(self, completevalues=Num_Samples, width=15, textvariable=RXN_Samples)
-        RXN_Samples_Entry.insert(0, "5000")
-        RXN_Samples_Entry.grid(row=2, column=1)
-        RXN_Samples_Entry.config(justify="center")
-        RXN_EOR = self.entries[5]
-        self.get_reactants()
-
-    def get_reactants(self):
-        global reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR
-        reactants_list = []
-        cell = 16
-        for i in range(RET.tableheight - 1):
-            if RET.entries[cell].get() == "" or RET.entries[cell].get() == "Clear":
-                cell += RET.tablewidth
-                pass
+        def update_table(self, index, cell):
+            if self.entries[cell + 1].get() == "" or self.entries[cell + 1].get() == "0":
+                self.entries[cell + 1].delete(0, tkinter.END)
+                self.entries[cell + 2].config(state="normal")
+                self.entries[cell + 2].delete(0, tkinter.END)
+            if self.entries[cell].get() == "Clear":
+                self.entries[cell].delete(0, tkinter.END)
+                self.entries[cell + 1].delete(0, tkinter.END)
+                self.entries[cell + 2].config(state="normal")
+                self.entries[cell + 2].delete(0, tkinter.END)
+                self.entries[cell + 3].delete(0, tkinter.END)
+                self.entries[cell + 4].config(state="normal")
+                self.entries[cell + 4].delete(0, tkinter.END)
+                self.entries[cell + 5].delete(0, tkinter.END)
+                self.entries[cell + 6].config(state="normal")
+                self.entries[cell + 6].delete(0, tkinter.END)
+                self.entries[cell + 7].delete(0, tkinter.END)
+                self.entries[cell + 8].config(state="normal")
+                self.entries[cell + 8].delete(0, tkinter.END)
+                self.entries[cell + 9].delete(0, tkinter.END)
+                self.entries[cell + 10].config(state="normal")
+                self.entries[cell + 10].delete(0, tkinter.END)
+                self.entries[cell + 11].delete(0, tkinter.END)
+                self.entries[cell + 12].config(state="normal")
+                self.entries[cell + 12].delete(0, tkinter.END)
+                self.entries[cell + 13].delete(0, tkinter.END)
+                self.entries[cell + 14].config(state="normal")
+                self.entries[cell + 14].delete(0, tkinter.END)
+                self.entries[cell + 15].delete(0, tkinter.END)
             else:
-                reactants_list.append(RET.entries[cell].get())
-                cell += RET.tablewidth
-        reactants_list = [f'{index + 1}: {reactant}' for index, reactant in enumerate(reactants_list)]
-        RXN_EM_Entry_2_SR.config(completevalues=reactants_list, state="readonly")
+                if self.entries[cell].get() != "" and self.entries[cell + 1].get() != "":
+                    a = str_to_class(Entry_Reactants[index].get())()
+                    molesA = float(Entry_masses[index].get()) / float(a.mw)
+                    self.entries[cell + 3].delete(0, tkinter.END)
+                    self.entries[cell + 3].insert(0, str(round(molesA, 6)))
+
+            def sum_mass():
+                total = 0
+                for entry in Entry_masses:
+                    if entry.get() != "":
+                        total = total + float(entry.get())
+                return total
+
+            def weight_percent():
+                cell = 17
+                index = 0
+                for i in range(self.tableheight - 1):
+                    if Entry_masses[index].get() != "":
+                        self.entries[cell + 1].config(state="normal")
+                        self.entries[cell + 1].delete(0, tkinter.END)
+                        self.entries[cell + 1].insert(0,
+                                                      str(round((float(Entry_masses[index].get()) / sum_mass()) * 100,
+                                                                3)))
+                        self.entries[cell + 1].config(state="readonly")
+                    cell = cell + self.tablewidth
+                    index = index + 1
+
+            weight_percent()
+
+        def update_rates(self, index, cell):
+            if self.entries[cell].get() != "Clear" and self.entries[cell].get() != "":
+                a = str_to_class(Entry_Reactants[index].get())()
+                self.entries[cell + 4].config(state="normal")
+                self.entries[cell + 4].delete(0, tkinter.END)
+                self.entries[cell + 4].insert(0, str(a.prgID))
+                self.entries[cell + 4].config(state="readonly")
+                self.entries[cell + 5].delete(0, tkinter.END)
+                self.entries[cell + 5].insert(0, str(a.prgk))
+                self.entries[cell + 6].config(state="normal")
+                self.entries[cell + 6].delete(0, tkinter.END)
+                self.entries[cell + 6].insert(0, str(a.cprgID))
+                self.entries[cell + 6].config(state="readonly")
+                self.entries[cell + 7].delete(0, tkinter.END)
+                self.entries[cell + 7].insert(0, str(a.cprgk))
+                self.entries[cell + 8].config(state="normal")
+                self.entries[cell + 8].delete(0, tkinter.END)
+                self.entries[cell + 8].insert(0, str(a.srgID))
+                self.entries[cell + 8].config(state="readonly")
+                self.entries[cell + 9].delete(0, tkinter.END)
+                self.entries[cell + 9].insert(0, str(a.srgk))
+                self.entries[cell + 10].config(state="normal")
+                self.entries[cell + 10].delete(0, tkinter.END)
+                self.entries[cell + 10].insert(0, str(a.csrgID))
+                self.entries[cell + 10].config(state="readonly")
+                self.entries[cell + 11].delete(0, tkinter.END)
+                self.entries[cell + 11].insert(0, str(a.csrgk))
+                self.entries[cell + 12].config(state="normal")
+                self.entries[cell + 12].delete(0, tkinter.END)
+                self.entries[cell + 12].insert(0, str(a.trgID))
+                self.entries[cell + 12].config(state="readonly")
+                self.entries[cell + 13].delete(0, tkinter.END)
+                self.entries[cell + 13].insert(0, str(a.trgk))
+                self.entries[cell + 14].config(state="normal")
+                self.entries[cell + 14].delete(0, tkinter.END)
+                self.entries[cell + 14].insert(0, str(a.ctrgID))
+                self.entries[cell + 14].config(state="readonly")
+                self.entries[cell + 15].delete(0, tkinter.END)
+                self.entries[cell + 15].insert(0, str(a.ctrgk))
+            else:
+                pass
 
 
-class RxnMetrics(tkinter.Frame):
-    def __init__(self, master=tab1):
-        tkinter.Frame.__init__(self, master)
-        self.tablewidth = None
-        self.tableheight = None
-        self.entries = None
-        self.grid(row=2, column=1, padx=5, pady=5)
-        self.create_table()
-
-    def create_table(self):
-        self.entries = {}
-        self.tableheight = 8
-        self.tablewidth = 2
-        counter = 0
-        for column in range(self.tablewidth):
-            for row in range(self.tableheight):
-                self.entries[counter] = tkinter.Entry(self)
-                self.entries[counter].grid(row=row, column=column)
-                # self.entries[counter].insert(0, str(counter))
-                self.entries[counter].config(justify="center", width=18)
-                counter += 1
-        self.table_labels()
-
-    def table_labels(self):
-        self.entries[0].delete(0, tkinter.END)
-        self.entries[0].insert(0, "EHC, % =")
-        self.entries[0].config(state="readonly")
-        self.entries[1].delete(0, tkinter.END)
-        self.entries[1].insert(0, "Theory WPE =")
-        self.entries[1].config(state="readonly")
-        self.entries[2].delete(0, tkinter.END)
-        self.entries[2].insert(0, "Acid Value =")
-        self.entries[2].config(state="readonly")
-        self.entries[3].delete(0, tkinter.END)
-        self.entries[3].insert(0, "Amine Value =")
-        self.entries[3].config(state="readonly")
-        self.entries[4].delete(0, tkinter.END)
-        self.entries[4].insert(0, "OH Value =")
-        self.entries[4].config(state="readonly")
-        self.entries[5].delete(0, tkinter.END)
-        self.entries[5].insert(0, "COC Value =")
-        self.entries[5].config(state="readonly")
-        self.entries[6].delete(0, tkinter.END)
-        self.entries[6].insert(0, "Iodine Value =")
-        self.entries[6].config(state="readonly")
+    global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value
 
 
-class RxnMetrics_sec(tkinter.Frame):
-    def __init__(self, master=tab1):
-        tkinter.Frame.__init__(self, master)
-        self.tablewidth = None
-        self.tableheight = None
-        self.entries = None
-        self.grid(row=2, column=1, padx=(500, 0), pady=5)
-        self.create_table()
+    class RxnDetails(tkinter.Frame):
+        def __init__(self, master=tab1):
+            tkinter.Frame.__init__(self, master)
+            self.tableheight = None
+            self.tablewidth = None
+            self.entries = None
+            self.grid(row=0, column=0, padx=5, pady=(20, 5))
+            self.create_table()
 
-    def create_table(self):
-        self.entries = {}
-        self.tableheight = 8
-        self.tablewidth = 2
-        counter = 0
-        for column in range(self.tablewidth):
-            for row in range(self.tableheight):
-                self.entries[counter] = tkinter.Entry(self)
-                self.entries[counter].grid(row=row, column=column)
-                # self.entries[counter].insert(0, str(counter))
-                self.entries[counter].config(justify="center", width=18)
-                counter += 1
-        self.table_labels()
+        def create_table(self):
+            self.entries = {}
+            self.tableheight = 3
+            self.tablewidth = 2
+            counter = 0
+            for column in range(self.tablewidth):
+                for row in range(self.tableheight):
+                    self.entries[counter] = tkinter.Entry(self)
+                    self.entries[counter].grid(row=row, column=column)
+                    # self.entries[counter].insert(0, str(counter))
+                    self.entries[counter].config(justify="center", width=18)
+                    counter += 1
+            self.table_labels()
 
-    def table_labels(self):
-        self.entries[0].delete(0, tkinter.END)
-        self.entries[0].insert(0, "EHC, % =")
-        self.entries[0].config(state="readonly")
-        self.entries[1].delete(0, tkinter.END)
-        self.entries[1].insert(0, "Theory WPE =")
-        self.entries[1].config(state="readonly")
-        self.entries[2].delete(0, tkinter.END)
-        self.entries[2].insert(0, "Acid Value =")
-        self.entries[2].config(state="readonly")
-        self.entries[3].delete(0, tkinter.END)
-        self.entries[3].insert(0, "Amine Value =")
-        self.entries[3].config(state="readonly")
-        self.entries[4].delete(0, tkinter.END)
-        self.entries[4].insert(0, "OH Value =")
-        self.entries[4].config(state="readonly")
-        self.entries[5].delete(0, tkinter.END)
-        self.entries[5].insert(0, "COC Value =")
-        self.entries[5].config(state="readonly")
-        self.entries[6].delete(0, tkinter.END)
-        self.entries[6].insert(0, "Iodine Value =")
-        self.entries[6].config(state="readonly")
+        def table_labels(self):
+            self.entries[2].delete(0, tkinter.END)
+            self.entries[2].insert(0, "# of samples =")
+            self.entries[2].config(state="readonly")
+            self.user_entry()
 
+        def user_entry(self):
+            global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, RXN_EM_Entry_2_SR, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, RXN_EM_Entry
+            RXN_EM = tkinter.StringVar()
+            reactants_list = []
+            RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
+            RXN_EM_Entry.grid(row=0, column=0)
+            RXN_EM_Entry.insert(0, "1º End Metric")
+            RXN_EM_Entry.config(justify="center", state="readonly")
+            RXN_EM_Value = self.entries[3]
+            RXN_EM_2_Active = tkinter.BooleanVar()
+            RXN_EM_2_Check = tkinter.Checkbutton(self, text="2º Active?", variable=RXN_EM_2_Active, onvalue=True,
+                                                 offvalue=False)
+            RXN_EM_2_Check.grid(row=0, column=2)
+            RXN_EM_2 = tkinter.StringVar()
+            RXN_EM_Entry_2 = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM_2)
+            RXN_EM_Entry_2.grid(row=1, column=0)
+            RXN_EM_Entry_2.insert(0, "2º End Metric")
+            RXN_EM_Entry_2.config(justify="center", state="readonly")
+            RXN_EM_Value_2 = self.entries[4]
+            RXN_EM_2_SR = tkinter.StringVar()
+            RXN_EM_Entry_2_SR = AutocompleteCombobox(self, completevalues=reactants_list, width=15,
+                                                     textvariable=RXN_EM_2_SR)
+            RXN_EM_Entry_2_SR.grid(row=1, column=2)
+            if RXN_EM_Entry_2_SR.get() == "":
+                RXN_EM_Entry_2_SR.insert(0, "2º Start")
+            RXN_EM_Entry_2_SR.config(justify="center")
+            RXN_Samples = tkinter.StringVar()
+            RXN_Samples_Entry = AutocompleteCombobox(self, completevalues=Num_Samples, width=15,
+                                                     textvariable=RXN_Samples)
+            RXN_Samples_Entry.insert(0, "5000")
+            RXN_Samples_Entry.grid(row=2, column=1)
+            RXN_Samples_Entry.config(justify="center")
+            RXN_EOR = self.entries[5]
+            self.get_reactants()
 
-class WeightDist(tkinter.Frame):
-    def __init__(self, master=tab2):
-        tkinter.Frame.__init__(self, master)
-        self.tablewidth = None
-        self.tableheight = None
-        self.entries = None
-        self.grid(row=0, column=0, padx=15, pady=15)
-        self.create_table()
-
-    def create_table(self):
-        self.entries = {}
-        self.tableheight = 6
-        self.tablewidth = 2
-        counter = 0
-        for column in range(self.tablewidth):
-            for row in range(self.tableheight):
-                self.entries[counter] = tkinter.Entry(self)
-                self.entries[counter].grid(row=row, column=column)
-                # self.entries[counter].insert(0, str(counter))
-                self.entries[counter].config(justify="center", width=15)
-                counter += 1
-        self.table_labels()
-
-    def table_labels(self):
-        self.entries[0].delete(0, tkinter.END)
-        self.entries[0].insert(0, "Mn (Number Average) =")
-        self.entries[0].config(width=25)
-        self.entries[0].config(state="readonly")
-        self.entries[1].delete(0, tkinter.END)
-        self.entries[1].insert(0, "Mw (Weight Average) =")
-        self.entries[1].config(width=25)
-        self.entries[1].config(state="readonly")
-        self.entries[2].delete(0, tkinter.END)
-        self.entries[2].insert(0, "PDI (Dispersity Index) =")
-        self.entries[2].config(width=25)
-        self.entries[2].config(state="readonly")
-        self.entries[3].delete(0, tkinter.END)
-        self.entries[3].insert(0, "Mz =")
-        self.entries[3].config(width=25)
-        self.entries[3].config(state="readonly")
-        self.entries[4].delete(0, tkinter.END)
-        self.entries[4].insert(0, "Mz + 1 =")
-        self.entries[4].config(width=25)
-        self.entries[4].config(state="readonly")
-        self.entries[5].delete(0, tkinter.END)
-        self.entries[5].insert(0, "Xn DOP = ")
-        self.entries[5].config(width=25)
-        self.entries[5].config(state="readonly")
+        def get_reactants(self):
+            global reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR
+            reactants_list = []
+            cell = 16
+            for i in range(RET.tableheight - 1):
+                if RET.entries[cell].get() == "" or RET.entries[cell].get() == "Clear":
+                    cell += RET.tablewidth
+                    pass
+                else:
+                    reactants_list.append(RET.entries[cell].get())
+                    cell += RET.tablewidth
+            reactants_list = [f'{index + 1}: {reactant}' for index, reactant in enumerate(reactants_list)]
+            RXN_EM_Entry_2_SR.config(completevalues=reactants_list, state="readonly")
 
 
-class WeightDist_2(tkinter.Frame):
-    def __init__(self, master=tab4):
-        tkinter.Frame.__init__(self, master)
-        self.tablewidth = None
-        self.tableheight = None
-        self.entries = None
-        self.grid(row=0, column=0, padx=15, pady=15)
-        self.create_table()
+    class RxnMetrics(tkinter.Frame):
+        def __init__(self, master=tab1):
+            tkinter.Frame.__init__(self, master)
+            self.tablewidth = None
+            self.tableheight = None
+            self.entries = None
+            self.grid(row=2, column=1, padx=5, pady=5)
+            self.create_table()
 
-    def create_table(self):
-        self.entries = {}
-        self.tableheight = 6
-        self.tablewidth = 2
-        counter = 0
-        for column in range(self.tablewidth):
-            for row in range(self.tableheight):
-                self.entries[counter] = tkinter.Entry(self)
-                self.entries[counter].grid(row=row, column=column)
-                # self.entries[counter].insert(0, str(counter))
-                self.entries[counter].config(justify="center", width=15)
-                counter += 1
-        self.table_labels()
+        def create_table(self):
+            self.entries = {}
+            self.tableheight = 8
+            self.tablewidth = 2
+            counter = 0
+            for column in range(self.tablewidth):
+                for row in range(self.tableheight):
+                    self.entries[counter] = tkinter.Entry(self)
+                    self.entries[counter].grid(row=row, column=column)
+                    # self.entries[counter].insert(0, str(counter))
+                    self.entries[counter].config(justify="center", width=18)
+                    counter += 1
+            self.table_labels()
 
-    def table_labels(self):
-        self.entries[0].delete(0, tkinter.END)
-        self.entries[0].insert(0, "Mn (Number Average) =")
-        self.entries[0].config(width=25)
-        self.entries[0].config(state="readonly")
-        self.entries[1].delete(0, tkinter.END)
-        self.entries[1].insert(0, "Mw (Weight Average) =")
-        self.entries[1].config(width=25)
-        self.entries[1].config(state="readonly")
-        self.entries[2].delete(0, tkinter.END)
-        self.entries[2].insert(0, "PDI (Dispersity Index) =")
-        self.entries[2].config(width=25)
-        self.entries[2].config(state="readonly")
-        self.entries[3].delete(0, tkinter.END)
-        self.entries[3].insert(0, "Mz =")
-        self.entries[3].config(width=25)
-        self.entries[3].config(state="readonly")
-        self.entries[4].delete(0, tkinter.END)
-        self.entries[4].insert(0, "Mz + 1 =")
-        self.entries[4].config(width=25)
-        self.entries[4].config(state="readonly")
-        self.entries[5].delete(0, tkinter.END)
-        self.entries[5].insert(0, "Xn DOP = ")
-        self.entries[5].config(width=25)
-        self.entries[5].config(state="readonly")
+        def table_labels(self):
+            self.entries[0].delete(0, tkinter.END)
+            self.entries[0].insert(0, "EHC, % =")
+            self.entries[0].config(state="readonly")
+            self.entries[1].delete(0, tkinter.END)
+            self.entries[1].insert(0, "Theory WPE =")
+            self.entries[1].config(state="readonly")
+            self.entries[2].delete(0, tkinter.END)
+            self.entries[2].insert(0, "Acid Value =")
+            self.entries[2].config(state="readonly")
+            self.entries[3].delete(0, tkinter.END)
+            self.entries[3].insert(0, "Amine Value =")
+            self.entries[3].config(state="readonly")
+            self.entries[4].delete(0, tkinter.END)
+            self.entries[4].insert(0, "OH Value =")
+            self.entries[4].config(state="readonly")
+            self.entries[5].delete(0, tkinter.END)
+            self.entries[5].insert(0, "COC Value =")
+            self.entries[5].config(state="readonly")
+            self.entries[6].delete(0, tkinter.END)
+            self.entries[6].insert(0, "Iodine Value =")
+            self.entries[6].config(state="readonly")
 
 
-class Buttons(tkinter.Frame):
-    def __init__(self, master=tab1):
-        tkinter.Frame.__init__(self, master)
-        self.tablewidth = None
-        self.tableheight = None
-        self.entries = None
-        self.grid(row=1, column=0, padx=5, pady=5)
-        self.create_table()
+    class RxnMetrics_sec(tkinter.Frame):
+        def __init__(self, master=tab1):
+            tkinter.Frame.__init__(self, master)
+            self.tablewidth = None
+            self.tableheight = None
+            self.entries = None
+            self.grid(row=2, column=1, padx=(500, 0), pady=5)
+            self.create_table()
 
-    def create_table(self):
-        self.entries = {}
-        self.tableheight = 4
-        self.tablewidth = 1
-        counter = 0
-        for column in range(self.tablewidth):
-            for row in range(self.tableheight):
-                self.entries[counter] = tkinter.Entry(self)
-                self.entries[counter].grid(row=row, column=column)
-                self.entries[counter].insert(0, str(counter))
-                self.entries[counter].config(justify="center", width=18)
-                counter += 1
-        self.add_buttons()
+        def create_table(self):
+            self.entries = {}
+            self.tableheight = 8
+            self.tablewidth = 2
+            counter = 0
+            for column in range(self.tablewidth):
+                for row in range(self.tableheight):
+                    self.entries[counter] = tkinter.Entry(self)
+                    self.entries[counter].grid(row=row, column=column)
+                    # self.entries[counter].insert(0, str(counter))
+                    self.entries[counter].config(justify="center", width=18)
+                    counter += 1
+            self.table_labels()
 
-    def add_buttons(self):
-        Simulate = tkinter.Button(self, text="Simulate", command=sim_values, width=15, bg="Green")
-        Simulate.grid(row=0, column=0)
-        stop_button = tkinter.Button(self, text="Stop", command=stop, width=15, bg="Red")
-        stop_button.grid(row=1, column=0)
-        clear_last_row = tkinter.Button(self, text="Clear Last", command=clear_last, width=15, bg="Yellow")
-        clear_last_row.grid(row=2, column=0)
-        Simulate = tkinter.Button(self, text="Reset", command=reset_entry_table, width=15, bg="Orange")
-        Simulate.grid(row=3, column=0)
-
-
-class SimStatus(tkinter.Frame):
-    def __init__(self, master=tab1):
-        tkinter.Frame.__init__(self, master)
-        self.tablewidth = None
-        self.tableheight = None
-        self.progress = None
-        self.entries = None
-        self.grid(row=0, column=1)
-        self.create_table()
-
-    def create_table(self):
-        self.entries = {}
-        self.tableheight = 2
-        self.tablewidth = 2
-        counter = 0
-        for column in range(self.tablewidth):
-            for row in range(self.tableheight):
-                self.entries[counter] = tkinter.Entry(self)
-                self.entries[counter].grid(row=row, column=column)
-                self.entries[counter].insert(0, str(counter))
-                self.entries[counter].config(justify="center", width=18)
-                counter += 1
-        self.tabel_labels()
-
-    def tabel_labels(self):
-        self.entries[0].delete(0, tkinter.END)
-        self.entries[0].insert(0, "1º Simulation Status")
-        self.entries[0].config(state="readonly")
-        self.entries[1].delete(0, tkinter.END)
-        self.entries[1].insert(0, "2º Simulation Status")
-        self.entries[1].config(state="readonly")
-        self.add_buttons()
-
-    def add_buttons(self):
-        self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate",
-                                        style="red.Horizontal.TProgressbar")
-        self.progress.grid(row=0, column=1)
-        self.progress_2 = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate",
-                                          style="red.Horizontal.TProgressbar")
-        self.progress_2.grid(row=1, column=1)
+        def table_labels(self):
+            self.entries[0].delete(0, tkinter.END)
+            self.entries[0].insert(0, "EHC, % =")
+            self.entries[0].config(state="readonly")
+            self.entries[1].delete(0, tkinter.END)
+            self.entries[1].insert(0, "Theory WPE =")
+            self.entries[1].config(state="readonly")
+            self.entries[2].delete(0, tkinter.END)
+            self.entries[2].insert(0, "Acid Value =")
+            self.entries[2].config(state="readonly")
+            self.entries[3].delete(0, tkinter.END)
+            self.entries[3].insert(0, "Amine Value =")
+            self.entries[3].config(state="readonly")
+            self.entries[4].delete(0, tkinter.END)
+            self.entries[4].insert(0, "OH Value =")
+            self.entries[4].config(state="readonly")
+            self.entries[5].delete(0, tkinter.END)
+            self.entries[5].insert(0, "COC Value =")
+            self.entries[5].config(state="readonly")
+            self.entries[6].delete(0, tkinter.END)
+            self.entries[6].insert(0, "Iodine Value =")
+            self.entries[6].config(state="readonly")
 
 
-RET = RxnEntryTable()
-WD = WeightDist()
-WD2 = WeightDist_2()
-RD = RxnDetails()
-RM = RxnMetrics()
-RM2 = RxnMetrics_sec()
-Buttons = Buttons()
-sim = SimStatus()
+    class WeightDist(tkinter.Frame):
+        def __init__(self, master=tab2):
+            tkinter.Frame.__init__(self, master)
+            self.tablewidth = None
+            self.tableheight = None
+            self.entries = None
+            self.grid(row=0, column=0, padx=15, pady=15)
+            self.create_table()
 
-# run update_table if user changes value in RET
-RET.entries[16].bind('<FocusOut>', lambda *args, entry=16, index=0, cell=16: check_entry(entry, index, cell))
-RET.entries[32].bind('<FocusOut>', lambda *args, entry=32, index=1, cell=32: check_entry(entry, index, cell))
-RET.entries[48].bind('<FocusOut>', lambda *args, entry=48, index=2, cell=48: check_entry(entry, index, cell))
-RET.entries[64].bind('<FocusOut>', lambda *args, entry=64, index=3, cell=64: check_entry(entry, index, cell))
-RET.entries[80].bind('<FocusOut>', lambda *args, entry=80, index=4, cell=80: check_entry(entry, index, cell))
-RET.entries[96].bind('<FocusOut>', lambda *args, entry=96, index=5, cell=96: check_entry(entry, index, cell))
-RET.entries[112].bind('<FocusOut>', lambda *args, entry=112, index=6, cell=112: check_entry(entry, index, cell))
-RET.entries[128].bind('<FocusOut>', lambda *args, entry=128, index=7, cell=128: check_entry(entry, index, cell))
-RET.entries[144].bind('<FocusOut>', lambda *args, entry=144, index=8, cell=144: check_entry(entry, index, cell))
-RET.entries[160].bind('<FocusOut>', lambda *args, entry=160, index=9, cell=160: check_entry(entry, index, cell))
-RET.entries[176].bind('<FocusOut>', lambda *args, entry=176, index=10, cell=176: check_entry(entry, index, cell))
-RET.entries[192].bind('<FocusOut>', lambda *args, entry=192, index=11, cell=192: check_entry(entry, index, cell))
-RET.entries[208].bind('<FocusOut>', lambda *args, entry=208, index=12, cell=208: check_entry(entry, index, cell))
-RET.entries[224].bind('<FocusOut>', lambda *args, entry=224, index=13, cell=224: check_entry(entry, index, cell))
+        def create_table(self):
+            self.entries = {}
+            self.tableheight = 6
+            self.tablewidth = 2
+            counter = 0
+            for column in range(self.tablewidth):
+                for row in range(self.tableheight):
+                    self.entries[counter] = tkinter.Entry(self)
+                    self.entries[counter].grid(row=row, column=column)
+                    # self.entries[counter].insert(0, str(counter))
+                    self.entries[counter].config(justify="center", width=15)
+                    counter += 1
+            self.table_labels()
 
-Entry_masses[0].bind("<KeyRelease>", lambda *args, index=0, cell=16: RET.update_table(index, cell))
-Entry_masses[1].bind("<KeyRelease>", lambda *args, index=1, cell=32: RET.update_table(index, cell))
-Entry_masses[2].bind("<KeyRelease>", lambda *args, index=2, cell=48: RET.update_table(index, cell))
-Entry_masses[3].bind("<KeyRelease>", lambda *args, index=3, cell=64: RET.update_table(index, cell))
-Entry_masses[4].bind("<KeyRelease>", lambda *args, index=4, cell=80: RET.update_table(index, cell))
-Entry_masses[5].bind("<KeyRelease>", lambda *args, index=5, cell=96: RET.update_table(index, cell))
-Entry_masses[6].bind("<KeyRelease>", lambda *args, index=6, cell=112: RET.update_table(index, cell))
-Entry_masses[7].bind("<KeyRelease>", lambda *args, index=7, cell=128: RET.update_table(index, cell))
-Entry_masses[8].bind("<KeyRelease>", lambda *args, index=8, cell=144: RET.update_table(index, cell))
-Entry_masses[9].bind("<KeyRelease>", lambda *args, index=9, cell=160: RET.update_table(index, cell))
-Entry_masses[10].bind("<KeyRelease>", lambda *args, index=10, cell=176: RET.update_table(index, cell))
-Entry_masses[11].bind("<KeyRelease>", lambda *args, index=11, cell=192: RET.update_table(index, cell))
-Entry_masses[12].bind("<KeyRelease>", lambda *args, index=12, cell=208: RET.update_table(index, cell))
-Entry_masses[13].bind("<KeyRelease>", lambda *args, index=13, cell=224: RET.update_table(index, cell))
+        def table_labels(self):
+            self.entries[0].delete(0, tkinter.END)
+            self.entries[0].insert(0, "Mn (Number Average) =")
+            self.entries[0].config(width=25)
+            self.entries[0].config(state="readonly")
+            self.entries[1].delete(0, tkinter.END)
+            self.entries[1].insert(0, "Mw (Weight Average) =")
+            self.entries[1].config(width=25)
+            self.entries[1].config(state="readonly")
+            self.entries[2].delete(0, tkinter.END)
+            self.entries[2].insert(0, "PDI (Dispersity Index) =")
+            self.entries[2].config(width=25)
+            self.entries[2].config(state="readonly")
+            self.entries[3].delete(0, tkinter.END)
+            self.entries[3].insert(0, "Mz =")
+            self.entries[3].config(width=25)
+            self.entries[3].config(state="readonly")
+            self.entries[4].delete(0, tkinter.END)
+            self.entries[4].insert(0, "Mz + 1 =")
+            self.entries[4].config(width=25)
+            self.entries[4].config(state="readonly")
+            self.entries[5].delete(0, tkinter.END)
+            self.entries[5].insert(0, "Xn DOP = ")
+            self.entries[5].config(width=25)
+            self.entries[5].config(state="readonly")
 
-window.bind('<Control-s>', lambda *args: sim_values())
-RXN_EM_Entry_2_SR.bind('<Enter>', lambda *args: RD.get_reactants())
-window.bind('<Control-a>', lambda *args: quick_add())
-window.bind('<Control-e>', lambda *args: reset_entry_table())
-window.bind('<Control-q>', lambda *args: quit())
-window.bind('<Control-r>', lambda *args: reset_entry_table())
-window.bind('<Control-l>', lambda *args: clear_last())
-RXN_EM_Entry.bind('<KeyRelease>', lambda *args: RXN_EM_Value.focus())
-RXN_EM_Entry_2.bind('<KeyRelease>', lambda *args: RXN_EM_Value_2.focus())
 
-R1Data = R1Data()
-R2Data = R2Data()
-R3Data = R3Data()
-R4Data = R4Data()
-R5Data = R5Data()
-R6Data = R6Data()
-R7Data = R7Data()
-R8Data = R8Data()
-R9Data = R9Data()
-R10Data = R10Data()
-R11Data = R11Data()
-R12Data = R12Data()
-R13Data = R13Data()
-R14Data = R14Data()
-rg = reactive_groups()
+    class WeightDist_2(tkinter.Frame):
+        def __init__(self, master=tab4):
+            tkinter.Frame.__init__(self, master)
+            self.tablewidth = None
+            self.tableheight = None
+            self.entries = None
+            self.grid(row=0, column=0, padx=15, pady=15)
+            self.create_table()
 
-window.mainloop()
+        def create_table(self):
+            self.entries = {}
+            self.tableheight = 6
+            self.tablewidth = 2
+            counter = 0
+            for column in range(self.tablewidth):
+                for row in range(self.tableheight):
+                    self.entries[counter] = tkinter.Entry(self)
+                    self.entries[counter].grid(row=row, column=column)
+                    # self.entries[counter].insert(0, str(counter))
+                    self.entries[counter].config(justify="center", width=15)
+                    counter += 1
+            self.table_labels()
+
+        def table_labels(self):
+            self.entries[0].delete(0, tkinter.END)
+            self.entries[0].insert(0, "Mn (Number Average) =")
+            self.entries[0].config(width=25)
+            self.entries[0].config(state="readonly")
+            self.entries[1].delete(0, tkinter.END)
+            self.entries[1].insert(0, "Mw (Weight Average) =")
+            self.entries[1].config(width=25)
+            self.entries[1].config(state="readonly")
+            self.entries[2].delete(0, tkinter.END)
+            self.entries[2].insert(0, "PDI (Dispersity Index) =")
+            self.entries[2].config(width=25)
+            self.entries[2].config(state="readonly")
+            self.entries[3].delete(0, tkinter.END)
+            self.entries[3].insert(0, "Mz =")
+            self.entries[3].config(width=25)
+            self.entries[3].config(state="readonly")
+            self.entries[4].delete(0, tkinter.END)
+            self.entries[4].insert(0, "Mz + 1 =")
+            self.entries[4].config(width=25)
+            self.entries[4].config(state="readonly")
+            self.entries[5].delete(0, tkinter.END)
+            self.entries[5].insert(0, "Xn DOP = ")
+            self.entries[5].config(width=25)
+            self.entries[5].config(state="readonly")
+
+
+    class Buttons(tkinter.Frame):
+        def __init__(self, master=tab1):
+            tkinter.Frame.__init__(self, master)
+            self.tablewidth = None
+            self.tableheight = None
+            self.entries = None
+            self.grid(row=1, column=0, padx=5, pady=5)
+            self.create_table()
+
+        def create_table(self):
+            self.entries = {}
+            self.tableheight = 4
+            self.tablewidth = 1
+            counter = 0
+            for column in range(self.tablewidth):
+                for row in range(self.tableheight):
+                    self.entries[counter] = tkinter.Entry(self)
+                    self.entries[counter].grid(row=row, column=column)
+                    self.entries[counter].insert(0, str(counter))
+                    self.entries[counter].config(justify="center", width=18)
+                    counter += 1
+            self.add_buttons()
+
+        def add_buttons(self):
+            Simulate = tkinter.Button(self, text="Simulate", command=multiprocessing, width=15, bg="Green")
+            Simulate.grid(row=0, column=0)
+            stop_button = tkinter.Button(self, text="Stop", command=stop, width=15, bg="Red")
+            stop_button.grid(row=1, column=0)
+            clear_last_row = tkinter.Button(self, text="Clear Last", command=clear_last, width=15, bg="Yellow")
+            clear_last_row.grid(row=2, column=0)
+            Simulate = tkinter.Button(self, text="Reset", command=reset_entry_table, width=15, bg="Orange")
+            Simulate.grid(row=3, column=0)
+
+
+    class SimStatus(tkinter.Frame):
+        def __init__(self, master=tab1):
+            tkinter.Frame.__init__(self, master)
+            self.tablewidth = None
+            self.tableheight = None
+            self.progress = None
+            self.entries = None
+            self.grid(row=0, column=1)
+            self.create_table()
+
+        def create_table(self):
+            self.entries = {}
+            self.tableheight = 2
+            self.tablewidth = 2
+            counter = 0
+            for column in range(self.tablewidth):
+                for row in range(self.tableheight):
+                    self.entries[counter] = tkinter.Entry(self)
+                    self.entries[counter].grid(row=row, column=column)
+                    self.entries[counter].insert(0, str(counter))
+                    self.entries[counter].config(justify="center", width=18)
+                    counter += 1
+            self.tabel_labels()
+
+        def tabel_labels(self):
+            self.entries[0].delete(0, tkinter.END)
+            self.entries[0].insert(0, "1º Simulation Status")
+            self.entries[0].config(state="readonly")
+            self.entries[1].delete(0, tkinter.END)
+            self.entries[1].insert(0, "2º Simulation Status")
+            self.entries[1].config(state="readonly")
+            self.add_buttons()
+
+        def add_buttons(self):
+            self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate",
+                                            style="red.Horizontal.TProgressbar")
+            self.progress.grid(row=0, column=1)
+            self.progress_2 = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate",
+                                              style="red.Horizontal.TProgressbar")
+            self.progress_2.grid(row=1, column=1)
+
+
+    RET = RxnEntryTable()
+    WD = WeightDist()
+    WD2 = WeightDist_2()
+    RD = RxnDetails()
+    RM = RxnMetrics()
+    RM2 = RxnMetrics_sec()
+    Buttons = Buttons()
+    sim = SimStatus()
+
+    # run update_table if user changes value in RET
+    RET.entries[16].bind('<FocusOut>', lambda *args, entry=16, index=0, cell=16: check_entry(entry, index, cell))
+    RET.entries[32].bind('<FocusOut>', lambda *args, entry=32, index=1, cell=32: check_entry(entry, index, cell))
+    RET.entries[48].bind('<FocusOut>', lambda *args, entry=48, index=2, cell=48: check_entry(entry, index, cell))
+    RET.entries[64].bind('<FocusOut>', lambda *args, entry=64, index=3, cell=64: check_entry(entry, index, cell))
+    RET.entries[80].bind('<FocusOut>', lambda *args, entry=80, index=4, cell=80: check_entry(entry, index, cell))
+    RET.entries[96].bind('<FocusOut>', lambda *args, entry=96, index=5, cell=96: check_entry(entry, index, cell))
+    RET.entries[112].bind('<FocusOut>', lambda *args, entry=112, index=6, cell=112: check_entry(entry, index, cell))
+    RET.entries[128].bind('<FocusOut>', lambda *args, entry=128, index=7, cell=128: check_entry(entry, index, cell))
+    RET.entries[144].bind('<FocusOut>', lambda *args, entry=144, index=8, cell=144: check_entry(entry, index, cell))
+    RET.entries[160].bind('<FocusOut>', lambda *args, entry=160, index=9, cell=160: check_entry(entry, index, cell))
+    RET.entries[176].bind('<FocusOut>', lambda *args, entry=176, index=10, cell=176: check_entry(entry, index, cell))
+    RET.entries[192].bind('<FocusOut>', lambda *args, entry=192, index=11, cell=192: check_entry(entry, index, cell))
+    RET.entries[208].bind('<FocusOut>', lambda *args, entry=208, index=12, cell=208: check_entry(entry, index, cell))
+    RET.entries[224].bind('<FocusOut>', lambda *args, entry=224, index=13, cell=224: check_entry(entry, index, cell))
+
+    Entry_masses[0].bind("<KeyRelease>", lambda *args, index=0, cell=16: RET.update_table(index, cell))
+    Entry_masses[1].bind("<KeyRelease>", lambda *args, index=1, cell=32: RET.update_table(index, cell))
+    Entry_masses[2].bind("<KeyRelease>", lambda *args, index=2, cell=48: RET.update_table(index, cell))
+    Entry_masses[3].bind("<KeyRelease>", lambda *args, index=3, cell=64: RET.update_table(index, cell))
+    Entry_masses[4].bind("<KeyRelease>", lambda *args, index=4, cell=80: RET.update_table(index, cell))
+    Entry_masses[5].bind("<KeyRelease>", lambda *args, index=5, cell=96: RET.update_table(index, cell))
+    Entry_masses[6].bind("<KeyRelease>", lambda *args, index=6, cell=112: RET.update_table(index, cell))
+    Entry_masses[7].bind("<KeyRelease>", lambda *args, index=7, cell=128: RET.update_table(index, cell))
+    Entry_masses[8].bind("<KeyRelease>", lambda *args, index=8, cell=144: RET.update_table(index, cell))
+    Entry_masses[9].bind("<KeyRelease>", lambda *args, index=9, cell=160: RET.update_table(index, cell))
+    Entry_masses[10].bind("<KeyRelease>", lambda *args, index=10, cell=176: RET.update_table(index, cell))
+    Entry_masses[11].bind("<KeyRelease>", lambda *args, index=11, cell=192: RET.update_table(index, cell))
+    Entry_masses[12].bind("<KeyRelease>", lambda *args, index=12, cell=208: RET.update_table(index, cell))
+    Entry_masses[13].bind("<KeyRelease>", lambda *args, index=13, cell=224: RET.update_table(index, cell))
+
+    window.bind('<Control-s>', lambda *args: sim_values())
+    RXN_EM_Entry_2_SR.bind('<Enter>', lambda *args: RD.get_reactants())
+    window.bind('<Control-a>', lambda *args: quick_add())
+    window.bind('<Control-e>', lambda *args: reset_entry_table())
+    window.bind('<Control-q>', lambda *args: quit())
+    window.bind('<Control-r>', lambda *args: reset_entry_table())
+    window.bind('<Control-l>', lambda *args: clear_last())
+    RXN_EM_Entry.bind('<KeyRelease>', lambda *args: RXN_EM_Value.focus())
+    RXN_EM_Entry_2.bind('<KeyRelease>', lambda *args: RXN_EM_Value_2.focus())
+
+    R1Data = R1Data()
+    R2Data = R2Data()
+    R3Data = R3Data()
+    R4Data = R4Data()
+    R5Data = R5Data()
+    R6Data = R6Data()
+    R7Data = R7Data()
+    R8Data = R8Data()
+    R9Data = R9Data()
+    R10Data = R10Data()
+    R11Data = R11Data()
+    R12Data = R12Data()
+    R13Data = R13Data()
+    R14Data = R14Data()
+    rg = reactive_groups()
+
+    window.mainloop()

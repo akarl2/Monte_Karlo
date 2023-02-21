@@ -9,7 +9,7 @@ def function(x, y):
     return x ** y
 
 if __name__ == '__main__':
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
         StartTime1 = time.time()
 
         f1 = executor.submit(function, 3, 4)
