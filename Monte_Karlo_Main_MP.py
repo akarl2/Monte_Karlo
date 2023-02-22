@@ -741,7 +741,7 @@ def clear_last():
 
 def sim_values():
     global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, end_metric_selection_sec, starting_materials, \
-        starting_materials_sec, RXN_Samples
+        starting_materials_sec
     row_for_sec = RXN_EM_Entry_2_SR.current()
     starting_mass, starting_mass_sec, total_ct, total_ct_sec = 0, 0, 0, 0
     end_metric_value = float(RXN_EM_Value.get())
