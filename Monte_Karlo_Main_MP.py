@@ -36,7 +36,8 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
     end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict
 
 
-def simulate(starting_materials, starting_materials_sec):
+def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status):
+    print('Process ID: ', os.getpid())
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, total_ct, total_ct_sec, quick_add
     in_situ_values = [[], [], [], [], [], [], []]
     in_situ_values_sec = [[], [], [], [], [], [], []]
@@ -332,21 +333,22 @@ def simulate(starting_materials, starting_materials_sec):
             groups = random.choices(chemical, weights, k=2)
             if time.time() - start > 3 and in_primary:
                 running = False
-                sim.progress['value'] = 100
-                RXN_Results(composition)
+                if __name__ == '__main__':
+                    sim.progress['value'] = 100
+                    RXN_Results(composition)
                 messagebox.showerror("Error", "Increase # of samples or End Metric is unattainable")
                 break
             else:
                 if time.time() - start > 3 and in_primary == False:
                     running = False
-                    sim.progress_2['value'] = 100
-                    RXN_Results_sec(composition)
+                    if __name__ == '__main__':
+                        sim.progress_2['value'] = 100
+                        RXN_Results_sec(composition)
                     messagebox.showerror("Error", "Increase # of samples or End Metric is unattainable")
                     break
         stop = time.time()
         update_comp(composition, groups)
     print(composition)
-
 
 def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[8].delete(0, tkinter.END)
@@ -367,7 +369,6 @@ def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[14].delete(0, tkinter.END)
     RM.entries[14].insert(0, IV)
 
-
 def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
     RM2.entries[8].delete(0, tkinter.END)
     RM2.entries[8].insert(0, EHC)
@@ -386,7 +387,6 @@ def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
     RM2.entries[13].insert(0, COC)
     RM2.entries[14].delete(0, tkinter.END)
     RM2.entries[14].insert(0, IV)
-
 
 def RXN_Results(composition):
     global rxn_summary_df, Xn
@@ -501,7 +501,6 @@ def RXN_Results(composition):
     show_byproducts(byproducts_df)
     show_Xn(Xn)
 
-
 def RXN_Results_sec(composition):
     global rxn_summary_df_2, Xn_2
     comp_summary_2 = collections.Counter(
@@ -615,7 +614,6 @@ def RXN_Results_sec(composition):
     show_byproducts_sec(byproducts_df_2)
     show_Xn_sec(Xn_2)
 
-
 # -------------------------------------------Display Results---------------------------------------------------#
 
 def show_results(rxn_summary_df):
@@ -638,7 +636,6 @@ def show_results(rxn_summary_df):
         results_table.height = window.winfo_screenheight() - 100
     results_table.show()
 
-
 def show_results_sec(rxn_summary_df_2):
     global results_table_2, frame_results_2
     try:
@@ -660,7 +657,6 @@ def show_results_sec(rxn_summary_df_2):
         results_table_2.height = window.winfo_screenheight() - 100
     results_table_2.show()
 
-
 def show_byproducts(byproducts_df):
     global byproducts_table, frame_byproducts
     try:
@@ -673,7 +669,6 @@ def show_byproducts(byproducts_df):
     byproducts_table = Table(frame_byproducts, dataframe=byproducts_df, showtoolbar=False, showstatusbar=True,
                              showindex=True, width=600, height=100, align='center', maxcellwidth=1000)
     byproducts_table.show()
-
 
 def show_byproducts_sec(byproducts_df_2):
     global byproducts_table_2, frame_byproducts_2
@@ -688,7 +683,6 @@ def show_byproducts_sec(byproducts_df_2):
                                showindex=True, width=600, height=100, align='center', maxcellwidth=1000)
     byproducts_table_2.show()
 
-
 def show_Xn(Xn):
     global Xn_table, frame_Xn
     try:
@@ -701,7 +695,6 @@ def show_Xn(Xn):
     Xn_table = Table(frame_Xn, dataframe=Xn, showtoolbar=True, showstatusbar=True, showindex=True, width=2000,
                      height=1000, align='center', maxcellwidth=1000)
     Xn_table.show()
-
 
 def show_Xn_sec(Xn_2):
     global Xn_table_2, frame_Xn_2
@@ -716,12 +709,10 @@ def show_Xn_sec(Xn_2):
                        height=1000, align='center', maxcellwidth=1000)
     Xn_table_2.show()
 
-
 # -------------------------------------------Auxiliary Functions---------------------------------------------------#
 
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
-
 
 def stop():
     global running
@@ -729,7 +720,6 @@ def stop():
         running = False
     else:
         pass
-
 
 def clear_last():
     cell = 16
@@ -748,9 +738,9 @@ def clear_last():
     RET.entries[clear_cell].insert(0, "Clear")
     check_entry(entry=clear_cell, index=clear_index, cell=clear_cell)
 
-
 def sim_values():
-    global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, end_metric_selection_sec, starting_materials, starting_materials_sec
+    global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, end_metric_selection_sec, starting_materials, \
+        starting_materials_sec
     row_for_sec = RXN_EM_Entry_2_SR.current()
     starting_mass, starting_mass_sec, total_ct, total_ct_sec = 0, 0, 0, 0
     end_metric_value = float(RXN_EM_Value.get())
@@ -797,10 +787,10 @@ def sim_values():
 
 def multiprocessing():
     if __name__ == "__main__":
-        #get the number of cores
+        sim_values()
         workers = os.cpu_count()
-        with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
-            results = [executor.submit(simulate, starting_materials, starting_materials_sec) for _ in range(1)]
+        with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
+            results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status) for _ in range(2)]
             for f in concurrent.futures.as_completed(results):
                 print(f.result())
 

@@ -1,14 +1,17 @@
 import concurrent.futures
 import time
 
-if __name__ == '__main__':
-    print("hello world")
 
+def test_func():
+    global z
+    z = 45
 
 def function(x, y):
-    return x ** y
+    return x ** y + z
 
 if __name__ == '__main__':
+    print("hello world")
+    test_func()
     with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
         StartTime1 = time.time()
 
