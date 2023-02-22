@@ -789,9 +789,8 @@ def multiprocessing():
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
             results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec) for _ in range(workers)]
             for f in concurrent.futures.as_completed(results):
-                print(f.result())
-                print(len(f.result()))
-
+                print("Done")
+            print(results[0].result())
 
 
 def reset_entry_table():
