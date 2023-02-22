@@ -792,9 +792,23 @@ def multiprocessing():
         sim_values()
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
             results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec) for _ in range(workers)]
-            for f in concurrent.futures.as_completed(results):
-                print("Done")
-            print(results[0].result()['comp_primary'])
+            # for f in concurrent.futures.as_completed(results):
+            #     print("Done")
+            # print(results[0].result()['comp_primary'])
+            consolidate_results(results)
+
+def consolidate_results(results):
+    primary_comp_summary = []
+    in_situ_values = []
+    seconday_comp_summary = []
+    in_situ_values_sec = []
+    for _ in range(len(results)):
+        for species in results[_].result()['comp_primary']:
+            primary_comp_summary.append(species)
+    comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in primary_comp_summary])
+    print(comp_summary)
+
+
 
 def reset_entry_table():
     for i in range(RET.tableheight - 1):
