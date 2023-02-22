@@ -36,9 +36,10 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
     end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict
 
 
-def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status):
+def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec):
+    rg = reactive_groups()
     print('Process ID: ', os.getpid())
-    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, total_ct, total_ct_sec, quick_add
+    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, quick_add
     in_situ_values = [[], [], [], [], [], [], []]
     in_situ_values_sec = [[], [], [], [], [], [], []]
     Xn_list, Xn_list_sec, byproducts, byproducts_sec, Mw_list, composition, composition_sec = [], [], [], [], [], [], []
@@ -790,7 +791,7 @@ def multiprocessing():
         sim_values()
         workers = os.cpu_count()
         with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
-            results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status) for _ in range(2)]
+            results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec) for _ in range(2)]
             for f in concurrent.futures.as_completed(results):
                 print(f.result())
 
