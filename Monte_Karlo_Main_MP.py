@@ -33,12 +33,11 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
     frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, \
     frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary, quick_add, quick_add_comp, \
     RXN_EM_Value, RXN_EM_Entry, rxn_summary_df, rxn_summary_df_2, Xn, Xn_2, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, \
-    end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict
+    end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict, samples_value
 
 
-def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, end_metric_selection):
+def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec):
     rg = reactive_groups()
-    print('Process ID: ', os.getpid())
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, quick_add
     in_situ_values = [[], [], [], [], [], [], []]
     in_situ_values_sec = [[], [], [], [], [], [], []]
@@ -215,7 +214,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                     if __name__ == '__main__':
                         sim.progress['value'] = 100
                         update_metrics(TAV, AV, OH, EHC, COC, IV)
-                    RXN_Results(composition)
                 else:
                     in_primary = False
                     if __name__ == '__main__':
@@ -349,8 +347,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                     break
         stop = time.time()
         update_comp(composition, groups)
-    print(composition)
-
+    return composition
 def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[8].delete(0, tkinter.END)
     RM.entries[8].insert(0, EHC)
@@ -459,7 +456,7 @@ def RXN_Results(composition):
     sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 4).sum()
     rxn_summary_df = rxn_summary_df[
         ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
-    rxn_summary_df['Mass'] = rxn_summary_df['Mass'] / float(RXN_Samples.get())
+    rxn_summary_df['Mass'] = rxn_summary_df['Mass'] / RXN_Samples
     rxn_summary_df.loc['Sum'] = round(rxn_summary_df.sum(), 3)
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
 
@@ -483,11 +480,10 @@ def RXN_Results(composition):
 
     byproducts_df = pandas.DataFrame(byproducts, columns=['Name', 'Mass'])
     byproducts_df.set_index('Name', inplace=True)
-    byproducts_df['Mass'] = byproducts_df['Mass'] / float(RXN_Samples.get())
+    byproducts_df['Mass'] = byproducts_df['Mass'] / RXN_Samples
     byproducts_df['Wt, % (Of byproducts)'] = round(byproducts_df['Mass'] / byproducts_df['Mass'].sum() * 100, 4)
     byproducts_df['Wt, % (Of Final)'] = round(byproducts_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
-    byproducts_df['Wt, % (Of Initial)'] = round(
-        byproducts_df['Mass'] / (starting_mass / float(RXN_Samples.get())) * 100, 4)
+    byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / (starting_mass / RXN_Samples) * 100, 4)
 
     Xn = pandas.DataFrame(in_situ_values[0], columns=['TAV'])
     Xn['AV'] = in_situ_values[1]
@@ -573,7 +569,7 @@ def RXN_Results_sec(composition):
     sumNiMi4 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW']) ** 4).sum()
     rxn_summary_df_2 = rxn_summary_df_2[
         ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
-    rxn_summary_df_2['Mass'] = rxn_summary_df_2['Mass'] / float(RXN_Samples.get())
+    rxn_summary_df_2['Mass'] = rxn_summary_df_2['Mass'] / RXN_Samples
     rxn_summary_df_2.loc['Sum'] = round(rxn_summary_df_2.sum(), 3)
     rxn_summary_df_2 = rxn_summary_df_2.groupby(['MW', 'Name']).sum()
     Mn = sumNiMi / sumNi
@@ -596,11 +592,10 @@ def RXN_Results_sec(composition):
 
     byproducts_df_2 = pandas.DataFrame(byproducts, columns=['Name', 'Mass'])
     byproducts_df_2.set_index('Name', inplace=True)
-    byproducts_df_2['Mass'] = byproducts_df_2['Mass'] / float(RXN_Samples.get())
+    byproducts_df_2['Mass'] = byproducts_df_2['Mass'] / RXN_Samples
     byproducts_df_2['Wt, % (Of byproducts)'] = round(byproducts_df_2['Mass'] / byproducts_df_2['Mass'].sum() * 100, 4)
     byproducts_df_2['Wt, % (Of Final)'] = round(byproducts_df_2['Mass'] / rxn_summary_df_2['Mass'].sum() * 100, 4)
-    byproducts_df_2['Wt, % (Of Initial)'] = round(
-        byproducts_df_2['Mass'] / (starting_mass / float(RXN_Samples.get())) * 100, 4)
+    byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / (starting_mass / RXN_Samples) * 100, 4)
 
     Xn_2 = pandas.DataFrame(in_situ_values_sec[0], columns=['TAV'])
     Xn_2['AV'] = in_situ_values_sec[1]
@@ -748,6 +743,8 @@ def sim_values():
     RXN_EM_2_Active_status = RXN_EM_2_Active.get()
     if RXN_EM_2_Active_status:
         end_metric_value_sec = float(RXN_EM_Value_2.get())
+    else:
+        end_metric_value_sec = 0
     end_metric_selection, end_metric_selection_sec = str(RXN_EM.get()), str(RXN_EM_Entry_2.get())
     cell = 16
     index = 0
@@ -768,7 +765,6 @@ def sim_values():
                                                 ct=RXN_Samples.get())
                 sn_dict[str_to_class(RDE[index]).sn] = str_to_class(RDE[index])
                 count = RXN_Samples.get()
-                # value_for_mass_adjust += float(count) * RET.entries[cell + 3].get()
                 moles_count = round(float(RET.entries[cell + 3].get()), 6)
                 starting_mass_sec += float(float(Entry_masses[index].get()) * float(count))
                 cell = cell + RET.tablewidth
@@ -789,11 +785,13 @@ def sim_values():
 def multiprocessing():
     if __name__ == "__main__":
         sim_values()
-        workers = os.cpu_count()
-        with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
-            results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, end_metric_selection) for _ in range(2)]
+        workers = os.cpu_count() - 2
+        with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
+            results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec) for _ in range(workers)]
             for f in concurrent.futures.as_completed(results):
                 print(f.result())
+                print(len(f.result()))
+
 
 
 def reset_entry_table():
@@ -1160,8 +1158,6 @@ if __name__ == "__main__":
 
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value
-
-
     class RxnDetails(tkinter.Frame):
         def __init__(self, master=tab1):
             tkinter.Frame.__init__(self, master)
