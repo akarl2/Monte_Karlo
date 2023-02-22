@@ -38,7 +38,7 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
 
 def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec):
     rg = reactive_groups()
-    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, quick_add
+    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, quick_add, comp_primary, comp_secondary
     in_situ_values = [[], [], [], [], [], [], []]
     in_situ_values_sec = [[], [], [], [], [], [], []]
     Xn_list, Xn_list_sec, byproducts, byproducts_sec, Mw_list, composition, composition_sec = [], [], [], [], [], [], []
@@ -161,7 +161,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             test_count = 0
 
     def RXN_Status(composition):
-        global test_interval, in_situ_values, Xn_list, running, in_primary
+        global test_interval, in_situ_values, Xn_list, running, in_primary, comp_primary, comp_secondary
+        comp_secondary = None
         comp_summary = collections.Counter(
             [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
              composition])
@@ -206,6 +207,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                    'Iodine Value': IV}
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_selection != '% EHC':
+            comp_primary = composition
             if __name__ == '__main__':
                 sim.progress['value'] = round(((end_metric_value / RXN_metric_value) * 100), 2)
             if RXN_metric_value <= end_metric_value:
@@ -219,25 +221,23 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                     if __name__ == '__main__':
                         sim.progress['value'] = 100
                         update_metrics(TAV, AV, OH, EHC, COC, IV)
-                    RXN_Results(composition)
                     for species in composition_sec:
                         composition.append(species)
         else:
             if __name__ == '__main__':
                 sim.progress['value'] = round(((EHC / end_metric_value) * 100), 2)
             if RXN_metric_value >= end_metric_value:
+                comp_primary = composition
                 if RXN_EM_2_Active_status == False:
                     running = False
                     if __name__ == '__main__':
                         sim.progress['value'] = 100
                         update_metrics(TAV, AV, OH, EHC, COC, IV)
-                    RXN_Results(composition)
                 else:
                     in_primary = False
                     if __name__ == '__main__':
                         sim.progress['value'] = 100
                         update_metrics(TAV, AV, OH, EHC, COC, IV)
-                    RXN_Results(composition)
                     for species in composition_sec:
                         composition.append(species)
         if __name__ == '__main__':
@@ -248,7 +248,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             update_metrics(TAV, AV, OH, EHC, COC, IV)
 
     def RXN_Status_sec(composition):
-        global test_interval, in_situ_values_sec, Xn_list_sec, running
+        global test_interval, in_situ_values_sec, Xn_list_sec, running, comp_secondary
         comp_summary_2 = collections.Counter(
             [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
              composition])
@@ -293,6 +293,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                    'Iodine Value': IV}
         RXN_metric_value_2 = metrics[end_metric_selection_sec]
         if end_metric_selection_sec != '% EHC':
+            comp_secondary = composition
             if __name__ == '__main__':
                 sim.progress_2['value'] = round(((end_metric_value_sec / RXN_metric_value_2) * 100), 2)
             if RXN_metric_value_2 <= end_metric_value_sec:
@@ -300,16 +301,15 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                 if __name__ == '__main__':
                     sim.progress['value'] = 100
                     update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
-                RXN_Results_sec(composition)
         else:
             if __name__ == '__main__':
                 sim.progress_2['value'] = round(((EHC / end_metric_value_sec) * 100), 2)
             if RXN_metric_value_2 >= end_metric_value_sec:
+                comp_secondary = composition
                 running = False
                 if __name__ == '__main__':
                     sim.progress['value'] = 100
                     update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
-                RXN_Results_sec(composition)
         if end_metric_value_upper_sec >= RXN_metric_value_2 >= end_metric_value_lower_sec:
             test_interval = 1
         if __name__ == '__main__':
@@ -347,7 +347,11 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                     break
         stop = time.time()
         update_comp(composition, groups)
-    return composition
+    if comp_secondary is None:
+        return {"comp_primary": comp_primary, "in_situ_values": in_situ_values, "Xn_list": Xn_list}
+    else:
+        return {"comp_primary": comp_primary, "comp_secondary": comp_secondary, "in_situ_values": in_situ_values, 'in_situ_values_sec': in_situ_values_sec, "Xn_list": Xn_list, "Xn_list_sec": Xn_list_sec}
+
 def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[8].delete(0, tkinter.END)
     RM.entries[8].insert(0, EHC)
@@ -784,14 +788,13 @@ def sim_values():
 
 def multiprocessing():
     if __name__ == "__main__":
+        workers = os.cpu_count() - 6
         sim_values()
-        workers = os.cpu_count() - 2
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
             results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec) for _ in range(workers)]
             for f in concurrent.futures.as_completed(results):
                 print("Done")
-            print(results[0].result())
-
+            print(results[0].result()['comp_primary'])
 
 def reset_entry_table():
     for i in range(RET.tableheight - 1):
@@ -812,7 +815,6 @@ def reset_entry_table():
     RXN_EM_Value.delete(0, 'end')
     RXN_EM_Entry.insert(0, "")
 
-
 def check_entry(entry, index, cell):
     RET.entries[entry].get()
     if RET.entries[entry].get() not in Reactants and RET.entries[entry].get() != "":
@@ -821,7 +823,6 @@ def check_entry(entry, index, cell):
     else:
         RET.update_table(index, cell)
         RET.update_rates(index, cell)
-
 
 def quick_add():
     cell = 16
@@ -844,7 +845,6 @@ def quick_add():
             check_entry(entry=cell, index=i + start_index, cell=cell)
             cell += RET.tablewidth
 
-
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
 def export_primary():
     filepath = filedialog.asksaveasfilename(defaultextension='.xlsx',
@@ -856,7 +856,6 @@ def export_primary():
             rxn_summary_df.to_excel(writer, sheet_name='1_Summary', index=True)
             Xn.to_excel(writer, sheet_name='1_In_Situ', index=True)
 
-
 def export_secondary():
     filepath = filedialog.asksaveasfilename(defaultextension='.xlsx',
                                             filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
@@ -866,7 +865,6 @@ def export_secondary():
         with pandas.ExcelWriter(filepath) as writer:
             rxn_summary_df_2.to_excel(writer, sheet_name='2_Summary', index=True)
             Xn_2.to_excel(writer, sheet_name='2_In_Situ', index=True)
-
 
 def export_all():
     filepath = filedialog.asksaveasfilename(defaultextension='.xlsx',
@@ -879,7 +877,6 @@ def export_all():
             Xn.to_excel(writer, sheet_name='1_In_Situ', index=True)
             rxn_summary_df_2.to_excel(writer, sheet_name='2_Summary', index=True)
             Xn_2.to_excel(writer, sheet_name='2_In_Situ', index=True)
-
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 if __name__ == "__main__":
