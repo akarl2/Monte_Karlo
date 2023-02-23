@@ -337,7 +337,6 @@ def simulate(starting_materials, starting_materials_sec):
                     break
         stop = time.time()
         update_comp(composition, groups)
-    print(composition)
 
 
 def update_metrics(TAV, AV, OH, EHC, COC, IV):

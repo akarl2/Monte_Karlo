@@ -987,6 +987,50 @@ class Diethyl_maleate:
 
 #-------------------------------------Other--------------------------------------#
 
+class Phenol:
+    def __init__(self):
+        self.name = "Phenol"
+        self.sn = "Phenol"
+        self.formula = "C6H6O"
+        self.mw = 93.113
+        self.density = 1.07
+        self.mass = self.mw
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = "CC_Nuc"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID], [self.srgID]]
+
+class Formaldehyde:
+    def __init__(self):
+        self.name = "Formaldehyde"
+        self.sn = "Form"
+        self.formula = "CH2O"
+        self.mw = 30.026
+        self.density = 1.1
+        self.mass = self.mw
+        self.prgID = "COHH"
+        self.prgk = 1
+        self.cprgID = "imine"
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
 class Acetone:
     def __init__(self):
         self.name = "Acetone"

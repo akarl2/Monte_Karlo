@@ -28,11 +28,14 @@ class reactive_groups:
         self.SOH = ['COOH', 'COC']
         self.COOH = ['NH2', 'POH', 'COC', 'SOH']
         self.COC = ['NH2', 'POH', 'SOH', 'COOH', 'NH']
+        self.COHH = ['NH2']
+        self.imine = ['CC_Nuc']
         self.Cl = ['NH2', 'NH']
         self.aB_unsat = ['NH2']
         self.CC_3 = None
         self.CC_2 = None
         self.CC_1 = None
+        self.CC_Nuc = ['imine']
         self.COOC = None
         self.CONH = None
 
@@ -53,6 +56,27 @@ class NH2:
         self.aB_unsat = 'NH'
         self.aB_unsat_wl = 0
         self.aB_unsat_wl_id = 'None'
+        self.COHH = 'imine'
+        self.COHH_wl = 18.0158
+        self.COHH_wl_id = "H2O"
+
+class CC_Nuc:
+    def __init__(self):
+        self.imine = 'NH'
+        self.imine_wl = 18.0158
+        self.imine_wl_id = "H2O"
+
+class imine:
+    def __init__(self):
+        self.CC_Nuc = 'NH'
+        self.CC_Nuc_wl = 18.0158
+        self.CC_Nuc_wl_id = 'Water'
+
+class COHH:
+    def __init__(self):
+        self.NH2 = "imine"
+        self.NH2_wl = 18.01528
+        self.NH2_wl_id = "H2O"
 
 class aB_unsat:
     def __init__(self):
@@ -86,6 +110,9 @@ class NH:
         self.Cl = 'N'
         self.Cl_wl = 36.458
         self.Cl_wl_id = "HCl"
+        self.COHH = 'CN'
+        self.COHH_wl = 18.0158
+        self.COHH_wl_id = "H2O"
 
 class COC:
     def __init__(self):
