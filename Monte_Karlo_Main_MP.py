@@ -161,11 +161,9 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             test_count = 0
 
     def RXN_Status(composition):
-        global test_interval, in_situ_values, Xn_list, running, in_primary, comp_primary, comp_secondary, byproducts_primary, byproducts_seconday
-        comp_secondary, byproducts_seconday = None, None
-        comp_summary = collections.Counter(
-            [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
-             composition])
+        global test_interval, in_situ_values, Xn_list, running, in_primary, comp_primary, comp_secondary, byproducts_primary, byproducts_secondary
+        comp_secondary, byproducts_secondary = None, None
+        comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
         sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
         total_ct_temp = 0
         for key in comp_summary:
@@ -203,8 +201,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         in_situ_values[4].append(EHC)
         in_situ_values[5].append(IV)
         Xn_list.append(round(total_ct / total_ct_temp, 4))
-        metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
-                   'Iodine Value': IV}
+        metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC, 'Iodine Value': IV}
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_selection != '% EHC':
             comp_primary = composition
@@ -741,7 +738,7 @@ def clear_last():
     RET.entries[clear_cell].insert(0, "Clear")
     check_entry(entry=clear_cell, index=clear_index, cell=clear_cell)
 
-def sim_values():
+def sim_values(workers):
     global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, end_metric_selection_sec, starting_materials, \
         starting_materials_sec
     row_for_sec = RXN_EM_Entry_2_SR.current()
@@ -785,6 +782,10 @@ def sim_values():
                 index += 1
             else:
                 break
+        total_ct *= workers
+        total_ct_sec *= workers
+        starting_mass *= workers
+        starting_mass_sec *= workers
     except AttributeError as e:
         messagebox.showerror("Exception raised", str(e))
         pass
@@ -792,7 +793,7 @@ def sim_values():
 def multiprocessing():
     if __name__ == "__main__":
         workers = int(os.cpu_count() * .75)
-        sim_values()
+        sim_values(workers)
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
             results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec) for _ in range(workers)]
             consolidate_results(results)
