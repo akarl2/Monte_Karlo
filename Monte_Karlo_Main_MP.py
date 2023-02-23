@@ -161,8 +161,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             test_count = 0
 
     def RXN_Status(composition):
-        global test_interval, in_situ_values, Xn_list, running, in_primary, comp_primary, comp_secondary
-        comp_secondary = None
+        global test_interval, in_situ_values, Xn_list, running, in_primary, comp_primary, comp_secondary, byproducts_primary, byproducts_seconday
+        comp_secondary, byproducts_seconday = None, None
         comp_summary = collections.Counter(
             [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
              composition])
@@ -208,6 +208,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_selection != '% EHC':
             comp_primary = composition
+            byproducts_primary = byproducts
             if __name__ == '__main__':
                 sim.progress['value'] = round(((end_metric_value / RXN_metric_value) * 100), 2)
             if RXN_metric_value <= end_metric_value:
@@ -228,6 +229,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                 sim.progress['value'] = round(((EHC / end_metric_value) * 100), 2)
             if RXN_metric_value >= end_metric_value:
                 comp_primary = composition
+                byproducts_primary = byproducts
                 if RXN_EM_2_Active_status == False:
                     running = False
                     if __name__ == '__main__':
@@ -248,7 +250,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             update_metrics(TAV, AV, OH, EHC, COC, IV)
 
     def RXN_Status_sec(composition):
-        global test_interval, in_situ_values_sec, Xn_list_sec, running, comp_secondary
+        global test_interval, in_situ_values_sec, Xn_list_sec, running, comp_secondary, byproducts_secondary
         comp_summary_2 = collections.Counter(
             [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
              composition])
@@ -294,6 +296,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         RXN_metric_value_2 = metrics[end_metric_selection_sec]
         if end_metric_selection_sec != '% EHC':
             comp_secondary = composition
+            byproducts_secondary = byproducts
             if __name__ == '__main__':
                 sim.progress_2['value'] = round(((end_metric_value_sec / RXN_metric_value_2) * 100), 2)
             if RXN_metric_value_2 <= end_metric_value_sec:
@@ -306,6 +309,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                 sim.progress_2['value'] = round(((EHC / end_metric_value_sec) * 100), 2)
             if RXN_metric_value_2 >= end_metric_value_sec:
                 comp_secondary = composition
+                byproducts_secondary = byproducts
                 running = False
                 if __name__ == '__main__':
                     sim.progress['value'] = 100
@@ -348,9 +352,9 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         stop = time.time()
         update_comp(composition, groups)
     if comp_secondary is None:
-        return {"comp_primary": comp_primary, "in_situ_values": in_situ_values, "Xn_list": Xn_list}
+        return {"comp_primary": comp_primary, "in_situ_values": in_situ_values, "Xn_list": Xn_list, 'byproducts_primary': byproducts_primary}
     else:
-        return {"comp_primary": comp_primary, "comp_secondary": comp_secondary, "in_situ_values": in_situ_values, 'in_situ_values_sec': in_situ_values_sec, "Xn_list": Xn_list, "Xn_list_sec": Xn_list_sec}
+        return {"comp_primary": comp_primary, "comp_secondary": comp_secondary, "in_situ_values": in_situ_values, 'in_situ_values_sec': in_situ_values_sec, "Xn_list": Xn_list, "Xn_list_sec": Xn_list_sec, 'byproducts_primary': byproducts_primary, 'byproducts_secondary': byproducts_secondary}
 
 def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[8].delete(0, tkinter.END)
@@ -390,11 +394,11 @@ def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
     RM2.entries[14].delete(0, tkinter.END)
     RM2.entries[14].insert(0, IV)
 
-def RXN_Results(composition):
+def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_list):
     global rxn_summary_df, Xn
     comp_summary = collections.Counter(
         [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
-         composition])
+         primary_comp_summary])
     sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
     RS = []
     for key in comp_summary:
@@ -458,9 +462,8 @@ def RXN_Results(composition):
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 2).sum()
     sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 3).sum()
     sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 4).sum()
-    rxn_summary_df = rxn_summary_df[
-        ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
-    rxn_summary_df['Mass'] = rxn_summary_df['Mass'] / RXN_Samples
+    rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
+    rxn_summary_df['Mass'] = rxn_summary_df['Mass'] / int(RXN_Samples.get())
     rxn_summary_df.loc['Sum'] = round(rxn_summary_df.sum(), 3)
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
 
@@ -482,12 +485,12 @@ def RXN_Results(composition):
     WD.entries[11].delete(0, tkinter.END)
     WD.entries[11].insert(0, round(total_ct / sumNi, 4))
 
-    byproducts_df = pandas.DataFrame(byproducts, columns=['Name', 'Mass'])
+    byproducts_df = pandas.DataFrame(byproducts_primary, columns=['Name', 'Mass'])
     byproducts_df.set_index('Name', inplace=True)
-    byproducts_df['Mass'] = byproducts_df['Mass'] / RXN_Samples
+    byproducts_df['Mass'] = byproducts_df['Mass'] / int(RXN_Samples.get())
     byproducts_df['Wt, % (Of byproducts)'] = round(byproducts_df['Mass'] / byproducts_df['Mass'].sum() * 100, 4)
     byproducts_df['Wt, % (Of Final)'] = round(byproducts_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
-    byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / (starting_mass / RXN_Samples) * 100, 4)
+    byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / (starting_mass / int(RXN_Samples.get())) * 100, 4)
 
     Xn = pandas.DataFrame(in_situ_values[0], columns=['TAV'])
     Xn['AV'] = in_situ_values[1]
@@ -502,11 +505,11 @@ def RXN_Results(composition):
     show_byproducts(byproducts_df)
     show_Xn(Xn)
 
-def RXN_Results_sec(composition):
+def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values_sec, Xn_list_sec):
     global rxn_summary_df_2, Xn_2
     comp_summary_2 = collections.Counter(
         [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
-         composition])
+         secondary_comp_summary])
     sum_comp_2 = sum([comp_summary_2[key] * key[2] for key in comp_summary_2])
     RS_2 = []
     for key in comp_summary_2:
@@ -573,7 +576,7 @@ def RXN_Results_sec(composition):
     sumNiMi4 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW']) ** 4).sum()
     rxn_summary_df_2 = rxn_summary_df_2[
         ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
-    rxn_summary_df_2['Mass'] = rxn_summary_df_2['Mass'] / RXN_Samples
+    rxn_summary_df_2['Mass'] = rxn_summary_df_2['Mass'] / int(RXN_Samples.get())
     rxn_summary_df_2.loc['Sum'] = round(rxn_summary_df_2.sum(), 3)
     rxn_summary_df_2 = rxn_summary_df_2.groupby(['MW', 'Name']).sum()
     Mn = sumNiMi / sumNi
@@ -594,12 +597,12 @@ def RXN_Results_sec(composition):
     WD2.entries[11].delete(0, tkinter.END)
     WD2.entries[11].insert(0, round(total_ct_sec / sumNi, 4))
 
-    byproducts_df_2 = pandas.DataFrame(byproducts, columns=['Name', 'Mass'])
+    byproducts_df_2 = pandas.DataFrame(byproducts_secondary, columns=['Name', 'Mass'])
     byproducts_df_2.set_index('Name', inplace=True)
-    byproducts_df_2['Mass'] = byproducts_df_2['Mass'] / RXN_Samples
+    byproducts_df_2['Mass'] = byproducts_df_2['Mass'] / int(RXN_Samples.get())
     byproducts_df_2['Wt, % (Of byproducts)'] = round(byproducts_df_2['Mass'] / byproducts_df_2['Mass'].sum() * 100, 4)
     byproducts_df_2['Wt, % (Of Final)'] = round(byproducts_df_2['Mass'] / rxn_summary_df_2['Mass'].sum() * 100, 4)
-    byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / (starting_mass / RXN_Samples) * 100, 4)
+    byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / (starting_mass / int(RXN_Samples.get())) * 100, 4)
 
     Xn_2 = pandas.DataFrame(in_situ_values_sec[0], columns=['TAV'])
     Xn_2['AV'] = in_situ_values_sec[1]
@@ -788,27 +791,55 @@ def sim_values():
 
 def multiprocessing():
     if __name__ == "__main__":
-        workers = os.cpu_count() - 6
+        workers = int(os.cpu_count() * .75)
         sim_values()
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
             results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec) for _ in range(workers)]
-            # for f in concurrent.futures.as_completed(results):
-            #     print("Done")
-            # print(results[0].result()['comp_primary'])
+            #for f in concurrent.futures.as_completed(results):
+                #print(f.result()['comp_primary'])
             consolidate_results(results)
 
 def consolidate_results(results):
-    primary_comp_summary = []
-    in_situ_values = []
-    seconday_comp_summary = []
-    in_situ_values_sec = []
-    for _ in range(len(results)):
-        for species in results[_].result()['comp_primary']:
-            primary_comp_summary.append(species)
-    comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in primary_comp_summary])
-    print(comp_summary)
-
-
+    primary_comp_summary, secondary_comp_summary = [], []
+    byproducts_primary, byproducts_secondary = [], []
+    in_situ_values = results[0].result()['in_situ_values']
+    Xn_list = results[0].result()['Xn_list']
+    if 'secondary_comp_secondary' in results[0].result():
+        in_situ_values_sec = results[0].result()['in_situ_values_sec']
+        Xn_list_sec = results[0].result()['Xn_list_sec']
+        for _ in range(len(results)):
+            for species in results[_].result()['comp_primary']:
+                primary_comp_summary.append(species)
+            for species in results[_].result()['secondary_comp_secondary']:
+                secondary_comp_summary.append(species)
+            for identifier, value in results[_].result()['byproducts_primary']:
+                for item in byproducts_primary:
+                    if item[0] == identifier:
+                        item[1] += value
+                        break
+                else:
+                    byproducts_primary.append([identifier, value])
+            for identifier, value in results[_].result()['byproducts_secondary']:
+                for item in byproducts_secondary:
+                    if item[0] == identifier:
+                        item[1] += value
+                        break
+                else:
+                    byproducts_secondary.append([identifier, value])
+        RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_list)
+        RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values_sec, Xn_list_sec)
+    else:
+        for _ in range(len(results)):
+            for species in results[_].result()['comp_primary']:
+                primary_comp_summary.append(species)
+            for identifier, value in results[_].result()['byproducts_primary']:
+                for item in byproducts_primary:
+                    if item[0] == identifier:
+                        item[1] += value
+                        break
+                else:
+                    byproducts_primary.append([identifier, value])
+        RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_list)
 
 def reset_entry_table():
     for i in range(RET.tableheight - 1):
