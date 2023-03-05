@@ -63,14 +63,14 @@ class NH2:
 class CC_Nuc:
     def __init__(self):
         self.imine = 'NH'
-        self.imine_wl = 18.0158
-        self.imine_wl_id = "H2O"
+        self.imine_wl = 0
+        self.imine_wl_id = None
 
 class imine:
     def __init__(self):
         self.CC_Nuc = 'NH'
-        self.CC_Nuc_wl = 18.0158
-        self.CC_Nuc_wl_id = 'Water'
+        self.CC_Nuc_wl = 0
+        self.CC_Nuc_wl_id = None
 
 class COHH:
     def __init__(self):

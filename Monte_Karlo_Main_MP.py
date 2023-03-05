@@ -1,31 +1,20 @@
 import collections
+import concurrent.futures
 import os
 import random
 import sys
-import tkinter
 import time
+import tkinter
 from tkinter import *
-import openpyxl
-import customtkinter
 from tkinter import ttk, messagebox, simpledialog, filedialog
+
 import pandas
-import concurrent.futures
+from pandastable import Table
 from ttkwidgets.autocomplete import AutocompleteCombobox
-from Database import *
-from Reactions import reactive_groups, NH2, NH, COOH, COC, POH, SOH
-from Reactions import *
-import itertools
-from pandastable import Table, TableModel, config
-import matplotlib
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
-from scipy.interpolate import make_interp_spline
-import statsmodels
-import math
-from Reactants import *
+
 from Reactants import R1Data, R2Data, R3Data, R4Data, R5Data, R6Data, R7Data, R8Data, R9Data, R10Data, R11Data, R12Data, \
     R13Data, R14Data
+from Reactions import *
 
 # Runs the simulation
 global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, \
@@ -45,8 +34,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     running, in_primary = True, True
     test_count = 0
     test_interval = 40
-    if __name__ == '__main__':
-        sim.progress['value'], sim.progress_2['value'] = 0, 0
+    #sim.progress['value'], sim.progress_2['value'] = 0, 0
     try:
         end_metric_value_upper = end_metric_value + 15
         end_metric_value_lower = end_metric_value - 15
@@ -800,13 +788,13 @@ def consolidate_results(results):
     byproducts_primary, byproducts_secondary = [], []
     in_situ_values = results[0].result()['in_situ_values']
     Xn_list = results[0].result()['Xn_list']
-    if 'secondary_comp_secondary' in results[0].result():
+    if 'comp_secondary' in results[0].result():
         in_situ_values_sec = results[0].result()['in_situ_values_sec']
         Xn_list_sec = results[0].result()['Xn_list_sec']
         for _ in range(len(results)):
             for species in results[_].result()['comp_primary']:
                 primary_comp_summary.append(species)
-            for species in results[_].result()['secondary_comp_secondary']:
+            for species in results[_].result()['comp_secondary']:
                 secondary_comp_summary.append(species)
             for identifier, value in results[_].result()['byproducts_primary']:
                 for item in byproducts_primary:
@@ -1271,7 +1259,7 @@ if __name__ == "__main__":
                     reactants_list.append(RET.entries[cell].get())
                     cell += RET.tablewidth
             reactants_list = [f'{index + 1}: {reactant}' for index, reactant in enumerate(reactants_list)]
-            RXN_EM_Entry_2_SR.config(completevalues=reactants_list, state="readonly")
+            RXN_EM_Entry_2_SR.config(values=reactants_list, state="readonly")
 
 
     class RxnMetrics(tkinter.Frame):

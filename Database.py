@@ -992,7 +992,7 @@ class Phenol:
         self.name = "Phenol"
         self.sn = "Phenol"
         self.formula = "C6H6O"
-        self.mw = 93.113
+        self.mw = 94.113
         self.density = 1.07
         self.mass = self.mw
         self.prgID = "POH"
