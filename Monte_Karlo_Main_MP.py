@@ -87,7 +87,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             new_group_dict = {'NG': NG, 'WL': WL, 'WL_ID': WL_ID}
 
     def update_comp(composition, groups):
-        global test_count, running, WL, NG2, new_group_dict, byproducts, low_group, in_primary
+        global test_count, running, WL, NG2, new_group_dict, low_group, in_primary
         NC, compoundA, compoundB = composition[groups[0][0]], composition[groups[0][0]], composition[groups[1][0]]
         swapped = False
         new_name = {}
@@ -143,12 +143,12 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             window.update()
         if test_count >= test_interval:
             if in_primary:
-                RXN_Status(composition)
+                RXN_Status(composition, byproducts)
             else:
-                RXN_Status_sec(composition)
+                RXN_Status_sec(composition, byproducts)
             test_count = 0
 
-    def RXN_Status(composition):
+    def RXN_Status(composition, byproducts):
         global test_interval, in_situ_values, Xn_list, running, in_primary, comp_primary, comp_secondary, byproducts_primary, byproducts_secondary
         comp_secondary, byproducts_secondary = None, None
         comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
@@ -195,8 +195,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             if __name__ == '__main__':
                 sim.progress['value'] = round(((end_metric_value / RXN_metric_value) * 100), 2)
             if RXN_metric_value <= end_metric_value:
-                comp_primary = composition
-                byproducts_primary = byproducts
+                comp_primary = tuple(composition)
+                byproducts_primary = tuple(byproducts)
                 if RXN_EM_2_Active_status == False:
                     running = False
                     if __name__ == '__main__':
@@ -234,7 +234,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         if in_primary and __name__ == '__main__':
             update_metrics(TAV, AV, OH, EHC, COC, IV)
 
-    def RXN_Status_sec(composition):
+    def RXN_Status_sec(composition, byproducts):
+        print(byproducts_primary)
         global test_interval, in_situ_values_sec, Xn_list_sec, running, comp_secondary, byproducts_secondary
         comp_summary_2 = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
         sum_comp_2 = sum([comp_summary_2[key] * key[2] for key in comp_summary_2])
@@ -777,8 +778,8 @@ def sim_values(workers):
 
 def multiprocessing():
     if __name__ == "__main__":
-        workers = 1
-        #workers = int(os.cpu_count() * .75)
+        #workers = 1
+        workers = int(os.cpu_count() * .75)
         sim_values(workers)
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
             results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers) for _ in range(workers)]
