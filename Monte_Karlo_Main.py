@@ -748,6 +748,7 @@ def sim_values():
     RXN_EM_2_Active_status = RXN_EM_2_Active.get()
     if RXN_EM_2_Active_status:
         end_metric_value_sec = float(RXN_EM_Value_2.get())
+        print(end_metric_value_sec)
     end_metric_selection, end_metric_selection_sec = str(RXN_EM.get()), str(RXN_EM_Entry_2.get())
     cell = 16
     index = 0

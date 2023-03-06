@@ -743,6 +743,28 @@ class C181:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.srgID]]
 
+class Oleic_Acid:
+    def __init__(self):
+        self.name = "Oleic Acid"
+        self.sn = "OA"
+        self.formula = "C18H34O2"
+        self.mw = 274.596
+        self.density = 0.895
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = "CC_1"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID]]
+
 class C14:
     def __init__(self):
         self.name = "C14"

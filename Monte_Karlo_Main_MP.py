@@ -192,11 +192,11 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC, 'Iodine Value': IV}
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_selection != '% EHC':
-            comp_primary = composition
-            byproducts_primary = byproducts
             if __name__ == '__main__':
                 sim.progress['value'] = round(((end_metric_value / RXN_metric_value) * 100), 2)
             if RXN_metric_value <= end_metric_value:
+                comp_primary = composition
+                byproducts_primary = byproducts
                 if RXN_EM_2_Active_status == False:
                     running = False
                     if __name__ == '__main__':
@@ -278,11 +278,11 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                    'Iodine Value': IV}
         RXN_metric_value_2 = metrics[end_metric_selection_sec]
         if end_metric_selection_sec != '% EHC':
-            comp_secondary = composition
-            byproducts_secondary = byproducts
             if __name__ == '__main__':
                 sim.progress_2['value'] = round(((end_metric_value_sec / RXN_metric_value_2) * 100), 2)
             if RXN_metric_value_2 <= end_metric_value_sec:
+                comp_secondary = composition
+                byproducts_secondary = byproducts
                 running = False
                 if __name__ == '__main__':
                     sim.progress['value'] = 100
@@ -777,7 +777,8 @@ def sim_values(workers):
 
 def multiprocessing():
     if __name__ == "__main__":
-        workers = int(os.cpu_count() * .75)
+        workers = 1
+        #workers = int(os.cpu_count() * .75)
         sim_values(workers)
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
             results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers) for _ in range(workers)]
