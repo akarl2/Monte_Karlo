@@ -1,20 +1,31 @@
 import collections
-import concurrent.futures
 import os
 import random
 import sys
-import time
 import tkinter
+import time
 from tkinter import *
+import openpyxl
+import customtkinter
 from tkinter import ttk, messagebox, simpledialog, filedialog
-
 import pandas
-from pandastable import Table
+import concurrent.futures
 from ttkwidgets.autocomplete import AutocompleteCombobox
-
+from Database import *
+from Reactions import reactive_groups, NH2, NH, COOH, COC, POH, SOH
+from Reactions import *
+import itertools
+from pandastable import Table, TableModel, config
+import matplotlib
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+from scipy.interpolate import make_interp_spline
+import statsmodels
+import math
+from Reactants import *
 from Reactants import R1Data, R2Data, R3Data, R4Data, R5Data, R6Data, R7Data, R8Data, R9Data, R10Data, R11Data, R12Data, \
     R13Data, R14Data
-from Reactions import *
 
 # Runs the simulation
 global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, \
@@ -197,6 +208,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             if RXN_metric_value <= end_metric_value:
                 comp_primary = tuple(composition)
                 byproducts_primary = tuple(byproducts)
+                print(byproducts_primary)
                 if RXN_EM_2_Active_status == False:
                     running = False
                     if __name__ == '__main__':
@@ -778,8 +790,8 @@ def sim_values(workers):
 
 def multiprocessing():
     if __name__ == "__main__":
-        #workers = 1
-        workers = int(os.cpu_count() * .75)
+        workers = 1
+        #workers = int(os.cpu_count() * .75)
         sim_values(workers)
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
             results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers) for _ in range(workers)]
