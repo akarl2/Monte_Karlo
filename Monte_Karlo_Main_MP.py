@@ -734,7 +734,7 @@ def clear_last():
     RET.entries[clear_cell].insert(0, "Clear")
     check_entry(entry=clear_cell, index=clear_index, cell=clear_cell)
 
-def sim_values(workers):
+def initialize_sim(workers):
     global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, end_metric_selection_sec, starting_materials, \
         starting_materials_sec, total_samples
     row_for_sec = RXN_EM_Entry_2_SR.current()
@@ -791,7 +791,7 @@ def multiprocessing():
     if __name__ == "__main__":
         #workers = 1
         workers = int(os.cpu_count() * .75)
-        sim_values(workers)
+        initialize_sim(workers)
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
             results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers) for _ in range(workers)]
             consolidate_results(results)
@@ -1585,7 +1585,7 @@ if __name__ == "__main__":
     Entry_masses[12].bind("<KeyRelease>", lambda *args, index=12, cell=208: RET.update_table(index, cell))
     Entry_masses[13].bind("<KeyRelease>", lambda *args, index=13, cell=224: RET.update_table(index, cell))
 
-    window.bind('<Control-s>', lambda *args: sim_values())
+    window.bind('<Control-s>', lambda *args: initialize_sim())
     RXN_EM_Entry_2_SR.bind('<Enter>', lambda *args: RD.get_reactants())
     window.bind('<Control-a>', lambda *args: quick_add())
     window.bind('<Control-e>', lambda *args: reset_entry_table())
