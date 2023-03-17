@@ -208,7 +208,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             if RXN_metric_value <= end_metric_value:
                 comp_primary = tuple(composition)
                 byproducts_primary = tuple(byproducts)
-                print(byproducts_primary)
                 if RXN_EM_2_Active_status == False:
                     running = False
                     if __name__ == '__main__':
@@ -790,8 +789,8 @@ def sim_values(workers):
 
 def multiprocessing():
     if __name__ == "__main__":
-        workers = 1
-        #workers = int(os.cpu_count() * .75)
+        #workers = 1
+        workers = int(os.cpu_count() * .75)
         sim_values(workers)
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
             results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers) for _ in range(workers)]
