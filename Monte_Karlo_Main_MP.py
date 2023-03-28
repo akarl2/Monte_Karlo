@@ -1,4 +1,6 @@
 import collections
+import queue
+import multiprocessing
 import os
 import random
 import sys
@@ -45,6 +47,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     running, in_primary = True, True
     test_count = 0
     test_interval = 40
+    #progress_queue.put(0)
     #sim.progress['value'], sim.progress_2['value'] = 0, 0
     try:
         end_metric_value_upper = end_metric_value + 15
@@ -207,7 +210,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                 sim.progress['value'] = round(((end_metric_value / RXN_metric_value) * 100), 2)
             if RXN_metric_value <= end_metric_value:
                 comp_primary = tuple(composition)
-                byproducts_primary = tuple(byproducts)
+                byproducts_primary = byproducts
                 if RXN_EM_2_Active_status == False:
                     running = False
                     if __name__ == '__main__':
@@ -246,8 +249,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             update_metrics(TAV, AV, OH, EHC, COC, IV)
 
     def RXN_Status_sec(composition, byproducts):
-        print(byproducts_primary)
         global test_interval, in_situ_values_sec, Xn_list_sec, running, comp_secondary, byproducts_secondary
+        print(f'Updated {byproducts_primary}')
         comp_summary_2 = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
         sum_comp_2 = sum([comp_summary_2[key] * key[2] for key in comp_summary_2])
         total_ct_temp_2 = 0
@@ -789,11 +792,18 @@ def initialize_sim(workers):
 
 def multiprocessing():
     if __name__ == "__main__":
-        #workers = 1
-        workers = int(os.cpu_count() * .75)
+        workers = 1
+        #workers = int(os.cpu_count() * .75)
         initialize_sim(workers)
+        progress_queue = queue.Queue()
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
             results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers) for _ in range(workers)]
+            # while any(result.running() for result in results):
+            #     try:
+            #         progress = progress_queue.get_nowait()
+            #         sim.progress['value'] = progress
+            #     except queue.Empty:
+            #         pass
             consolidate_results(results)
 
 def consolidate_results(results):
