@@ -38,7 +38,7 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
     end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict, samples_value, total_samples
 
 
-def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers):
+def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, process_queue):
     rg = reactive_groups()
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, quick_add, comp_primary, comp_secondary
     in_situ_values = [[], [], [], [], [], [], []]
@@ -47,7 +47,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     running, in_primary = True, True
     test_count = 0
     test_interval = 40
-    #progress_queue.put(0)
+    process_queue.put(0)
     #sim.progress['value'], sim.progress_2['value'] = 0, 0
     try:
         end_metric_value_upper = end_metric_value + 15
@@ -790,20 +790,21 @@ def initialize_sim(workers):
         messagebox.showerror("Exception raised", str(e))
         pass
 
-def multiprocessing():
+def multiprocessing_sim():
     if __name__ == "__main__":
-        workers = 1
-        #workers = int(os.cpu_count() * .75)
+        #workers = 1
+        workers = int(os.cpu_count() * .75)
         initialize_sim(workers)
-        progress_queue = queue.Queue()
+        progress_queue = multiprocessing.Manager().Queue()
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
-            results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers) for _ in range(workers)]
-            # while any(result.running() for result in results):
-            #     try:
-            #         progress = progress_queue.get_nowait()
-            #         sim.progress['value'] = progress
-            #     except queue.Empty:
-            #         pass
+            results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, progress_queue) for _ in range(workers)]
+            while any(result.running() for result in results):
+                try:
+                    progress = progress_queue.get_nowait()
+                    sim.progress['value'] = progress
+                except queue.Empty:
+                    pass
+            concurrent.futures.wait(results)
             consolidate_results(results)
 
 def consolidate_results(results):
@@ -1503,7 +1504,7 @@ if __name__ == "__main__":
             self.add_buttons()
 
         def add_buttons(self):
-            Simulate = tkinter.Button(self, text="Simulate", command=multiprocessing, width=15, bg="Green")
+            Simulate = tkinter.Button(self, text="Simulate", command=multiprocessing_sim, width=15, bg="Green")
             Simulate.grid(row=0, column=0)
             stop_button = tkinter.Button(self, text="Stop", command=stop, width=15, bg="Red")
             stop_button.grid(row=1, column=0)
