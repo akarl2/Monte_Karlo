@@ -27,7 +27,7 @@ import statsmodels
 import math
 from Reactants import *
 from Reactants import R1Data, R2Data, R3Data, R4Data, R5Data, R6Data, R7Data, R8Data, R9Data, R10Data, R11Data, R12Data, \
-    R13Data, R14Data
+    R13Data, R14Data, R15Data, R16Data, R17Data, R18Data, R19Data
 
 # Runs the simulation
 global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, \
@@ -206,6 +206,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC, 'Iodine Value': IV}
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_selection != '% EHC':
+            process_queue.put(round(((end_metric_value / RXN_metric_value) * 100), 2))
             if __name__ == '__main__':
                 sim.progress['value'] = round(((end_metric_value / RXN_metric_value) * 100), 2)
             if RXN_metric_value <= end_metric_value:
@@ -792,8 +793,8 @@ def initialize_sim(workers):
 
 def multiprocessing_sim():
     if __name__ == "__main__":
-        #workers = 1
-        workers = int(os.cpu_count() * .75)
+        workers = 2
+        #workers = int(os.cpu_count() * .75)
         initialize_sim(workers)
         progress_queue = multiprocessing.Manager().Queue()
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
@@ -802,6 +803,7 @@ def multiprocessing_sim():
                 try:
                     progress = progress_queue.get_nowait()
                     sim.progress['value'] = progress
+                    window.update()
                 except queue.Empty:
                     pass
             concurrent.futures.wait(results)
@@ -980,16 +982,14 @@ if __name__ == "__main__":
 
     Entry_Reactants = ['R1Reactant', 'R2Reactant', 'R3Reactant', 'R4Reactant', 'R5Reactant', 'R6Reactant', 'R7Reactant',
                        'R8Reactant', 'R9Reactant', 'R10Reactant', 'R11Reactant', 'R12Reactant', 'R13Reactant',
-                       'R14Reactant']
+                       'R14Reactant', 'R15Reactant', 'R16Reactant', 'R17Reactant', 'R18Reactant', 'R19Reactant',]
     Entry_masses = ['R1mass', 'R2mass', 'R3mass', 'R4mass', 'R5mass', 'R6mass', 'R7mass', 'R8mass', 'R9mass', 'R10mass',
-                    'R11mass', 'R12mass', 'R13mass', 'R14mass']
-    RDE = ['R1Data', 'R2Data', 'R3Data', 'R4Data', 'R5Data', 'R6Data', 'R7Data', 'R8Data', 'R9Data', 'R10Data',
-           'R11Data',
-           'R12Data', 'R13Data', 'R14Data']
+                    'R11mass', 'R12mass', 'R13mass', 'R14mass', 'R15mass', 'R16mass', 'R17mass', 'R18mass', 'R19mass',]
+    RDE = ['R1Data', 'R2Data', 'R3Data', 'R4Data', 'R5Data', 'R6Data', 'R7Data', 'R8Data', 'R9Data', 'R10Data', 'R11Data',
+           'R12Data', 'R13Data', 'R14Data', 'R15Data', 'R16Data', 'R17Data', 'R18Data', 'R19Data',]
 
     global starting_cell
     starting_cell = 16
-
 
     class QuickAddWindow(simpledialog.Dialog):
         def body(self, master):
@@ -1028,7 +1028,7 @@ if __name__ == "__main__":
         def __init__(self, master=tab1):
             tkinter.Frame.__init__(self, master)
             self.tablewidth = 16
-            self.tableheight = 15
+            self.tableheight = 20
             self.entries = None
             self.grid(row=5, column=1, padx=10, pady=10)
             self.create_table()
@@ -1580,6 +1580,12 @@ if __name__ == "__main__":
     RET.entries[192].bind('<FocusOut>', lambda *args, entry=192, index=11, cell=192: check_entry(entry, index, cell))
     RET.entries[208].bind('<FocusOut>', lambda *args, entry=208, index=12, cell=208: check_entry(entry, index, cell))
     RET.entries[224].bind('<FocusOut>', lambda *args, entry=224, index=13, cell=224: check_entry(entry, index, cell))
+    RET.entries[240].bind('<FocusOut>', lambda *args, entry=240, index=14, cell=240: check_entry(entry, index, cell))
+    RET.entries[256].bind('<FocusOut>', lambda *args, entry=256, index=15, cell=256: check_entry(entry, index, cell))
+    RET.entries[272].bind('<FocusOut>', lambda *args, entry=272, index=16, cell=272: check_entry(entry, index, cell))
+    RET.entries[288].bind('<FocusOut>', lambda *args, entry=288, index=17, cell=288: check_entry(entry, index, cell))
+    RET.entries[304].bind('<FocusOut>', lambda *args, entry=304, index=18, cell=304: check_entry(entry, index, cell))
+
 
     Entry_masses[0].bind("<KeyRelease>", lambda *args, index=0, cell=16: RET.update_table(index, cell))
     Entry_masses[1].bind("<KeyRelease>", lambda *args, index=1, cell=32: RET.update_table(index, cell))
@@ -1595,6 +1601,12 @@ if __name__ == "__main__":
     Entry_masses[11].bind("<KeyRelease>", lambda *args, index=11, cell=192: RET.update_table(index, cell))
     Entry_masses[12].bind("<KeyRelease>", lambda *args, index=12, cell=208: RET.update_table(index, cell))
     Entry_masses[13].bind("<KeyRelease>", lambda *args, index=13, cell=224: RET.update_table(index, cell))
+    Entry_masses[14].bind("<KeyRelease>", lambda *args, index=14, cell=240: RET.update_table(index, cell))
+    Entry_masses[15].bind("<KeyRelease>", lambda *args, index=15, cell=256: RET.update_table(index, cell))
+    Entry_masses[16].bind("<KeyRelease>", lambda *args, index=16, cell=272: RET.update_table(index, cell))
+    Entry_masses[17].bind("<KeyRelease>", lambda *args, index=17, cell=288: RET.update_table(index, cell))
+    Entry_masses[18].bind("<KeyRelease>", lambda *args, index=18, cell=304: RET.update_table(index, cell))
+
 
     window.bind('<Control-s>', lambda *args: initialize_sim())
     RXN_EM_Entry_2_SR.bind('<Enter>', lambda *args: RD.get_reactants())
@@ -1620,6 +1632,12 @@ if __name__ == "__main__":
     R12Data = R12Data()
     R13Data = R13Data()
     R14Data = R14Data()
+    R15Data = R15Data()
+    R16Data = R16Data()
+    R17Data = R17Data()
+    R18Data = R18Data()
+    R19Data = R19Data()
+
     rg = reactive_groups()
 
     window.mainloop()
