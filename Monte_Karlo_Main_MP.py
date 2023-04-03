@@ -39,6 +39,8 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
 
 
 def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, process_queue):
+    process_queue.put(os.getpid())
+    print(process_queue.get())
     rg = reactive_groups()
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, quick_add, comp_primary, comp_secondary
     in_situ_values = [[], [], [], [], [], [], []]
@@ -207,8 +209,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_selection != '% EHC':
             process_queue.put(round(((end_metric_value / RXN_metric_value) * 100), 2))
-            if __name__ == '__main__':
-                sim.progress['value'] = round(((end_metric_value / RXN_metric_value) * 100), 2)
             if RXN_metric_value <= end_metric_value:
                 comp_primary = tuple(composition)
                 byproducts_primary = byproducts
@@ -799,6 +799,10 @@ def multiprocessing_sim():
         progress_queue = multiprocessing.Manager().Queue()
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
             results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, progress_queue) for _ in range(workers)]
+            tracker_PID = progress_queue.get()
+            while not progress_queue.empty():
+                progress_queue.get()
+            progress_queue.put(tracker_PID)
             while any(result.running() for result in results):
                 try:
                     progress = progress_queue.get_nowait()
