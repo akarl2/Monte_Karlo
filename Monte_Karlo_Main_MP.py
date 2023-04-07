@@ -40,11 +40,10 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
 
 def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, process_queue):
     process_queue.put(os.getpid())
-    print(process_queue.get())
     rg = reactive_groups()
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, quick_add, comp_primary, comp_secondary
-    in_situ_values = [[], [], [], [], [], [], [], []]
-    in_situ_values_sec = [[], [], [], [], [], [], []]
+    in_situ_values = [[], [], [], [], [], [], [], [], []]
+    in_situ_values_sec = [[], [], [], [], [], [], [], []]
     Xn_list, Xn_list_sec, byproducts, byproducts_sec, Mw_list, composition, composition_sec = [], [], [], [], [], [], []
     running, in_primary = True, True
     test_count = 0
@@ -170,10 +169,11 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
         sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
         sum_comp_2 = sum([comp_summary[key] * key[2]**2 for key in comp_summary])
-        Mw = sum_comp_2 / sum_comp
         total_ct_temp = 0
         for key in comp_summary:
             total_ct_temp += comp_summary[key]
+        Mw = sum_comp_2 / sum_comp
+        Mn = sum_comp / total_ct_temp
         amine_ct, amine_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct = 0, 0, 0, 0, 0, 0, 0
         for key in comp_summary:
             key_names = [i[0] for i in key[0]]
@@ -207,6 +207,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         in_situ_values[4].append(EHC)
         in_situ_values[5].append(IV)
         in_situ_values[6].append(Mw)
+        in_situ_values[7].append(Mn)
         Xn_list.append(round((total_ct / workers) / total_ct_temp, 4))
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC, 'Iodine Value': IV}
         RXN_metric_value = metrics[end_metric_selection]
@@ -254,12 +255,14 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
 
     def RXN_Status_sec(composition, byproducts):
         global test_interval, in_situ_values_sec, Xn_list_sec, running, comp_secondary, byproducts_secondary
-        print(f'Updated {byproducts_primary}')
         comp_summary_2 = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
         sum_comp_2 = sum([comp_summary_2[key] * key[2] for key in comp_summary_2])
+        sum_comp_2_2 = sum([comp_summary_2[key] * key[2] ** 2 for key in comp_summary_2])
         total_ct_temp_2 = 0
         for key in comp_summary_2:
             total_ct_temp_2 += comp_summary_2[key]
+        Mw = sum_comp_2_2 / sum_comp_2
+        Mn = sum_comp_2 / total_ct_temp_2
         amine_ct, amine_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct = 0, 0, 0, 0, 0, 0, 0
         for key in comp_summary_2:
             key_names = [i[0] for i in key[0]]
@@ -292,6 +295,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         in_situ_values_sec[3].append(COC)
         in_situ_values_sec[4].append(EHC)
         in_situ_values_sec[5].append(IV)
+        in_situ_values_sec[6].append(Mw)
         Xn_list_sec.append(round((total_ct_sec / workers) / total_ct_temp_2, 4))
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
                    'Iodine Value': IV}
@@ -501,6 +505,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_lis
     Xn['Xn'] = Xn_list
     Xn['P'] = -(1 / Xn['Xn']) + 1
     Xn['Mw'] = in_situ_values[6]
+    Xn['Mn'] = in_situ_values[7]
     # messagebox.showinfo('Results', 'Simulation Successful!')
     show_results(rxn_summary_df)
     show_byproducts(byproducts_df)
@@ -613,6 +618,8 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     Xn_2['IV'] = in_situ_values_sec[5]
     Xn_2['Xn'] = Xn_list_sec
     Xn_2['P'] = -(1 / Xn_2['Xn']) + 1
+    Xn_2['Mw'] = in_situ_values_sec[6]
+    Xn_2['Mn'] = in_situ_values_sec[7]
     # messagebox.showinfo('Results', 'Simulation Successful!')
     show_results_sec(rxn_summary_df_2)
     show_byproducts_sec(byproducts_df_2)
@@ -797,8 +804,8 @@ def initialize_sim(workers):
 
 def multiprocessing_sim():
     if __name__ == "__main__":
-        #workers = 2
-        workers = int(os.cpu_count() * .75)
+        workers = 2
+        #workers = int(os.cpu_count() * .75)
         initialize_sim(workers)
         progress_queue = multiprocessing.Manager().Queue()
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
@@ -974,11 +981,13 @@ if __name__ == "__main__":
     filemenu1 = tkinter.Menu(menubar, tearoff=0)
     export_menu = tkinter.Menu(filemenu1, tearoff=0)
     filemenu2 = tkinter.Menu(menubar, tearoff=0)
+    threads_menu = tkinter.Menu(filemenu2, tearoff=0)
     filemenu3 = tkinter.Menu(menubar, tearoff=0)
     menubar.add_cascade(label='File', menu=filemenu1)
     menubar.add_cascade(label='Options', menu=filemenu2)
     menubar.add_cascade(label='Help', menu=filemenu3)
     filemenu1.add_cascade(label="Export", menu=export_menu)
+    filemenu2.add_cascade(label="Simulations", menu=threads_menu)
     export_menu.add_command(label='1° Reaction Results', command=export_primary)
     export_menu.add_command(label='2° Reaction Results', command=export_secondary)
     export_menu.add_command(label='All Reaction Results', command=export_all)
