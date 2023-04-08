@@ -43,7 +43,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     rg = reactive_groups()
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, quick_add, comp_primary, comp_secondary
     in_situ_values = [[], [], [], [], [], [], [], [], []]
-    in_situ_values_sec = [[], [], [], [], [], [], [], []]
+    in_situ_values_sec = [[], [], [], [], [], [], [], [], []]
     Xn_list, Xn_list_sec, byproducts, byproducts_sec, Mw_list, composition, composition_sec = [], [], [], [], [], [], []
     running, in_primary = True, True
     test_count = 0
@@ -296,6 +296,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         in_situ_values_sec[4].append(EHC)
         in_situ_values_sec[5].append(IV)
         in_situ_values_sec[6].append(Mw)
+        in_situ_values_sec[7].append(Mn)
         Xn_list_sec.append(round((total_ct_sec / workers) / total_ct_temp_2, 4))
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
                    'Iodine Value': IV}
@@ -804,7 +805,7 @@ def initialize_sim(workers):
 
 def multiprocessing_sim():
     if __name__ == "__main__":
-        workers = 2
+        workers = 1
         #workers = int(os.cpu_count() * .75)
         initialize_sim(workers)
         progress_queue = multiprocessing.Manager().Queue()
