@@ -216,6 +216,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             if RXN_metric_value <= end_metric_value:
                 comp_primary = tuple(composition)
                 byproducts_primary = byproducts
+                print(byproducts_primary)
                 if RXN_EM_2_Active_status == False:
                     running = False
                     if __name__ == '__main__':
@@ -729,6 +730,7 @@ def str_to_class(classname):
 def stop():
     global running
     if running:
+        #set running in simulate to false
         running = False
     else:
         pass
@@ -827,8 +829,11 @@ def multiprocessing_sim():
             if running is False:
                 for result in results:
                     result.cancel()
+                    result.result()
                 while not progress_queue.empty():
                     progress_queue.get()
+                sim.progress['value'] = 0
+                return
             consolidate_results(results)
 
 def consolidate_results(results):
@@ -1530,7 +1535,7 @@ if __name__ == "__main__":
         def add_buttons(self):
             Simulate = tkinter.Button(self, text="Simulate", command=multiprocessing_sim, width=15, bg="Green")
             Simulate.grid(row=0, column=0)
-            stop_button = tkinter.Button(self, text="Stop", command=stop, width=15, bg="Red")
+            stop_button = tkinter.Button(self, text="Terminate", command=stop, width=15, bg="Red")
             stop_button.grid(row=1, column=0)
             clear_last_row = tkinter.Button(self, text="Clear Last", command=clear_last, width=15, bg="Yellow")
             clear_last_row.grid(row=2, column=0)
