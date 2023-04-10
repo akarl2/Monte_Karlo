@@ -229,8 +229,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                     for species in composition_sec:
                         composition.append(species)
         else:
-            if __name__ == '__main__':
-                sim.progress['value'] = round(((EHC / end_metric_value) * 100), 2)
+            process_queue.put(round(((EHC / end_metric_value) * 100), 2))
             if RXN_metric_value >= end_metric_value:
                 comp_primary = composition
                 byproducts_primary = byproducts
@@ -477,6 +476,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_lis
     PDI = Mw / Mn
     Mz = sumNiMi3 / sumNiMi2
     Mz1 = sumNiMi4 / sumNiMi3
+
     WD.entries[6].delete(0, tkinter.END)
     WD.entries[6].insert(0, round(Mn, 4))
     WD.entries[7].delete(0, tkinter.END)
@@ -805,6 +805,8 @@ def initialize_sim(workers):
 
 def multiprocessing_sim():
     if __name__ == "__main__":
+        global running
+        running = True
         workers = 1
         #workers = int(os.cpu_count() * .75)
         initialize_sim(workers)
@@ -815,14 +817,18 @@ def multiprocessing_sim():
             while not progress_queue.empty():
                 progress_queue.get()
             progress_queue.put(tracker_PID)
-            while any(result.running() for result in results):
+            while any(result.running() for result in results) and running is True:
                 try:
                     progress = progress_queue.get_nowait()
                     sim.progress['value'] = progress
                     window.update()
                 except queue.Empty:
                     pass
-            concurrent.futures.wait(results)
+            if running is False:
+                for result in results:
+                    result.cancel()
+                while not progress_queue.empty():
+                    progress_queue.get()
             consolidate_results(results)
 
 def consolidate_results(results):
