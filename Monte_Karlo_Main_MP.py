@@ -31,20 +31,21 @@ from Reactants import R1Data, R2Data, R3Data, R4Data, R5Data, R6Data, R7Data, R8
 
 # Runs the simulation
 global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, \
-    total_ct, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, byproducts_sec, \
-    frame_byproducts, Mw_list, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, \
+    total_ct, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, \
+    frame_byproducts, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, \
     frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary, quick_add, quick_add_comp, \
     RXN_EM_Value, RXN_EM_Entry, rxn_summary_df, rxn_summary_df_2, Xn, Xn_2, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, \
     end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict, samples_value, total_samples
 
 
-def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, process_queue):
-    process_queue.put(os.getpid())
+def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, process_queue, PID_list):
+    PID_list.append(os.getpid())
+    time.sleep(1)
     rg = reactive_groups()
-    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, Mw_list, running, in_primary, in_situ_values_sec, Xn_list_sec, byproducts_sec, quick_add, comp_primary, comp_secondary
+    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, running, in_primary, in_situ_values_sec, Xn_list_sec, quick_add, comp_primary, comp_secondary
     in_situ_values = [[], [], [], [], [], [], [], [], []]
     in_situ_values_sec = [[], [], [], [], [], [], [], [], []]
-    Xn_list, Xn_list_sec, byproducts, byproducts_sec, Mw_list, composition, composition_sec = [], [], [], [], [], [], []
+    Xn_list, Xn_list_sec, byproducts, composition, composition_sec = [], [], [], [], []
     running, in_primary = True, True
     test_count = 0
     test_interval = 40
@@ -102,7 +103,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             new_group_dict = {'NG': NG, 'WL': WL, 'WL_ID': WL_ID}
 
     def update_comp(composition, groups):
-        global test_count, running, WL, NG2, new_group_dict, low_group, in_primary
+        global test_count, NG2, new_group_dict, low_group, in_primary
         NC, compoundA, compoundB = composition[groups[0][0]], composition[groups[0][0]], composition[groups[1][0]]
         swapped = False
         new_name = {}
@@ -212,7 +213,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC, 'Iodine Value': IV}
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_selection != '% EHC':
-            process_queue.put(round(((end_metric_value / RXN_metric_value) * 100), 2))
+            if os.getpid() == PID_list[0]:
+                process_queue.put(round(((end_metric_value / RXN_metric_value) * 100), 2))
             if RXN_metric_value <= end_metric_value:
                 comp_primary = tuple(composition)
                 byproducts_primary = byproducts
@@ -804,12 +806,11 @@ def multiprocessing_sim():
         workers = int(os.cpu_count() * .75)
         initialize_sim(workers)
         progress_queue = multiprocessing.Manager().Queue()
+        PID_list = multiprocessing.Manager().list()
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
-            results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, progress_queue) for _ in range(workers)]
-            tracker_PID = progress_queue.get()
-            while not progress_queue.empty():
-                progress_queue.get()
-            progress_queue.put(tracker_PID)
+            results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, progress_queue, PID_list) for _ in range(workers)]
+            while len(PID_list) < workers:
+                pass
             while any(result.running() for result in results) and running is True:
                 try:
                     progress = progress_queue.get_nowait()
