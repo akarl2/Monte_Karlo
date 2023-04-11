@@ -216,7 +216,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             if RXN_metric_value <= end_metric_value:
                 comp_primary = tuple(composition)
                 byproducts_primary = byproducts
-                print(byproducts_primary)
                 if RXN_EM_2_Active_status == False:
                     running = False
                     if __name__ == '__main__':
@@ -343,17 +342,11 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             groups = random.choices(chemical, weights, k=2)
             if time.time() - start > 3 and in_primary:
                 running = False
-                if __name__ == '__main__':
-                    sim.progress['value'] = 100
-                    RXN_Results(composition)
                 messagebox.showerror("Error", "Increase # of samples or End Metric is unattainable")
                 break
             else:
                 if time.time() - start > 3 and in_primary == False:
                     running = False
-                    if __name__ == '__main__':
-                        sim.progress_2['value'] = 100
-                        RXN_Results_sec(composition)
                     messagebox.showerror("Error", "Increase # of samples or End Metric is unattainable")
                     break
         stop = time.time()
@@ -809,8 +802,8 @@ def multiprocessing_sim():
     if __name__ == "__main__":
         global running
         running = True
-        workers = 1
-        #workers = int(os.cpu_count() * .75)
+        #workers = 1
+        workers = int(os.cpu_count() * .75)
         initialize_sim(workers)
         progress_queue = multiprocessing.Manager().Queue()
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
@@ -830,10 +823,13 @@ def multiprocessing_sim():
                 for result in results:
                     result.cancel()
                     result.result()
+                    window.update()
                 while not progress_queue.empty():
                     progress_queue.get()
                 sim.progress['value'] = 0
+                messagebox.showinfo("Simulation Cancelled", "Simulation cancelled by user")
                 return
+            concurrent.futures.wait(results)
             consolidate_results(results)
 
 def consolidate_results(results):
