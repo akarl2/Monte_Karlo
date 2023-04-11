@@ -340,15 +340,13 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         start = time.time()
         while groups[0][0] == groups[1][0] or check_react(groups) is False:
             groups = random.choices(chemical, weights, k=2)
-            if time.time() - start > 3 and in_primary:
+            if time.time() - start > 3:
                 running = False
-                messagebox.showerror("Error", "Increase # of samples or End Metric is unattainable")
+                if in_primary:
+                    messagebox.showerror("1° Error", "Increase # of samples or End Metric is unattainable")
+                else:
+                    messagebox.showerror("2° Error", "Increase # of samples or End Metric is unattainable")
                 break
-            else:
-                if time.time() - start > 3 and in_primary == False:
-                    running = False
-                    messagebox.showerror("Error", "Increase # of samples or End Metric is unattainable")
-                    break
         stop = time.time()
         update_comp(composition, groups)
     if comp_secondary is None:
