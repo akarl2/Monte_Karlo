@@ -286,9 +286,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                 comp_secondary = composition
                 byproducts_secondary = byproducts
                 running = False
-                if __name__ == '__main__':
-                    sim.progress['value'] = 100
-                    update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
         else:
             if __name__ == '__main__':
                 sim.progress_2['value'] = round(((EHC / end_metric_value_sec) * 100), 2)
@@ -296,9 +293,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                 comp_secondary = composition
                 byproducts_secondary = byproducts
                 running = False
-                if __name__ == '__main__':
-                    sim.progress['value'] = 100
-                    update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
         if end_metric_value_upper_sec >= RXN_metric_value_2 >= end_metric_value_lower_sec:
             test_interval = 1
         if __name__ == '__main__':
