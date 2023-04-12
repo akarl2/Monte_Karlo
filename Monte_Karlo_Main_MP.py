@@ -38,7 +38,7 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
     end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict, samples_value, total_samples
 
 
-def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, process_queue, PID_list):
+def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, process_queue, PID_list, progress_queue_sec):
     PID_list.append(os.getpid())
     time.sleep(1)
     rg = reactive_groups()
@@ -50,7 +50,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     test_count = 0
     test_interval = 40
     process_queue.put(0)
-    #sim.progress['value'], sim.progress_2['value'] = 0, 0
+    progress_queue_sec.put(0)
     try:
         end_metric_value_upper = end_metric_value + 15
         end_metric_value_lower = end_metric_value - 15
@@ -195,60 +195,42 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                     epoxide_ct += comp_summary[key]
                 elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
                     IV_ct += comp_summary[key]
-        TAV = round((amine_ct * 56100) / sum_comp, 2)
+        TAV = round((amine_ct * 56100) / sum_comp, 2)  # Calculate in-situ variables
         AV = round((acid_ct * 56100) / sum_comp, 2)
         OH = round((alcohol_ct * 56100) / sum_comp, 2)
         COC = round((epoxide_ct * 56100) / sum_comp, 2)
         EHC = round((EHC_ct * 35.453) / sum_comp * 100, 2)
         IV = round(((IV_ct * 2) * (127 / sum_comp) * 100), 2)
-        in_situ_values[0].append(TAV)
-        in_situ_values[1].append(AV)
-        in_situ_values[2].append(OH)
-        in_situ_values[3].append(COC)
-        in_situ_values[4].append(EHC)
-        in_situ_values[5].append(IV)
-        in_situ_values[6].append(Mw)
-        in_situ_values[7].append(Mn)
+        variables = [TAV, AV, OH, COC, EHC, IV, Mw, Mn]  # in-situ variables added to list
+        for i, variable in enumerate(variables):
+            in_situ_values[i].append(variable)
         Xn_list.append(round((total_ct / workers) / total_ct_temp, 4))
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC, 'Iodine Value': IV}
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_selection != '% EHC':
-            if os.getpid() == PID_list[0]:
+            if os.getpid() == PID_list[-1]:
                 process_queue.put(round(((end_metric_value / RXN_metric_value) * 100), 2))
             if RXN_metric_value <= end_metric_value:
                 comp_primary = tuple(composition)
                 byproducts_primary = byproducts
                 if RXN_EM_2_Active_status == False:
                     running = False
-                    if __name__ == '__main__':
-                        sim.progress['value'] = 100
-                        update_metrics(TAV, AV, OH, EHC, COC, IV)
                 else:
                     in_primary = False
-                    if __name__ == '__main__':
-                        sim.progress['value'] = 100
-                        update_metrics(TAV, AV, OH, EHC, COC, IV)
                     for species in composition_sec:
                         composition.append(species)
         else:
-            process_queue.put(round(((EHC / end_metric_value) * 100), 2))
+            if os.getpid() == PID_list[-1]:
+                process_queue.put(round(((EHC / end_metric_value) * 100), 2))
             if RXN_metric_value >= end_metric_value:
                 comp_primary = composition
                 byproducts_primary = byproducts
                 if RXN_EM_2_Active_status == False:
                     running = False
-                    if __name__ == '__main__':
-                        sim.progress['value'] = 100
-                        update_metrics(TAV, AV, OH, EHC, COC, IV)
                 else:
                     in_primary = False
-                    if __name__ == '__main__':
-                        sim.progress['value'] = 100
-                        update_metrics(TAV, AV, OH, EHC, COC, IV)
                     for species in composition_sec:
                         composition.append(species)
-        if __name__ == '__main__':
-            window.update()
         if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
             test_interval = 1
         if in_primary and __name__ == '__main__':
@@ -290,21 +272,16 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         COC = round((epoxide_ct * 56100) / sum_comp_2, 2)
         EHC = round((EHC_ct * 35.453) / sum_comp_2 * 100, 2)
         IV = round(((IV_ct * 2) * (127 / sum_comp_2) * 100), 2)
-        in_situ_values_sec[0].append(TAV)
-        in_situ_values_sec[1].append(AV)
-        in_situ_values_sec[2].append(OH)
-        in_situ_values_sec[3].append(COC)
-        in_situ_values_sec[4].append(EHC)
-        in_situ_values_sec[5].append(IV)
-        in_situ_values_sec[6].append(Mw)
-        in_situ_values_sec[7].append(Mn)
+        variables = [TAV, AV, OH, COC, EHC, IV, Mw, Mn]
+        for i, variable in enumerate(variables):
+            in_situ_values[i].append(variable)
         Xn_list_sec.append(round((total_ct_sec / workers) / total_ct_temp_2, 4))
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
                    'Iodine Value': IV}
         RXN_metric_value_2 = metrics[end_metric_selection_sec]
         if end_metric_selection_sec != '% EHC':
-            if __name__ == '__main__':
-                sim.progress_2['value'] = round(((end_metric_value_sec / RXN_metric_value_2) * 100), 2)
+            if os.getpid() == PID_list[-1]:
+               progress_queue_sec.put(round((end_metric_value_sec / RXN_metric_value_2) * 100), 2)
             if RXN_metric_value_2 <= end_metric_value_sec:
                 comp_secondary = composition
                 byproducts_secondary = byproducts
@@ -806,9 +783,10 @@ def multiprocessing_sim():
         workers = int(os.cpu_count() * .75)
         initialize_sim(workers)
         progress_queue = multiprocessing.Manager().Queue()
+        progress_queue_sec = multiprocessing.Manager().Queue()
         PID_list = multiprocessing.Manager().list()
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
-            results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, progress_queue, PID_list) for _ in range(workers)]
+            results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, progress_queue, PID_list, progress_queue_sec) for _ in range(workers)]
             while len(PID_list) < workers:
                 pass
             while any(result.running() for result in results) and running is True:
