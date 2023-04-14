@@ -55,6 +55,139 @@ class Glycerol:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.srgID], [self.prgID]]
 
+class C8_OH:
+    def __init__(self):
+        self.name = "C8_OH"
+        self.sn = "C8_OH"
+        self.formula = "C8H18O"
+        self.mw = 130.23
+        self.density = 0.83
+        self.mass = self.mw
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class C10_OH:
+    def __init__(self):
+        self.name = "C10_OH"
+        self.sn = "C10_OH"
+        self.formula = "C10H22O"
+        self.mw = 158.28
+        self.density = 0.83
+        self.mass = self.mw
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class C12_OH:
+    def __init__(self):
+        self.name = "C12_OH"
+        self.sn = "C12_OH"
+        self.formula = "C12H26O"
+        self.mw = 186.32
+        self.density = 0.83
+        self.mass = self.mw
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class C14_OH:
+    def __init__(self):
+        self.name = "C14_OH"
+        self.sn = "C14_OH"
+        self.formula = "C14H30O"
+        self.mw = 214.36
+        self.density = 0.83
+        self.mass = self.mw
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class C16_OH:
+    def __init__(self):
+        self.name = "C16_OH"
+        self.sn = "C16_OH"
+        self.formula = "C16H34O"
+        self.mw = 242.40
+        self.density = 0.83
+        self.mass = self.mw
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class C18_OH:
+    def __init__(self):
+        self.name = "C18_OH"
+        self.sn = "C18_OH"
+        self.formula = "C18H38O"
+        self.mw = 270.44
+        self.density = 0.83
+        self.mass = self.mw
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+
 class Neopentyl_glycol:
     def __init__(self):
         self.name = "Neopentyl_glycol"
@@ -1186,6 +1319,7 @@ quick_add_dict = {
     "Linseed FA": [["C16", .0658], ["C18", 0.0443], ["C181", 0.1851], ["C182", 0.1725], ["C183", 0.5324]],
     "TETA (Dist)": [["LTETA", 0.53933], ["Branched_TETA", 0.02738], ["Bis_AEP", 0.25383], ["PEEDA", 0.17608], ["Hydroxyethylpiperazine", 0.00335]],
     "TEPA (Dist)": [["LTEPA", 0.45057], ["AETETA", 0.10475], ["AEPEEDA", 0.32109], ["PEDETA", 0.10282], ["PEHA", 0.02077]],
+    'C8-18_OH': [['C8_OH', 0.00043], ['C10_OH', 0.00144], ['C12_OH', 0.6786], ['C14_OH', 0.24907], ['C16_OH', 0.06759], ['C18_OH', 0.00288]],
 
 }
 
