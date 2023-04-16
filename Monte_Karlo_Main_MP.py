@@ -35,7 +35,7 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
     frame_byproducts, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, \
     frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary, quick_add, quick_add_comp, \
     RXN_EM_Value, RXN_EM_Entry, rxn_summary_df, rxn_summary_df_2, Xn, Xn_2, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, \
-    end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict, samples_value, total_samples
+    end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict, samples_value, total_samples, canceled_by_user
 
 
 def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, process_queue, PID_list, progress_queue_sec):
@@ -223,7 +223,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             if os.getpid() == PID_list[-1]:
                 process_queue.put(round(((EHC / end_metric_value) * 100), 2))
             if RXN_metric_value >= end_metric_value:
-                comp_primary = composition
+                comp_primary = tuple(composition)
                 byproducts_primary = byproducts
                 if RXN_EM_2_Active_status == False:
                     running = False
@@ -274,7 +274,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         IV = round(((IV_ct * 2) * (127 / sum_comp_2) * 100), 2)
         variables = [TAV, AV, OH, COC, EHC, IV, Mw, Mn]
         for i, variable in enumerate(variables):
-            in_situ_values[i].append(variable)
+            in_situ_values_sec[i].append(variable)
         Xn_list_sec.append(round((total_ct_sec / workers) / total_ct_temp_2, 4))
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
                    'Iodine Value': IV}
@@ -472,7 +472,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_lis
     Xn['P'] = -(1 / Xn['Xn']) + 1
     Xn['Mw'] = in_situ_values[6]
     Xn['Mn'] = in_situ_values[7]
-    # messagebox.showinfo('Results', 'Simulation Successful!')
+
     show_results(rxn_summary_df)
     show_byproducts(byproducts_df)
     show_Xn(Xn)
@@ -586,7 +586,7 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     Xn_2['P'] = -(1 / Xn_2['Xn']) + 1
     Xn_2['Mw'] = in_situ_values_sec[6]
     Xn_2['Mn'] = in_situ_values_sec[7]
-    # messagebox.showinfo('Results', 'Simulation Successful!')
+
     show_results_sec(rxn_summary_df_2)
     show_byproducts_sec(byproducts_df_2)
     show_Xn_sec(Xn_2)
@@ -692,9 +692,9 @@ def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
 def stop():
-    global running
+    global running, canceled_by_user
     if running:
-        #set running in simulate to false
+        canceled_by_user = True
         running = False
     else:
         pass
@@ -790,7 +790,13 @@ def multiprocessing_sim():
                     window.update()
                 except queue.Empty:
                     pass
-            if running is False:
+                try:
+                    progress_sec = progress_queue_sec.get_nowait()
+                    sim.progress_2['value'] = progress_sec
+                    window.update()
+                except queue.Empty:
+                    pass
+            if running is False and canceled_by_user is True:
                 for result in results:
                     result.cancel()
                     result.result()
