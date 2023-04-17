@@ -219,6 +219,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                     in_primary = False
                     for species in composition_sec:
                         composition.append(species)
+                    test_interval = 40
         else:
             if os.getpid() == PID_list[-1]:
                 process_queue.put(round(((EHC / end_metric_value) * 100), 2))
@@ -231,9 +232,10 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                     in_primary = False
                     for species in composition_sec:
                         composition.append(species)
+                    test_interval = 40
         if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
             test_interval = 1
-        if in_primary and __name__ == '__main__':
+        if os.getpid() == PID_list[-1]:
             update_metrics(TAV, AV, OH, EHC, COC, IV)
 
     def RXN_Status_sec(composition, byproducts):
@@ -287,8 +289,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                 byproducts_secondary = byproducts
                 running = False
         else:
-            if __name__ == '__main__':
-                sim.progress_2['value'] = round(((EHC / end_metric_value_sec) * 100), 2)
+            if os.getpid() == PID_list[-1]:
+                progress_queue_sec.put(round(((EHC / end_metric_value_sec) * 100), 2))
             if RXN_metric_value_2 >= end_metric_value_sec:
                 comp_secondary = composition
                 byproducts_secondary = byproducts
