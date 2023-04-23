@@ -40,9 +40,11 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
 
 def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, process_queue, PID_list, progress_queue_sec):
     PID_list.append(os.getpid())
+    currentPID = os.getpid()
     time.sleep(1)
     rg = reactive_groups()
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, running, in_primary, in_situ_values_sec, Xn_list_sec, quick_add, comp_primary, comp_secondary
+    metrics_list = []
     in_situ_values = [[], [], [], [], [], [], [], [], []]
     in_situ_values_sec = [[], [], [], [], [], [], [], [], []]
     Xn_list, Xn_list_sec, byproducts, composition, composition_sec = [], [], [], [], []
@@ -208,7 +210,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC, 'Iodine Value': IV}
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_selection != '% EHC':
-            if os.getpid() == PID_list[-1]:
+            if currentPID == PID_list[-1]:
                 process_queue.put(round(((end_metric_value / RXN_metric_value) * 100), 2))
             if RXN_metric_value <= end_metric_value:
                 comp_primary = tuple(composition)
@@ -221,7 +223,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                         composition.append(species)
                     test_interval = 40
         else:
-            if os.getpid() == PID_list[-1]:
+            if currentPID == PID_list[-1]:
                 process_queue.put(round(((EHC / end_metric_value) * 100), 2))
             if RXN_metric_value >= end_metric_value:
                 comp_primary = tuple(composition)
@@ -235,8 +237,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                     test_interval = 40
         if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
             test_interval = 1
-        if os.getpid() == PID_list[-1]:
-            update_metrics(TAV, AV, OH, EHC, COC, IV)
 
     def RXN_Status_sec(composition, byproducts):
         global test_interval, in_situ_values_sec, Xn_list_sec, running, comp_secondary, byproducts_secondary
@@ -282,14 +282,14 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                    'Iodine Value': IV}
         RXN_metric_value_2 = metrics[end_metric_selection_sec]
         if end_metric_selection_sec != '% EHC':
-            if os.getpid() == PID_list[-1]:
+            if currentPID == PID_list[-1]:
                progress_queue_sec.put(round((end_metric_value_sec / RXN_metric_value_2) * 100), 2)
             if RXN_metric_value_2 <= end_metric_value_sec:
                 comp_secondary = composition
                 byproducts_secondary = byproducts
                 running = False
         else:
-            if os.getpid() == PID_list[-1]:
+            if currentPID == PID_list[-1]:
                 progress_queue_sec.put(round(((EHC / end_metric_value_sec) * 100), 2))
             if RXN_metric_value_2 >= end_metric_value_sec:
                 comp_secondary = composition
@@ -297,9 +297,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                 running = False
         if end_metric_value_upper_sec >= RXN_metric_value_2 >= end_metric_value_lower_sec:
             test_interval = 1
-        if __name__ == '__main__':
-            update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
-            window.update()
 
     while running:
         test_count += 1
@@ -776,7 +773,7 @@ def multiprocessing_sim():
         global running
         running = True
         #workers = 1
-        workers = int(os.cpu_count() * .75)
+        workers = int(os.cpu_count() * .85)
         initialize_sim(workers)
         progress_queue = multiprocessing.Manager().Queue()
         progress_queue_sec = multiprocessing.Manager().Queue()
