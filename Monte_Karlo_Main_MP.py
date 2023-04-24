@@ -770,6 +770,8 @@ def initialize_sim(workers):
 
 def multiprocessing_sim():
     if __name__ == "__main__":
+        Buttons.Simulate.config(text = "Running...")
+        Buttons.Simulate.config(state="disabled")
         global running
         running = True
         #workers = 1
@@ -807,6 +809,8 @@ def multiprocessing_sim():
                 return
             concurrent.futures.wait(results)
             consolidate_results(results)
+            Buttons.Simulate.config(state="normal")
+            Buttons.Simulate.config(text = "Simulate")
 
 def consolidate_results(results):
     primary_comp_summary, secondary_comp_summary = [], []
@@ -1484,6 +1488,7 @@ if __name__ == "__main__":
     class Buttons(tkinter.Frame):
         def __init__(self, master=tab1):
             tkinter.Frame.__init__(self, master)
+            self.Simulate = None
             self.tablewidth = None
             self.tableheight = None
             self.entries = None
@@ -1505,14 +1510,14 @@ if __name__ == "__main__":
             self.add_buttons()
 
         def add_buttons(self):
-            Simulate = tkinter.Button(self, text="Simulate", command=multiprocessing_sim, width=15, bg="Green")
-            Simulate.grid(row=0, column=0)
+            self.Simulate = tkinter.Button(self, text="Simulate", command=multiprocessing_sim, width=15, bg="Green")
+            self.Simulate.grid(row=0, column=0)
             stop_button = tkinter.Button(self, text="Terminate", command=stop, width=15, bg="Red")
             stop_button.grid(row=1, column=0)
             clear_last_row = tkinter.Button(self, text="Clear Last", command=clear_last, width=15, bg="Yellow")
             clear_last_row.grid(row=2, column=0)
-            Simulate = tkinter.Button(self, text="Reset", command=reset_entry_table, width=15, bg="Orange")
-            Simulate.grid(row=3, column=0)
+            self.Reset = tkinter.Button(self, text="Reset", command=reset_entry_table, width=15, bg="Orange")
+            self.Reset.grid(row=3, column=0)
 
 
     class SimStatus(tkinter.Frame):
