@@ -51,8 +51,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     running, in_primary = True, True
     test_count = 0
     test_interval = 40
-    process_queue.put(0)
-    progress_queue_sec.put(0)
     try:
         end_metric_value_upper = end_metric_value + 15
         end_metric_value_lower = end_metric_value - 15
@@ -770,8 +768,10 @@ def initialize_sim(workers):
 
 def multiprocessing_sim():
     if __name__ == "__main__":
-        Buttons.Simulate.config(text = "Running...")
+        Buttons.Simulate.config(text="Running...")
         Buttons.Simulate.config(state="disabled")
+        sim.progress['value'] = 0
+        sim.progress_2['value'] = 0
         global running
         running = True
         #workers = 1
@@ -805,12 +805,13 @@ def multiprocessing_sim():
                 while not progress_queue.empty():
                     progress_queue.get()
                 sim.progress['value'] = 0
+                sim.progress_2['value'] = 0
                 messagebox.showinfo("Simulation Cancelled", "Simulation cancelled by user")
                 return
             concurrent.futures.wait(results)
             consolidate_results(results)
             Buttons.Simulate.config(state="normal")
-            Buttons.Simulate.config(text = "Simulate")
+            Buttons.Simulate.config(text="Simulate")
 
 def consolidate_results(results):
     primary_comp_summary, secondary_comp_summary = [], []
