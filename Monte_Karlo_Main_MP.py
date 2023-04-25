@@ -779,7 +779,6 @@ def multiprocessing_sim():
         running = True
         #workers = 1
         workers = int(os.cpu_count() * .85)
-        initialize_sim(workers)
         if initialize_sim(workers) == "Error":
             Buttons.Simulate.config(text="Simulate", state="normal")
             return
