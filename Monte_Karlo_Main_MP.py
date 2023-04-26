@@ -719,6 +719,7 @@ def initialize_sim(workers):
         starting_materials_sec, total_samples
     starting_mass, starting_mass_sec, total_ct, total_ct_sec = 0, 0, 0, 0
     row_for_sec = RXN_EM_Entry_2_SR.current()
+    print(float(RXN_EM_Value.get()))
     try:
         end_metric_value = float(RXN_EM_Value.get())
         RXN_EM_2_Active_status = RXN_EM_2_Active.get()
@@ -778,8 +779,8 @@ def multiprocessing_sim():
         sim.progress_2['value'] = 0
         global running
         running = True
-        #workers = 1
-        workers = int(os.cpu_count() * .85)
+        workers = NUM_OF_SIM.get()
+        workers = int(workers)
         if initialize_sim(workers) == "Error":
             Buttons.Simulate.config(text="Simulate", state="normal")
             return
@@ -1216,7 +1217,7 @@ if __name__ == "__main__":
                 pass
 
 
-    global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value
+    global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
     class RxnDetails(tkinter.Frame):
         def __init__(self, master=tab1):
             tkinter.Frame.__init__(self, master)
@@ -1228,7 +1229,7 @@ if __name__ == "__main__":
 
         def create_table(self):
             self.entries = {}
-            self.tableheight = 3
+            self.tableheight = 4
             self.tablewidth = 2
             counter = 0
             for column in range(self.tablewidth):
@@ -1244,17 +1245,20 @@ if __name__ == "__main__":
             self.entries[2].delete(0, tkinter.END)
             self.entries[2].insert(0, "# of samples =")
             self.entries[2].config(state="readonly")
+            self.entries[3].delete(0, tkinter.END)
+            self.entries[3].insert(0, "# of Simulations =")
+            self.entries[3].config(state="readonly")
             self.user_entry()
 
         def user_entry(self):
-            global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, RXN_EM_Entry_2_SR, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, RXN_EM_Entry
+            global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, RXN_EM_Entry_2_SR, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, RXN_EM_Entry, NUM_OF_SIM
             RXN_EM = tkinter.StringVar()
             reactants_list = []
             RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
             RXN_EM_Entry.grid(row=0, column=0)
             RXN_EM_Entry.insert(0, "1º End Metric")
             RXN_EM_Entry.config(justify="center", state="readonly")
-            RXN_EM_Value = self.entries[3]
+            RXN_EM_Value = self.entries[4]
             RXN_EM_2_Active = tkinter.BooleanVar()
             RXN_EM_2_Check = tkinter.Checkbutton(self, text="2º Active?", variable=RXN_EM_2_Active, onvalue=True,
                                                  offvalue=False)
@@ -1264,7 +1268,7 @@ if __name__ == "__main__":
             RXN_EM_Entry_2.grid(row=1, column=0)
             RXN_EM_Entry_2.insert(0, "2º End Metric")
             RXN_EM_Entry_2.config(justify="center", state="readonly")
-            RXN_EM_Value_2 = self.entries[4]
+            RXN_EM_Value_2 = self.entries[5]
             RXN_EM_2_SR = tkinter.StringVar()
             RXN_EM_Entry_2_SR = AutocompleteCombobox(self, completevalues=reactants_list, width=15,
                                                      textvariable=RXN_EM_2_SR)
@@ -1278,7 +1282,16 @@ if __name__ == "__main__":
             RXN_Samples_Entry.insert(0, "5000")
             RXN_Samples_Entry.grid(row=2, column=1)
             RXN_Samples_Entry.config(justify="center")
-            RXN_EOR = self.entries[5]
+
+
+            NUM_OF_SIM = tkinter.StringVar()
+            Core_options = [str(i) for i in range(1, multiprocessing.cpu_count() + 1)]
+            NUM_OF_SIM_Entry = AutocompleteCombobox(self, completevalues=Core_options, width=15,
+                                                    textvariable=NUM_OF_SIM)
+            NUM_OF_SIM_Entry.insert(0, str(int(multiprocessing.cpu_count()*0.75)))
+            NUM_OF_SIM_Entry.grid(row=3, column=1)
+            NUM_OF_SIM_Entry.config(justify="center")
+
             self.get_reactants()
 
         def get_reactants(self):
