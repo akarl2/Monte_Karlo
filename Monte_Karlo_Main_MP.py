@@ -433,6 +433,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_lis
     rxn_summary_df.loc['Sum'] = round(rxn_summary_df.sum(), 3)
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
 
+
     Mn = sumNiMi / sumNi
     Mw = sumNiMi2 / sumNiMi
     PDI = Mw / Mn
@@ -793,15 +794,14 @@ def multiprocessing_sim():
                 try:
                     progress = progress_queue.get_nowait()
                     sim.progress['value'] = progress
-                    window.update()
                 except queue.Empty:
                     pass
                 try:
                     progress_sec = progress_queue_sec.get_nowait()
                     sim.progress_2['value'] = progress_sec
-                    window.update()
                 except queue.Empty:
                     pass
+                window.update()
             if running is False and canceled_by_user is True:
                 for result in results:
                     result.cancel()
@@ -812,12 +812,11 @@ def multiprocessing_sim():
                 sim.progress['value'] = 0
                 sim.progress_2['value'] = 0
                 messagebox.showinfo("Simulation Cancelled", "Simulation cancelled by user")
+                Buttons.Simulate.config(text="Simulate", state="normal")
                 return
             concurrent.futures.wait(results)
             consolidate_results(results)
-            Buttons.Simulate.config(state="normal")
-            Buttons.Simulate.config(text="Simulate")
-
+            Buttons.Simulate.config(text="Simulate", state="normal")
 def consolidate_results(results):
     primary_comp_summary, secondary_comp_summary = [], []
     byproducts_primary, byproducts_secondary = [], []
