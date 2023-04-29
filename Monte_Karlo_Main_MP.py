@@ -719,7 +719,6 @@ def initialize_sim(workers):
         starting_materials_sec, total_samples
     starting_mass, starting_mass_sec, total_ct, total_ct_sec = 0, 0, 0, 0
     row_for_sec = RXN_EM_Entry_2_SR.current()
-    print(float(RXN_EM_Value.get()))
     try:
         end_metric_value = float(RXN_EM_Value.get())
         RXN_EM_2_Active_status = RXN_EM_2_Active.get()
@@ -909,6 +908,15 @@ def quick_add():
             check_entry(entry=cell, index=i + start_index, cell=cell)
             cell += RET.tablewidth
 
+#-------------------------------------------------APC Functions----------------------------------------------------------#
+def APC():
+    global rxn_summary_df
+    APC_df = rxn_summary_df
+    APC_df = APC_df.reset_index()
+    APC_df = APC_df[['MW', 'Wt,%']]
+    print(APC_df)
+
+
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
 def export_primary():
     filepath = filedialog.asksaveasfilename(defaultextension='.xlsx',
@@ -975,17 +983,18 @@ if __name__ == "__main__":
     filemenu1 = tkinter.Menu(menubar, tearoff=0)
     export_menu = tkinter.Menu(filemenu1, tearoff=0)
     filemenu2 = tkinter.Menu(menubar, tearoff=0)
-    threads_menu = tkinter.Menu(filemenu2, tearoff=0)
+    APC_Menu = tkinter.Menu(filemenu2, tearoff=0)
     filemenu3 = tkinter.Menu(menubar, tearoff=0)
     menubar.add_cascade(label='File', menu=filemenu1)
     menubar.add_cascade(label='Options', menu=filemenu2)
     menubar.add_cascade(label='Help', menu=filemenu3)
     filemenu1.add_cascade(label="Export", menu=export_menu)
-    filemenu2.add_cascade(label="Simulations", menu=threads_menu)
+    filemenu2.add_cascade(label="Calculate", menu=APC_Menu)
     export_menu.add_command(label='1° Reaction Results', command=export_primary)
     export_menu.add_command(label='2° Reaction Results', command=export_secondary)
     export_menu.add_command(label='All Reaction Results', command=export_all)
-    filemenu1.add_separator()
+    APC_Menu.add_command(label='1° APC Results', command=APC)
+    APC_Menu.add_command(label='2° APC Results')
     filemenu1.add_command(label='Reset', command=reset_entry_table)
     filemenu1.add_command(label='Exit', command=window.destroy)
     filemenu2.add_command(label='Quick Add', command=quick_add)
