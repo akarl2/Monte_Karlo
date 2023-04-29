@@ -911,10 +911,37 @@ def quick_add():
 #-------------------------------------------------APC Functions----------------------------------------------------------#
 def APC():
     global rxn_summary_df
-    APC_df = rxn_summary_df
-    APC_df = APC_df.reset_index()
-    APC_df = APC_df[['MW', 'Wt,%']]
+    APC_comp = rxn_summary_df
+    APC_comp = APC_comp.reset_index()
+    APC_comp = APC_comp[['MW', 'Wt,%', 'Name']]
+    APC_comp = APC_comp[:-1]
+
+    APC_comp['RT(min)'] = APC_comp['MW'] * 0.0054 + 3.9372
+
+    APC_columns = []
+    for i in range(len(APC_comp)):
+        APC_columns.append(APC_comp['Name'][i])
+    APC_rows = list(range(0, 401))
+    APC_df = pandas.DataFrame(0, index=APC_rows, columns=APC_columns)
+    APC_df.index.name = 'Time'
+    APC_df.index = APC_df.index * 0.05
+
+    FWHM = 0.5
+
+    for i, comp in APC_comp.iterrows():
+        mean = APC_comp['RT(min)']
+        peak = [math.exp(-0.5 * ((x - mean.iloc[i]) / (FWHM/2.35)) ** 2) for x in APC_rows]
+        APC_df[comp['Name']] = peak
+
+    APC_df['Aggregate'] = APC_df.sum(axis=1)
+
+
     print(APC_df)
+
+
+
+
+
 
 
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
