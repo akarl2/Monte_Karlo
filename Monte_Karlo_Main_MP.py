@@ -12,6 +12,8 @@ import customtkinter
 from tkinter import ttk, messagebox, simpledialog, filedialog
 import pandas
 import concurrent.futures
+
+import scipy
 from ttkwidgets.autocomplete import AutocompleteCombobox
 from Database import *
 from Reactions import reactive_groups, NH2, NH, COOH, COC, POH, SOH
@@ -915,8 +917,7 @@ def APC():
     APC_comp = APC_comp.reset_index()
     APC_comp = APC_comp[['MW', 'Wt,%', 'Name']]
     APC_comp = APC_comp[:-1]
-
-    APC_comp['RT(min)'] = APC_comp['MW'] * 0.0054 + 3.9372
+    APC_comp['RT(min)'] = (APC_comp['MW'] * -0.0054) + 13.063
 
     APC_columns = []
     for i in range(len(APC_comp)):
@@ -926,22 +927,32 @@ def APC():
     APC_df.index.name = 'Time'
     APC_df.index = APC_df.index * 0.05
 
-    FWHM = 0.5
+    for i, row in APC_comp.iterrows():
+        mean = row['RT(min)']
+        FWHM = 0.4
+        for j in range(len(APC_df.index)):
+            time = APC_df.index[j]
+            APC_df.loc[time, row['Name']] = math.exp(-0.5 * ((time - mean) / (FWHM/2.35)) ** 2) * (row['Wt,%'] / 100)
 
-    for i, comp in APC_comp.iterrows():
-        mean = APC_comp['RT(min)']
-        peak = [math.exp(-0.5 * ((x - mean.iloc[i]) / (FWHM/2.35)) ** 2) for x in APC_rows]
-        APC_df[comp['Name']] = peak
-
-    APC_df['Aggregate'] = APC_df.sum(axis=1)
-
-
-    print(APC_df)
+    APC_df['Sum'] = APC_df.sum(axis=1)
 
 
+    plt.figure(figsize=(10, 6))
+    for col in APC_columns:
+        plt.plot(APC_df.index, APC_df[col], label=col)
+    plt.xlabel('Time (min)')
+    plt.ylabel('Intesity (arbitrary units)')
+    plt.title('APC')
+    plt.legend()
+    plt.show()
 
-
-
+    plt.figure(figsize=(10, 6))
+    plt.plot(APC_df.index, APC_df['Sum'], label='Sum')
+    plt.xlabel('Time (min)')
+    plt.ylabel('Intensity (arbitrary units)')
+    plt.title('APC')
+    plt.legend()
+    plt.show()
 
 
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
