@@ -917,9 +917,11 @@ def APC():
     APC_comp = APC_comp.reset_index()
     APC_comp = APC_comp[['MW', 'Wt,%', 'Name']]
     APC_comp = APC_comp[:-1]
-    cal_slope = -0.0054
-    cal_intercept = 17.563
+    cal_slope = -0.00162
+    cal_intercept = 18.2182
     APC_comp['RT(min)'] = (APC_comp['MW'] * cal_slope) + cal_intercept
+    MAX_MW = 10000
+    MAX_RT = MAX_MW * cal_slope + cal_intercept
 
     APC_columns = []
     for i in range(len(APC_comp)):
@@ -929,12 +931,12 @@ def APC():
     APC_df.index.name = 'Time'
     APC_df.index = APC_df.index * 0.05
 
-    MAX_MW = 100000
-    MIN_MW = 100
 
     for i, row in APC_comp.iterrows():
         apex = row['RT(min)']
-        FWHM = 0.45
+        if apex <= MAX_RT:
+            apex = MAX_RT
+        FWHM = 0.1
         for j in range(len(APC_df.index)):
             time = APC_df.index[j]
             APC_df.loc[time, row['Name']] = math.exp(-0.5 * ((time - apex) / (FWHM/2.35)) ** 2) * (row['Wt,%'])
