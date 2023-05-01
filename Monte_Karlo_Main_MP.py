@@ -7,6 +7,11 @@ import sys
 import tkinter
 import time
 from tkinter import *
+from mpl_toolkits import *
+from matplotlib.backends.backend_tkagg import *
+import matplotlib.backends.backend_tkagg as tkagg
+
+import numpy as np
 import openpyxl
 import customtkinter
 from tkinter import ttk, messagebox, simpledialog, filedialog
@@ -686,6 +691,35 @@ def show_Xn_sec(Xn_2):
                        height=1000, align='center', maxcellwidth=1000)
     Xn_table_2.show()
 
+
+def show_APC():
+    global APC_df
+    fig, ax = plt.subplots(figsize=(10, 8))
+    ax.plot(APC_df.index, APC_df['Sum'])
+    ax.set_xlabel('Time (min)')
+    ax.set_ylabel('Intensity (a.u.)')
+    ax.set_title('Theoretical APC')
+    ax.set_xticks(np.arange(0, 12.5, 0.5))
+    ax.set_xlim(0, 12)
+
+    # Create a Tkinter window
+    root = tkinter.Tk()
+    root.title("Theoretical APC")
+
+    # Add the Matplotlib canvas to the window
+    canvas = FigureCanvasTkAgg(fig, master=root)
+    canvas.draw()
+    canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+
+    # Add the Matplotlib toolbar to the window
+    toolbar = tkagg.NavigationToolbar2Tk(canvas, root)
+    toolbar.update()
+    toolbar.pack()
+
+    # Add a button to close the window
+    button = tkinter.Button(root, text="Close", command=root.destroy)
+    button.pack()
+
 # -------------------------------------------Auxiliary Functions---------------------------------------------------#
 
 def str_to_class(classname):
@@ -912,16 +946,18 @@ def quick_add():
 
 #-------------------------------------------------APC Functions----------------------------------------------------------#
 def APC():
-    global rxn_summary_df
+    global rxn_summary_df, APC_df
     APC_comp = rxn_summary_df
     APC_comp = APC_comp.reset_index()
     APC_comp = APC_comp[['MW', 'Wt,%', 'Name']]
     APC_comp = APC_comp[:-1]
-    cal_slope = -0.00162
-    cal_intercept = 18.2182
-    APC_comp['RT(min)'] = (APC_comp['MW'] * cal_slope) + cal_intercept
-    MAX_MW = 10000
-    MAX_RT = MAX_MW * cal_slope + cal_intercept
+    cal_slope = -0.957
+    cal_intercept = 14.811
+    APC_comp['RT(min)'] = cal_slope * np.log(APC_comp['MW']) + cal_intercept
+    cal_slope_2 = -.156
+    cal_intercept_2 = 6.585
+    MAX_MW = 30000
+    MAX_RT = cal_slope_2 * np.log(MAX_MW) + cal_intercept_2
 
     APC_columns = []
     for i in range(len(APC_comp)):
@@ -931,36 +967,17 @@ def APC():
     APC_df.index.name = 'Time'
     APC_df.index = APC_df.index * 0.05
 
-
     for i, row in APC_comp.iterrows():
         apex = row['RT(min)']
         if apex <= MAX_RT:
-            apex = MAX_RT
-        FWHM = 0.1
+            apex = cal_slope_2 * np.log(row['MW']) + cal_intercept_2
+        FWHM = 0.15
         for j in range(len(APC_df.index)):
             time = APC_df.index[j]
-            APC_df.loc[time, row['Name']] = math.exp(-0.5 * ((time - apex) / (FWHM/2.35)) ** 2) * (row['Wt,%'])
+            APC_df.loc[time, row['Name']] = math.exp(-0.5 * ((time - apex) / (FWHM/2.35)) ** 2) * (row['Wt,%'] * .5)
 
     APC_df['Sum'] = APC_df.sum(axis=1)
-
-
-    plt.figure(figsize=(10, 6))
-    for col in APC_columns:
-        plt.plot(APC_df.index, APC_df[col], label=col)
-    plt.xlabel('Time (min)')
-    plt.ylabel('Intesity (arbitrary units)')
-    plt.title('APC')
-    plt.legend()
-    plt.show()
-
-    plt.figure(figsize=(10, 6))
-    plt.plot(APC_df.index, APC_df['Sum'], label='Sum')
-    plt.xlabel('Time (min)')
-    plt.ylabel('Intensity (arbitrary units)')
-    plt.title('APC')
-    plt.legend()
-    plt.show()
-
+    show_APC()
 
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
 def export_primary():
@@ -1339,7 +1356,7 @@ if __name__ == "__main__":
 
 
             NUM_OF_SIM = tkinter.StringVar()
-            Core_options = [str(i) for i in range(1, multiprocessing.cpu_count() + 1)]
+            Core_options = [str(i) for i in range(1, multiprocessing.cpu_count() -1)]
             NUM_OF_SIM_Entry = AutocompleteCombobox(self, completevalues=Core_options, width=15,
                                                     textvariable=NUM_OF_SIM)
             NUM_OF_SIM_Entry.insert(0, str(int(multiprocessing.cpu_count()*0.75)))
