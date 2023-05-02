@@ -973,11 +973,13 @@ def APC():
         FWHM = 0.14
         for j in range(len(APC_df.index)):
             time = APC_df.index[j]
-            APC_df.loc[time, row['Name']] = math.exp(-0.5 * ((time - peak_apex) / (FWHM/2.35)) ** 2) * (row['Wt,%'] * .5)
+            if time <= 4 or time >= 11:
+                APC_df.loc[time, row['Name']] = 0
+            else:
+                APC_df.loc[time, row['Name']] = math.exp(-0.5 * ((time - peak_apex) / (FWHM/2.35)) ** 2) * (row['Wt,%'] * .5)
 
     APC_df['Sum'] = APC_df.sum(axis=1)
     show_APC()
-
 
 
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
