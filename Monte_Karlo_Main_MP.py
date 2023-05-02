@@ -952,7 +952,7 @@ def APC():
     APC_comp = APC_comp[['MW', 'Wt,%', 'Name']]
     APC_comp = APC_comp[:-1]
     APC_comp['Log(MW)'] = np.log10(APC_comp['MW'])
-    APC_comp['RT(min)'] = (-0.2586 * APC_comp['Log(MW)']**4) + (4.3888 * APC_comp['Log(MW)']**3) - (26.817 * APC_comp['Log(MW)']**2) + (68.052 * APC_comp['Log(MW)']) - 52.024
+    APC_comp['RT(min)'] = (-0.2586 * APC_comp['Log(MW)']**4) + (4.3888 * APC_comp['Log(MW)']**3) - (26.817 * APC_comp['Log(MW)']**2) + (68.052 * APC_comp['Log(MW)']) - 52.024  #STD equation
     MIN_MW = np.log10(350)
     MAX_MW = np.log10(290000)
 
@@ -967,16 +967,18 @@ def APC():
     for i, row in APC_comp.iterrows():
         peak_apex = row['RT(min)']
         if row['Log(MW)'] < MIN_MW:
-            peak_apex = -1.3282 * APC_comp.loc[i, 'Log(MW)'] + 12.387
+            peak_apex = -1.3282 * APC_comp.loc[i, 'Log(MW)'] + 12.387  #low MW equation
         if row['Log(MW)'] > MAX_MW:
-            peak_apex = (-0.0545 * APC_comp.loc[i, 'Log(MW)']**3) + (1.1095 * APC_comp.loc[i, 'Log(MW)']**2) - (7.5132 * APC_comp.loc[i, 'Log(MW)']) + 21.44
-        FWHM = 0.15
+            peak_apex = (-0.0545 * APC_comp.loc[i, 'Log(MW)']**3) + (1.1095 * APC_comp.loc[i, 'Log(MW)']**2) - (7.5132 * APC_comp.loc[i, 'Log(MW)']) + 21.44   #High MW equation
+        FWHM = 0.14
         for j in range(len(APC_df.index)):
             time = APC_df.index[j]
             APC_df.loc[time, row['Name']] = math.exp(-0.5 * ((time - peak_apex) / (FWHM/2.35)) ** 2) * (row['Wt,%'] * .5)
 
     APC_df['Sum'] = APC_df.sum(axis=1)
     show_APC()
+
+
 
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
 def export_primary():
@@ -1054,8 +1056,8 @@ if __name__ == "__main__":
     export_menu.add_command(label='1° Reaction Results', command=export_primary)
     export_menu.add_command(label='2° Reaction Results', command=export_secondary)
     export_menu.add_command(label='All Reaction Results', command=export_all)
-    APC_Menu.add_command(label='1° APC Results', command=APC)
-    APC_Menu.add_command(label='2° APC Results')
+    APC_Menu.add_command(label='1° APC Chromatograph', command=APC)
+    APC_Menu.add_command(label='2° APC Chromatograph')
     filemenu1.add_command(label='Reset', command=reset_entry_table)
     filemenu1.add_command(label='Exit', command=window.destroy)
     filemenu2.add_command(label='Quick Add', command=quick_add)

@@ -232,6 +232,139 @@ class Castor_Oil:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.prgID], [self.prgID]]
 
+
+class Gly_1_RA_3:
+    def __init__(self):
+        self.name = "Gly_1_RA_3"
+        self.sn = "Gly_1_RA_3"
+        self.formula = "C3H6O3"
+        self.mw = 933.4279
+        self.density = 0.94
+        self.mass = self.mw
+        self.prgID = "SOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID], [self.prgID]]
+
+class C18_1_Gly_1_RA_2:
+    def __init__(self):
+        self.name = "C18_1_Gly_1_RA_2"
+        self.sn = "C18_1_Gly_1_RA_2"
+        self.formula = "C3H6O3"
+        self.mw = 919.45
+        self.density = 0.94
+        self.mass = self.mw
+        self.prgID = "SOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
+class C181_1_Gly_1_RA_2:
+    def __init__(self):
+        self.name = "C181_1_Gly_1_RA_2"
+        self.sn = "C181_1_Gly_1_RA_2"
+        self.formula = "C3H6O3"
+        self.mw = 917.43
+        self.density = 0.94
+        self.mass = self.mw
+        self.prgID = "SOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
+class C182_1_Gly_1_RA_2:
+    def __init__(self):
+        self.name = "C182_1_Gly_1_RA_2"
+        self.sn = "C182_1_Gly_1_RA_2"
+        self.formula = "C3H6O3"
+        self.mw = 915.42
+        self.density = 0.94
+        self.mass = self.mw
+        self.prgID = "SOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class C181_1_C182_1_Gly_1_RA_1:
+    def __init__(self):
+        self.name = "C181_1_C182_1_Gly_1_RA_1"
+        self.sn = "C181_1_C182_1_Gly_1_RA_1"
+        self.formula = "C3H6O3"
+        self.mw = 899.4299
+        self.density = 0.94
+        self.mass = self.mw
+        self.prgID = "SOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class C18_1_C18_2_Gly_1_RA_1:
+    def __init__(self):
+        self.name = "C18_1_C18_2_Gly_1_RA_1"
+        self.sn = "C18_1_C18_2_Gly_1_RA_1"
+        self.formula = "C3H6O3"
+        self.mw = 899.4299
+        self.density = 0.94
+        self.mass = self.mw
+        self.prgID = "SOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
 class PPG425:
     def __init__(self):
         self.name = "PPG425"
@@ -774,12 +907,7 @@ class Adipic_Acid:
         self.formula = "C6H10O4"
         self.mw = 146.14
         self.density = 1.36
-        self.prgmw = 73.07
-        self.srgmw = 0
-        self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
-        self.rg = "Acid"
-        self.numgroups = len(set(self.comp))
         self.prgID = "COOH"
         self.prgk = 1
         self.cprgID = None
@@ -792,7 +920,32 @@ class Adipic_Acid:
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
-        self.dist = [[self.prgID],[self.prgID]]
+        self.dist = [[self.prgID], [self.prgID]]
+
+class Ricinoleic_Acid:
+    def __init__(self):
+        self.name = "Ricinoleic Acid"
+        self.sn = "RA"
+        self.formula = "C18H34O3"
+        self.mw = 298.46
+        self.prgmw = 298.46
+        self.srgmw = 0
+        self.density = 0.946
+        self.mass = self.mw
+        self.comp = self.prgmw
+        self.prgID = "COOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = "SOH"
+        self.srgk = 1
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID]]
 
 
 class Isostearic_Acid:
@@ -804,9 +957,6 @@ class Isostearic_Acid:
         self.prgmw = 284.48
         self.srgmw = 0
         self.density = 0.93
-        self.mass = self.mw
-        self.comp = self.prgmw
-        self.density = 0.895
         self.prgID = "COOH"
         self.prgk = 1
         self.cprgID = None
@@ -1320,7 +1470,7 @@ quick_add_dict = {
     "TETA (Dist)": [["LTETA", 0.53933], ["Branched_TETA", 0.02738], ["Bis_AEP", 0.25383], ["PEEDA", 0.17608], ["Hydroxyethylpiperazine", 0.00335]],
     "TEPA (Dist)": [["LTEPA", 0.45057], ["AETETA", 0.10475], ["AEPEEDA", 0.32109], ["PEDETA", 0.10282], ["PEHA", 0.02077]],
     'C8-18_OH': [['C8_OH', 0.00043], ['C10_OH', 0.00144], ['C12_OH', 0.6786], ['C14_OH', 0.24907], ['C16_OH', 0.06759], ['C18_OH', 0.00288]],
-
+    'Castor Oil': [['Gly_1_RA_3', .7259], ['C18_1_Gly_1_RA_2', 0.0237], ['C181_1_Gly_1_RA_2', 0.1005], ['C182_1_Gly_1_RA_2', 0.1236], ['C181_1_C182_1_Gly_1_RA_1', 0.0131], ['C181_1_C182_1_Gly_1_RA_1', 0.0131]],
 }
 
 class Clear:
