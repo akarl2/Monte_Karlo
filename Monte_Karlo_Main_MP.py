@@ -951,13 +951,10 @@ def APC():
     APC_comp = APC_comp.reset_index()
     APC_comp = APC_comp[['MW', 'Wt,%', 'Name']]
     APC_comp = APC_comp[:-1]
-    cal_slope = -0.957
-    cal_intercept = 14.811
-    APC_comp['RT(min)'] = cal_slope * np.log(APC_comp['MW']) + cal_intercept
-    cal_slope_2 = -.156
-    cal_intercept_2 = 6.585
-    MAX_MW = 30000
-    MAX_RT = cal_slope_2 * np.log(MAX_MW) + cal_intercept_2
+    APC_comp['Log(MW)'] = np.log10(APC_comp['MW'])
+    APC_comp['RT(min)'] = (-0.2586 * APC_comp['Log(MW)']**4) + (4.3888 * APC_comp['Log(MW)']**3) - (26.817 * APC_comp['Log(MW)']**2) + (68.052 * APC_comp['Log(MW)']) - 52.024
+    MIN_MW = np.log10(350)
+    MAX_MW = np.log10(290000)
 
     APC_columns = []
     for i in range(len(APC_comp)):
@@ -966,15 +963,19 @@ def APC():
     APC_df = pandas.DataFrame(0, index=APC_rows, columns=APC_columns)
     APC_df.index.name = 'Time'
     APC_df.index = APC_df.index * 0.05
+    print(APC_df)
 
     for i, row in APC_comp.iterrows():
-        apex = row['RT(min)']
-        if apex <= MAX_RT:
-            apex = cal_slope_2 * np.log(row['MW']) + cal_intercept_2
+        peak_apex = row['RT(min)']
+        if row['Log(MW)'] < MIN_MW:
+            peak_apex = -1.3282 * APC_comp.loc[i, 'Log(MW)'] + 12.387
+            print("adjusted")
+        if row['Log(MW)'] > MAX_MW:
+            peak_apex = (-0.0545 * APC_comp.loc[i, 'Log(MW)']**3) + (1.1095 * APC_comp.loc[i, 'Log(MW)']**2) - (7.5132 * APC_comp.loc[i, 'Log(MW)']) + 21.44
         FWHM = 0.15
         for j in range(len(APC_df.index)):
             time = APC_df.index[j]
-            APC_df.loc[time, row['Name']] = math.exp(-0.5 * ((time - apex) / (FWHM/2.35)) ** 2) * (row['Wt,%'] * .5)
+            APC_df.loc[time, row['Name']] = math.exp(-0.5 * ((time - peak_apex) / (FWHM/2.35)) ** 2) * (row['Wt,%'] * .5)
 
     APC_df['Sum'] = APC_df.sum(axis=1)
     show_APC()
