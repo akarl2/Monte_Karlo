@@ -959,17 +959,15 @@ def APC():
     APC_columns = []
     for i in range(len(APC_comp)):
         APC_columns.append(APC_comp['Name'][i])
-    APC_rows = list(range(0, 401))
+    APC_rows = list(range(0, 1201))
     APC_df = pandas.DataFrame(0, index=APC_rows, columns=APC_columns)
     APC_df.index.name = 'Time'
-    APC_df.index = APC_df.index * 0.05
-    print(APC_df)
+    APC_df.index = APC_df.index * 0.01
 
     for i, row in APC_comp.iterrows():
         peak_apex = row['RT(min)']
         if row['Log(MW)'] < MIN_MW:
             peak_apex = -1.3282 * APC_comp.loc[i, 'Log(MW)'] + 12.387
-            print("adjusted")
         if row['Log(MW)'] > MAX_MW:
             peak_apex = (-0.0545 * APC_comp.loc[i, 'Log(MW)']**3) + (1.1095 * APC_comp.loc[i, 'Log(MW)']**2) - (7.5132 * APC_comp.loc[i, 'Log(MW)']) + 21.44
         FWHM = 0.15
