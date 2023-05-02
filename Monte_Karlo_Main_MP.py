@@ -967,9 +967,9 @@ def APC():
     for i, row in APC_comp.iterrows():
         peak_apex = row['RT(min)']
         if row['Log(MW)'] < MIN_MW:
-            peak_apex = -1.3282 * APC_comp.loc[i, 'Log(MW)'] + 12.387  #low MW equation
+            peak_apex = -1.3282 * row['Log(MW)'] + 12.387  #low MW equation
         if row['Log(MW)'] > MAX_MW:
-            peak_apex = (-0.0545 * APC_comp.loc[i, 'Log(MW)']**3) + (1.1095 * APC_comp.loc[i, 'Log(MW)']**2) - (7.5132 * APC_comp.loc[i, 'Log(MW)']) + 21.44   #High MW equation
+            peak_apex = (-0.0545 * row['Log(MW)']**3) + (1.1095 * row['Log(MW)']**2) - (7.5132 * row['Log(MW)']) + 21.44   #High MW equation
         FWHM = 0.14
         for j in range(len(APC_df.index)):
             time = APC_df.index[j]
@@ -980,7 +980,6 @@ def APC():
 
     APC_df['Sum'] = APC_df.sum(axis=1)
     show_APC()
-
 
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
 def export_primary():
