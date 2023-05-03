@@ -450,15 +450,27 @@ class Pentaerythritol:
 class Butanediol:
     def __init__(self):
         self.name = "1,4-Butanediol"
-        self.sn = "1,4-BDO"
+        self.sn = "BDO"
         self.formula = "C4H10O2"
         self.mw = 90.122
         self.density = 1.0171
         self.prgmw = 45.061
         self.srgmw = 0
-        self.comp = (self.prgmw, self.prgmw)
         self.mass = self.mw
-        self.numgroups = len(set(self.comp))
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
 
 class Trimethylolpropane:
     def __init__(self):

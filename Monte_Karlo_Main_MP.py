@@ -694,7 +694,7 @@ def show_Xn_sec(Xn_2):
 
 def show_APC():
     global APC_df
-    fig, ax = plt.subplots(figsize=(10, 8))
+    fig, ax = plt.subplots(figsize=(15, 6))
     ax.plot(APC_df.index, APC_df['Sum'])
     ax.set_xlabel('Time (min)')
     ax.set_ylabel('Intensity (a.u.)')
@@ -702,9 +702,11 @@ def show_APC():
     ax.set_xticks(np.arange(0, 12.5, 0.5))
     ax.set_xlim(0, 12)
 
+    #double the
+
     # Create a Tkinter window
     root = tkinter.Tk()
-    root.title("Theoretical APC")
+    root.title("Monte Karlo - Theoretical APC")
 
     # Add the Matplotlib canvas to the window
     canvas = FigureCanvasTkAgg(fig, master=root)
@@ -719,6 +721,7 @@ def show_APC():
     # Add a button to close the window
     button = tkinter.Button(root, text="Close", command=root.destroy)
     button.pack()
+
 
 # -------------------------------------------Auxiliary Functions---------------------------------------------------#
 
@@ -951,8 +954,11 @@ def APC():
     APC_comp = APC_comp.reset_index()
     APC_comp = APC_comp[['MW', 'Wt,%', 'Name']]
     APC_comp = APC_comp[:-1]
+    APC_Flow_Rate = 1
+    min_time = 4 *.6
+    max_time = 11 *.6
     APC_comp['Log(MW)'] = np.log10(APC_comp['MW'])
-    APC_comp['RT(min)'] = (-0.2586 * APC_comp['Log(MW)']**4) + (4.3888 * APC_comp['Log(MW)']**3) - (26.817 * APC_comp['Log(MW)']**2) + (68.052 * APC_comp['Log(MW)']) - 52.024  #STD equation
+    APC_comp['RT(min)'] = ((-0.1552 * APC_comp['Log(MW)']**4) + (2.6333 * APC_comp['Log(MW)']**3) - (16.09 * APC_comp['Log(MW)']**2) + (40.831 * APC_comp['Log(MW)']) - 31.25) / APC_Flow_Rate  #STD equation
     MIN_MW = np.log10(350)
     MAX_MW = np.log10(290000)
 
@@ -967,13 +973,13 @@ def APC():
     for i, row in APC_comp.iterrows():
         peak_apex = row['RT(min)']
         if row['Log(MW)'] < MIN_MW:
-            peak_apex = -1.3282 * row['Log(MW)'] + 12.387  #low MW equation
+            peak_apex = (-0.5372 * row['Log(MW)'] + 6.702) / APC_Flow_Rate  #low MW equation
         if row['Log(MW)'] > MAX_MW:
-            peak_apex = (-0.0545 * row['Log(MW)']**3) + (1.1095 * row['Log(MW)']**2) - (7.5132 * row['Log(MW)']) + 21.44   #High MW equation
-        FWHM = 0.14
+            peak_apex = ((0.0102 * row['Log(MW)']**2) - (0.1595 * row['Log(MW)']) + 3.2674) / APC_Flow_Rate   #High MW equation
+        FWHM = 0.084
         for j in range(len(APC_df.index)):
             time = APC_df.index[j]
-            if time <= 4 or time >= 11:
+            if time <= min_time or time >= max_time:
                 APC_df.loc[time, row['Name']] = 0
             else:
                 APC_df.loc[time, row['Name']] = math.exp(-0.5 * ((time - peak_apex) / (FWHM/2.35)) ** 2) * (row['Wt,%'] * .5)
