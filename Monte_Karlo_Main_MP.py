@@ -7,6 +7,8 @@ import sys
 import tkinter
 import time
 from tkinter import *
+
+from matplotlib.widgets import Cursor
 from mpl_toolkits import *
 from matplotlib.backends.backend_tkagg import *
 import matplotlib.backends.backend_tkagg as tkagg
@@ -691,8 +693,7 @@ def show_Xn_sec(Xn_2):
                        height=1000, align='center', maxcellwidth=1000)
     Xn_table_2.show()
 
-
-def show_APC():
+def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
     global APC_df
     fig, ax = plt.subplots(figsize=(15, 6))
     ax.plot(APC_df.index, APC_df['Sum'])
@@ -702,7 +703,9 @@ def show_APC():
     ax.set_xticks(np.arange(0, 12.5, 0.5))
     ax.set_xlim(0, 12)
 
-    #double the
+    textstr = f'Flow Rate: {APC_Flow_Rate:.1f} ml/min\nFWHM (100 MW): {APC_FWHM:.3f} min\nFWHM (100K MW): {APC_FWHM2:.3f} min'
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
     # Create a Tkinter window
     root = tkinter.Tk()
@@ -948,15 +951,26 @@ def quick_add():
             cell += RET.tablewidth
 
 #-------------------------------------------------APC Functions----------------------------------------------------------#
-def APC():
-    global rxn_summary_df, APC_df
+def run_APC():
+    APCParametersWindow(window)
+    # if the first and second items in apc_params are not empty strings, then run APC
+
+    if apc_params[0] != "" and apc_params[1] != "" and apc_params[2] != "":
+        APC_Flow_Rate = apc_params[0]
+        APC_FWHM = apc_params[1]
+        APC_FWHM2 = apc_params[2]
+        APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2)
+    else:
+        messagebox.showerror("Error", "Please enter valid parameters for flow rate and FWHM.")
+
+def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
+    global rxn_summary_df, APC_df, apc_params
     APC_comp = rxn_summary_df
     APC_comp = APC_comp.reset_index()
     APC_comp = APC_comp[['MW', 'Wt,%', 'Name']]
     APC_comp = APC_comp[:-1]
-    APC_Flow_Rate = 1
-    min_time = 4 *.6
-    max_time = 11 *.6
+    min_time = 2.4 / APC_Flow_Rate
+    max_time = 6.6 / APC_Flow_Rate
     APC_comp['Log(MW)'] = np.log10(APC_comp['MW'])
     APC_comp['RT(min)'] = ((-0.1552 * APC_comp['Log(MW)']**4) + (2.6333 * APC_comp['Log(MW)']**3) - (16.09 * APC_comp['Log(MW)']**2) + (40.831 * APC_comp['Log(MW)']) - 31.25) / APC_Flow_Rate  #STD equation
     MIN_MW = np.log10(350)
@@ -970,13 +984,16 @@ def APC():
     APC_df.index.name = 'Time'
     APC_df.index = APC_df.index * 0.01
 
+    FWHM_slope = (APC_FWHM2 - APC_FWHM) / 99900
+    FWHM_yint = APC_FWHM - (APC_FWHM2 - APC_FWHM) / 99900 * 100
+
     for i, row in APC_comp.iterrows():
         peak_apex = row['RT(min)']
+        FWHM = FWHM_slope * row['Log(MW)'] + FWHM_yint
         if row['Log(MW)'] < MIN_MW:
             peak_apex = (-0.5372 * row['Log(MW)'] + 6.702) / APC_Flow_Rate  #low MW equation
         if row['Log(MW)'] > MAX_MW:
             peak_apex = ((0.0102 * row['Log(MW)']**2) - (0.1595 * row['Log(MW)']) + 3.2674) / APC_Flow_Rate   #High MW equation
-        FWHM = 0.084
         for j in range(len(APC_df.index)):
             time = APC_df.index[j]
             if time <= min_time or time >= max_time:
@@ -985,7 +1002,7 @@ def APC():
                 APC_df.loc[time, row['Name']] = math.exp(-0.5 * ((time - peak_apex) / (FWHM/2.35)) ** 2) * (row['Wt,%'] * .5)
 
     APC_df['Sum'] = APC_df.sum(axis=1)
-    show_APC()
+    show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2)
 
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
 def export_primary():
@@ -1063,7 +1080,7 @@ if __name__ == "__main__":
     export_menu.add_command(label='1° Reaction Results', command=export_primary)
     export_menu.add_command(label='2° Reaction Results', command=export_secondary)
     export_menu.add_command(label='All Reaction Results', command=export_all)
-    APC_Menu.add_command(label='1° APC Chromatograph', command=APC)
+    APC_Menu.add_command(label='1° APC Chromatograph', command=run_APC)
     APC_Menu.add_command(label='2° APC Chromatograph')
     filemenu1.add_command(label='Reset', command=reset_entry_table)
     filemenu1.add_command(label='Exit', command=window.destroy)
@@ -1080,6 +1097,55 @@ if __name__ == "__main__":
 
     global starting_cell
     starting_cell = 16
+
+
+    class APCParametersWindow(simpledialog.Dialog):
+        def body(self, master):
+            self.title("APC Parameters")
+            Label(master, text="Flow Rate (ml/min):").grid(row=0, column=0)
+            self.flow_rate = DoubleVar(value=1.0)  # Set default value to 1.0 ml/min
+            self.e1 = Entry(master, width=18, textvariable=self.flow_rate)
+            self.e1.grid(row=0, column=1)
+            Label(master, text="100 MW FWHM (min):").grid(row=1, column=0)
+            self.fwhm = DoubleVar(value=0.04)
+            self.e2 = Entry(master, width=18, textvariable=self.fwhm)
+            self.e2.grid(row=1, column=1)
+            Label(master, text="100K MW FWHM (min):").grid(row=2, column=0)
+            self.fwhm2 = DoubleVar(value=0.09)
+            self.e3 = Entry(master, width=18, textvariable=self.fwhm2)
+            self.e3.grid(row=2, column=1)
+            self.flow_rate.trace('w', self.update_fwhm)
+            return self.e1
+
+        def update_fwhm(self, *args):
+            try:
+                flow_rate = self.flow_rate.get()
+                self.fwhm.set(0.045 / flow_rate)
+                self.fwhm2.set(0.09 / flow_rate)
+            except ZeroDivisionError:
+                pass
+            except ValueError:
+                pass
+
+        def buttonbox(self):
+            box = Frame(self)
+            w = Button(box, text="Submit", width=10, command=self.ok)
+            w.pack(side=LEFT, padx=5, pady=5)
+            w = Button(box, text="Cancel", width=10, command=self.cancel)
+            w.pack(side=LEFT, padx=5, pady=5)
+            self.bind("<Return>", self.ok)
+            self.bind("<Escape>", self.cancel)
+            box.pack()
+
+        def cancel(self):
+            global apc_params
+            apc_params = None
+            self.destroy()
+
+        def ok(self):
+            global apc_params
+            apc_params = [self.flow_rate.get(), self.fwhm.get(), self.fwhm2.get()]
+            self.destroy()
 
     class QuickAddWindow(simpledialog.Dialog):
         def body(self, master):
