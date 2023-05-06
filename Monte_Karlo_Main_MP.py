@@ -772,6 +772,12 @@ def initialize_sim(workers):
     else:
         end_metric_value_sec = 0
     end_metric_selection, end_metric_selection_sec = str(RXN_EM.get()), str(RXN_EM_Entry_2.get())
+    if "Metric" in end_metric_selection:
+        messagebox.showinfo("Error", "Please select valid end metric(s)")
+        return "Error"
+        if RXN_EM_2_Active_status and "Metric" in end_metric_selection_sec:
+            messagebox.showinfo("Error", "Please select valid end metric(s)")
+            return "Error"
     cell = 16
     index = 0
     sn_dict = {}
@@ -972,8 +978,8 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
     min_time = 2.4 / APC_Flow_Rate
     max_time = 6.6 / APC_Flow_Rate
     APC_comp['Log(MW)'] = np.log10(APC_comp['MW'])
-    APC_comp['RT(min)'] = ((-0.1552 * APC_comp['Log(MW)']**4) + (2.6333 * APC_comp['Log(MW)']**3) - (16.09 * APC_comp['Log(MW)']**2) + (40.831 * APC_comp['Log(MW)']) - 31.25) / APC_Flow_Rate  #STD equation
-    MIN_MW = np.log10(350)
+    APC_comp['RT(min)'] = ((0.0764 * APC_comp['Log(MW)']**5) - (1.7619 * APC_comp['Log(MW)']**4) + (15.963 * APC_comp['Log(MW)']**3) - (70.62 * APC_comp['Log(MW)']**2) + (150.77 * APC_comp['Log(MW)']) - 118.59) / APC_Flow_Rate  #STD equation
+    MIN_MW = np.log10(621)
     MAX_MW = np.log10(290000)
 
     APC_columns = []
@@ -991,7 +997,8 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
         peak_apex = row['RT(min)']
         FWHM = FWHM_slope * row['Log(MW)'] + FWHM_yint
         if row['Log(MW)'] < MIN_MW:
-            peak_apex = (-0.5372 * row['Log(MW)'] + 6.702) / APC_Flow_Rate  #low MW equation
+            peak_apex = ((-0.2736 * row['Log(MW)']**4) + (2.4619 * row['Log(MW)']**3) - (8.2219 * row['Log(MW)']**2) + (11.357 * row['Log(MW)']) + 0.634) / APC_Flow_Rate   #Low MW equation
+            #peak_apex = (-0.5372 * row['Log(MW)'] + 6.702) / APC_Flow_Rate  #low MW equation
         if row['Log(MW)'] > MAX_MW:
             peak_apex = ((0.0102 * row['Log(MW)']**2) - (0.1595 * row['Log(MW)']) + 3.2674) / APC_Flow_Rate   #High MW equation
         for j in range(len(APC_df.index)):
@@ -1107,11 +1114,11 @@ if __name__ == "__main__":
             self.e1 = Entry(master, width=18, textvariable=self.flow_rate)
             self.e1.grid(row=0, column=1)
             Label(master, text="100 MW FWHM (min):").grid(row=1, column=0)
-            self.fwhm = DoubleVar(value=0.04)
+            self.fwhm = DoubleVar(value=0.060)
             self.e2 = Entry(master, width=18, textvariable=self.fwhm)
             self.e2.grid(row=1, column=1)
             Label(master, text="100K MW FWHM (min):").grid(row=2, column=0)
-            self.fwhm2 = DoubleVar(value=0.09)
+            self.fwhm2 = DoubleVar(value=0.35)
             self.e3 = Entry(master, width=18, textvariable=self.fwhm2)
             self.e3.grid(row=2, column=1)
             self.flow_rate.trace('w', self.update_fwhm)
