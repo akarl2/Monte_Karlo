@@ -693,7 +693,7 @@ def show_Xn_sec(Xn_2):
                        height=1000, align='center', maxcellwidth=1000)
     Xn_table_2.show()
 
-def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
+def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, STD_Equation_params, Low_MW_Equation_params, High_MW_Equation_params, Min_MW_time, Max_MW_time):
     global APC_df
     fig, ax = plt.subplots(figsize=(15, 6))
     ax.plot(APC_df.index, APC_df['Sum'])
@@ -706,6 +706,7 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
     textstr = f'Flow Rate: {APC_Flow_Rate:.1f} ml/min\nFWHM (100 MW): {APC_FWHM:.3f} min\nFWHM (100K MW): {APC_FWHM2:.3f} min'
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
     ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+
 
     # Create a Tkinter window
     root = tkinter.Tk()
@@ -721,10 +722,37 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
     toolbar.update()
     toolbar.pack()
 
-    # Add a button to close the window
-    button = tkinter.Button(root, text="Close", command=root.destroy)
+    # Add a box to enter x value
+    label_x = tkinter.Label(root, text="Enter x value:")
+    label_x.pack()
+    entry_x = tkinter.Entry(root)
+    entry_x.pack()
+
+    def calculate_MW(STD_Equation_params, Low_MW_Equation_params, High_MW_Equation_params, APC_Flow_Rate, Min_MW_time, Max_MW_time):
+        x = float(entry_x.get())
+        # if x > Min_MW_time:
+        #
+        #
+        # elif x < Max_MW_time:
+        #
+        # else:
+        #
+        # MW = 10 ** MW_log
+        # label_y.config(text=f"The corresponding MW is: {MW:.3f}")
+
+    button = tkinter.Button(root, text="Calculate MW (g/mol)",
+                            command=lambda: calculate_MW(STD_Equation_params, Low_MW_Equation_params,
+                                                        High_MW_Equation_params, APC_Flow_Rate, Min_MW_time,
+                                                        Max_MW_time))
     button.pack()
 
+    # Add a label to show the corresponding y value
+    label_y = tkinter.Label(root, text="")
+    label_y.pack()
+
+    # Add a button to close the window
+    button_close = tkinter.Button(root, text="Close", command=root.destroy)
+    button_close.pack()
 
 # -------------------------------------------Auxiliary Functions---------------------------------------------------#
 
@@ -977,10 +1005,15 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
     APC_comp = APC_comp[:-1]
     min_time = 2.4 / APC_Flow_Rate
     max_time = 6.6 / APC_Flow_Rate
+    STD_Equation_params = np.array([0.0764, -1.7619, 15.963, -70.62, 150.77, -118.59])
+    Low_MW_Equation_params = np.array([-0.2736, 2.4619, -8.2219, 11.357, 0.634])
+    High_MW_Equation_params = np.array([0.0102, -0.1595, 3.2674])
     APC_comp['Log(MW)'] = np.log10(APC_comp['MW'])
-    APC_comp['RT(min)'] = ((0.0764 * APC_comp['Log(MW)']**5) - (1.7619 * APC_comp['Log(MW)']**4) + (15.963 * APC_comp['Log(MW)']**3) - (70.62 * APC_comp['Log(MW)']**2) + (150.77 * APC_comp['Log(MW)']) - 118.59) / APC_Flow_Rate  #STD equation
+    APC_comp['RT(min)'] = np.polyval(STD_Equation_params, APC_comp['Log(MW)']) / APC_Flow_Rate
     MIN_MW = np.log10(621)
+    MIN_MW_time = np.polyval(Low_MW_Equation_params, MIN_MW) / APC_Flow_Rate
     MAX_MW = np.log10(290000)
+    MAX_MW_time = np.polyval(High_MW_Equation_params, MAX_MW) / APC_Flow_Rate
 
     APC_columns = []
     for i in range(len(APC_comp)):
@@ -997,19 +1030,21 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
         peak_apex = row['RT(min)']
         FWHM = FWHM_slope * row['Log(MW)'] + FWHM_yint
         if row['Log(MW)'] < MIN_MW:
-            peak_apex = ((-0.2736 * row['Log(MW)']**4) + (2.4619 * row['Log(MW)']**3) - (8.2219 * row['Log(MW)']**2) + (11.357 * row['Log(MW)']) + 0.634) / APC_Flow_Rate   #Low MW equation
-            #peak_apex = (-0.5372 * row['Log(MW)'] + 6.702) / APC_Flow_Rate  #low MW equation
+            peak_apex = np.polyval(Low_MW_Equation_params, row['Log(MW)']) / APC_Flow_Rate
         if row['Log(MW)'] > MAX_MW:
-            peak_apex = ((0.0102 * row['Log(MW)']**2) - (0.1595 * row['Log(MW)']) + 3.2674) / APC_Flow_Rate   #High MW equation
+            peak_apex = np.polyval(High_MW_Equation_params, row['Log(MW)']) / APC_Flow_Rate
         for j in range(len(APC_df.index)):
             time = APC_df.index[j]
             if time <= min_time or time >= max_time:
                 APC_df.loc[time, row['Name']] = 0
             else:
-                APC_df.loc[time, row['Name']] = math.exp(-0.5 * ((time - peak_apex) / (FWHM/2.35)) ** 2) * (row['Wt,%'] * .5)
+                APC_df.loc[time, row['Name']] = np.exp(-0.5 * np.power((time - peak_apex) / (FWHM / 2.35), 2)) * (row['Wt,%'] * 0.5)
+
 
     APC_df['Sum'] = APC_df.sum(axis=1)
-    show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2)
+    show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, STD_Equation_params,Low_MW_Equation_params, High_MW_Equation_params, MIN_MW_time, MAX_MW_time)
+
+
 
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
 def export_primary():
