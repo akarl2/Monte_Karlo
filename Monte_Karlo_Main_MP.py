@@ -893,6 +893,7 @@ def multiprocessing_sim():
             concurrent.futures.wait(results)
             consolidate_results(results)
             Buttons.Simulate.config(text="Simulate", state="normal")
+
 def consolidate_results(results):
     primary_comp_summary, secondary_comp_summary = [], []
     byproducts_primary, byproducts_secondary = [], []
@@ -1009,11 +1010,24 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
     Low_MW_Equation_params = np.array([-0.2736, 2.4619, -8.2219, 11.357, 0.634])
     High_MW_Equation_params = np.array([0.0102, -0.1595, 3.2674])
     APC_comp['Log(MW)'] = np.log10(APC_comp['MW'])
-    APC_comp['RT(min)'] = np.polyval(STD_Equation_params, APC_comp['Log(MW)']) / APC_Flow_Rate
+    APC_comp.loc[:, 'FWHM(min)'] = 0.000
+    APC_comp.loc[:, 'RT(min)'] = 0.000
     MIN_MW = np.log10(621)
     MIN_MW_time = np.polyval(Low_MW_Equation_params, MIN_MW) / APC_Flow_Rate
     MAX_MW = np.log10(290000)
     MAX_MW_time = np.polyval(High_MW_Equation_params, MAX_MW) / APC_Flow_Rate
+
+    FWHM_slope = (APC_FWHM2 - APC_FWHM) / 99900
+    FWHM_yint = APC_FWHM - (APC_FWHM2 - APC_FWHM) / 99900 * 100
+
+    for i, row in APC_comp.iterrows():
+        APC_comp.loc[i, 'FWHM(min)'] = FWHM_slope * row['Log(MW)'] + FWHM_yint
+        if row['Log(MW)'] < MIN_MW:
+            APC_comp.loc[i, 'RT(min)'] = np.polyval(Low_MW_Equation_params, row['Log(MW)']) / APC_Flow_Rate
+        elif row['Log(MW)'] > MAX_MW:
+            APC_comp.loc[i, 'RT(min)'] = np.polyval(High_MW_Equation_params, row['Log(MW)']) / APC_Flow_Rate
+        else:
+            APC_comp.loc[i, 'RT(min)'] = np.polyval(STD_Equation_params, row['Log(MW)']) / APC_Flow_Rate
 
     APC_columns = []
     for i in range(len(APC_comp)):
@@ -1023,28 +1037,20 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
     APC_df.index.name = 'Time'
     APC_df.index = APC_df.index * 0.01
 
-    FWHM_slope = (APC_FWHM2 - APC_FWHM) / 99900
-    FWHM_yint = APC_FWHM - (APC_FWHM2 - APC_FWHM) / 99900 * 100
+    def calc_apc_value(row, time):
+        return np.exp(-0.5 * np.power((time - row['RT(min)']) / (row['FWHM(min)'] / 2.35), 2)) * (row['Wt,%'] * 0.5)
 
-    for i, row in APC_comp.iterrows():
-        peak_apex = row['RT(min)']
-        FWHM = FWHM_slope * row['Log(MW)'] + FWHM_yint
-        if row['Log(MW)'] < MIN_MW:
-            peak_apex = np.polyval(Low_MW_Equation_params, row['Log(MW)']) / APC_Flow_Rate
-        if row['Log(MW)'] > MAX_MW:
-            peak_apex = np.polyval(High_MW_Equation_params, row['Log(MW)']) / APC_Flow_Rate
-        for j in range(len(APC_df.index)):
-            time = APC_df.index[j]
-            if time <= min_time or time >= max_time:
-                APC_df.loc[time, row['Name']] = 0
-            else:
-                APC_df.loc[time, row['Name']] = np.exp(-0.5 * np.power((time - peak_apex) / (FWHM / 2.35), 2)) * (row['Wt,%'] * 0.5)
+    def calc_apc_matrix(APC_comp, APC_df):
+        times = APC_df.index.values
+        apc_values = np.zeros((len(times), len(APC_comp)))
+        for i, row in APC_comp.iterrows():
+            apc_values[:, i] = calc_apc_value(row, times)
+        return pandas.DataFrame(apc_values, index=times, columns=APC_comp['Name'])
 
+    APC_df = calc_apc_matrix(APC_comp, APC_df)
 
     APC_df['Sum'] = APC_df.sum(axis=1)
-    show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, STD_Equation_params,Low_MW_Equation_params, High_MW_Equation_params, MIN_MW_time, MAX_MW_time)
-
-
+    show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, STD_Equation_params, Low_MW_Equation_params, High_MW_Equation_params, MIN_MW_time, MAX_MW_time)
 
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
 def export_primary():
