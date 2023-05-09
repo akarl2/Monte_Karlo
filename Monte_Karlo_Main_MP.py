@@ -7,6 +7,7 @@ import sys
 import tkinter
 import time
 from tkinter import *
+import mplcursors
 
 from matplotlib.widgets import Cursor
 from mpl_toolkits import *
@@ -693,7 +694,26 @@ def show_Xn_sec(Xn_2):
                        height=1000, align='center', maxcellwidth=1000)
     Xn_table_2.show()
 
-def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, STD_Equation_params, Low_MW_Equation_params, High_MW_Equation_params, Min_MW_time, Max_MW_time):
+
+def get_peak_info(APC_comp, xdata, tolerance=0.01):
+    # Find the peak closest to the given retention time
+    closest_peak = APC_comp.iloc[(APC_comp['RT(min)'] - xdata).abs().argsort()[0]]
+
+    # If the closest peak is within the allowed tolerance, return its information
+    if abs(closest_peak['RT(min)'] - xdata) <= tolerance:
+        return {
+            'Name': closest_peak['Name'],
+            'MW': 10 ** closest_peak['Log(MW)'],
+            'RT(min)': closest_peak['RT(min)'],
+            'Wt,%': closest_peak['Wt,%'],
+        }
+    # If no peak is found within the tolerance, return None
+    else:
+        return None
+
+
+# Define the show_APC function with the new functionality
+def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp):
     global APC_df
     fig, ax = plt.subplots(figsize=(15, 6))
     ax.plot(APC_df.index, APC_df['Sum'])
@@ -707,6 +727,17 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, STD_Equation_params, Low_MW_Equ
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
     ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
+    def on_move(event):
+        xdata = event.xdata
+        if xdata is not None:
+            peak_info = get_peak_info(APC_comp, xdata)
+            if peak_info is not None:
+                label_y.config(
+                    text=f"Peak Name: {peak_info['Name']}\nRetention Time (min): {peak_info['RT(min)']:.2f}\nMW(g/mol): {peak_info['MW']:.2f}\nWt,%: {peak_info['Wt,%']:.2f}")
+            else:
+                label_y.config(text=f"Peak Name:\nRetention Time (min):\nMW(g/mol):\nWt,%:")
+
+    fig.canvas.mpl_connect('motion_notify_event', on_move)
 
     # Create a Tkinter window
     root = tkinter.Tk()
@@ -718,33 +749,9 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, STD_Equation_params, Low_MW_Equ
     canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
     # Add the Matplotlib toolbar to the window
-    toolbar = tkagg.NavigationToolbar2Tk(canvas, root)
+    toolbar = NavigationToolbar2Tk(canvas, root)
     toolbar.update()
     toolbar.pack()
-
-    # Add a box to enter x value
-    label_x = tkinter.Label(root, text="Enter x value:")
-    label_x.pack()
-    entry_x = tkinter.Entry(root)
-    entry_x.pack()
-
-    def calculate_MW(STD_Equation_params, Low_MW_Equation_params, High_MW_Equation_params, APC_Flow_Rate, Min_MW_time, Max_MW_time):
-        x = float(entry_x.get())
-        # if x > Min_MW_time:
-        #
-        #
-        # elif x < Max_MW_time:
-        #
-        # else:
-        #
-        # MW = 10 ** MW_log
-        # label_y.config(text=f"The corresponding MW is: {MW:.3f}")
-
-    button = tkinter.Button(root, text="Calculate MW (g/mol)",
-                            command=lambda: calculate_MW(STD_Equation_params, Low_MW_Equation_params,
-                                                        High_MW_Equation_params, APC_Flow_Rate, Min_MW_time,
-                                                        Max_MW_time))
-    button.pack()
 
     # Add a label to show the corresponding y value
     label_y = tkinter.Label(root, text="")
@@ -1013,9 +1020,7 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
     APC_comp.loc[:, 'FWHM(min)'] = 0.000
     APC_comp.loc[:, 'RT(min)'] = 0.000
     MIN_MW = np.log10(621)
-    MIN_MW_time = np.polyval(Low_MW_Equation_params, MIN_MW) / APC_Flow_Rate
     MAX_MW = np.log10(290000)
-    MAX_MW_time = np.polyval(High_MW_Equation_params, MAX_MW) / APC_Flow_Rate
 
     FWHM_slope = (APC_FWHM2 - APC_FWHM) / 99900
     FWHM_yint = APC_FWHM - (APC_FWHM2 - APC_FWHM) / 99900 * 100
@@ -1032,10 +1037,10 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
     APC_columns = []
     for i in range(len(APC_comp)):
         APC_columns.append(APC_comp['Name'][i])
-    APC_rows = list(range(0, 1201))
+    APC_rows = list(range(0, 120001))
     APC_df = pandas.DataFrame(0, index=APC_rows, columns=APC_columns)
     APC_df.index.name = 'Time'
-    APC_df.index = APC_df.index * 0.01
+    APC_df.index = APC_df.index * 0.001
 
     def calc_apc_value(row, time):
         return np.exp(-0.5 * np.power((time - row['RT(min)']) / (row['FWHM(min)'] / 2.35), 2)) * (row['Wt,%'] * 0.5)
@@ -1050,7 +1055,7 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
     APC_df = calc_apc_matrix(APC_comp, APC_df)
 
     APC_df['Sum'] = APC_df.sum(axis=1)
-    show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, STD_Equation_params, Low_MW_Equation_params, High_MW_Equation_params, MIN_MW_time, MAX_MW_time)
+    show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp)
 
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
 def export_primary():
