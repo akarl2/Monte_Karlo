@@ -696,10 +696,7 @@ def show_Xn_sec(Xn_2):
 
 
 def get_peak_info(APC_comp, xdata, tolerance=0.01):
-    # Find the peak closest to the given retention time
     closest_peak = APC_comp.iloc[(APC_comp['RT(min)'] - xdata).abs().argsort()[0]]
-
-    # If the closest peak is within the allowed tolerance, return its information
     if abs(closest_peak['RT(min)'] - xdata) <= tolerance:
         return {
             'Name': closest_peak['Name'],
@@ -707,19 +704,15 @@ def get_peak_info(APC_comp, xdata, tolerance=0.01):
             'RT(min)': closest_peak['RT(min)'],
             'Wt,%': closest_peak['Wt,%'],
         }
-    # If no peak is found within the tolerance, return None
     else:
         return None
 
-
-# Define the show_APC function with the new functionality
-def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp):
-    global APC_df
+def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df):
     fig, ax = plt.subplots(figsize=(15, 6))
     ax.plot(APC_df.index, APC_df['Sum'])
     ax.set_xlabel('Time (min)')
     ax.set_ylabel('Intensity (a.u.)')
-    ax.set_title('Theoretical APC')
+    ax.set_title('1° Theoretical APC')
     ax.set_xticks(np.arange(0, 12.5, 0.5))
     ax.set_xlim(0, 12)
 
@@ -739,25 +732,20 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp):
 
     fig.canvas.mpl_connect('motion_notify_event', on_move)
 
-    # Create a Tkinter window
     root = tkinter.Tk()
-    root.title("Monte Karlo - Theoretical APC")
+    root.title("Monte Karlo - 1° Theoretical APC")
 
-    # Add the Matplotlib canvas to the window
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.draw()
     canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
-    # Add the Matplotlib toolbar to the window
     toolbar = NavigationToolbar2Tk(canvas, root)
     toolbar.update()
     toolbar.pack()
 
-    # Add a label to show the corresponding y value
-    label_y = tkinter.Label(root, text="")
+    label_y = tkinter.Label(root, text=f"Peak Name:\nRetention Time (min):\nMW(g/mol):\nWt,%:")
     label_y.pack()
 
-    # Add a button to close the window
     button_close = tkinter.Button(root, text="Close", command=root.destroy)
     button_close.pack()
 
@@ -1055,7 +1043,7 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
     APC_df = calc_apc_matrix(APC_comp, APC_df)
 
     APC_df['Sum'] = APC_df.sum(axis=1)
-    show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp)
+    show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df)
 
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
 def export_primary():
