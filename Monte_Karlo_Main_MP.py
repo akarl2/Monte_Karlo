@@ -699,17 +699,15 @@ def get_peak_info(APC_comp, xdata, tolerance=0.01):
     closest_peak = APC_comp.iloc[(APC_comp['RT(min)'] - xdata).abs().argsort()[0]]
     if abs(closest_peak['RT(min)'] - xdata) <= tolerance:
         return {
-            'Name': closest_peak['Name'],
-            'MW': 10 ** closest_peak['Log(MW)'],
-            'RT(min)': closest_peak['RT(min)'],
-            'Wt,%': closest_peak['Wt,%'],
+            'Name': closest_peak['Name'], 'MW': 10 ** closest_peak['Log(MW)'],
+            'RT(min)': closest_peak['RT(min)'],'Wt,%': closest_peak['Wt,%'],
         }
     else:
         return None
 
 def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df):
     fig, ax = plt.subplots(figsize=(15, 6))
-    ax.plot(APC_df.index, APC_df['Sum'])
+    ax.plot(APC_df.index, APC_df['Sum'], linewidth=0.75)
     ax.set_xlabel('Time (min)')
     ax.set_ylabel('Intensity (a.u.)')
     ax.set_title('1° Theoretical APC')
