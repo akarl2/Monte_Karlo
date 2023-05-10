@@ -694,7 +694,6 @@ def show_Xn_sec(Xn_2):
                        height=1000, align='center', maxcellwidth=1000)
     Xn_table_2.show()
 
-
 def get_peak_info(APC_comp, xdata, tolerance=0.01):
     closest_peak = APC_comp.iloc[(APC_comp['RT(min)'] - xdata).abs().argsort()[0]]
     if abs(closest_peak['RT(min)'] - xdata) <= tolerance:
@@ -705,12 +704,12 @@ def get_peak_info(APC_comp, xdata, tolerance=0.01):
     else:
         return None
 
-def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df):
+def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df, label):
     fig, ax = plt.subplots(figsize=(15, 6))
     ax.plot(APC_df.index, APC_df['Sum'], linewidth=0.75)
     ax.set_xlabel('Time (min)')
     ax.set_ylabel('Intensity (a.u.)')
-    ax.set_title('1° Theoretical APC')
+    ax.set_title(f'{label} Theoretical APC')
     ax.set_xticks(np.arange(0, 12.5, 0.5))
     ax.set_xlim(0, 12)
 
@@ -731,7 +730,8 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df):
     fig.canvas.mpl_connect('motion_notify_event', on_move)
 
     root = tkinter.Tk()
-    root.title("Monte Karlo - 1° Theoretical APC")
+    root.title(f'Monte Karlo - {label} Theoretical APC')
+    root.iconbitmap("testtube.ico")
 
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.draw()
@@ -787,11 +787,11 @@ def initialize_sim(workers):
         RXN_EM_2_Active_status = RXN_EM_2_Active.get()
         if RXN_EM_2_Active_status:
             end_metric_value_sec = float(RXN_EM_Value_2.get())
+        else:
+            end_metric_value_sec = 0
     except ValueError:
         messagebox.showinfo("Error", "Please enter a valid number for the end metric value(s)")
         return "Error"
-    else:
-        end_metric_value_sec = 0
     end_metric_selection, end_metric_selection_sec = str(RXN_EM.get()), str(RXN_EM_Entry_2.get())
     if "Metric" in end_metric_selection:
         messagebox.showinfo("Error", "Please select valid end metric(s)")
@@ -979,26 +979,23 @@ def quick_add():
             cell += RET.tablewidth
 
 #-------------------------------------------------APC Functions----------------------------------------------------------#
-def run_APC():
+def run_APC(rxn_summary_df, label):
     APCParametersWindow(window)
-    # if the first and second items in apc_params are not empty strings, then run APC
-
     if apc_params[0] != "" and apc_params[1] != "" and apc_params[2] != "":
         APC_Flow_Rate = apc_params[0]
         APC_FWHM = apc_params[1]
         APC_FWHM2 = apc_params[2]
-        APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2)
+        APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, rxn_summary_df,label)
+
     else:
         messagebox.showerror("Error", "Please enter valid parameters for flow rate and FWHM.")
 
-def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
-    global rxn_summary_df, APC_df, apc_params
+def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, rxn_summary_df, label):
+    global APC_df, apc_params
     APC_comp = rxn_summary_df
     APC_comp = APC_comp.reset_index()
     APC_comp = APC_comp[['MW', 'Wt,%', 'Name']]
     APC_comp = APC_comp[:-1]
-    min_time = 2.4 / APC_Flow_Rate
-    max_time = 6.6 / APC_Flow_Rate
     STD_Equation_params = np.array([0.0764, -1.7619, 15.963, -70.62, 150.77, -118.59])
     Low_MW_Equation_params = np.array([-0.2736, 2.4619, -8.2219, 11.357, 0.634])
     High_MW_Equation_params = np.array([0.0102, -0.1595, 3.2674])
@@ -1028,20 +1025,17 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2):
     APC_df.index.name = 'Time'
     APC_df.index = APC_df.index * 0.001
 
-    def calc_apc_value(row, time):
-        return np.exp(-0.5 * np.power((time - row['RT(min)']) / (row['FWHM(min)'] / 2.35), 2)) * (row['Wt,%'] * 0.5)
-
     def calc_apc_matrix(APC_comp, APC_df):
         times = APC_df.index.values
         apc_values = np.zeros((len(times), len(APC_comp)))
         for i, row in APC_comp.iterrows():
-            apc_values[:, i] = calc_apc_value(row, times)
+            apc_values[:, i] = np.exp(-0.5 * np.power((times - row['RT(min)']) / (row['FWHM(min)'] / 2.35), 2)) * (row['Wt,%'] * 0.5)
         return pandas.DataFrame(apc_values, index=times, columns=APC_comp['Name'])
 
     APC_df = calc_apc_matrix(APC_comp, APC_df)
 
     APC_df['Sum'] = APC_df.sum(axis=1)
-    show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df)
+    show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df, label)
 
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
 def export_primary():
@@ -1119,8 +1113,8 @@ if __name__ == "__main__":
     export_menu.add_command(label='1° Reaction Results', command=export_primary)
     export_menu.add_command(label='2° Reaction Results', command=export_secondary)
     export_menu.add_command(label='All Reaction Results', command=export_all)
-    APC_Menu.add_command(label='1° APC Chromatograph', command=run_APC)
-    APC_Menu.add_command(label='2° APC Chromatograph')
+    APC_Menu.add_command(label='1° APC Chromatograph', command=lambda: run_APC(rxn_summary_df, label="1°"))
+    APC_Menu.add_command(label='2° APC Chromatograph', command=lambda: run_APC(rxn_summary_df_2, label="2°"))
     filemenu1.add_command(label='Reset', command=reset_entry_table)
     filemenu1.add_command(label='Exit', command=window.destroy)
     filemenu2.add_command(label='Quick Add', command=quick_add)
@@ -1141,6 +1135,7 @@ if __name__ == "__main__":
     class APCParametersWindow(simpledialog.Dialog):
         def body(self, master):
             self.title("APC Parameters")
+            self.iconbitmap("testtube.ico")
             Label(master, text="Flow Rate (ml/min):").grid(row=0, column=0)
             self.flow_rate = DoubleVar(value=1.0)  # Set default value to 1.0 ml/min
             self.e1 = Entry(master, width=18, textvariable=self.flow_rate)
