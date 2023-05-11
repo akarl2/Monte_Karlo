@@ -14,6 +14,9 @@ from mpl_toolkits import *
 from matplotlib.backends.backend_tkagg import *
 import matplotlib.backends.backend_tkagg as tkagg
 
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QApplication, QMainWindow
+
 import numpy as np
 import openpyxl
 import customtkinter
@@ -322,11 +325,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             groups = random.choices(chemical, weights, k=2)
             if time.time() - start > 3:
                 running = False
-                if in_primary:
-                    messagebox.showerror("1° Error", "Increase # of samples or End Metric is unattainable")
-                else:
-                    messagebox.showerror("2° Error", "Increase # of samples or End Metric is unattainable")
-                break
+                return "Metric Error"
         stop = time.time()
         update_comp(composition, groups)
     if comp_secondary is None:
@@ -710,7 +709,8 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df, label):
     ax.set_xlabel('Time (min)')
     ax.set_ylabel('Intensity (a.u.)')
     ax.set_title(f'{label} Theoretical APC')
-    ax.set_xticks(np.arange(0, 12.5, 0.5))
+    ax.set_xticks(np.arange(0, 12.5, 0.25))
+    ax.set_xticklabels(np.arange(0, 12.5, 0.25), rotation=-35)
     ax.set_xlim(0, 12)
 
     textstr = f'Flow Rate: {APC_Flow_Rate:.1f} ml/min\nFWHM (100 MW): {APC_FWHM:.3f} min\nFWHM (100K MW): {APC_FWHM2:.3f} min'
@@ -843,8 +843,7 @@ def initialize_sim(workers):
 def multiprocessing_sim():
     if __name__ == "__main__":
         Buttons.Simulate.config(state="disabled", text="Running...")
-        sim.progress['value'] = 0
-        sim.progress_2['value'] = 0
+        sim.progress['value'], sim.progress_2 = 0, 0
         global running
         running = True
         workers = NUM_OF_SIM.get()
@@ -878,15 +877,17 @@ def multiprocessing_sim():
                     window.update()
                 while not progress_queue.empty():
                     progress_queue.get()
-                sim.progress['value'] = 0
-                sim.progress_2['value'] = 0
+                sim.progress['value'], sim.progress_2 = 0, 0
                 messagebox.showinfo("Simulation Cancelled", "Simulation cancelled by user")
                 Buttons.Simulate.config(text="Simulate", state="normal")
                 return
             concurrent.futures.wait(results)
+            if results[0].result() == "Metric Error":
+                messagebox.showinfo("Error", "Please select valid end metric(s)")
+                Buttons.Simulate.config(text="Simulate", state="normal")
+                return
             consolidate_results(results)
             Buttons.Simulate.config(text="Simulate", state="normal")
-
 def consolidate_results(results):
     primary_comp_summary, secondary_comp_summary = [], []
     byproducts_primary, byproducts_secondary = [], []
@@ -1154,8 +1155,8 @@ if __name__ == "__main__":
         def update_fwhm(self, *args):
             try:
                 flow_rate = self.flow_rate.get()
-                self.fwhm.set(0.045 / flow_rate)
-                self.fwhm2.set(0.09 / flow_rate)
+                self.fwhm.set(0.06 / flow_rate)
+                self.fwhm2.set(0.35 / flow_rate)
             except ZeroDivisionError:
                 pass
             except ValueError:
