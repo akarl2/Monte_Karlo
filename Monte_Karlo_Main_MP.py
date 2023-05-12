@@ -693,15 +693,17 @@ def show_Xn_sec(Xn_2):
                        height=1000, align='center', maxcellwidth=1000)
     Xn_table_2.show()
 
-def get_peak_info(APC_comp, xdata, tolerance=0.01):
-    closest_peak = APC_comp.iloc[(APC_comp['RT(min)'] - xdata).abs().argsort()[0]]
-    if abs(closest_peak['RT(min)'] - xdata) <= tolerance:
-        return {
-            'Name': closest_peak['Name'], 'MW': 10 ** closest_peak['Log(MW)'],
-            'RT(min)': closest_peak['RT(min)'],'Wt,%': closest_peak['Wt,%'],
-        }
-    else:
-        return None
+def get_peak_info(APC_comp, xdata, tolerance=0.01, n=5):
+    closest_peaks = APC_comp.iloc[(APC_comp['RT(min)'] - xdata).abs().nsmallest(n).index]
+    peaks_info = []
+    for i, peak in closest_peaks.iterrows():
+        if abs(peak['RT(min)'] - xdata) <= tolerance:
+            peak_info = {
+                'Name': peak['Name'], 'MW': 10 ** peak['Log(MW)'],
+                'RT(min)': peak['RT(min)'],'Wt,%': peak['Wt,%'],
+            }
+            peaks_info.append(peak_info)
+    return peaks_info
 
 def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df, label):
     fig, ax = plt.subplots(figsize=(15, 6))
@@ -709,8 +711,8 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df, label):
     ax.set_xlabel('Time (min)')
     ax.set_ylabel('Intensity (a.u.)')
     ax.set_title(f'{label} Theoretical APC')
-    ax.set_xticks(np.arange(0, 12.5, 0.25))
-    ax.set_xticklabels(np.arange(0, 12.5, 0.25), rotation=-35)
+    ax.set_xticks(np.arange(0, 12.25, 0.25))
+    ax.set_xticklabels(np.arange(0, 12.25, 0.25), rotation=-35)
     ax.set_xlim(0, 12)
 
     textstr = f'Flow Rate: {APC_Flow_Rate:.1f} ml/min\nFWHM (100 MW): {APC_FWHM:.3f} min\nFWHM (100K MW): {APC_FWHM2:.3f} min'
@@ -720,12 +722,13 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df, label):
     def on_move(event):
         xdata = event.xdata
         if xdata is not None:
-            peak_info = get_peak_info(APC_comp, xdata)
-            if peak_info is not None:
-                label_y.config(
-                    text=f"Peak Name: {peak_info['Name']}\nRetention Time (min): {peak_info['RT(min)']:.2f}\nMW(g/mol): {peak_info['MW']:.2f}\nWt,%: {peak_info['Wt,%']:.2f}")
-            else:
-                label_y.config(text=f"Peak Name:\nRetention Time (min):\nMW(g/mol):\nWt,%:")
+            closest_peaks = APC_comp.iloc[(APC_comp['RT(min)'] - xdata).abs().argsort()[:5]]
+            peak_info = ""
+            for i, peak in closest_peaks.iterrows():
+                peak_info += f"Name: {peak['Name']}, Retention Time (min): {peak['RT(min)']:.2f}, MW(g/mol): {10 ** peak['Log(MW)']:.2f}, Wt,%: {peak['Wt,%']:.2f}\n"
+            label_y.config(text=peak_info.strip())
+        else:
+            label_y.config(text=f"Peak Name:\nRetention Time (min):\nMW(g/mol):\nWt,%:")
 
     fig.canvas.mpl_connect('motion_notify_event', on_move)
 
@@ -741,7 +744,7 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df, label):
     toolbar.update()
     toolbar.pack()
 
-    label_y = tkinter.Label(root, text=f"Peak Name:\nRetention Time (min):\nMW(g/mol):\nWt,%:")
+    label_y = tkinter.Label(root, text="No peak found.")
     label_y.pack()
 
     button_close = tkinter.Button(root, text="Close", command=root.destroy)
