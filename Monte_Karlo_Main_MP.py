@@ -14,9 +14,6 @@ from mpl_toolkits import *
 from matplotlib.backends.backend_tkagg import *
 import matplotlib.backends.backend_tkagg as tkagg
 
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QMainWindow
-
 import numpy as np
 import openpyxl
 import customtkinter
@@ -294,7 +291,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         RXN_metric_value_2 = metrics[end_metric_selection_sec]
         if end_metric_selection_sec != '% EHC':
             if currentPID == PID_list[-1]:
-               progress_queue_sec.put(round((end_metric_value_sec / RXN_metric_value_2) * 100), 2)
+                progress_queue_sec.put(round((end_metric_value_sec / RXN_metric_value_2) * 100), 2)
             if RXN_metric_value_2 <= end_metric_value_sec:
                 comp_secondary = composition
                 byproducts_secondary = byproducts
@@ -846,7 +843,7 @@ def initialize_sim(workers):
 def multiprocessing_sim():
     if __name__ == "__main__":
         Buttons.Simulate.config(state="disabled", text="Running...")
-        sim.progress['value'], sim.progress_2 = 0, 0
+        sim.progress['value'], sim.progress_2['value'] = 0, 0
         global running
         running = True
         workers = NUM_OF_SIM.get()
@@ -880,12 +877,12 @@ def multiprocessing_sim():
                     window.update()
                 while not progress_queue.empty():
                     progress_queue.get()
-                sim.progress['value'], sim.progress_2 = 0, 0
+                sim.progress['value'], sim.progress_2['value'] = 0, 0
                 messagebox.showinfo("Simulation Cancelled", "Simulation cancelled by user")
                 Buttons.Simulate.config(text="Simulate", state="normal")
                 return
             concurrent.futures.wait(results)
-            if results[0].result() == "Metric Error":
+            if results[0].result() == "Metric Error" or results[0].result() == "Zero Error":
                 messagebox.showinfo("Error", "Please select valid end metric(s)")
                 Buttons.Simulate.config(text="Simulate", state="normal")
                 return
