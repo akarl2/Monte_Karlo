@@ -720,12 +720,14 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df, label):
         xdata = event.xdata
         if xdata is not None:
             closest_peaks = APC_comp.iloc[(APC_comp['RT(min)'] - xdata).abs().argsort()[:5]]
-            peak_info = ""
+            peak_info = []
             for i, peak in closest_peaks.iterrows():
-                peak_info += f"Name: {peak['Name']}, Retention Time (min): {peak['RT(min)']:.2f}, MW(g/mol): {10 ** peak['Log(MW)']:.2f}, Wt,%: {peak['Wt,%']:.2f}\n"
-            label_y.config(text=peak_info.strip())
+                peak_info.append([peak['Name'], f"{peak['RT(min)']:.3f}", f"{10 ** peak['Log(MW)']:.2f}", f"{peak['Wt,%']:.2f}"])
+            table.delete(*table.get_children())
+            for info in peak_info:
+                table.insert("", "end", values=info)
         else:
-            label_y.config(text=f"Peak Name:\nRetention Time (min):\nMW(g/mol):\nWt,%:")
+            table.delete(*table.get_children())
 
     fig.canvas.mpl_connect('motion_notify_event', on_move)
 
@@ -741,11 +743,17 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df, label):
     toolbar.update()
     toolbar.pack()
 
-    label_y = tkinter.Label(root, text="No peak found.")
-    label_y.pack()
+    # Create a table to display the closest peaks
+    columns = ("Name", "Retention Time (min)", "MW(g/mol)", "Wt,%")
+    table = ttk.Treeview(root, columns=columns, show="headings", height=5)
+    for col in columns:
+        table.heading(col, text=col)
+    table.pack()
 
     button_close = tkinter.Button(root, text="Close", command=root.destroy)
     button_close.pack()
+
+    root.mainloop()
 
 # -------------------------------------------Auxiliary Functions---------------------------------------------------#
 
