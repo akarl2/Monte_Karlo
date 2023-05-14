@@ -690,18 +690,6 @@ def show_Xn_sec(Xn_2):
                        height=1000, align='center', maxcellwidth=1000)
     Xn_table_2.show()
 
-def get_peak_info(APC_comp, xdata, tolerance=0.01, n=5):
-    closest_peaks = APC_comp.iloc[(APC_comp['RT(min)'] - xdata).abs().nsmallest(n).index]
-    peaks_info = []
-    for i, peak in closest_peaks.iterrows():
-        if abs(peak['RT(min)'] - xdata) <= tolerance:
-            peak_info = {
-                'Name': peak['Name'], 'MW': 10 ** peak['Log(MW)'],
-                'RT(min)': peak['RT(min)'],'Wt,%': peak['Wt,%'],
-            }
-            peaks_info.append(peak_info)
-    return peaks_info
-
 def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df, label):
     fig, ax = plt.subplots(figsize=(15, 6))
     ax.plot(APC_df.index, APC_df['Sum'], linewidth=0.75)
@@ -722,7 +710,8 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df, label):
             closest_peaks = APC_comp.iloc[(APC_comp['RT(min)'] - xdata).abs().argsort()[:5]]
             peak_info = []
             for i, peak in closest_peaks.iterrows():
-                peak_info.append([peak['Name'], f"{peak['RT(min)']:.3f}", f"{10 ** peak['Log(MW)']:.2f}", f"{peak['Wt,%']:.2f}"])
+                if abs(peak['RT(min)'] - xdata) <= 0.05:
+                    peak_info.append([peak['Name'], f"{peak['RT(min)']:.3f}", f"{10 ** peak['Log(MW)']:.2f}", f"{peak['Wt,%']:.2f}"])
             table.delete(*table.get_children())
             for info in peak_info:
                 table.insert("", "end", values=info)
