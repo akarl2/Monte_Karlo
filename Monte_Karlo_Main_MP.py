@@ -702,43 +702,48 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df, label):
 
     textstr = f'Flow Rate: {APC_Flow_Rate:.1f} ml/min\nFWHM (100 MW): {APC_FWHM:.3f} min\nFWHM (100K MW): {APC_FWHM2:.3f} min'
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-    ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+    a = ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+    time_textstr = f'Time (min): '
+    b = ax.text(0.05, 0.75, time_textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
-    def on_move(event):
+    fig.canvas.draw()
+
+    def on_move(event, b):
         xdata = event.xdata
         if xdata is not None:
             closest_peaks = APC_comp.iloc[(APC_comp['RT(min)'] - xdata).abs().argsort()[:5]]
+            tolerence = 0.05
             peak_info = []
             for i, peak in closest_peaks.iterrows():
-                if abs(peak['RT(min)'] - xdata) <= 0.05:
+                if abs(peak['RT(min)'] - xdata) <= tolerence:
                     peak_info.append([peak['Name'], f"{peak['RT(min)']:.3f}", f"{10 ** peak['Log(MW)']:.2f}", f"{peak['Wt,%']:.2f}"])
             table.delete(*table.get_children())
             for info in peak_info:
                 table.insert("", "end", values=info)
+            time_textstr = f'Time (min): {xdata:.3f}'
+            b.set_text(time_textstr)
         else:
             table.delete(*table.get_children())
+            time_textstr = f'Time (min): '
+            b.set_text(time_textstr)
+        fig.canvas.draw_idle()
 
-    fig.canvas.mpl_connect('motion_notify_event', on_move)
+    fig.canvas.mpl_connect('motion_notify_event', lambda event: on_move(event, b))
 
     root = tkinter.Tk()
     root.title(f'Monte Karlo - {label} Theoretical APC')
     root.iconbitmap("testtube.ico")
-
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.draw()
     canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
-
     toolbar = NavigationToolbar2Tk(canvas, root)
     toolbar.update()
     toolbar.pack()
-
-    # Create a table to display the closest peaks
     columns = ("Name", "Retention Time (min)", "MW(g/mol)", "Wt,%")
     table = ttk.Treeview(root, columns=columns, show="headings", height=5)
     for col in columns:
         table.heading(col, text=col)
     table.pack()
-
     button_close = tkinter.Button(root, text="Close", command=root.destroy)
     button_close.pack()
 
@@ -1139,11 +1144,11 @@ if __name__ == "__main__":
             self.e1 = Entry(master, width=18, textvariable=self.flow_rate)
             self.e1.grid(row=0, column=1)
             Label(master, text="100 MW FWHM (min):").grid(row=1, column=0)
-            self.fwhm = DoubleVar(value=0.060)
+            self.fwhm = DoubleVar(value=0.060) # Set default FWHM for 100 MW
             self.e2 = Entry(master, width=18, textvariable=self.fwhm)
             self.e2.grid(row=1, column=1)
             Label(master, text="100K MW FWHM (min):").grid(row=2, column=0)
-            self.fwhm2 = DoubleVar(value=0.35)
+            self.fwhm2 = DoubleVar(value=0.6) # Set default FWHM for 100K MW
             self.e3 = Entry(master, width=18, textvariable=self.fwhm2)
             self.e3.grid(row=2, column=1)
             self.flow_rate.trace('w', self.update_fwhm)
@@ -1153,7 +1158,7 @@ if __name__ == "__main__":
             try:
                 flow_rate = self.flow_rate.get()
                 self.fwhm.set(0.06 / flow_rate)
-                self.fwhm2.set(0.35 / flow_rate)
+                self.fwhm2.set(0.6 / flow_rate)
             except ZeroDivisionError:
                 pass
             except ValueError:
