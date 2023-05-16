@@ -720,13 +720,11 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df, label):
             table.delete(*table.get_children())
             for info in peak_info:
                 table.insert("", "end", values=info)
-            time_textstr = f'Time (min): {xdata:.3f}'
-            b.set_text(time_textstr)
+            b.set_text(f'Time (min): {xdata:.3f}')
         else:
             table.delete(*table.get_children())
-            time_textstr = f'Time (min): '
-            b.set_text(time_textstr)
-        fig.canvas.draw_idle()
+            b.set_text(f'Time (min): ')
+        fig.canvas.draw()
 
     fig.canvas.mpl_connect('motion_notify_event', lambda event: on_move(event, b))
 
@@ -1148,7 +1146,7 @@ if __name__ == "__main__":
             self.e2 = Entry(master, width=18, textvariable=self.fwhm)
             self.e2.grid(row=1, column=1)
             Label(master, text="100K MW FWHM (min):").grid(row=2, column=0)
-            self.fwhm2 = DoubleVar(value=0.6) # Set default FWHM for 100K MW
+            self.fwhm2 = DoubleVar(value=0.1) # Set default FWHM for 100K MW
             self.e3 = Entry(master, width=18, textvariable=self.fwhm2)
             self.e3.grid(row=2, column=1)
             self.flow_rate.trace('w', self.update_fwhm)
@@ -1158,7 +1156,7 @@ if __name__ == "__main__":
             try:
                 flow_rate = self.flow_rate.get()
                 self.fwhm.set(0.06 / flow_rate)
-                self.fwhm2.set(0.6 / flow_rate)
+                self.fwhm2.set(0.1 / flow_rate)
             except ZeroDivisionError:
                 pass
             except ValueError:
