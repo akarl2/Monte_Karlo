@@ -54,7 +54,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     time.sleep(1)
     rg = reactive_groups()
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, running, in_primary, in_situ_values_sec, Xn_list_sec, quick_add, comp_primary, comp_secondary
-    metrics_list = []
     in_situ_values = [[], [], [], [], [], [], [], [], []]
     in_situ_values_sec = [[], [], [], [], [], [], [], [], []]
     Xn_list, Xn_list_sec, byproducts, composition, composition_sec = [], [], [], [], []
@@ -217,6 +216,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         Xn_list.append(round((total_ct / workers) / total_ct_temp, 4))
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC, 'Iodine Value': IV}
         RXN_metric_value = metrics[end_metric_selection]
+        if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
+            test_interval = 1
         if end_metric_selection != '% EHC':
             if currentPID == PID_list[-1]:
                 process_queue.put(round(((end_metric_value / RXN_metric_value) * 100), 2))
@@ -243,8 +244,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                     for species in composition_sec:
                         composition.append(species)
                     test_interval = 40
-        if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
-            test_interval = 1
 
     def RXN_Status_sec(composition, byproducts):
         global test_interval, in_situ_values_sec, Xn_list_sec, running, comp_secondary, byproducts_secondary
@@ -289,6 +288,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
                    'Iodine Value': IV}
         RXN_metric_value_2 = metrics[end_metric_selection_sec]
+        if end_metric_value_upper_sec >= RXN_metric_value_2 >= end_metric_value_lower_sec:
+            test_interval = 1
         if end_metric_selection_sec != '% EHC':
             if currentPID == PID_list[-1]:
                 progress_queue_sec.put(round((end_metric_value_sec / RXN_metric_value_2) * 100), 2)
@@ -303,8 +304,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                 comp_secondary = composition
                 byproducts_secondary = byproducts
                 running = False
-        if end_metric_value_upper_sec >= RXN_metric_value_2 >= end_metric_value_lower_sec:
-            test_interval = 1
 
     while running:
         test_count += 1
