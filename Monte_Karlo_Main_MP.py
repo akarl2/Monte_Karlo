@@ -15,7 +15,7 @@ from matplotlib.backends.backend_tkagg import *
 import matplotlib.backends.backend_tkagg as tkagg
 
 import numpy as np
-import openpyxl
+from openpyxl import Workbook
 import customtkinter
 from tkinter import ttk, messagebox, simpledialog, filedialog
 import pandas
@@ -1144,6 +1144,10 @@ def export_all():
             data = list(map(list, zip(*data)))
             df = pandas.DataFrame(data)
             df.to_excel(writer, sheet_name='2_Aux', index=False, header=False, startrow=0, startcol=18)
+
+            workbook = writer.book
+            sheet_names = ['1_Summary', '1_In_Situ', '1_Aux', '2_Summary', '2_In_Situ', '2_Aux']
+            workbook._sheets.sort(key=lambda ws: sheet_names.index(ws.title))
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 if __name__ == "__main__":
