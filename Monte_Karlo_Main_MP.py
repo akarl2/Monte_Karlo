@@ -368,7 +368,7 @@ def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
     RM2.entries[14].insert(0, IV)
 
 def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_list):
-    global rxn_summary_df, Xn, total_samples
+    global rxn_summary_df, Xn, total_samples, byproducts_df
     comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in primary_comp_summary])
     sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
     RS = []
@@ -481,7 +481,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_lis
     show_Xn(Xn)
 
 def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values_sec, Xn_list_sec):
-    global rxn_summary_df_2, Xn_2, total_samples
+    global rxn_summary_df_2, Xn_2, total_samples, byproducts_df_2
     comp_summary_2 = collections.Counter(
         [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
          secondary_comp_summary])
@@ -1046,8 +1046,28 @@ def export_primary():
     else:
         with pandas.ExcelWriter(filepath) as writer:
             rxn_summary_df.to_excel(writer, sheet_name='1_Summary', index=True)
+            byproducts_df.to_excel(writer, sheet_name='1_Summary', index=True, startrow=0, startcol=18)
             Xn.to_excel(writer, sheet_name='1_In_Situ', index=True)
+            data = []
+            for row in range(RET.tableheight):
+                row_data = []
+                for column in range(RET.tablewidth):
+                    entry = RET.entries[row * RET.tablewidth + column]
+                    row_data.append(entry.get())
+                data.append(row_data)
+            df = pandas.DataFrame(data)
+            df.to_excel(writer, sheet_name='1_Aux', index=False, header=False)
 
+            data = []
+            for column in range(WD.tablewidth):
+                column_data = []
+                for row in range(WD.tableheight):
+                    entry = WD.entries[row + column * WD.tableheight]
+                    column_data.append(entry.get())
+                data.append(column_data)
+            data = list(map(list, zip(*data)))
+            df = pandas.DataFrame(data)
+            df.to_excel(writer, sheet_name='1_Aux', index=False, header=False, startrow=0, startcol=18)
 def export_secondary():
     filepath = filedialog.asksaveasfilename(defaultextension='.xlsx',
                                             filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
@@ -1056,7 +1076,28 @@ def export_secondary():
     else:
         with pandas.ExcelWriter(filepath) as writer:
             rxn_summary_df_2.to_excel(writer, sheet_name='2_Summary', index=True)
+            byproducts_df_2.to_excel(writer, sheet_name='2_Summary', index=True, startrow=0, startcol=18)
             Xn_2.to_excel(writer, sheet_name='2_In_Situ', index=True)
+            data = []
+            for row in range(RET.tableheight):
+                row_data = []
+                for column in range(RET.tablewidth):
+                    entry = RET.entries[row * RET.tablewidth + column]
+                    row_data.append(entry.get())
+                data.append(row_data)
+            df = pandas.DataFrame(data)
+            df.to_excel(writer, sheet_name='2_Aux', index=False, header=False)
+
+            data = []
+            for column in range(WD2.tablewidth):
+                column_data = []
+                for row in range(WD2.tableheight):
+                    entry = WD2.entries[row + column * WD2.tableheight]
+                    column_data.append(entry.get())
+                data.append(column_data)
+            data = list(map(list, zip(*data)))
+            df = pandas.DataFrame(data)
+            df.to_excel(writer, sheet_name='2_Aux', index=False, header=False, startrow=0, startcol=18)
 
 def export_all():
     filepath = filedialog.asksaveasfilename(defaultextension='.xlsx',
@@ -1066,9 +1107,43 @@ def export_all():
     else:
         with pandas.ExcelWriter(filepath) as writer:
             rxn_summary_df.to_excel(writer, sheet_name='1_Summary', index=True)
+            byproducts_df.to_excel(writer, sheet_name='1_Summary', index=True, startrow=0, startcol=18)
             Xn.to_excel(writer, sheet_name='1_In_Situ', index=True)
             rxn_summary_df_2.to_excel(writer, sheet_name='2_Summary', index=True)
+            byproducts_df_2.to_excel(writer, sheet_name='2_Summary', index=True, startrow=0, startcol=18)
             Xn_2.to_excel(writer, sheet_name='2_In_Situ', index=True)
+            data = []
+            for row in range(RET.tableheight):
+                row_data = []
+                for column in range(RET.tablewidth):
+                    entry = RET.entries[row * RET.tablewidth + column]
+                    row_data.append(entry.get())
+                data.append(row_data)
+            df = pandas.DataFrame(data)
+            df.to_excel(writer, sheet_name='1_Aux', index=False, header=False)
+            df.to_excel(writer, sheet_name='2_Aux', index=False, header=False)
+
+            data = []
+            for column in range(WD.tablewidth):
+                column_data = []
+                for row in range(WD.tableheight):
+                    entry = WD.entries[row + column * WD.tableheight]
+                    column_data.append(entry.get())
+                data.append(column_data)
+            data = list(map(list, zip(*data)))
+            df = pandas.DataFrame(data)
+            df.to_excel(writer, sheet_name='1_Aux', index=False, header=False, startrow=0, startcol=18)
+
+            data = []
+            for column in range(WD2.tablewidth):
+                column_data = []
+                for row in range(WD2.tableheight):
+                    entry = WD2.entries[row + column * WD2.tableheight]
+                    column_data.append(entry.get())
+                data.append(column_data)
+            data = list(map(list, zip(*data)))
+            df = pandas.DataFrame(data)
+            df.to_excel(writer, sheet_name='2_Aux', index=False, header=False, startrow=0, startcol=18)
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 if __name__ == "__main__":
@@ -1212,7 +1287,6 @@ if __name__ == "__main__":
             global quick_add_comp
             quick_add_comp = [self.e1.get(), float(self.e2.get())]
             self.destroy()
-
 
     class RxnEntryTable(tkinter.Frame):
         def __init__(self, master=tab1):
