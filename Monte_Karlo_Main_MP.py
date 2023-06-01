@@ -329,6 +329,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     else:
         return {"comp_primary": comp_primary, "comp_secondary": comp_secondary, "in_situ_values": in_situ_values, 'in_situ_values_sec': in_situ_values_sec, "Xn_list": Xn_list, "Xn_list_sec": Xn_list_sec, 'byproducts_primary': byproducts_primary, 'byproducts_secondary': byproducts_secondary}
 
+
 def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[8].delete(0, tkinter.END)
     RM.entries[8].insert(0, EHC)
@@ -347,6 +348,7 @@ def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[13].insert(0, COC)
     RM.entries[14].delete(0, tkinter.END)
     RM.entries[14].insert(0, IV)
+
 
 def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
     RM2.entries[8].delete(0, tkinter.END)
@@ -887,6 +889,7 @@ def multiprocessing_sim():
                 return
             consolidate_results(results)
             Buttons.Simulate.config(text="Simulate", state="normal")
+
 def consolidate_results(results):
     primary_comp_summary, secondary_comp_summary = [], []
     byproducts_primary, byproducts_secondary = [], []
@@ -1068,6 +1071,7 @@ def export_primary():
             data = list(map(list, zip(*data)))
             df = pandas.DataFrame(data)
             df.to_excel(writer, sheet_name='1_Aux', index=False, header=False, startrow=0, startcol=18)
+
 def export_secondary():
     filepath = filedialog.asksaveasfilename(defaultextension='.xlsx',
                                             filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
