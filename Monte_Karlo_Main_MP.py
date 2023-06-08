@@ -1889,9 +1889,6 @@ if __name__ == "__main__":
     R18Data = R18Data()
     R19Data = R19Data()
 
-    for i in range (1,20):
-        globals()['R{}Data'.format(i)].get_data()
-
     rg = reactive_groups()
 
     window.mainloop()
