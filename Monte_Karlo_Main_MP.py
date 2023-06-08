@@ -1851,46 +1851,12 @@ if __name__ == "__main__":
     sim = SimStatus()
 
     # run update_table if user changes value in RET
-    RET.entries[16].bind('<FocusOut>', lambda *args, entry=16, index=0, cell=16: check_entry(entry, index, cell))
-    RET.entries[32].bind('<FocusOut>', lambda *args, entry=32, index=1, cell=32: check_entry(entry, index, cell))
-    RET.entries[48].bind('<FocusOut>', lambda *args, entry=48, index=2, cell=48: check_entry(entry, index, cell))
-    RET.entries[64].bind('<FocusOut>', lambda *args, entry=64, index=3, cell=64: check_entry(entry, index, cell))
-    RET.entries[80].bind('<FocusOut>', lambda *args, entry=80, index=4, cell=80: check_entry(entry, index, cell))
-    RET.entries[96].bind('<FocusOut>', lambda *args, entry=96, index=5, cell=96: check_entry(entry, index, cell))
-    RET.entries[112].bind('<FocusOut>', lambda *args, entry=112, index=6, cell=112: check_entry(entry, index, cell))
-    RET.entries[128].bind('<FocusOut>', lambda *args, entry=128, index=7, cell=128: check_entry(entry, index, cell))
-    RET.entries[144].bind('<FocusOut>', lambda *args, entry=144, index=8, cell=144: check_entry(entry, index, cell))
-    RET.entries[160].bind('<FocusOut>', lambda *args, entry=160, index=9, cell=160: check_entry(entry, index, cell))
-    RET.entries[176].bind('<FocusOut>', lambda *args, entry=176, index=10, cell=176: check_entry(entry, index, cell))
-    RET.entries[192].bind('<FocusOut>', lambda *args, entry=192, index=11, cell=192: check_entry(entry, index, cell))
-    RET.entries[208].bind('<FocusOut>', lambda *args, entry=208, index=12, cell=208: check_entry(entry, index, cell))
-    RET.entries[224].bind('<FocusOut>', lambda *args, entry=224, index=13, cell=224: check_entry(entry, index, cell))
-    RET.entries[240].bind('<FocusOut>', lambda *args, entry=240, index=14, cell=240: check_entry(entry, index, cell))
-    RET.entries[256].bind('<FocusOut>', lambda *args, entry=256, index=15, cell=256: check_entry(entry, index, cell))
-    RET.entries[272].bind('<FocusOut>', lambda *args, entry=272, index=16, cell=272: check_entry(entry, index, cell))
-    RET.entries[288].bind('<FocusOut>', lambda *args, entry=288, index=17, cell=288: check_entry(entry, index, cell))
-    RET.entries[304].bind('<FocusOut>', lambda *args, entry=304, index=18, cell=304: check_entry(entry, index, cell))
+    for i in range(16, 305, 16):
+        RET.entries[i].bind("<FocusOut>", lambda *args, entry=i, index=int(i/16-1), cell=i: check_entry(entry, index, cell))
 
-
-    Entry_masses[0].bind("<KeyRelease>", lambda *args, index=0, cell=16: RET.update_table(index, cell))
-    Entry_masses[1].bind("<KeyRelease>", lambda *args, index=1, cell=32: RET.update_table(index, cell))
-    Entry_masses[2].bind("<KeyRelease>", lambda *args, index=2, cell=48: RET.update_table(index, cell))
-    Entry_masses[3].bind("<KeyRelease>", lambda *args, index=3, cell=64: RET.update_table(index, cell))
-    Entry_masses[4].bind("<KeyRelease>", lambda *args, index=4, cell=80: RET.update_table(index, cell))
-    Entry_masses[5].bind("<KeyRelease>", lambda *args, index=5, cell=96: RET.update_table(index, cell))
-    Entry_masses[6].bind("<KeyRelease>", lambda *args, index=6, cell=112: RET.update_table(index, cell))
-    Entry_masses[7].bind("<KeyRelease>", lambda *args, index=7, cell=128: RET.update_table(index, cell))
-    Entry_masses[8].bind("<KeyRelease>", lambda *args, index=8, cell=144: RET.update_table(index, cell))
-    Entry_masses[9].bind("<KeyRelease>", lambda *args, index=9, cell=160: RET.update_table(index, cell))
-    Entry_masses[10].bind("<KeyRelease>", lambda *args, index=10, cell=176: RET.update_table(index, cell))
-    Entry_masses[11].bind("<KeyRelease>", lambda *args, index=11, cell=192: RET.update_table(index, cell))
-    Entry_masses[12].bind("<KeyRelease>", lambda *args, index=12, cell=208: RET.update_table(index, cell))
-    Entry_masses[13].bind("<KeyRelease>", lambda *args, index=13, cell=224: RET.update_table(index, cell))
-    Entry_masses[14].bind("<KeyRelease>", lambda *args, index=14, cell=240: RET.update_table(index, cell))
-    Entry_masses[15].bind("<KeyRelease>", lambda *args, index=15, cell=256: RET.update_table(index, cell))
-    Entry_masses[16].bind("<KeyRelease>", lambda *args, index=16, cell=272: RET.update_table(index, cell))
-    Entry_masses[17].bind("<KeyRelease>", lambda *args, index=17, cell=288: RET.update_table(index, cell))
-    Entry_masses[18].bind("<KeyRelease>", lambda *args, index=18, cell=304: RET.update_table(index, cell))
+    # run update_table if user changes value in RET
+    for i in range(0, 19):
+        Entry_masses[i].bind("<KeyRelease>", lambda *args, index=i, cell=int(i*16+16): RET.update_table(index, cell))
 
 
     window.bind('<Control-s>', lambda *args: initialize_sim())
@@ -1922,6 +1888,9 @@ if __name__ == "__main__":
     R17Data = R17Data()
     R18Data = R18Data()
     R19Data = R19Data()
+
+    for i in range (1,20):
+        globals()['R{}Data'.format(i)].get_data()
 
     rg = reactive_groups()
 
