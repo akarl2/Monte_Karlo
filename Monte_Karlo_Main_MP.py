@@ -984,24 +984,31 @@ def quick_add():
 #-------------------------------------------------APC Functions----------------------------------------------------------#
 def run_APC(rxn_summary_df, label):
     APCParametersWindow(window)
-    if apc_params[0] != "" and apc_params[1] != "" and apc_params[2] != "":
+    if apc_params[0] != "" and apc_params[1] != "" and apc_params[2] != "" and apc_params[3] != "":
         APC_Flow_Rate = apc_params[0]
         APC_FWHM = apc_params[1]
         APC_FWHM2 = apc_params[2]
-        APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, rxn_summary_df,label)
+        APC_temp = apc_params[3]
+        APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_temp, rxn_summary_df, label)
 
     else:
-        messagebox.showerror("Error", "Please enter valid parameters for flow rate and FWHM.")
+        messagebox.showerror("Error", "Please enter valid parameters for flow rate, FWHM, and temp.")
 
-def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, rxn_summary_df, label):
+def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_temp, rxn_summary_df, label):
     global APC_df, apc_params
     APC_comp = rxn_summary_df
     APC_comp = APC_comp.reset_index()
     APC_comp = APC_comp[['MW', 'Wt,%', 'Name']]
     APC_comp = APC_comp[:-1]
-    STD_Equation_params = np.array([0.0764, -1.7619, 15.963, -70.62, 150.77, -118.59])
-    Low_MW_Equation_params = np.array([-0.2736, 2.4619, -8.2219, 11.357, 0.634])
-    High_MW_Equation_params = np.array([0.0102, -0.1595, 3.2674])
+    print(str(APC_temp))
+    if str(APC_temp) == "35.0":
+        STD_Equation_params = np.array([0.0236, -0.6399, 6.5554 , -31.7505, 71.8922, -56.3224])
+        Low_MW_Equation_params = np.array([-2.3929, 23.5376, -84.6780, 130.2941, -65.8746])
+        High_MW_Equation_params = np.array([0.1656, -1.9258, 8.1094])
+    elif str(APC_temp) == "55.0":
+        STD_Equation_params = np.array([0.0264, -0.7016, 7.0829, -33.9565, 76.4028, -59.9091])
+        Low_MW_Equation_params = np.array([-3.9837, 39.3822, -143.5709, 227.0508, -125.0942])
+        High_MW_Equation_params = np.array([0.1646, -1.9211, 8.1197])
     APC_comp['Log(MW)'] = np.log10(APC_comp['MW'])
     APC_comp.loc[:, 'FWHM(min)'] = 0.000
     APC_comp.loc[:, 'RT(min)'] = 0.000
@@ -1231,6 +1238,10 @@ if __name__ == "__main__":
             self.fwhm2 = DoubleVar(value=0.1) # Set default FWHM for 100K MW
             self.e3 = Entry(master, width=18, textvariable=self.fwhm2)
             self.e3.grid(row=2, column=1)
+            Label(master, text="Temperature (°C):").grid(row=3, column=0)
+            self.temp = DoubleVar(value=35) # Set default temperature to 35°C
+            self.e4 = Entry(master, width=18, textvariable=self.temp)
+            self.e4.grid(row=3, column=1)
             self.flow_rate.trace('w', self.update_fwhm)
             return self.e1
 
@@ -1261,7 +1272,7 @@ if __name__ == "__main__":
 
         def ok(self):
             global apc_params
-            apc_params = [self.flow_rate.get(), self.fwhm.get(), self.fwhm2.get()]
+            apc_params = [self.flow_rate.get(), self.fwhm.get(), self.fwhm2.get(), self.temp.get()]
             self.destroy()
 
     class QuickAddWindow(simpledialog.Dialog):
