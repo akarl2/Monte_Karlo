@@ -796,10 +796,9 @@ def initialize_sim(workers):
     end_metric_selection, end_metric_selection_sec = str(RXN_EM.get()), str(RXN_EM_Entry_2.get())
     if "Metric" in end_metric_selection:
         messagebox.showinfo("Error", "Please select valid end metric(s)")
-        return "Error"
         if RXN_EM_2_Active_status and "Metric" in end_metric_selection_sec:
             messagebox.showinfo("Error", "Please select valid end metric(s)")
-            return "Error"
+        return "Error"
     cell = 16
     index = 0
     sn_dict = {}
@@ -845,7 +844,7 @@ def multiprocessing_sim():
     if __name__ == "__main__":
         Buttons.Simulate.config(state="disabled", text="Running...")
         sim.progress['value'], sim.progress_2['value'] = 0, 0
-        global running
+        global running 
         running = True
         workers = NUM_OF_SIM.get()
         workers = int(workers)
@@ -1002,12 +1001,12 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_temp, rxn_summary_df, label):
     APC_comp = APC_comp[:-1]
     if str(APC_temp) == "35.0":
         STD_Equation_params = np.array([0.0236, -0.6399, 6.5554 , -31.7505, 71.8922, -56.3224])
-        Low_MW_Equation_params = np.array([-2.3929, 23.5376, -84.6780, 130.2941, -65.8746])
-        High_MW_Equation_params = np.array([0.1656, -1.9258, 8.1094])
+        Low_MW_Equation_params = np.array([-1.4443, 13.5759, -48.4406, 76.9940, -40.3772])
+        High_MW_Equation_params = np.array([0.1606, -1.8779, 7.9957])
     elif str(APC_temp) == "55.0":
         STD_Equation_params = np.array([0.0264, -0.7016, 7.0829, -33.9565, 76.4028, -59.9091])
-        Low_MW_Equation_params = np.array([-3.9837, 39.3822, -143.5709, 227.0508, -125.0942])
-        High_MW_Equation_params = np.array([0.1646, -1.9211, 8.1197])
+        Low_MW_Equation_params = np.array([-1.9097, 18.0005, -64.1695, 101.7605, -54.9071])
+        High_MW_Equation_params = np.array([0.1621, -1.8972, 8.0633])
     APC_comp['Log(MW)'] = np.log10(APC_comp['MW'])
     APC_comp.loc[:, 'FWHM(min)'] = 0.000
     APC_comp.loc[:, 'RT(min)'] = 0.000
