@@ -1000,7 +1000,7 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_temp, rxn_summary_df, label):
     APC_comp = APC_comp[['MW', 'Wt,%', 'Name']]
     APC_comp = APC_comp[:-1]
     if str(APC_temp) == "35.0":
-        STD_Equation_params = np.array([0.0236, -0.6399, 6.5554 , -31.7505, 71.8922, -56.3224])
+        STD_Equation_params = np.array([0.0236, -0.6399, 6.5554, -31.7505, 71.8922, -56.3224])
         Low_MW_Equation_params = np.array([-1.4443, 13.5759, -48.4406, 76.9940, -40.3772])
         High_MW_Equation_params = np.array([0.1606, -1.8779, 7.9957])
     elif str(APC_temp) == "55.0":
