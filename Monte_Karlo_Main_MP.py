@@ -1002,11 +1002,11 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_temp, rxn_summary_df, label):
     if str(APC_temp) == "35.0":
         STD_Equation_params = np.array([0.0236, -0.6399, 6.5554, -31.7505, 71.8922, -56.3224])
         Low_MW_Equation_params = np.array([-1.4443, 13.5759, -48.4406, 76.9940, -40.3772])
-        High_MW_Equation_params = np.array([0.1606, -1.8779, 7.9957])
+        High_MW_Equation_params = np.array([0.1411, -1.6901, 7.5488])
     elif str(APC_temp) == "55.0":
         STD_Equation_params = np.array([0.0264, -0.7016, 7.0829, -33.9565, 76.4028, -59.9091])
         Low_MW_Equation_params = np.array([-1.9097, 18.0005, -64.1695, 101.7605, -54.9071])
-        High_MW_Equation_params = np.array([0.1621, -1.8972, 8.0633])
+        High_MW_Equation_params = np.array([0.1417, -1.7016, 7.5978])
     APC_comp['Log(MW)'] = np.log10(APC_comp['MW'])
     APC_comp.loc[:, 'FWHM(min)'] = 0.000
     APC_comp.loc[:, 'RT(min)'] = 0.000

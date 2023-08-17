@@ -571,6 +571,29 @@ class Bisphenol_A:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.prgID]]
 
+class Butyl_Acetate:
+    def __init__(self):
+        self.name = "Butyl Acetate"
+        self.sn = "BuAc"
+        self.formula = "C6H12O2"
+        self.mw = 116.16
+        self.density = 0.883
+        self.mass = self.mw
+        self.prgID = "COOC"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+
 #-------------------------------------------Amines----------------------------#
 class DETA:
     def __init__(self):
