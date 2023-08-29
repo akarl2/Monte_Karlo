@@ -691,15 +691,20 @@ def show_Xn_sec(Xn_2):
                        height=1000, align='center', maxcellwidth=1000)
     Xn_table_2.show()
 
-def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df, label):
+def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, label):
     fig, ax = plt.subplots(figsize=(15, 6))
     ax.plot(APC_df.index, APC_df['Sum'], linewidth=0.75)
     ax.set_xlabel('Time (min)')
     ax.set_ylabel('Intensity (a.u.)')
     ax.set_title(f'{label} Theoretical APC')
-    ax.set_xticks(np.arange(0, 12.25, 0.25))
-    ax.set_xticklabels(np.arange(0, 12.25, 0.25), rotation=-35)
-    ax.set_xlim(0, 12)
+    if APC_Solvent == "THF":
+        ax.set_xticks(np.arange(0, 12.25, 0.25))
+        ax.set_xticklabels(np.arange(0, 12.25, 0.25), rotation=-35)
+        ax.set_xlim(0, 12)
+    elif APC_Solvent == "Water":
+        ax.set_xticks(np.arange(12, 25.25, 0.25))
+        ax.set_xticklabels(np.arange(12, 25.25, 0.25), rotation=-35)
+        ax.set_xlim(12, 25)
 
     textstr = f'Flow Rate: {APC_Flow_Rate:.1f} ml/min\nFWHM (100 MW): {APC_FWHM:.3f} min\nFWHM (100K MW): {APC_FWHM2:.3f} min'
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
@@ -988,30 +993,37 @@ def run_APC(rxn_summary_df, label):
         APC_FWHM = apc_params[1]
         APC_FWHM2 = apc_params[2]
         APC_temp = apc_params[3]
-        APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_temp, rxn_summary_df, label)
-
+        APC_Solvent = apc_params[4]
+        APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_temp, APC_Solvent, rxn_summary_df, label)
     else:
         messagebox.showerror("Error", "Please enter valid parameters for flow rate, FWHM, and temp.")
 
-def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_temp, rxn_summary_df, label):
+def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_temp, APC_Solvent, rxn_summary_df, label):
     global APC_df, apc_params
     APC_comp = rxn_summary_df
     APC_comp = APC_comp.reset_index()
     APC_comp = APC_comp[['MW', 'Wt,%', 'Name']]
     APC_comp = APC_comp[:-1]
-    if str(APC_temp) == "35.0":
+    if str(APC_temp) == "35" and APC_Solvent == "THF":
         STD_Equation_params = np.array([0.0236, -0.6399, 6.5554, -31.7505, 71.8922, -56.3224])
         Low_MW_Equation_params = np.array([-1.4443, 13.5759, -48.4406, 76.9940, -40.3772])
         High_MW_Equation_params = np.array([0.1411, -1.6901, 7.5488])
-    elif str(APC_temp) == "55.0":
+    elif str(APC_temp) == "55" and APC_Solvent == "THF":
         STD_Equation_params = np.array([0.0264, -0.7016, 7.0829, -33.9565, 76.4028, -59.9091])
         Low_MW_Equation_params = np.array([-1.9097, 18.0005, -64.1695, 101.7605, -54.9071])
         High_MW_Equation_params = np.array([0.1417, -1.7016, 7.5978])
+    elif APC_Solvent == "Water":
+        STD_Equation_params = np.array([-0.08236, 1.3094, -7.7095, 20.5979, -26.0739, 24.0511])
     APC_comp['Log(MW)'] = np.log10(APC_comp['MW'])
     APC_comp.loc[:, 'FWHM(min)'] = 0.000
     APC_comp.loc[:, 'RT(min)'] = 0.000
-    MIN_MW = np.log10(621)
-    MAX_MW = np.log10(290000)
+
+    if APC_Solvent == "THF":
+        MIN_MW = np.log10(621)
+        MAX_MW = np.log10(290000)
+    elif APC_Solvent == "Water":
+        MIN_MW = np.log10(1)
+        MAX_MW = np.log10(1000000)
 
     FWHM_slope = (APC_FWHM2 - APC_FWHM) / 99900
     FWHM_yint = APC_FWHM - (APC_FWHM2 - APC_FWHM) / 99900 * 100
@@ -1028,7 +1040,10 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_temp, rxn_summary_df, label):
     APC_columns = []
     for i in range(len(APC_comp)):
         APC_columns.append(APC_comp['Name'][i])
-    APC_rows = list(range(0, 120001))
+    if APC_Solvent == "THF":
+        APC_rows = list(range(0, 120001))
+    elif APC_Solvent == "Water":
+        APC_rows = list(range(12000, 25001))
     APC_df = pandas.DataFrame(0, index=APC_rows, columns=APC_columns)
     APC_df.index.name = 'Time'
     APC_df.index = APC_df.index * 0.001
@@ -1043,7 +1058,7 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_temp, rxn_summary_df, label):
     APC_df = calc_apc_matrix(APC_comp, APC_df)
 
     APC_df['Sum'] = APC_df.sum(axis=1)
-    show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_comp, APC_df, label)
+    show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, label)
 
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
 def export_primary():
@@ -1224,22 +1239,36 @@ if __name__ == "__main__":
         def body(self, master):
             self.title("APC Parameters")
             self.iconbitmap("testtube.ico")
+
             Label(master, text="Flow Rate (ml/min):").grid(row=0, column=0)
-            self.flow_rate = DoubleVar(value=1.0)  # Set default value to 1.0 ml/min
+            self.flow_rate = DoubleVar(value=0.6)  # Set default value to 1.0 ml/min
             self.e1 = Entry(master, width=18, textvariable=self.flow_rate)
             self.e1.grid(row=0, column=1)
+
             Label(master, text="100 MW FWHM (min):").grid(row=1, column=0)
             self.fwhm = DoubleVar(value=0.060) # Set default FWHM for 100 MW
             self.e2 = Entry(master, width=18, textvariable=self.fwhm)
             self.e2.grid(row=1, column=1)
+
             Label(master, text="100K MW FWHM (min):").grid(row=2, column=0)
             self.fwhm2 = DoubleVar(value=0.1) # Set default FWHM for 100K MW
             self.e3 = Entry(master, width=18, textvariable=self.fwhm2)
             self.e3.grid(row=2, column=1)
+
             Label(master, text="Temperature (°C):").grid(row=3, column=0)
-            self.temp = DoubleVar(value=35) # Set default temperature to 35°C
-            self.e4 = Entry(master, width=18, textvariable=self.temp)
-            self.e4.grid(row=3, column=1)
+            self.temp = IntVar(value=35) # Set default temperature to 35°C
+            self.temp_choices = [35, 55]
+            self.combobox = ttk.Combobox(master, values=self.temp_choices, textvariable=self.temp)
+            self.combobox.grid(row=3, column=1)
+            self.combobox.config(width=15)
+
+            Label(master, text="Solvent:").grid(row=4, column=0)
+            self.solvent = StringVar(value="THF") # Set default solvent to THF
+            self.solvent_choices = ["THF", "Water"]
+            self.combobox_solvent = ttk.Combobox(master, values=self.solvent_choices, textvariable=self.solvent)
+            self.combobox_solvent.grid(row=4, column=1)
+            self.combobox_solvent.config(width=15)
+
             self.flow_rate.trace('w', self.update_fwhm)
             return self.e1
 
@@ -1270,7 +1299,7 @@ if __name__ == "__main__":
 
         def ok(self):
             global apc_params
-            apc_params = [self.flow_rate.get(), self.fwhm.get(), self.fwhm2.get(), self.temp.get()]
+            apc_params = [self.flow_rate.get(), self.fwhm.get(), self.fwhm2.get(), self.temp.get(), self.solvent.get()]
             self.destroy()
 
     class QuickAddWindow(simpledialog.Dialog):
