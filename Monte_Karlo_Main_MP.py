@@ -706,11 +706,11 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
         ax.set_xticklabels(np.arange(12, 25.25, 0.25), rotation=-35)
         ax.set_xlim(12, 25)
 
-    textstr = f'Flow Rate: {APC_Flow_Rate:.1f} ml/min\nFWHM (100 MW): {APC_FWHM:.3f} min\nFWHM (100K MW): {APC_FWHM2:.3f} min'
+    textstr = f'Solvent: {APC_Solvent} \nFlow Rate: {APC_Flow_Rate:.1f} ml/min\nFWHM (100 MW): {APC_FWHM:.3f} min\nFWHM (100K MW): {APC_FWHM2:.3f} min'
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
     a = ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
     time_textstr = f'Time (min): '
-    b = ax.text(0.05, 0.75, time_textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+    b = ax.text(0.05, 0.7, time_textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
     fig.canvas.draw()
 
