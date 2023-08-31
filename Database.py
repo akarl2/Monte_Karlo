@@ -1281,6 +1281,72 @@ class Azelaic_acid:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.prgID]]
 
+class Pelargonic_acid:
+    def __init__(self):
+        self.name = "Pelargonic acid"
+        self.sn = "PelAc"
+        self.formula = "C9H18O2"
+        self.mw = 158.24
+        self.density = 0.89
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.prgk = 1
+        self.cprgID = "None"
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = "None"
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = "None"
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class Pimelic_acid:
+    def __init__(self):
+        self.name = "Pimelic acid"
+        self.sn = "PiAc"
+        self.formula = "C7H12O4"
+        self.mw = 160.17
+        self.density = 1.2
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.prgk = 1
+        self.cprgID = "None"
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = "None"
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = "None"
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
+class Undecanedioic_acid:
+    def __init__(self):
+        self.name = "Undecanedioic acid"
+        self.sn = "UndAc"
+        self.formula = "C11H20O4"
+        self.mw = 216.28
+        self.density = 1.2
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.prgk = 1
+        self.cprgID = "None"
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = "None"
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = "None"
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
 class Itaconic_acid:
     def __init__(self):
         self.name = "Itaconic acid"
@@ -1506,6 +1572,9 @@ quick_add_dict = {
     "TEPA (Dist)": [["LTEPA", 0.45057], ["AETETA", 0.10475], ["AEPEEDA", 0.32109], ["PEDETA", 0.10282], ["PEHA", 0.02077]],
     'C8-18_OH': [['C8_OH', 0.00043], ['C10_OH', 0.00144], ['C12_OH', 0.6786], ['C14_OH', 0.24907], ['C16_OH', 0.06759], ['C18_OH', 0.00288]],
     'Castor Oil': [['Gly_1_RA_3', .85], ['C18_1_Gly_1_RA_2', 0.0130], ['C181_1_Gly_1_RA_2', 0.0550], ['C182_1_Gly_1_RA_2', 0.0677], ['C181_1_C182_1_Gly_1_RA_1', 0.0072], ['C181_1_C182_1_Gly_1_RA_1', 0.0072]],
+    'Emerox 1110': [['Pelargonic_acid', 0.02], ['Pimelic_acid', 0.07], ['Azelaic_acid', 0.7900], ['Undecanedioic_acid', 0.1200]],
+    'Emerox 1144': [['Pelargonic_acid', 0.0004], ['Pimelic_acid', 0.0300], ['Azelaic_acid', 0.8896], ['Undecanedioic_acid', 0.0800]],
+    'Emerox 2195': [['Pelargonic_acid', 0.0005], ['Pimelic_acid', 0.0150], ['Azelaic_acid', 0.9595], ['Undecanedioic_acid', 0.0250]],
 }
 
 class Clear:
