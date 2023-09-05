@@ -1270,13 +1270,20 @@ if __name__ == "__main__":
             self.combobox_solvent.config(width=15)
 
             self.flow_rate.trace('w', self.update_fwhm)
+            self.solvent.trace('w', self.update_fwhm)
+
             return self.e1
 
         def update_fwhm(self, *args):
             try:
                 flow_rate = self.flow_rate.get()
-                self.fwhm.set(0.06 / flow_rate)
-                self.fwhm2.set(0.1 / flow_rate)
+                if self.solvent.get() == "Water":
+                    self.flow_rate.set(0.5)
+                    self.fwhm.set(0.35)
+                    self.fwhm2.set(0.35)
+                elif self.solvent.get() == "THF":
+                    self.fwhm.set(0.06 / flow_rate)
+                    self.fwhm2.set(0.1 / flow_rate)
             except ZeroDivisionError:
                 pass
             except ValueError:
