@@ -8,6 +8,7 @@ import tkinter
 import time
 from tkinter import *
 import mplcursors
+from scipy.integrate import trapz
 
 from matplotlib.widgets import Cursor
 from mpl_toolkits import *
@@ -710,7 +711,7 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
 
     fig.canvas.draw()
 
-    def on_move(event, b):
+    def on_move(event):
         xdata = event.xdata
         if xdata is not None:
             closest_peaks = APC_comp.iloc[(APC_comp['RT(min)'] - xdata).abs().argsort()[:5]]
@@ -728,7 +729,7 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
             b.set_text(f'Time (min): ')
         fig.canvas.draw()
 
-    fig.canvas.mpl_connect('motion_notify_event', lambda event: on_move(event, b))
+    fig.canvas.mpl_connect('motion_notify_event', lambda event: on_move(event))
 
     root = tkinter.Tk()
     root.title(f'Monte Karlo - {label} Theoretical APC')
