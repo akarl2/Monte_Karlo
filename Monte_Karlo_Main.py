@@ -308,16 +308,15 @@ def simulate(starting_materials, starting_materials_sec):
             test_interval = 1
         update_metrics_sec(TAV, AV, OH, EHC, COC, IV)
 
+    total_time_sum = 0.0
+    cycles_completed = 0
     while running:
         test_count += 1
         weights = []
         chemical = []
-        for i, chemicals in enumerate(composition):
-            index = 0
-            for group in chemicals[0]:
-                chemical.append([i, index, group[0]])
-                weights.append(group[1])
-                index += 1
+        time_1_start = time.time()
+        chemical.extend([(i, index, group[0]) for i, chemicals in enumerate(composition) for index, group in enumerate(chemicals[0])])
+        weights.extend([group[1] for chemicals in composition for group in chemicals[0]])
         groups = random.choices(chemical, weights, k=2)
         start = time.time()
         while groups[0][0] == groups[1][0] or check_react(groups) is False:
@@ -337,8 +336,14 @@ def simulate(starting_materials, starting_materials_sec):
                     break
         stop = time.time()
         update_comp(composition, groups)
-
-
+        total_time = time.time() - time_1_start
+        total_time_sum += total_time
+        cycles_completed += 1
+        if cycles_completed == 100:
+            average_time = total_time_sum / 100
+            print(f'Average Time for 100 Cycles: {round(average_time, 4)}')
+            total_time_sum = 0.0
+            cycles_completed = 0
 def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[8].delete(0, tkinter.END)
     RM.entries[8].insert(0, EHC)

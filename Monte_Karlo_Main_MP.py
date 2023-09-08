@@ -309,12 +309,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         test_count += 1
         weights = []
         chemical = []
-        for i, chemicals in enumerate(composition):
-            index = 0
-            for group in chemicals[0]:
-                chemical.append([i, index, group[0]])
-                weights.append(group[1])
-                index += 1
+        chemical.extend([(i, index, group[0]) for i, chemicals in enumerate(composition) for index, group in enumerate(chemicals[0])])
+        weights.extend([group[1] for chemicals in composition for group in chemicals[0]])
         groups = random.choices(chemical, weights, k=2)
         start = time.time()
         while groups[0][0] == groups[1][0] or check_react(groups) is False:
