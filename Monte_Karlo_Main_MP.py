@@ -708,6 +708,8 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
     a = ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
     time_textstr = f'Time (min): '
     b = ax.text(0.05, 0.7, time_textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+    ingegrated_area = f'Integrated Area: '
+    c = ax.text(0.05, 0.6, ingegrated_area, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
 
     fig.canvas.draw()
 
@@ -748,18 +750,38 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
     button_close = tkinter.Button(root, text="Close", command=root.destroy)
     button_close.pack()
 
-    x = np.array(APC_df.index)
-    y = np.array(APC_df['Sum'])
+    start_time_label = tkinter.Label(root, text="Start Time (min)")
+    end_time_label = tkinter.Label(root, text="End Time (min)")
+    start_time_entry = tkinter.Entry(root)
+    end_time_entry = tkinter.Entry(root)
+    start_time_entry.insert(0, "12.00")
+    end_time_entry.insert(0, "25.00")
+    start_time_entry.pack()
+    end_time_entry.pack()
 
-    indicies = np.where((x > 21.377) & (x < 23))
+    def calculate_area():
+        # Get the time range from the Entry fields
+        start_time = float(start_time_entry.get())
+        end_time = float(end_time_entry.get())
 
-    x_range = x[indicies]
-    y_range = y[indicies]
+        x = np.array(APC_df.index)
+        y = np.array(APC_df['Sum'])
 
-    area_range = simps(y_range, x_range)
-    total_area = simps(y, x)
-    area_percent = area_range / total_area * 100
-    print(f'{label} APC Area Percent: {area_percent:.2f}%')
+        # Filter data based on the time range
+        indicies = np.where((x > start_time) & (x < end_time))
+
+        x_range = x[indicies]
+        y_range = y[indicies]
+
+        area_range = simps(y_range, x_range)
+        total_area = simps(y, x)
+        area_percent = area_range / total_area * 100
+        c.set_text(f'Integrated Area: {area_percent:.2f}%')
+
+        fig.canvas.draw()
+
+    submit_button = tkinter.Button(root, text="Calculate Area", command=calculate_area)
+    submit_button.pack()
 
     root.mainloop()
 
