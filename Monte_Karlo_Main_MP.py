@@ -10,7 +10,7 @@ from tkinter import *
 import mplcursors
 from scipy.integrate import trapz, simps
 
-from matplotlib.widgets import Cursor
+from matplotlib.widgets import Cursor, Slider, SpanSelector
 from mpl_toolkits import *
 from matplotlib.backends.backend_tkagg import *
 import matplotlib.backends.backend_tkagg as tkagg
@@ -731,34 +731,6 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
             b.set_text(f'Time (min): ')
         fig.canvas.draw()
 
-    fig.canvas.mpl_connect('motion_notify_event', lambda event: on_move(event))
-
-    root = tkinter.Tk()
-    root.title(f'Monte Karlo - {label} Theoretical APC')
-    root.iconbitmap("testtube.ico")
-    canvas = FigureCanvasTkAgg(fig, master=root)
-    canvas.draw()
-    canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
-    toolbar = NavigationToolbar2Tk(canvas, root)
-    toolbar.update()
-    toolbar.pack()
-    columns = ("Name", "Retention Time (min)", "MW(g/mol)", "Wt,%")
-    table = ttk.Treeview(root, columns=columns, show="headings", height=5)
-    for col in columns:
-        table.heading(col, text=col)
-    table.pack()
-    button_close = tkinter.Button(root, text="Close", command=root.destroy)
-    button_close.pack()
-
-    start_time_label = tkinter.Label(root, text="Start Time (min)")
-    end_time_label = tkinter.Label(root, text="End Time (min)")
-    start_time_entry = tkinter.Entry(root)
-    end_time_entry = tkinter.Entry(root)
-    start_time_entry.insert(0, "12.00")
-    end_time_entry.insert(0, "25.00")
-    start_time_entry.pack()
-    end_time_entry.pack()
-
     def calculate_area():
         # Get the time range from the Entry fields
         start_time = float(start_time_entry.get())
@@ -780,8 +752,84 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
 
         fig.canvas.draw()
 
+    fig.canvas.mpl_connect('motion_notify_event', lambda event: on_move(event))
+
+    root = tkinter.Tk()
+    root.title(f'Monte Karlo - {label} Theoretical APC')
+    root.iconbitmap("testtube.ico")
+    canvas = FigureCanvasTkAgg(fig, master=root)
+    canvas.draw()
+    canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+    toolbar = NavigationToolbar2Tk(canvas, root)
+    toolbar.update()
+    toolbar.pack()
+    columns = ("Name", "Retention Time (min)", "MW(g/mol)", "Wt,%")
+    table = ttk.Treeview(root, columns=columns, show="headings", height=5)
+    for col in columns:
+        table.heading(col, text=col)
+    table.pack()
+    button_close = tkinter.Button(root, text="Close", command=root.destroy)
+    button_close.pack()
+
+    start_time_entry = tkinter.Entry(root)
+    end_time_entry = tkinter.Entry(root)
+    start_time_entry.insert(0, "12.00")
+    end_time_entry.insert(0, "25.00")
+    start_time_entry.pack()
+    end_time_entry.pack()
     submit_button = tkinter.Button(root, text="Calculate Area", command=calculate_area)
     submit_button.pack()
+
+    # Create vertical bars for start and end times
+    start_time = 12.0
+    end_time = 25.0
+    start_time_line = ax.axvline(start_time, color='red', linestyle='--', linewidth=2, picker=True)
+    end_time_line = ax.axvline(end_time, color='red', linestyle='--', linewidth=2, picker=True)
+
+    # Variables to track the dragging state
+    dragging_start = False
+    dragging_end = False
+
+    # Function to handle mouse button press events
+    def on_press(event):
+        global dragging_start, dragging_end
+        if event.button == 1:
+            if start_time_line.contains(event)[0]:
+                dragging_start = True
+            elif end_time_line.contains(event)[0]:
+                dragging_end = True
+
+    # Function to handle mouse button release events
+    def on_release(event):
+        global dragging_start, dragging_end
+        if event.button == 1:
+            dragging_start = False
+            dragging_end = False
+
+    # Function to handle mouse motion events (dragging)
+    def on_motion(event):
+        global start_time, end_time
+        if dragging_start:
+            start_time = event.xdata
+            start_time_line.set_xdata([start_time, start_time])
+        elif dragging_end:
+            end_time = event.xdata
+            end_time_line.set_xdata([end_time, end_time])
+
+        # Clear previous annotations by setting their text to an empty string
+        for ann in ax.texts:
+            ann.set_text('')
+
+        # Add new annotations for start and end times
+        ax.text(start_time + 0.1, 0.9, f'Start Time: {start_time:.2f}', transform=ax.transAxes, color='red')
+        ax.text(end_time + 0.1, 0.8, f'End Time: {end_time:.2f}', transform=ax.transAxes, color='red')
+
+        ax.set_xlim(0, 30)  # Adjust the x-axis limits as needed
+        fig.canvas.draw_idle()
+
+    fig.canvas.mpl_connect('button_press_event', on_press)
+    fig.canvas.mpl_connect('button_release_event', on_release)
+    fig.canvas.mpl_connect('motion_notify_event', on_motion)
 
     root.mainloop()
 
