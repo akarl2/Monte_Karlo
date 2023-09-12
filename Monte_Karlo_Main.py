@@ -311,6 +311,7 @@ def simulate(starting_materials, starting_materials_sec):
     total_time_sum = 0.0
     cycles_completed = 0
     while running:
+        time1 = time.time()
         test_count += 1
         weights = []
         chemical = []
@@ -334,6 +335,8 @@ def simulate(starting_materials, starting_materials_sec):
                     RXN_Results_sec(composition)
                     messagebox.showerror("Error", "Increase # of samples or End Metric is unattainable")
                     break
+        time2 = time.time()
+        print( 'Time to find groups: ' + str(time2 - time1))
         stop = time.time()
         update_comp(composition, groups)
         total_time = time.time() - time_1_start

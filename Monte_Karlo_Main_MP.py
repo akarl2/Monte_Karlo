@@ -8,7 +8,7 @@ import tkinter
 import time
 from tkinter import *
 import mplcursors
-from scipy.integrate import trapz
+from scipy.integrate import trapz, simps
 
 from matplotlib.widgets import Cursor
 from mpl_toolkits import *
@@ -747,6 +747,19 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
     table.pack()
     button_close = tkinter.Button(root, text="Close", command=root.destroy)
     button_close.pack()
+
+    x = np.array(APC_df.index)
+    y = np.array(APC_df['Sum'])
+
+    indicies = np.where((x > 21.377) & (x < 23))
+
+    x_range = x[indicies]
+    y_range = y[indicies]
+
+    area_range = simps(y_range, x_range)
+    total_area = simps(y, x)
+    area_percent = area_range / total_area * 100
+    print(f'{label} APC Area Percent: {area_percent:.2f}%')
 
     root.mainloop()
 
