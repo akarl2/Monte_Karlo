@@ -732,9 +732,7 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
         fig.canvas.draw()
 
     def calculate_area():
-        # Get the time range from the Entry fields
-        start_time = float(start_time_entry.get())
-        end_time = float(end_time_entry.get())
+        global start_time, end_time
 
         x = np.array(APC_df.index)
         y = np.array(APC_df['Sum'])
@@ -771,22 +769,15 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
     button_close = tkinter.Button(root, text="Close", command=root.destroy)
     button_close.pack()
 
-    start_time_entry = tkinter.Entry(root)
-    end_time_entry = tkinter.Entry(root)
-    start_time_entry.insert(0, "12.00")
-    end_time_entry.insert(0, "25.00")
-    start_time_entry.pack()
-    end_time_entry.pack()
-    submit_button = tkinter.Button(root, text="Calculate Area", command=calculate_area)
-    submit_button.pack()
-
     # Create vertical bars for start and end times
-    start_time = 12.0
-    end_time = 25.0
-    start_time_line = ax.axvline(start_time, color='red', linestyle='--', linewidth=2, picker=True)
-    end_time_line = ax.axvline(end_time, color='red', linestyle='--', linewidth=2, picker=True)
+    global start_time, end_time
+    start_time = 13.0
+    end_time = 24.0
+    start_time_line = ax.axvline(start_time, color='blue', linestyle='-', linewidth=1, picker=True)
+    end_time_line = ax.axvline(end_time, color='red', linestyle='-', linewidth=1, picker=True)
 
     # Variables to track the dragging state
+    global dragging_start, dragging_end
     dragging_start = False
     dragging_end = False
 
@@ -815,17 +806,11 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
         elif dragging_end:
             end_time = event.xdata
             end_time_line.set_xdata([end_time, end_time])
+        elif dragging_start == False and dragging_end == False:
+            return
+        calculate_area()
 
-        # Clear previous annotations by setting their text to an empty string
-        for ann in ax.texts:
-            ann.set_text('')
-
-        # Add new annotations for start and end times
-        ax.text(start_time + 0.1, 0.9, f'Start Time: {start_time:.2f}', transform=ax.transAxes, color='red')
-        ax.text(end_time + 0.1, 0.8, f'End Time: {end_time:.2f}', transform=ax.transAxes, color='red')
-
-        ax.set_xlim(0, 30)  # Adjust the x-axis limits as needed
-        fig.canvas.draw_idle()
+        fig.canvas.draw()
 
     fig.canvas.mpl_connect('button_press_event', on_press)
     fig.canvas.mpl_connect('button_release_event', on_release)
