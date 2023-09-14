@@ -49,7 +49,9 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
     end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict, samples_value, total_samples, canceled_by_user
 
 
-def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, process_queue, PID_list, progress_queue_sec):
+def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec,
+             end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, process_queue,
+             PID_list, progress_queue_sec):
     PID_list.append(os.getpid())
     currentPID = os.getpid()
     time.sleep(1)
@@ -60,7 +62,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     Xn_list, Xn_list_sec, byproducts, composition, composition_sec = [], [], [], [], []
     running, in_primary = True, True
     test_count = 0
-    test_interval = 40
+    test_interval = 50
     try:
         end_metric_value_upper = end_metric_value + 15
         end_metric_value_lower = end_metric_value - 15
@@ -177,9 +179,11 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     def RXN_Status(composition, byproducts):
         global test_interval, in_situ_values, Xn_list, running, in_primary, comp_primary, comp_secondary, byproducts_primary, byproducts_secondary
         comp_secondary, byproducts_secondary = None, None
-        comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+        comp_summary = collections.Counter(
+            [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
+             composition])
         sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
-        sum_comp_2 = sum([comp_summary[key] * key[2]**2 for key in comp_summary])
+        sum_comp_2 = sum([comp_summary[key] * key[2] ** 2 for key in comp_summary])
         total_ct_temp = 0
         for key in comp_summary:
             total_ct_temp += comp_summary[key]
@@ -215,7 +219,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         for i, variable in enumerate(variables):
             in_situ_values[i].append(variable)
         Xn_list.append(round((total_ct / workers) / total_ct_temp, 4))
-        metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC, 'Iodine Value': IV}
+        metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
+                   'Iodine Value': IV}
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
             test_interval = 1
@@ -248,7 +253,9 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
 
     def RXN_Status_sec(composition, byproducts):
         global test_interval, in_situ_values_sec, Xn_list_sec, running, comp_secondary, byproducts_secondary
-        comp_summary_2 = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+        comp_summary_2 = collections.Counter(
+            [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
+             composition])
         sum_comp_2 = sum([comp_summary_2[key] * key[2] for key in comp_summary_2])
         sum_comp_2_2 = sum([comp_summary_2[key] * key[2] ** 2 for key in comp_summary_2])
         total_ct_temp_2 = 0
@@ -310,7 +317,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         test_count += 1
         weights = []
         chemical = []
-        chemical.extend([(i, index, group[0]) for i, chemicals in enumerate(composition) for index, group in enumerate(chemicals[0])])
+        chemical.extend([(i, index, group[0]) for i, chemicals in enumerate(composition) for index, group in
+                         enumerate(chemicals[0])])
         weights.extend([group[1] for chemicals in composition for group in chemicals[0]])
         groups = random.choices(chemical, weights, k=2)
         start = time.time()
@@ -322,9 +330,12 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         stop = time.time()
         update_comp(composition, groups)
     if comp_secondary is None:
-        return {"comp_primary": comp_primary, "in_situ_values": in_situ_values, "Xn_list": Xn_list, 'byproducts_primary': byproducts_primary}
+        return {"comp_primary": comp_primary, "in_situ_values": in_situ_values, "Xn_list": Xn_list,
+                'byproducts_primary': byproducts_primary}
     else:
-        return {"comp_primary": comp_primary, "comp_secondary": comp_secondary, "in_situ_values": in_situ_values, 'in_situ_values_sec': in_situ_values_sec, "Xn_list": Xn_list, "Xn_list_sec": Xn_list_sec, 'byproducts_primary': byproducts_primary, 'byproducts_secondary': byproducts_secondary}
+        return {"comp_primary": comp_primary, "comp_secondary": comp_secondary, "in_situ_values": in_situ_values,
+                'in_situ_values_sec': in_situ_values_sec, "Xn_list": Xn_list, "Xn_list_sec": Xn_list_sec,
+                'byproducts_primary': byproducts_primary, 'byproducts_secondary': byproducts_secondary}
 
 
 def update_metrics(TAV, AV, OH, EHC, COC, IV):
@@ -366,9 +377,12 @@ def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
     RM2.entries[14].delete(0, tkinter.END)
     RM2.entries[14].insert(0, IV)
 
+
 def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_list):
     global rxn_summary_df, Xn, total_samples, byproducts_df
-    comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in primary_comp_summary])
+    comp_summary = collections.Counter(
+        [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
+         primary_comp_summary])
     sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
     RS = []
     for key in comp_summary:
@@ -432,11 +446,11 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_lis
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 2).sum()
     sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 3).sum()
     sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 4).sum()
-    rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
+    rxn_summary_df = rxn_summary_df[
+        ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
     rxn_summary_df['Mass'] = rxn_summary_df['Mass'] / total_samples
     rxn_summary_df.loc['Sum'] = round(rxn_summary_df.sum(), 3)
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
-
 
     Mn = sumNiMi / sumNi
     Mw = sumNiMi2 / sumNiMi
@@ -462,7 +476,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_lis
     byproducts_df['Mass'] = byproducts_df['Mass'] / total_samples
     byproducts_df['Wt, % (Of byproducts)'] = round(byproducts_df['Mass'] / byproducts_df['Mass'].sum() * 100, 4)
     byproducts_df['Wt, % (Of Final)'] = round(byproducts_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
-    byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / (starting_mass /total_samples) * 100, 4)
+    byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / (starting_mass / total_samples) * 100, 4)
 
     Xn = pandas.DataFrame(in_situ_values[0], columns=['TAV'])
     Xn['AV'] = in_situ_values[1]
@@ -478,6 +492,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_lis
     show_results(rxn_summary_df)
     show_byproducts(byproducts_df)
     show_Xn(Xn)
+
 
 def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values_sec, Xn_list_sec):
     global rxn_summary_df_2, Xn_2, total_samples, byproducts_df_2
@@ -593,6 +608,7 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     show_byproducts_sec(byproducts_df_2)
     show_Xn_sec(Xn_2)
 
+
 # -------------------------------------------Display Results---------------------------------------------------#
 
 def show_results(rxn_summary_df):
@@ -615,6 +631,7 @@ def show_results(rxn_summary_df):
         results_table.height = window.winfo_screenheight() - 100
     results_table.show()
 
+
 def show_results_sec(rxn_summary_df_2):
     global results_table_2, frame_results_2
     try:
@@ -636,6 +653,7 @@ def show_results_sec(rxn_summary_df_2):
         results_table_2.height = window.winfo_screenheight() - 100
     results_table_2.show()
 
+
 def show_byproducts(byproducts_df):
     global byproducts_table, frame_byproducts
     try:
@@ -648,6 +666,7 @@ def show_byproducts(byproducts_df):
     byproducts_table = Table(frame_byproducts, dataframe=byproducts_df, showtoolbar=False, showstatusbar=True,
                              showindex=True, width=600, height=100, align='center', maxcellwidth=1000)
     byproducts_table.show()
+
 
 def show_byproducts_sec(byproducts_df_2):
     global byproducts_table_2, frame_byproducts_2
@@ -662,6 +681,7 @@ def show_byproducts_sec(byproducts_df_2):
                                showindex=True, width=600, height=100, align='center', maxcellwidth=1000)
     byproducts_table_2.show()
 
+
 def show_Xn(Xn):
     global Xn_table, frame_Xn
     try:
@@ -675,6 +695,7 @@ def show_Xn(Xn):
                      height=1000, align='center', maxcellwidth=1000)
     Xn_table.show()
 
+
 def show_Xn_sec(Xn_2):
     global Xn_table_2, frame_Xn_2
     try:
@@ -687,6 +708,7 @@ def show_Xn_sec(Xn_2):
     Xn_table_2 = Table(frame_Xn_2, dataframe=Xn_2, showtoolbar=True, showstatusbar=True, showindex=True, width=2000,
                        height=1000, align='center', maxcellwidth=1000)
     Xn_table_2.show()
+
 
 def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, label):
     fig, ax = plt.subplots(figsize=(15, 6))
@@ -721,7 +743,8 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
             peak_info = []
             for i, peak in closest_peaks.iterrows():
                 if abs(peak['RT(min)'] - xdata) <= tolerence:
-                    peak_info.append([peak['Name'], f"{peak['RT(min)']:.3f}", f"{10 ** peak['Log(MW)']:.2f}", f"{peak['Wt,%']:.2f}"])
+                    peak_info.append(
+                        [peak['Name'], f"{peak['RT(min)']:.3f}", f"{10 ** peak['Log(MW)']:.2f}", f"{peak['Wt,%']:.2f}"])
             table.delete(*table.get_children())
             for info in peak_info:
                 table.insert("", "end", values=info)
@@ -738,7 +761,8 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
         y = np.array(APC_df['Sum'])
 
         # Filter data based on the time range
-        indicies = np.where((x > start_time) & (x < end_time))
+        x_times = sorted([start_time, end_time])
+        indicies = np.where((x > x_times[0]) & (x < x_times[1]))
 
         x_range = x[indicies]
         y_range = y[indicies]
@@ -746,7 +770,7 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
         area_range = simps(y_range, x_range)
         total_area = simps(y, x)
         area_percent = area_range / total_area * 100
-        c.set_text(f'Integrated Area: {area_percent:.2f}%')
+        c.set_text(f'Integrated Area, %: {area_percent:.2f}')
 
         fig.canvas.draw()
 
@@ -800,14 +824,14 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
     # Function to handle mouse motion events (dragging)
     def on_motion(event):
         global start_time, end_time
-        if dragging_start:
+        if dragging_start == False and dragging_end == False:
+            return
+        elif dragging_start:
             start_time = event.xdata
             start_time_line.set_xdata([start_time, start_time])
         elif dragging_end:
             end_time = event.xdata
             end_time_line.set_xdata([end_time, end_time])
-        elif dragging_start == False and dragging_end == False:
-            return
         calculate_area()
 
         fig.canvas.draw()
@@ -818,10 +842,12 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
 
     root.mainloop()
 
+
 # -------------------------------------------Auxiliary Functions---------------------------------------------------#
 
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
+
 
 def stop():
     global running, canceled_by_user
@@ -830,6 +856,7 @@ def stop():
         running = False
     else:
         pass
+
 
 def clear_last():
     cell = 16
@@ -847,6 +874,7 @@ def clear_last():
     RET.entries[clear_cell].delete(0, 'end')
     RET.entries[clear_cell].insert(0, "Clear")
     check_entry(entry=clear_cell, index=clear_index, cell=clear_cell)
+
 
 def initialize_sim(workers):
     global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, end_metric_selection_sec, starting_materials, \
@@ -910,11 +938,12 @@ def initialize_sim(workers):
         messagebox.showerror("Exception raised", str(e))
         pass
 
+
 def multiprocessing_sim():
     if __name__ == "__main__":
         Buttons.Simulate.config(state="disabled", text="Running...")
         sim.progress['value'], sim.progress_2['value'] = 0, 0
-        global running 
+        global running
         running = True
         workers = NUM_OF_SIM.get()
         workers = int(workers)
@@ -925,7 +954,10 @@ def multiprocessing_sim():
         progress_queue_sec = multiprocessing.Manager().Queue()
         PID_list = multiprocessing.Manager().list()
         with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
-            results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, progress_queue, PID_list, progress_queue_sec) for _ in range(workers)]
+            results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value,
+                                       end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict,
+                                       RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, progress_queue,
+                                       PID_list, progress_queue_sec) for _ in range(workers)]
             while len(PID_list) < workers:
                 pass
             while any(result.running() for result in results) and running is True:
@@ -958,6 +990,7 @@ def multiprocessing_sim():
                 return
             consolidate_results(results)
             Buttons.Simulate.config(text="Simulate", state="normal")
+
 
 def consolidate_results(results):
     primary_comp_summary, secondary_comp_summary = [], []
@@ -1001,6 +1034,7 @@ def consolidate_results(results):
                     byproducts_primary.append([identifier, value])
         RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_list)
 
+
 def reset_entry_table():
     for i in range(RET.tableheight - 1):
         for j in range(RET.tablewidth):
@@ -1020,6 +1054,7 @@ def reset_entry_table():
     RXN_EM_Value.delete(0, 'end')
     RXN_EM_Entry.insert(0, "")
 
+
 def check_entry(entry, index, cell):
     RET.entries[entry].get()
     if RET.entries[entry].get() not in Reactants and RET.entries[entry].get() != "":
@@ -1028,6 +1063,7 @@ def check_entry(entry, index, cell):
     else:
         RET.update_table(index, cell)
         RET.update_rates(index, cell)
+
 
 def quick_add():
     cell = 16
@@ -1050,7 +1086,8 @@ def quick_add():
             check_entry(entry=cell, index=i + start_index, cell=cell)
             cell += RET.tablewidth
 
-#-------------------------------------------------APC Functions----------------------------------------------------------#
+
+# -------------------------------------------------APC Functions----------------------------------------------------------#
 def run_APC(rxn_summary_df, label):
     APCParametersWindow(window)
     if apc_params[0] != "" and apc_params[1] != "" and apc_params[2] != "" and apc_params[3] != "":
@@ -1062,6 +1099,7 @@ def run_APC(rxn_summary_df, label):
         APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_temp, APC_Solvent, rxn_summary_df, label)
     else:
         messagebox.showerror("Error", "Please enter valid parameters for flow rate, FWHM, and temp.")
+
 
 def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_temp, APC_Solvent, rxn_summary_df, label):
     global APC_df, apc_params
@@ -1117,13 +1155,15 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_temp, APC_Solvent, rxn_summary_d
         times = APC_df.index.values
         apc_values = np.zeros((len(times), len(APC_comp)))
         for i, row in APC_comp.iterrows():
-            apc_values[:, i] = np.exp(-0.5 * np.power((times - row['RT(min)']) / (row['FWHM(min)'] / 2.35), 2)) * (row['Wt,%'] * 0.5)
+            apc_values[:, i] = np.exp(-0.5 * np.power((times - row['RT(min)']) / (row['FWHM(min)'] / 2.35), 2)) * (
+                        row['Wt,%'] * 0.5)
         return pandas.DataFrame(apc_values, index=times, columns=APC_comp['Name'])
 
     APC_df = calc_apc_matrix(APC_comp, APC_df)
 
     APC_df['Sum'] = APC_df.sum(axis=1)
     show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, label)
+
 
 # -------------------------------------------------Export Data Functions-------------------------------------------------#
 def export_primary():
@@ -1157,6 +1197,7 @@ def export_primary():
             df = pandas.DataFrame(data)
             df.to_excel(writer, sheet_name='1_Aux', index=False, header=False, startrow=0, startcol=18)
 
+
 def export_secondary():
     filepath = filedialog.asksaveasfilename(defaultextension='.xlsx',
                                             filetypes=[("Excel xlsx", "*.xlsx"), ("Excel csv", "*.csv")])
@@ -1187,6 +1228,7 @@ def export_secondary():
             data = list(map(list, zip(*data)))
             df = pandas.DataFrame(data)
             df.to_excel(writer, sheet_name='2_Aux', index=False, header=False, startrow=0, startcol=18)
+
 
 def export_all():
     filepath = filedialog.asksaveasfilename(defaultextension='.xlsx',
@@ -1237,6 +1279,7 @@ def export_all():
             workbook = writer.book
             sheet_names = ['1_Summary', '1_In_Situ', '1_Aux', '2_Summary', '2_In_Situ', '2_Aux']
             workbook._sheets.sort(key=lambda ws: sheet_names.index(ws.title))
+
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 if __name__ == "__main__":
@@ -1290,11 +1333,12 @@ if __name__ == "__main__":
 
     Entry_Reactants = ['R1Reactant', 'R2Reactant', 'R3Reactant', 'R4Reactant', 'R5Reactant', 'R6Reactant', 'R7Reactant',
                        'R8Reactant', 'R9Reactant', 'R10Reactant', 'R11Reactant', 'R12Reactant', 'R13Reactant',
-                       'R14Reactant', 'R15Reactant', 'R16Reactant', 'R17Reactant', 'R18Reactant', 'R19Reactant',]
+                       'R14Reactant', 'R15Reactant', 'R16Reactant', 'R17Reactant', 'R18Reactant', 'R19Reactant', ]
     Entry_masses = ['R1mass', 'R2mass', 'R3mass', 'R4mass', 'R5mass', 'R6mass', 'R7mass', 'R8mass', 'R9mass', 'R10mass',
-                    'R11mass', 'R12mass', 'R13mass', 'R14mass', 'R15mass', 'R16mass', 'R17mass', 'R18mass', 'R19mass',]
-    RDE = ['R1Data', 'R2Data', 'R3Data', 'R4Data', 'R5Data', 'R6Data', 'R7Data', 'R8Data', 'R9Data', 'R10Data', 'R11Data',
-           'R12Data', 'R13Data', 'R14Data', 'R15Data', 'R16Data', 'R17Data', 'R18Data', 'R19Data',]
+                    'R11mass', 'R12mass', 'R13mass', 'R14mass', 'R15mass', 'R16mass', 'R17mass', 'R18mass', 'R19mass', ]
+    RDE = ['R1Data', 'R2Data', 'R3Data', 'R4Data', 'R5Data', 'R6Data', 'R7Data', 'R8Data', 'R9Data', 'R10Data',
+           'R11Data',
+           'R12Data', 'R13Data', 'R14Data', 'R15Data', 'R16Data', 'R17Data', 'R18Data', 'R19Data', ]
 
     global starting_cell
     starting_cell = 16
@@ -1311,24 +1355,24 @@ if __name__ == "__main__":
             self.e1.grid(row=0, column=1)
 
             Label(master, text="100 MW FWHM (min):").grid(row=1, column=0)
-            self.fwhm = DoubleVar(value=0.060) # Set default FWHM for 100 MW
+            self.fwhm = DoubleVar(value=0.060)  # Set default FWHM for 100 MW
             self.e2 = Entry(master, width=18, textvariable=self.fwhm)
             self.e2.grid(row=1, column=1)
 
             Label(master, text="100K MW FWHM (min):").grid(row=2, column=0)
-            self.fwhm2 = DoubleVar(value=0.1) # Set default FWHM for 100K MW
+            self.fwhm2 = DoubleVar(value=0.1)  # Set default FWHM for 100K MW
             self.e3 = Entry(master, width=18, textvariable=self.fwhm2)
             self.e3.grid(row=2, column=1)
 
             Label(master, text="Temperature (°C):").grid(row=3, column=0)
-            self.temp = IntVar(value=35) # Set default temperature to 35°C
+            self.temp = IntVar(value=35)  # Set default temperature to 35°C
             self.temp_choices = [35, 55]
             self.combobox = ttk.Combobox(master, values=self.temp_choices, textvariable=self.temp)
             self.combobox.grid(row=3, column=1)
             self.combobox.config(width=15)
 
             Label(master, text="Solvent:").grid(row=4, column=0)
-            self.solvent = StringVar(value="THF") # Set default solvent to THF
+            self.solvent = StringVar(value="THF")  # Set default solvent to THF
             self.solvent_choices = ["THF", "Water"]
             self.combobox_solvent = ttk.Combobox(master, values=self.solvent_choices, textvariable=self.solvent)
             self.combobox_solvent.grid(row=4, column=1)
@@ -1374,6 +1418,7 @@ if __name__ == "__main__":
             apc_params = [self.flow_rate.get(), self.fwhm.get(), self.fwhm2.get(), self.temp.get(), self.solvent.get()]
             self.destroy()
 
+
     class QuickAddWindow(simpledialog.Dialog):
         def body(self, master):
             self.title("Quick Add")
@@ -1405,6 +1450,7 @@ if __name__ == "__main__":
             global quick_add_comp
             quick_add_comp = [self.e1.get(), float(self.e2.get())]
             self.destroy()
+
 
     class RxnEntryTable(tkinter.Frame):
         def __init__(self, master=tab1):
@@ -1589,6 +1635,8 @@ if __name__ == "__main__":
 
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
+
+
     class RxnDetails(tkinter.Frame):
         def __init__(self, master=tab1):
             tkinter.Frame.__init__(self, master)
@@ -1654,12 +1702,11 @@ if __name__ == "__main__":
             RXN_Samples_Entry.grid(row=2, column=1)
             RXN_Samples_Entry.config(justify="center")
 
-
             NUM_OF_SIM = tkinter.StringVar()
-            Core_options = [str(i) for i in range(1, multiprocessing.cpu_count() -1)]
+            Core_options = [str(i) for i in range(1, multiprocessing.cpu_count() - 1)]
             NUM_OF_SIM_Entry = AutocompleteCombobox(self, completevalues=Core_options, width=15,
                                                     textvariable=NUM_OF_SIM)
-            NUM_OF_SIM_Entry.insert(0, str(int(multiprocessing.cpu_count()*0.75)))
+            NUM_OF_SIM_Entry.insert(0, str(int(multiprocessing.cpu_count() * 0.75)))
             NUM_OF_SIM_Entry.grid(row=3, column=1)
             NUM_OF_SIM_Entry.config(justify="center")
 
@@ -1962,12 +2009,13 @@ if __name__ == "__main__":
 
     # run update_table if user changes value in RET
     for i in range(16, 305, 16):
-        RET.entries[i].bind("<FocusOut>", lambda *args, entry=i, index=int(i/16-1), cell=i: check_entry(entry, index, cell))
+        RET.entries[i].bind("<FocusOut>",
+                            lambda *args, entry=i, index=int(i / 16 - 1), cell=i: check_entry(entry, index, cell))
 
     # run update_table if user changes value in RET
     for i in range(0, 19):
-        Entry_masses[i].bind("<KeyRelease>", lambda *args, index=i, cell=int(i*16+16): RET.update_table(index, cell))
-
+        Entry_masses[i].bind("<KeyRelease>",
+                             lambda *args, index=i, cell=int(i * 16 + 16): RET.update_table(index, cell))
 
     window.bind('<Control-s>', lambda *args: initialize_sim())
     RXN_EM_Entry_2_SR.bind('<Enter>', lambda *args: RD.get_reactants())
