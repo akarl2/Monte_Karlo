@@ -711,6 +711,7 @@ def show_Xn_sec(Xn_2):
 
 
 def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, label):
+    global start_time, end_time, dragging_start, dragging_end
     fig, ax = plt.subplots(figsize=(15, 6))
     ax.plot(APC_df.index, APC_df['Sum'], linewidth=0.75)
     ax.set_xlabel('Time (min)')
@@ -720,18 +721,26 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
         ax.set_xticks(np.arange(0, 12.25, 0.25))
         ax.set_xticklabels(np.arange(0, 12.25, 0.25), rotation=-35)
         ax.set_xlim(0, 12)
+        start_time = 1.0
+        end_time = 11.0
     elif APC_Solvent == "Water":
         ax.set_xticks(np.arange(12, 25.25, 0.25))
         ax.set_xticklabels(np.arange(12, 25.25, 0.25), rotation=-35)
         ax.set_xlim(12, 25)
+        start_time = 13.0
+        end_time = 24.0
 
     textstr = f'Solvent: {APC_Solvent} \nFlow Rate: {APC_Flow_Rate:.1f} ml/min\nFWHM (100 MW): {APC_FWHM:.3f} min\nFWHM (100K MW): {APC_FWHM2:.3f} min'
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
     a = ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
-    time_textstr = f'Time (min): '
+    time_textstr = f'Time, min: '
     b = ax.text(0.05, 0.7, time_textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
-    ingegrated_area = f'Integrated Area: '
+    ingegrated_area = f'Integrated Area, %: '
     c = ax.text(0.05, 0.6, ingegrated_area, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+
+    # Create vertical bars for start and end times
+    start_time_line = ax.axvline(start_time, color='blue', linestyle='-', linewidth=1, picker=True)
+    end_time_line = ax.axvline(end_time, color='red', linestyle='-', linewidth=1, picker=True)
 
     fig.canvas.draw()
 
@@ -748,10 +757,10 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
             table.delete(*table.get_children())
             for info in peak_info:
                 table.insert("", "end", values=info)
-            b.set_text(f'Time (min): {xdata:.3f}')
+            b.set_text(f'Time, min: {xdata:.3f}')
         else:
             table.delete(*table.get_children())
-            b.set_text(f'Time (min): ')
+            b.set_text(f'Time, min: ')
         fig.canvas.draw()
 
     def calculate_area():
@@ -793,15 +802,7 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
     button_close = tkinter.Button(root, text="Close", command=root.destroy)
     button_close.pack()
 
-    # Create vertical bars for start and end times
-    global start_time, end_time
-    start_time = 13.0
-    end_time = 24.0
-    start_time_line = ax.axvline(start_time, color='blue', linestyle='-', linewidth=1, picker=True)
-    end_time_line = ax.axvline(end_time, color='red', linestyle='-', linewidth=1, picker=True)
-
     # Variables to track the dragging state
-    global dragging_start, dragging_end
     dragging_start = False
     dragging_end = False
 
