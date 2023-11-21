@@ -38,6 +38,7 @@ class reactive_groups:
         self.CC_Nuc = ['imine']
         self.COOC = None
         self.CONH = None
+        self.EHC = ['OH']
 
 class NH2:
     def __init__(self):
@@ -165,6 +166,12 @@ class Cl:
         self.NH = 'N'
         self.NH_wl = 36.458
         self.NH_wl_id = 'HCl'
+
+class EHC:
+    def __init__(self):
+        self.OH = 'COC'
+        self.OH_wl = 58.44
+        self.OH_wl_id = 'NaCl'
 
 
 

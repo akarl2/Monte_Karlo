@@ -88,9 +88,16 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             composition_sec.append([inner_result, compound[2], compound[1]])
 
     def check_react(groups):
+        is_EHC = False
         global groupA, groupB
         groupA = groups[0][2]
         groupB = groups[1][2]
+        # if 'Epi' in sn_dict:
+        #     sOHk = sn_dict['Epi'].cprgID[1]
+        #     if groupA == "SOH" and composition[groups[1][0]][0][groups[1][1]][1] == sOHk:
+        #         is_EHC = True
+        #         if groupB == "OH" and is_EHC:
+        #             return True
         if groupB in getattr(rg, groupA):
             new_group(groupA, groupB)
             return True
@@ -1197,6 +1204,10 @@ def export_primary():
             data = list(map(list, zip(*data)))
             df = pandas.DataFrame(data)
             df.to_excel(writer, sheet_name='1_Aux', index=False, header=False, startrow=0, startcol=18)
+
+            #export APC_df['Sum'] to excel
+ 
+            APC_df['Sum'].to_excel(writer, sheet_name='1_APC', index=False, header=False)
 
 
 def export_secondary():
