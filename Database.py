@@ -1480,6 +1480,218 @@ class Epichlorohydrin:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.srgID]]
 
+
+class BDO_MGE:
+    def __init__(self):
+        self.name = "BDO_MGE"
+        self.sn = "BDO_MGE"
+        self.formula = "C4H10O2"
+        self.mw = 146.242
+        self.density = 1.1
+        self.prgID = "COC"
+        self.prgk = 1
+        self.cprgID = "SOH"
+        self.cprgk = 0
+        self.srgID = "POH"
+        self.srgk = 0
+        self.csrgID = "SOH"
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID]]
+
+class BDO_DGE:
+    def __init__(self):
+        self.name = "BDO_DGE"
+        self.sn = "BDO_DGE"
+        self.formula = "C4H10O2"
+        self.mw = 202.362
+        self.density = 1.1
+        self.prgID = "COC"
+        self.prgk = 1
+        self.cprgID = "SOH"
+        self.cprgk = 0
+        self.srgID = "POH"
+        self.srgk = 0
+        self.csrgID = "SOH"
+        self.csrgk = 0
+        self.trgID = "POH"
+        self.trgk = 0
+        self.ctrgID = "SOH"
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
+class BDO_MGE_2:
+    def __init__(self):
+        self.name = "BDO_MGE_Di"
+        self.sn = "BDO_MGE_Di"
+        self.formula = "C4H10O2"
+        self.mw = 238.762
+        self.density = 1.1
+        self.prgID = "COC"
+        self.prgk = 1
+        self.cprgID = "SOH"
+        self.cprgk = 0
+        self.srgID = "POH"
+        self.srgk = 0
+        self.csrgID = "SOH"
+        self.csrgk = 0
+        self.trgID = "Cl"
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID], [self.trgID]]
+
+class BDO_DGE_3:
+    def __init__(self):
+        self.name = "BDO_DGE_Tri"
+        self.sn = "BDO_DGE_Tri"
+        self.formula = "C4H10O2"
+        self.mw = 294.882
+        self.density = 1.1
+        self.prgID = "COC"
+        self.prgk = 1
+        self.cprgID = "SOH"
+        self.cprgk = 0
+        self.srgID = "Cl"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID], [self.srgID]]
+
+class BDO_DGE_4:
+    def __init__(self):
+        self.name = "BDO_DGE_Tetra"
+        self.sn = "BDO_DGE_Tetra"
+        self.formula = "C4H10O2"
+        self.mw = 387.402
+        self.density = 1.1
+        self.prgID = "COC"
+        self.prgk = 1
+        self.cprgID = "SOH"
+        self.cprgk = 0
+        self.srgID = "Cl"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID], [self.srgID]]
+
+class BDO_DGE_5:
+    def __init__(self):
+        self.name = "BDO_DGE_Penta"
+        self.sn = "BDO_DGE_Penta"
+        self.formula = "C4H10O2"
+        self.mw = 479.922
+        self.density = 1.1
+        self.prgID = "COC"
+        self.prgk = 1
+        self.cprgID = "SOH"
+        self.cprgk = 0
+        self.srgID = "Cl"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID], [self.srgID]]
+
+class BDO_DGE_5:
+    def __init__(self):
+        self.name = "BDO_DGE_Penta"
+        self.sn = "BDO_DGE_Penta"
+        self.formula = "C4H10O2"
+        self.mw = 479.922
+        self.density = 1.1
+        self.prgID = "COC"
+        self.prgk = 1
+        self.cprgID = "SOH"
+        self.cprgk = 0
+        self.srgID = "Cl"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID], [self.srgID]]
+
+class BDO_DGE_6:
+    def __init__(self):
+        self.name = "BDO_DGE_Hexa"
+        self.sn = "BDO_DGE_Hexa"
+        self.formula = "C4H10O2"
+        self.mw = 572.442
+        self.density = 1.1
+        self.prgID = "COC"
+        self.prgk = 1
+        self.cprgID = "SOH"
+        self.cprgk = 0
+        self.srgID = "Cl"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID], [self.srgID]]
+
+class BDO_DGE_7:
+    def __init__(self):
+        self.name = "BDO_DGE_Hepta"
+        self.sn = "BDO_DGE_Hepta"
+        self.formula = "C4H10O2"
+        self.mw = 664.962
+        self.density = 1.1
+        self.prgID = "COC"
+        self.prgk = 1
+        self.cprgID = "SOH"
+        self.cprgk = 0
+        self.srgID = "Cl"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID], [self.srgID]]
+
+class BDO_DGE_8:
+    def __init__(self):
+        self.name = "BDO_DGE_Octa"
+        self.sn = "BDO_DGE_Octa"
+        self.formula = "C4H10O2"
+        self.mw = 757.482
+        self.density = 1.1
+        self.prgID = "COC"
+        self.prgk = 1
+        self.cprgID = "SOH"
+        self.cprgk = 0
+        self.srgID = "Cl"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID], [self.srgID]]
+
+
 class Propylene_oxide:
     def __init__(self):
         self.name = "Propylene oxide"
@@ -1575,6 +1787,7 @@ quick_add_dict = {
     'Emerox 1110': [['Pelargonic_acid', 0.02], ['Pimelic_acid', 0.07], ['Azelaic_acid', 0.7900], ['Undecanedioic_acid', 0.1200]],
     'Emerox 1144': [['Pelargonic_acid', 0.0004], ['Pimelic_acid', 0.0300], ['Azelaic_acid', 0.8896], ['Undecanedioic_acid', 0.0800]],
     'Emerox 2195': [['Pelargonic_acid', 0.0005], ['Pimelic_acid', 0.0150], ['Azelaic_acid', 0.9595], ['Undecanedioic_acid', 0.0250]],
+    'CM67': [['BDO_MGE', 0.1185], ['BDO_DGE', 0.4275], ['BDO_MGE_2', 0.0372], ['BDO_DGE_3', 0.2968], ['BDO_DGE_4', 0.0941], ['BDO_DGE_5', 0.0218], ['BDO_DGE_6', 0.0037], ['BDO_DGE_7', 0.0003], ['BDO_DGE_8', 0.0001]]
 }
 
 class Clear:
