@@ -57,8 +57,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     time.sleep(1)
     rg = reactive_groups()
     global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, running, in_primary, in_situ_values_sec, Xn_list_sec, quick_add, comp_primary, comp_secondary
-    in_situ_values = [[], [], [], [], [], [], [], [], []]
-    in_situ_values_sec = [[], [], [], [], [], [], [], [], []]
+    in_situ_values = [[], [], [], [], [], [], [], [], [], [], [], []]
+    in_situ_values_sec = [[], [], [], [], [], [], [], [], [], [], [], []]
     Xn_list, Xn_list_sec, byproducts, composition, composition_sec = [], [], [], [], []
     running, in_primary = True, True
     test_count = 0
@@ -197,11 +197,18 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         Mw = sum_comp_2 / sum_comp
         Mn = sum_comp / total_ct_temp
         amine_ct, amine_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct = 0, 0, 0, 0, 0, 0, 0
+        NH2_ct, NH_ct, N_ct = 0, 0, 0
         for key in comp_summary:
             key_names = [i[0] for i in key[0]]
             Cl_ct = key_names.count('Cl')
             for group in key[0]:
                 if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
+                    if group[0] == 'NH2':
+                        NH2_ct += comp_summary[key]
+                    elif group[0] == 'NH':
+                        NH_ct += comp_summary[key]
+                    elif group[0] == 'N':
+                        N_ct += comp_summary[key]
                     amine_ct += comp_summary[key]
                 elif group[0] == 'COOH':
                     acid_ct += comp_summary[key]
@@ -216,18 +223,21 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                     epoxide_ct += comp_summary[key]
                 elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
                     IV_ct += comp_summary[key]
+        p_TAV = round((NH2_ct * 56100) / sum_comp, 2)
+        s_TAV = round((NH_ct * 56100) / sum_comp, 2)
+        t_TAV = round((N_ct * 56100) / sum_comp, 2)
         TAV = round((amine_ct * 56100) / sum_comp, 2)  # Calculate in-situ variables
         AV = round((acid_ct * 56100) / sum_comp, 2)
         OH = round((alcohol_ct * 56100) / sum_comp, 2)
         COC = round((epoxide_ct * 56100) / sum_comp, 2)
         EHC = round((EHC_ct * 35.453) / sum_comp * 100, 2)
         IV = round(((IV_ct * 2) * (127 / sum_comp) * 100), 2)
-        variables = [TAV, AV, OH, COC, EHC, IV, Mw, Mn]  # in-situ variables added to list
+        variables = [TAV, AV, OH, COC, EHC, IV, Mw, Mn, p_TAV, s_TAV, t_TAV]  # in-situ variables added to list
         for i, variable in enumerate(variables):
             in_situ_values[i].append(variable)
         Xn_list.append(round((total_ct / workers) / total_ct_temp, 4))
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
-                   'Iodine Value': IV}
+                   'Iodine Value': IV, '1° TAV': p_TAV, '2° TAV': s_TAV, '3° TAV': t_TAV}
         RXN_metric_value = metrics[end_metric_selection]
         if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
             test_interval = 1
@@ -271,11 +281,18 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         Mw = sum_comp_2_2 / sum_comp_2
         Mn = sum_comp_2 / total_ct_temp_2
         amine_ct, amine_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct = 0, 0, 0, 0, 0, 0, 0
+        NH2_ct, NH_ct, N_ct = 0, 0, 0
         for key in comp_summary_2:
             key_names = [i[0] for i in key[0]]
             Cl_ct = key_names.count('Cl')
             for group in key[0]:
                 if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
+                    if group[0] == 'NH2':
+                        NH2_ct += comp_summary_2[key]
+                    elif group[0] == 'NH':
+                        NH_ct += comp_summary_2[key]
+                    elif group[0] == 'N':
+                        N_ct += comp_summary_2[key]
                     amine_ct += comp_summary_2[key]
                 elif group[0] == 'COOH':
                     acid_ct += comp_summary_2[key]
@@ -291,17 +308,20 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                 elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
                     IV_ct += comp_summary_2[key]
         TAV = round((amine_ct * 56100) / sum_comp_2, 2)
+        p_TAV = round((NH2_ct * 56100) / sum_comp_2, 2)
+        s_TAV = round((NH_ct * 56100) / sum_comp_2, 2)
+        t_TAV = round((N_ct * 56100) / sum_comp_2, 2)
         AV = round((acid_ct * 56100) / sum_comp_2, 2)
         OH = round((alcohol_ct * 56100) / sum_comp_2, 2)
         COC = round((epoxide_ct * 56100) / sum_comp_2, 2)
         EHC = round((EHC_ct * 35.453) / sum_comp_2 * 100, 2)
         IV = round(((IV_ct * 2) * (127 / sum_comp_2) * 100), 2)
-        variables = [TAV, AV, OH, COC, EHC, IV, Mw, Mn]
+        variables = [TAV, AV, OH, COC, EHC, IV, Mw, Mn, p_TAV, s_TAV, t_TAV]  # in-situ variables added to list
         for i, variable in enumerate(variables):
             in_situ_values_sec[i].append(variable)
         Xn_list_sec.append(round((total_ct_sec / workers) / total_ct_temp_2, 4))
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
-                   'Iodine Value': IV}
+                   'Iodine Value': IV, '1° TAV': p_TAV, '2° TAV': s_TAV, '3° TAV': t_TAV}
         RXN_metric_value_2 = metrics[end_metric_selection_sec]
         if end_metric_value_upper_sec >= RXN_metric_value_2 >= end_metric_value_lower_sec:
             test_interval = 1
@@ -495,6 +515,10 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_lis
     Xn['P'] = -(1 / Xn['Xn']) + 1
     Xn['Mw'] = in_situ_values[6]
     Xn['Mn'] = in_situ_values[7]
+    Xn['1° TAV'] = in_situ_values[8]
+    Xn['2° TAV'] = in_situ_values[9]
+    Xn['3° TAV'] = in_situ_values[10]
+
 
     show_results(rxn_summary_df)
     show_byproducts(byproducts_df)
@@ -1831,6 +1855,7 @@ if __name__ == "__main__":
             self.entries[6].delete(0, tkinter.END)
             self.entries[6].insert(0, "Iodine Value =")
             self.entries[6].config(state="readonly")
+
 
 
     class WeightDist(tkinter.Frame):
