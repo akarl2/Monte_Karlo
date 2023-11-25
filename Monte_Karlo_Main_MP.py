@@ -42,11 +42,11 @@ from Reactants import R1Data, R2Data, R3Data, R4Data, R5Data, R6Data, R7Data, R8
 
 # Runs the simulation
 global running, emo_a, results_table, frame_results, expanded_results, groupA, groupB, test_count, test_interval, \
-    total_ct, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, Xn_list, Xn_list_sec, byproducts, \
+    total_ct, total_ct_sec, sn_dist, TAV, AV, OH, COC, EHC, in_situ_values, in_situ_values_sec, byproducts, \
     frame_byproducts, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, \
     frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary, quick_add, quick_add_comp, \
     RXN_EM_Value, RXN_EM_Entry, rxn_summary_df, rxn_summary_df_2, Xn, Xn_2, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, \
-    end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict, samples_value, total_samples, canceled_by_user
+    end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict, samples_value, total_samples, canceled_by_user, metrics
 
  
 def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec,
@@ -56,10 +56,10 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     currentPID = os.getpid()
     time.sleep(1)
     rg = reactive_groups()
-    global test_count, test_interval, sn_dist, in_situ_values, Xn_list, byproducts, running, in_primary, in_situ_values_sec, Xn_list_sec, quick_add, comp_primary, comp_secondary
-    in_situ_values = [[], [], [], [], [], [], [], [], [], [], [], []]
-    in_situ_values_sec = [[], [], [], [], [], [], [], [], [], [], [], []]
-    Xn_list, Xn_list_sec, byproducts, composition, composition_sec = [], [], [], [], []
+    global test_count, test_interval, sn_dist, in_situ_values, byproducts, running, in_primary, in_situ_values_sec, quick_add, comp_primary, comp_secondary
+    in_situ_values = [[], [], [], [], [], [], [], [], [], [], [], [], []]
+    in_situ_values_sec = [[], [], [], [], [], [], [], [], [], [], [], [], []]
+    byproducts, composition, composition_sec = [], [], []
     running, in_primary = True, True
     test_count = 0
     test_interval = 50
@@ -180,7 +180,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             test_count = 0
 
     def RXN_Status(composition, byproducts):
-        global test_interval, in_situ_values, Xn_list, running, in_primary, comp_primary, comp_secondary, byproducts_primary, byproducts_secondary
+        global test_interval, in_situ_values, running, in_primary, comp_primary, comp_secondary, byproducts_primary, byproducts_secondary, metrics
         comp_secondary, byproducts_secondary = None, None
         if not in_primary:
             comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
@@ -229,15 +229,18 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         COC = round((epoxide_ct * 56100) / sum_comp, 2)
         EHC = round((EHC_ct * 35.453) / sum_comp * 100, 2)
         IV = round(((IV_ct * 2) * (127 / sum_comp) * 100), 2)
+        if not in_primary:
+            Xn = round((total_ct_sec / workers) / total_ct_temp, 4)
+        else:
+            Xn = round((total_ct / workers) / total_ct_temp, 4)
 
-        variables = [TAV, AV, OH, COC, EHC, IV, Mw, Mn, p_TAV, s_TAV, t_TAV]
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
-                   'Iodine Value': IV, '1° TAV': p_TAV, '2° TAV': s_TAV, '3° TAV': t_TAV}
+                   'Iodine Value': IV, 'MW': Mw, 'Mn': Mn, '1° TAV': p_TAV, '2° TAV': s_TAV, '3° TAV': t_TAV, 'Xn': Xn}
 
         if not in_primary:
-            for i, variable in enumerate(variables):
-                in_situ_values_sec[i].append(variable)
-            Xn_list_sec.append(round((total_ct_sec / workers) / total_ct_temp, 4))
+            if not in_primary:
+                for i, (metric_name, variable) in enumerate(metrics.items()):
+                    in_situ_values_sec[i].append(variable)
             RXN_metric_value = metrics[end_metric_selection_sec]
             if end_metric_value_upper_sec >= RXN_metric_value >= end_metric_value_lower_sec:
                 test_interval = 1
@@ -249,9 +252,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                     byproducts_secondary = byproducts
                     running = False
         else:
-            for i, variable in enumerate(variables):
+            for i, (metric_name, variable) in enumerate(metrics.items()):
                 in_situ_values[i].append(variable)
-            Xn_list.append(round((total_ct / workers) / total_ct_temp, 4))
             RXN_metric_value = metrics[end_metric_selection]
             if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
                 test_interval = 1
@@ -286,12 +288,10 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         stop = time.time()
         update_comp(composition, groups)
     if comp_secondary is None:
-        return {"comp_primary": comp_primary, "in_situ_values": in_situ_values, "Xn_list": Xn_list,
-                'byproducts_primary': byproducts_primary}
+        return {"comp_primary": comp_primary, "in_situ_values": in_situ_values, 'byproducts_primary': byproducts_primary}
     else:
         return {"comp_primary": comp_primary, "comp_secondary": comp_secondary, "in_situ_values": in_situ_values,
-                'in_situ_values_sec': in_situ_values_sec, "Xn_list": Xn_list, "Xn_list_sec": Xn_list_sec,
-                'byproducts_primary': byproducts_primary, 'byproducts_secondary': byproducts_secondary}
+                'in_situ_values_sec': in_situ_values_sec, 'byproducts_primary': byproducts_primary, 'byproducts_secondary': byproducts_secondary}
 
 
 def update_metrics(TAV, AV, OH, EHC, COC, IV):
@@ -334,8 +334,8 @@ def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
     RM2.entries[14].insert(0, IV)
 
 
-def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_list):
-    global rxn_summary_df, Xn, total_samples, byproducts_df
+def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
+    global rxn_summary_df, Xn, total_samples, byproducts_df, metrics
     comp_summary = collections.Counter(
         [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
          primary_comp_summary])
@@ -434,19 +434,19 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_lis
     byproducts_df['Wt, % (Of Final)'] = round(byproducts_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
     byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / (starting_mass / total_samples) * 100, 4)
 
-    Xn = pandas.DataFrame(in_situ_values[0], columns=['TAV'])
+    Xn = pandas.DataFrame(in_situ_values[0], columns = ['TAV'])
     Xn['AV'] = in_situ_values[1]
     Xn['OH'] = in_situ_values[2]
     Xn['COC'] = in_situ_values[3]
     Xn['EHC, %'] = in_situ_values[4]
     Xn['IV'] = in_situ_values[5]
-    Xn['Xn'] = Xn_list
-    Xn['P'] = -(1 / Xn['Xn']) + 1
     Xn['Mw'] = in_situ_values[6]
     Xn['Mn'] = in_situ_values[7]
     Xn['1° TAV'] = in_situ_values[8]
     Xn['2° TAV'] = in_situ_values[9]
     Xn['3° TAV'] = in_situ_values[10]
+    Xn['Xn'] = in_situ_values[11]
+    Xn['P'] = -(1 / Xn['Xn']) + 1
 
 
     show_results(rxn_summary_df)
@@ -454,7 +454,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_lis
     show_Xn(Xn)
 
 
-def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values_sec, Xn_list_sec):
+def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values_sec):
     global rxn_summary_df_2, Xn_2, total_samples, byproducts_df_2
     comp_summary_2 = collections.Counter(
         [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
@@ -559,10 +559,13 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     Xn_2['COC'] = in_situ_values_sec[3]
     Xn_2['EHC, %'] = in_situ_values_sec[4]
     Xn_2['IV'] = in_situ_values_sec[5]
-    Xn_2['Xn'] = Xn_list_sec
-    Xn_2['P'] = -(1 / Xn_2['Xn']) + 1
     Xn_2['Mw'] = in_situ_values_sec[6]
     Xn_2['Mn'] = in_situ_values_sec[7]
+    Xn_2['1° TAV'] = in_situ_values_sec[8]
+    Xn_2['2° TAV'] = in_situ_values_sec[9]
+    Xn_2['3° TAV'] = in_situ_values_sec[10]
+    Xn_2['Xn'] = in_situ_values_sec[11]
+    Xn_2['P'] = -(1 / Xn_2['Xn']) + 1
 
     show_results_sec(rxn_summary_df_2)
     show_byproducts_sec(byproducts_df_2)
@@ -957,10 +960,8 @@ def consolidate_results(results):
     primary_comp_summary, secondary_comp_summary = [], []
     byproducts_primary, byproducts_secondary = [], []
     in_situ_values = results[0].result()['in_situ_values']
-    Xn_list = results[0].result()['Xn_list']
     if 'comp_secondary' in results[0].result():
         in_situ_values_sec = results[0].result()['in_situ_values_sec']
-        Xn_list_sec = results[0].result()['Xn_list_sec']
         for _ in range(len(results)):
             for species in results[_].result()['comp_primary']:
                 primary_comp_summary.append(species)
@@ -980,8 +981,8 @@ def consolidate_results(results):
                         break
                 else:
                     byproducts_secondary.append([identifier, value])
-        RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_list)
-        RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values_sec, Xn_list_sec)
+        RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values)
+        RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values_sec)
     else:
         for _ in range(len(results)):
             for species in results[_].result()['comp_primary']:
@@ -993,7 +994,7 @@ def consolidate_results(results):
                         break
                 else:
                     byproducts_primary.append([identifier, value])
-        RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values, Xn_list)
+        RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values)
 
 
 def reset_entry_table():
