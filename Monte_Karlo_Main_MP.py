@@ -79,7 +79,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             for group in compound[0]:
                 inner_result.append([group[0], group[1]])
             composition.append([inner_result, compound[2], compound[1]])
-
     for compound in starting_materials_sec:
         for i in range(compound[3][0]):
             inner_result = []
@@ -122,7 +121,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             new_group_dict = {'NG': NG, 'WL': WL, 'WL_ID': WL_ID}
 
     def update_comp(composition, groups):
-        global test_count, NG2, new_group_dict, low_group, in_primary
+        global test_count, NG2, new_group_dict
         NC, compoundA, compoundB = composition[groups[0][0]], composition[groups[0][0]], composition[groups[1][0]]
         swapped = False
         new_name = {}
@@ -177,27 +176,26 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         if __name__ == '__main__':
             window.update()
         if test_count >= test_interval:
-            if in_primary:
-                RXN_Status(composition, byproducts)
-            else:
-                RXN_Status_sec(composition, byproducts)
+            RXN_Status(composition, byproducts)
             test_count = 0
 
     def RXN_Status(composition, byproducts):
         global test_interval, in_situ_values, Xn_list, running, in_primary, comp_primary, comp_secondary, byproducts_primary, byproducts_secondary
         comp_secondary, byproducts_secondary = None, None
-        comp_summary = collections.Counter(
-            [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
-             composition])
-        sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
+        if not in_primary:
+            comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+            sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
+        else:
+            comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+            sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
+
         sum_comp_2 = sum([comp_summary[key] * key[2] ** 2 for key in comp_summary])
-        total_ct_temp = 0
-        for key in comp_summary:
-            total_ct_temp += comp_summary[key]
+        total_ct_temp = sum(comp_summary[key] for key in comp_summary)
         Mw = sum_comp_2 / sum_comp
         Mn = sum_comp / total_ct_temp
-        amine_ct, amine_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct = 0, 0, 0, 0, 0, 0, 0
-        NH2_ct, NH_ct, N_ct = 0, 0, 0
+
+        amine_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, NH2_ct, NH_ct, N_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0
+
         for key in comp_summary:
             key_names = [i[0] for i in key[0]]
             Cl_ct = key_names.count('Cl')
@@ -214,131 +212,62 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                     acid_ct += comp_summary[key]
                 elif group[0] == 'POH' or group[0] == 'SOH':
                     alcohol_ct += comp_summary[key]
-                    if 'Epi' in sn_dict:
-                        sOHk = sn_dict['Epi'].cprgID[1]
-                        if group[0] == 'SOH' and group[1] == sOHk and Cl_ct > 0:
-                            Cl_ct -= 1
-                            EHC_ct += comp_summary[key]
+                    if 'Epi' in sn_dict and group[0] == 'SOH' and group[1] == sn_dict['Epi'].cprgID[1] and Cl_ct > 0:
+                        Cl_ct -= 1
+                        EHC_ct += comp_summary[key]
                 elif group[0] == 'COC':
                     epoxide_ct += comp_summary[key]
-                elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
+                elif group[0] in ['aB_unsat', 'CC_3', 'CC_2', 'CC_1']:
                     IV_ct += comp_summary[key]
+
+        TAV = round((amine_ct * 56100) / sum_comp, 2)
         p_TAV = round((NH2_ct * 56100) / sum_comp, 2)
         s_TAV = round((NH_ct * 56100) / sum_comp, 2)
         t_TAV = round((N_ct * 56100) / sum_comp, 2)
-        TAV = round((amine_ct * 56100) / sum_comp, 2)  # Calculate in-situ variables
         AV = round((acid_ct * 56100) / sum_comp, 2)
         OH = round((alcohol_ct * 56100) / sum_comp, 2)
         COC = round((epoxide_ct * 56100) / sum_comp, 2)
         EHC = round((EHC_ct * 35.453) / sum_comp * 100, 2)
         IV = round(((IV_ct * 2) * (127 / sum_comp) * 100), 2)
-        variables = [TAV, AV, OH, COC, EHC, IV, Mw, Mn, p_TAV, s_TAV, t_TAV]  # in-situ variables added to list
-        for i, variable in enumerate(variables):
-            in_situ_values[i].append(variable)
-        Xn_list.append(round((total_ct / workers) / total_ct_temp, 4))
-        metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
-                   'Iodine Value': IV, '1° TAV': p_TAV, '2° TAV': s_TAV, '3° TAV': t_TAV}
-        RXN_metric_value = metrics[end_metric_selection]
-        if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
-            test_interval = 1
-        if end_metric_selection != '% EHC':
-            if currentPID == PID_list[-1]:
-                process_queue.put(round(((end_metric_value / RXN_metric_value) * 100), 2))
-            if RXN_metric_value <= end_metric_value:
-                comp_primary = tuple(composition)
-                byproducts_primary = byproducts
-                if RXN_EM_2_Active_status == False:
-                    running = False
-                else:
-                    in_primary = False
-                    for species in composition_sec:
-                        composition.append(species)
-                    test_interval = 40
-        else:
-            if currentPID == PID_list[-1]:
-                process_queue.put(round(((EHC / end_metric_value) * 100), 2))
-            if RXN_metric_value >= end_metric_value:
-                comp_primary = tuple(composition)
-                byproducts_primary = byproducts
-                if RXN_EM_2_Active_status == False:
-                    running = False
-                else:
-                    in_primary = False
-                    for species in composition_sec:
-                        composition.append(species)
-                    test_interval = 40
 
-    def RXN_Status_sec(composition, byproducts):
-        global test_interval, in_situ_values_sec, Xn_list_sec, running, comp_secondary, byproducts_secondary
-        comp_summary_2 = collections.Counter(
-            [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in
-             composition])
-        sum_comp_2 = sum([comp_summary_2[key] * key[2] for key in comp_summary_2])
-        sum_comp_2_2 = sum([comp_summary_2[key] * key[2] ** 2 for key in comp_summary_2])
-        total_ct_temp_2 = 0
-        for key in comp_summary_2:
-            total_ct_temp_2 += comp_summary_2[key]
-        Mw = sum_comp_2_2 / sum_comp_2
-        Mn = sum_comp_2 / total_ct_temp_2
-        amine_ct, amine_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct = 0, 0, 0, 0, 0, 0, 0
-        NH2_ct, NH_ct, N_ct = 0, 0, 0
-        for key in comp_summary_2:
-            key_names = [i[0] for i in key[0]]
-            Cl_ct = key_names.count('Cl')
-            for group in key[0]:
-                if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
-                    if group[0] == 'NH2':
-                        NH2_ct += comp_summary_2[key]
-                    elif group[0] == 'NH':
-                        NH_ct += comp_summary_2[key]
-                    elif group[0] == 'N':
-                        N_ct += comp_summary_2[key]
-                    amine_ct += comp_summary_2[key]
-                elif group[0] == 'COOH':
-                    acid_ct += comp_summary_2[key]
-                elif group[0] == 'POH' or group[0] == 'SOH':
-                    alcohol_ct += comp_summary_2[key]
-                    if 'Epi' in sn_dict:
-                        sOHk = sn_dict['Epi'].cprgID[1]
-                        if group[0] == 'SOH' and group[1] == sOHk and Cl_ct > 0:
-                            Cl_ct -= 1
-                            EHC_ct += comp_summary_2[key]
-                elif group[0] == 'COC':
-                    epoxide_ct += comp_summary_2[key]
-                elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
-                    IV_ct += comp_summary_2[key]
-        TAV = round((amine_ct * 56100) / sum_comp_2, 2)
-        p_TAV = round((NH2_ct * 56100) / sum_comp_2, 2)
-        s_TAV = round((NH_ct * 56100) / sum_comp_2, 2)
-        t_TAV = round((N_ct * 56100) / sum_comp_2, 2)
-        AV = round((acid_ct * 56100) / sum_comp_2, 2)
-        OH = round((alcohol_ct * 56100) / sum_comp_2, 2)
-        COC = round((epoxide_ct * 56100) / sum_comp_2, 2)
-        EHC = round((EHC_ct * 35.453) / sum_comp_2 * 100, 2)
-        IV = round(((IV_ct * 2) * (127 / sum_comp_2) * 100), 2)
-        variables = [TAV, AV, OH, COC, EHC, IV, Mw, Mn, p_TAV, s_TAV, t_TAV]  # in-situ variables added to list
-        for i, variable in enumerate(variables):
-            in_situ_values_sec[i].append(variable)
-        Xn_list_sec.append(round((total_ct_sec / workers) / total_ct_temp_2, 4))
+        variables = [TAV, AV, OH, COC, EHC, IV, Mw, Mn, p_TAV, s_TAV, t_TAV]
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
                    'Iodine Value': IV, '1° TAV': p_TAV, '2° TAV': s_TAV, '3° TAV': t_TAV}
-        RXN_metric_value_2 = metrics[end_metric_selection_sec]
-        if end_metric_value_upper_sec >= RXN_metric_value_2 >= end_metric_value_lower_sec:
-            test_interval = 1
-        if end_metric_selection_sec != '% EHC':
-            if currentPID == PID_list[-1]:
-                progress_queue_sec.put(round((end_metric_value_sec / RXN_metric_value_2) * 100), 2)
-            if RXN_metric_value_2 <= end_metric_value_sec:
-                comp_secondary = composition
-                byproducts_secondary = byproducts
-                running = False
+
+        if not in_primary:
+            for i, variable in enumerate(variables):
+                in_situ_values_sec[i].append(variable)
+            Xn_list_sec.append(round((total_ct_sec / workers) / total_ct_temp, 4))
+            RXN_metric_value = metrics[end_metric_selection_sec]
+            if end_metric_value_upper_sec >= RXN_metric_value >= end_metric_value_lower_sec:
+                test_interval = 1
+            if end_metric_selection_sec != '% EHC':
+                if currentPID == PID_list[-1]:
+                    progress_queue_sec.put(round((end_metric_value_sec / RXN_metric_value) * 100), 2)
+                if RXN_metric_value <= end_metric_value_sec:
+                    comp_secondary = composition
+                    byproducts_secondary = byproducts
+                    running = False
         else:
-            if currentPID == PID_list[-1]:
-                progress_queue_sec.put(round(((EHC / end_metric_value_sec) * 100), 2))
-            if RXN_metric_value_2 >= end_metric_value_sec:
-                comp_secondary = composition
-                byproducts_secondary = byproducts
-                running = False
+            for i, variable in enumerate(variables):
+                in_situ_values[i].append(variable)
+            Xn_list.append(round((total_ct / workers) / total_ct_temp, 4))
+            RXN_metric_value = metrics[end_metric_selection]
+            if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
+                test_interval = 1
+            if end_metric_selection != '% EHC':
+                if currentPID == PID_list[-1]:
+                    process_queue.put(round((end_metric_value / RXN_metric_value) * 100), 2)
+                if RXN_metric_value <= end_metric_value:
+                    comp_primary = tuple(composition)
+                    byproducts_primary = byproducts
+                    if not RXN_EM_2_Active_status:
+                        running = False
+                    else:
+                        in_primary = False
+                        for species in composition_sec:
+                            composition.append(species)
+                        test_interval = 40
 
     while running:
         test_count += 1
