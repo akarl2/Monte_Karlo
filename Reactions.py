@@ -17,7 +17,7 @@ class Etherification:
 
 Reactions = ["Condensation", "Etherification", "PolyCondensation"]
 End_Metrics = ["Amine Value", "Acid Value", "OH Value", "Epoxide Value", '% EHC', 'Iodine Value', "1° TAV", "2° TAV", "3° TAV" ]
-Num_Samples = ["1000", "2500", "5000", "10000","25000", "50000", "100000"]
+Num_Samples = ["1000", "2500", "5000", "10000", "25000", "50000", "100000"]
 
 
 class reactive_groups:

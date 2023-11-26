@@ -434,7 +434,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     byproducts_df['Wt, % (Of Final)'] = round(byproducts_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
     byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / (starting_mass / total_samples) * 100, 4)
 
-    Xn = pandas.DataFrame(in_situ_values[0], columns = ['TAV'])
+    Xn = pandas.DataFrame(in_situ_values[0], columns=['TAV'])
     Xn['AV'] = in_situ_values[1]
     Xn['OH'] = in_situ_values[2]
     Xn['COC'] = in_situ_values[3]
