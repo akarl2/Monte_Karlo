@@ -405,6 +405,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     rxn_summary_df = rxn_summary_df[
         ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
     rxn_summary_df['Mass'] = rxn_summary_df['Mass'] / total_samples
+    rxn_mass = rxn_summary_df['Mass'].sum()
     rxn_summary_df.loc['Sum'] = round(rxn_summary_df.sum(), 3)
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
 
@@ -431,7 +432,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     byproducts_df.set_index('Name', inplace=True)
     byproducts_df['Mass'] = byproducts_df['Mass'] / total_samples
     byproducts_df['Wt, % (Of byproducts)'] = round(byproducts_df['Mass'] / byproducts_df['Mass'].sum() * 100, 4)
-    byproducts_df['Wt, % (Of Final)'] = round(byproducts_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
+    byproducts_df['Wt, % (Of Final)'] = round(byproducts_df['Mass'] / (rxn_mass + byproducts_df['Mass'])  * 100, 4)
     byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / (starting_mass / total_samples) * 100, 4)
 
     Xn = pandas.DataFrame(in_situ_values[0], columns=['TAV'])
@@ -448,11 +449,9 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     Xn['Xn'] = in_situ_values[11]
     Xn['P'] = -(1 / Xn['Xn']) + 1
 
-
     show_results(rxn_summary_df)
     show_byproducts(byproducts_df)
     show_Xn(Xn)
-
 
 def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values_sec):
     global rxn_summary_df_2, Xn_2, total_samples, byproducts_df_2
@@ -526,6 +525,7 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     rxn_summary_df_2 = rxn_summary_df_2[
         ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
     rxn_summary_df_2['Mass'] = rxn_summary_df_2['Mass'] / total_samples
+    rxn_mass = rxn_summary_df_2['Mass'].sum()
     rxn_summary_df_2.loc['Sum'] = round(rxn_summary_df_2.sum(), 3)
     rxn_summary_df_2 = rxn_summary_df_2.groupby(['MW', 'Name']).sum()
     Mn = sumNiMi / sumNi
@@ -550,8 +550,8 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     byproducts_df_2.set_index('Name', inplace=True)
     byproducts_df_2['Mass'] = byproducts_df_2['Mass'] / total_samples
     byproducts_df_2['Wt, % (Of byproducts)'] = round(byproducts_df_2['Mass'] / byproducts_df_2['Mass'].sum() * 100, 4)
-    byproducts_df_2['Wt, % (Of Final)'] = round(byproducts_df_2['Mass'] / rxn_summary_df_2['Mass'].sum() * 100, 4)
-    byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / (starting_mass / total_samples) * 100, 4)
+    byproducts_df_2['Wt, % (Of Final)'] = round(byproducts_df_2['Mass'] / (rxn_mass + byproducts_df_2['Mass']) * 100, 4)
+    byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / (starting_mass_sec / total_samples) * 100, 4)
 
     Xn_2 = pandas.DataFrame(in_situ_values_sec[0], columns=['TAV'])
     Xn_2['AV'] = in_situ_values_sec[1]
