@@ -198,27 +198,44 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
 
         for key in comp_summary:
             key_names = [i[0] for i in key[0]]
+            NH2_ct += key_names.count('NH2') * comp_summary[key]
+            NH_ct += key_names.count('NH') * comp_summary[key]
+            N_ct += key_names.count('N') * comp_summary[key]
+            amine_ct = (NH2_ct + NH_ct + N_ct)
+            acid_ct += key_names.count('COOH') * comp_summary[key]
+            alcohol_ct += (key_names.count('POH') + key_names.count('SOH')) * comp_summary[key]
+            epoxide_ct += key_names.count('COC') * comp_summary[key]
+            IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count('CC_1')) *  comp_summary[key]
             Cl_ct = key_names.count('Cl')
             for group in key[0]:
-                if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
-                    if group[0] == 'NH2':
-                        NH2_ct += comp_summary[key]
-                    elif group[0] == 'NH':
-                        NH_ct += comp_summary[key]
-                    elif group[0] == 'N':
-                        N_ct += comp_summary[key]
-                    amine_ct += comp_summary[key]
-                elif group[0] == 'COOH':
-                    acid_ct += comp_summary[key]
-                elif group[0] == 'POH' or group[0] == 'SOH':
+                if group[0] == 'POH' or group[0] == 'SOH':
                     alcohol_ct += comp_summary[key]
                     if 'Epi' in sn_dict and group[0] == 'SOH' and group[1] == sn_dict['Epi'].cprgID[1] and Cl_ct > 0:
                         Cl_ct -= 1
                         EHC_ct += comp_summary[key]
-                elif group[0] == 'COC':
-                    epoxide_ct += comp_summary[key]
-                elif group[0] in ['aB_unsat', 'CC_3', 'CC_2', 'CC_1']:
-                    IV_ct += comp_summary[key]
+
+            # key_names = [i[0] for i in key[0]]
+            # Cl_ct = key_names.count('Cl')
+            # for group in key[0]:
+            #     if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
+            #         if group[0] == 'NH2':
+            #             NH2_ct += comp_summary[key]
+            #         elif group[0] == 'NH':
+            #             NH_ct += comp_summary[key]
+            #         elif group[0] == 'N':
+            #             N_ct += comp_summary[key]
+            #         amine_ct += comp_summary[key]
+            #     elif group[0] == 'COOH':
+            #         acid_ct += comp_summary[key]
+            #     elif group[0] == 'POH' or group[0] == 'SOH':
+            #         alcohol_ct += comp_summary[key]
+            #         if 'Epi' in sn_dict and group[0] == 'SOH' and group[1] == sn_dict['Epi'].cprgID[1] and Cl_ct > 0:
+            #             Cl_ct -= 1
+            #             EHC_ct += comp_summary[key]
+            #     elif group[0] == 'COC':
+            #         epoxide_ct += comp_summary[key]
+            #     elif group[0] in ['aB_unsat', 'CC_3', 'CC_2', 'CC_1']:
+            #         IV_ct += comp_summary[key]
 
         TAV = round((amine_ct * 56100) / sum_comp, 2)
         p_TAV = round((NH2_ct * 56100) / sum_comp, 2)
@@ -269,7 +286,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                         in_primary = False
                         for species in composition_sec:
                             composition.append(species)
-                        test_interval = 40
+                        test_interval = 50
 
     while running:
         test_count += 1
@@ -313,7 +330,6 @@ def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[14].delete(0, tkinter.END)
     RM.entries[14].insert(0, IV)
 
-
 def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
     RM2.entries[8].delete(0, tkinter.END)
     RM2.entries[8].insert(0, EHC)
@@ -332,8 +348,6 @@ def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
     RM2.entries[13].insert(0, COC)
     RM2.entries[14].delete(0, tkinter.END)
     RM2.entries[14].insert(0, IV)
-
-
 def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     global rxn_summary_df, Xn, total_samples, byproducts_df, metrics
     comp_summary = collections.Counter(
@@ -368,8 +382,6 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
                         EHC_ct += key[3]
             elif group[0] == 'COC':
                 epoxide_ct += key[3]
-            # elif group[0] == 'Cl' and 'SOH' in key_names:
-            # EHC_ct += key[3]
             elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
                 IV_ct += key[3]
         key.append(round((amine_ct * 56100) / sum_comp, 2))
@@ -402,8 +414,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 2).sum()
     sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 3).sum()
     sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 4).sum()
-    rxn_summary_df = rxn_summary_df[
-        ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
+    rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
     rxn_summary_df['Mass'] = rxn_summary_df['Mass'] / total_samples
     rxn_mass = rxn_summary_df['Mass'].sum()
     rxn_summary_df.loc['Sum'] = round(rxn_summary_df.sum(), 3)
@@ -452,7 +463,6 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     show_results(rxn_summary_df)
     show_byproducts(byproducts_df)
     show_Xn(Xn)
-
 def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values_sec):
     global rxn_summary_df_2, Xn_2, total_samples, byproducts_df_2
     comp_summary_2 = collections.Counter(
@@ -487,8 +497,6 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
                         EHC_ct += key[3]
             elif group[0] == 'COC':
                 epoxide_ct += key[3]
-            # elif group[0] == 'Cl' and 'SOH' in key_names:
-            # EHC_ct += key[3]
             elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
                 IV_ct += key[3]
         key.append(round((amine_ct * 56100) / sum_comp_2, 2))
