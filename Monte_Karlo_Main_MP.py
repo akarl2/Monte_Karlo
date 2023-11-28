@@ -46,12 +46,12 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
     frame_byproducts, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, \
     frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary, quick_add, quick_add_comp, \
     RXN_EM_Value, RXN_EM_Entry, rxn_summary_df, rxn_summary_df_2, Xn, Xn_2, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, \
-    end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict, samples_value, total_samples, canceled_by_user, metrics
+    end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict, samples_value, total_samples, canceled_by_user, metrics, RXN_EM_Operator, RXN_EM_Operator_2
 
  
 def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec,
              end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, process_queue,
-             PID_list, progress_queue_sec):
+             PID_list, progress_queue_sec, RXN_EM_Operator_sel, RXN_EM_Operator_2_sel):
     PID_list.append(os.getpid())
     currentPID = os.getpid()
     time.sleep(1)
@@ -202,11 +202,11 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             NH2_ct += key_names.count('NH2') * comp_summary[key]
             NH_ct += key_names.count('NH') * comp_summary[key]
             N_ct += key_names.count('N') * comp_summary[key]
-            amine_ct = (NH2_ct + NH_ct + N_ct)
+            amine_ct = NH2_ct + NH_ct + N_ct
             acid_ct += key_names.count('COOH') * comp_summary[key]
             alcohol_ct += (key_names.count('POH') + key_names.count('SOH')) * comp_summary[key]
             epoxide_ct += key_names.count('COC') * comp_summary[key]
-            IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count('CC_1')) *  comp_summary[key]
+            IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count('CC_1')) * comp_summary[key]
             Cl_ct = key_names.count('Cl')
             for group in key[0]:
                 if group[0] == 'POH' or group[0] == 'SOH':
@@ -214,29 +214,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                     if 'Epi' in sn_dict and group[0] == 'SOH' and group[1] == sn_dict['Epi'].cprgID[1] and Cl_ct > 0:
                         Cl_ct -= 1
                         EHC_ct += comp_summary[key]
-
-            # key_names = [i[0] for i in key[0]]
-            # Cl_ct = key_names.count('Cl')
-            # for group in key[0]:
-            #     if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
-            #         if group[0] == 'NH2':
-            #             NH2_ct += comp_summary[key]
-            #         elif group[0] == 'NH':
-            #             NH_ct += comp_summary[key]
-            #         elif group[0] == 'N':
-            #             N_ct += comp_summary[key]
-            #         amine_ct += comp_summary[key]
-            #     elif group[0] == 'COOH':
-            #         acid_ct += comp_summary[key]
-            #     elif group[0] == 'POH' or group[0] == 'SOH':
-            #         alcohol_ct += comp_summary[key]
-            #         if 'Epi' in sn_dict and group[0] == 'SOH' and group[1] == sn_dict['Epi'].cprgID[1] and Cl_ct > 0:
-            #             Cl_ct -= 1
-            #             EHC_ct += comp_summary[key]
-            #     elif group[0] == 'COC':
-            #         epoxide_ct += comp_summary[key]
-            #     elif group[0] in ['aB_unsat', 'CC_3', 'CC_2', 'CC_1']:
-            #         IV_ct += comp_summary[key]
 
         TAV = round((amine_ct * 56100) / sum_comp, 2)
         p_TAV = round((NH2_ct * 56100) / sum_comp, 2)
@@ -260,26 +237,27 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             if not in_primary:
                 for i, (metric_name, variable) in enumerate(metrics.items()):
                     in_situ_values_sec[i].append(variable)
-            RXN_metric_value = metrics[end_metric_selection_sec]
-            if end_metric_value_upper_sec >= RXN_metric_value >= end_metric_value_lower_sec:
+                RXN_metric_value = metrics[end_metric_selection_sec]
+
+            if (RXN_EM_Operator_2_sel == '<=' and RXN_metric_value <= end_metric_value_upper_sec) or (RXN_EM_Operator_2_sel == '>=' and RXN_metric_value >= end_metric_value_lower_sec):
                 test_interval = 1
             if end_metric_selection_sec != '% EHC':
                 if currentPID == PID_list[-1]:
                     progress_queue_sec.put(round((end_metric_value_sec / RXN_metric_value) * 100), 2)
-                if RXN_metric_value <= end_metric_value_sec:
-                    comp_secondary = composition
+                if (RXN_EM_Operator_2_sel == '<=' and RXN_metric_value <= end_metric_value_sec) or (RXN_EM_Operator_2_sel == '>=' and RXN_metric_value >= end_metric_value_sec):
+                    comp_secondary = tuple(composition)
                     byproducts_secondary = byproducts
                     running = False
         else:
             for i, (metric_name, variable) in enumerate(metrics.items()):
                 in_situ_values[i].append(variable)
             RXN_metric_value = metrics[end_metric_selection]
-            if end_metric_value_upper >= RXN_metric_value >= end_metric_value_lower:
+            if (RXN_EM_Operator_sel == '<=' and RXN_metric_value <= end_metric_value_upper) or (RXN_EM_Operator_sel == '>=' and RXN_metric_value >= end_metric_value_lower):
                 test_interval = 1
             if end_metric_selection != '% EHC':
                 if currentPID == PID_list[-1]:
                     process_queue.put(round((end_metric_value / RXN_metric_value) * 100), 2)
-                if RXN_metric_value <= end_metric_value:
+                if (RXN_EM_Operator_sel == '<=' and RXN_metric_value <= end_metric_value) or (RXN_EM_Operator_sel == '>=' and RXN_metric_value >= end_metric_value):
                     comp_primary = tuple(composition)
                     byproducts_primary = byproducts
                     if not RXN_EM_2_Active_status:
@@ -361,13 +339,13 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
         RS.append((key[0], key[1], key[2], comp_summary[key]))
     RS = [[[list(x) for x in i[0]], [list(y) for y in i[1]], i[2], i[3]] for i in RS]
     for key in RS:
-        amine_ct, pTAV_ct, sTAV_ct, tTAV_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, totalCl_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        amine_ct, NH2_ct, NH_ct, N_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, totalCl_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         key_names = [i[0] for i in key[0]]
         totalCl_ct += key_names.count('Cl') * key[3]
-        pTAV_ct += key_names.count('NH2') * key[3]
-        sTAV_ct += key_names.count('NH') * key[3]
-        tTAV_ct += key_names.count('N') * key[3]
-        amine_ct = (pTAV_ct + sTAV_ct + tTAV_ct)
+        NH2_ct += key_names.count('NH2') * key[3]
+        NH_ct += key_names.count('NH') * key[3]
+        N_ct += key_names.count('N') * key[3]
+        amine_ct = NH2_ct + NH_ct + NH_ct
         acid_ct += key_names.count('COOH') * key[3]
         alcohol_ct += (key_names.count('POH') + key_names.count('SOH')) * key[3]
         epoxide_ct += key_names.count('COC') * key[3]
@@ -381,9 +359,9 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
                     EHC_ct += key[3]
 
         key.append(round((amine_ct * 56100) / sum_comp, 2))
-        key.append(round((pTAV_ct * 56100) / sum_comp, 2))
-        key.append(round((sTAV_ct * 56100) / sum_comp, 2))
-        key.append(round((tTAV_ct * 56100) / sum_comp, 2))
+        key.append(round((NH2_ct * 56100) / sum_comp, 2))
+        key.append(round((NH_ct * 56100) / sum_comp, 2))
+        key.append(round((N_ct * 56100) / sum_comp, 2))
         key.append(round((acid_ct * 56100) / sum_comp, 2))
         key.append(round((alcohol_ct * 56100) / sum_comp, 2))
         key.append(round((epoxide_ct * 56100) / sum_comp, 2))
@@ -472,13 +450,13 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
         RS_2.append((key[0], key[1], key[2], comp_summary_2[key]))
     RS_2 = [[[list(x) for x in i[0]], [list(y) for y in i[1]], i[2], i[3]] for i in RS_2]
     for key in RS_2:
-        amine_ct, pTAV_ct, sTAV_ct, tTAV_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, totCl_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        amine_ct, NH2_ct, NH_ct, N_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, totCl_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         key_names = [i[0] for i in key[0]]
         totCl_ct += key_names.count('Cl') * key[3]
-        pTAV_ct += key_names.count('NH2') * key[3]
-        sTAV_ct += key_names.count('NH') * key[3]
-        tTAV_ct += key_names.count('N') * key[3]
-        amine_ct = (pTAV_ct + sTAV_ct + tTAV_ct)
+        NH2_ct += key_names.count('NH2') * key[3]
+        NH_ct += key_names.count('NH') * key[3]
+        N_ct += key_names.count('N') * key[3]
+        amine_ct = NH2_ct + NH_ct + N_ct
         acid_ct += key_names.count('COOH') * key[3]
         alcohol_ct += (key_names.count('POH') + key_names.count('SOH')) * key[3]
         epoxide_ct += key_names.count('COC') * key[3]
@@ -491,9 +469,9 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
                     Cl_ct -= 1
                     EHC_ct += key[3]
         key.append(round((amine_ct * 56100) / sum_comp_2, 2))
-        key.append(round((pTAV_ct * 56100) / sum_comp_2, 2))
-        key.append(round((sTAV_ct * 56100) / sum_comp_2, 2))
-        key.append(round((tTAV_ct * 56100) / sum_comp_2, 2))
+        key.append(round((NH2_ct * 56100) / sum_comp_2, 2))
+        key.append(round((NH_ct * 56100) / sum_comp_2, 2))
+        key.append(round((N_ct * 56100) / sum_comp_2, 2))
         key.append(round((acid_ct * 56100) / sum_comp_2, 2))
         key.append(round((alcohol_ct * 56100) / sum_comp_2, 2))
         key.append(round((epoxide_ct * 56100) / sum_comp_2, 2))
@@ -843,12 +821,14 @@ def clear_last():
 
 def initialize_sim(workers):
     global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, end_metric_selection_sec, starting_materials, \
-        starting_materials_sec, total_samples
+        starting_materials_sec, total_samples, RXN_EM_Operator,RXN_EM_Operator_2, RXN_EM_Operator_sel, RXN_EM_Operator_2_sel
     starting_mass, starting_mass_sec, total_ct, total_ct_sec = 0, 0, 0, 0
     row_for_sec = RXN_EM_Entry_2_SR.current()
     try:
         end_metric_value = float(RXN_EM_Value.get())
         RXN_EM_2_Active_status = RXN_EM_2_Active.get()
+        RXN_EM_Operator_sel = RXN_EM_Operator.get()
+        RXN_EM_Operator_2_sel = RXN_EM_Operator_2.get()
         if RXN_EM_2_Active_status:
             end_metric_value_sec = float(RXN_EM_Value_2.get())
         else:
@@ -922,7 +902,7 @@ def multiprocessing_sim():
             results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value,
                                        end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict,
                                        RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, progress_queue,
-                                       PID_list, progress_queue_sec) for _ in range(workers)]
+                                       PID_list, progress_queue_sec, RXN_EM_Operator_sel, RXN_EM_Operator_2_sel) for _ in range(workers)]
             while len(PID_list) < workers:
                 pass
             while any(result.running() for result in results) and running is True:
@@ -1616,7 +1596,7 @@ if __name__ == "__main__":
         def create_table(self):
             self.entries = {}
             self.tableheight = 4
-            self.tablewidth = 2
+            self.tablewidth = 3
             counter = 0
             for column in range(self.tablewidth):
                 for row in range(self.tableheight):
@@ -1637,28 +1617,43 @@ if __name__ == "__main__":
             self.user_entry()
 
         def user_entry(self):
-            global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, RXN_EM_Entry_2_SR, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, RXN_EM_Entry, NUM_OF_SIM
+            global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, RXN_EM_Entry_2_SR, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, RXN_EM_Entry, NUM_OF_SIM, RXN_EM_Operator, RXN_EM_Operator_2
             RXN_EM = tkinter.StringVar()
+            RXN_EM.set("1º End Metric")
             reactants_list = []
             RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
             RXN_EM_Entry.grid(row=0, column=0)
-            RXN_EM_Entry.insert(0, "1º End Metric")
             RXN_EM_Entry.config(justify="center", state="readonly")
-            RXN_EM_Value = self.entries[4]
+            RXN_EM_Value = self.entries[8]
+
+            RXN_EM_Operator = tkinter.StringVar()
+            RXN_EM_Operator.set("<=")
+            RXN_EM_Operator_Entry = AutocompleteCombobox(self, completevalues=["<=", ">="], width=15, textvariable=RXN_EM_Operator)
+            RXN_EM_Operator_Entry.grid(row=0, column=1)
+            RXN_EM_Operator_Entry.config(justify="center", state="readonly")
+
             RXN_EM_2_Active = tkinter.BooleanVar()
             RXN_EM_2_Check = tkinter.Checkbutton(self, text="2º Active?", variable=RXN_EM_2_Active, onvalue=True,
                                                  offvalue=False)
-            RXN_EM_2_Check.grid(row=0, column=2)
+            RXN_EM_2_Check.grid(row=0, column=3)
             RXN_EM_2 = tkinter.StringVar()
             RXN_EM_Entry_2 = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM_2)
             RXN_EM_Entry_2.grid(row=1, column=0)
             RXN_EM_Entry_2.insert(0, "2º End Metric")
             RXN_EM_Entry_2.config(justify="center", state="readonly")
-            RXN_EM_Value_2 = self.entries[5]
+            RXN_EM_Value_2 = self.entries[9]
+
+            RXN_EM_Operator_2 = tkinter.StringVar()
+            RXN_EM_Operator_2.set("<=")
+            RXN_EM_Operator_Entry_2 = AutocompleteCombobox(self, completevalues=["<=", ">="], width=15, textvariable=RXN_EM_Operator_2)
+            RXN_EM_Operator_Entry_2.grid(row=1, column=1)
+            RXN_EM_Operator_Entry_2.config(justify="center", state="readonly")
+
+
             RXN_EM_2_SR = tkinter.StringVar()
             RXN_EM_Entry_2_SR = AutocompleteCombobox(self, completevalues=reactants_list, width=15,
                                                      textvariable=RXN_EM_2_SR)
-            RXN_EM_Entry_2_SR.grid(row=1, column=2)
+            RXN_EM_Entry_2_SR.grid(row=1, column=3)
             if RXN_EM_Entry_2_SR.get() == "":
                 RXN_EM_Entry_2_SR.insert(0, "2º Start")
             RXN_EM_Entry_2_SR.config(justify="center")
