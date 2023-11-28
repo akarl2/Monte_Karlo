@@ -48,7 +48,7 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
     RXN_EM_Value, RXN_EM_Entry, rxn_summary_df, rxn_summary_df_2, Xn, Xn_2, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, \
     end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict, samples_value, total_samples, canceled_by_user, metrics, RXN_EM_Operator, RXN_EM_Operator_2
 
- 
+# -------------------------------------------Simulate---------------------------------------------------#
 def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec,
              end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, process_queue,
              PID_list, progress_queue_sec, RXN_EM_Operator_sel, RXN_EM_Operator_2_sel):
@@ -64,11 +64,11 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     test_count = 0
     test_interval = 50
     try:
-        end_metric_value_upper = end_metric_value + 15
-        end_metric_value_lower = end_metric_value - 15
+        end_metric_value_upper = end_metric_value * 1.15
+        end_metric_value_lower = end_metric_value * 0.85
         if RXN_EM_2_Active_status:
-            end_metric_value_upper_sec = end_metric_value_sec + 15
-            end_metric_value_lower_sec = end_metric_value_sec - 15
+            end_metric_value_upper_sec = end_metric_value_sec * 1.15
+            end_metric_value_lower_sec = end_metric_value_sec * 0.85
     except ValueError:
         messagebox.showerror("Error", "Please enter a value for the end metric(s).")
         return
@@ -1398,7 +1398,6 @@ if __name__ == "__main__":
             quick_add_comp = [self.e1.get(), float(self.e2.get())]
             self.destroy()
 
-
     class RxnEntryTable(tkinter.Frame):
         def __init__(self, master=tab1):
             tkinter.Frame.__init__(self, master)
@@ -1529,9 +1528,7 @@ if __name__ == "__main__":
                     if Entry_masses[index].get() != "":
                         self.entries[cell + 1].config(state="normal")
                         self.entries[cell + 1].delete(0, tkinter.END)
-                        self.entries[cell + 1].insert(0,
-                                                      str(round((float(Entry_masses[index].get()) / sum_mass()) * 100,
-                                                                3)))
+                        self.entries[cell + 1].insert(0,str(round((float(Entry_masses[index].get()) / sum_mass()) * 100,3)))
                         self.entries[cell + 1].config(state="readonly")
                     cell = cell + self.tablewidth
                     index = index + 1
@@ -1579,6 +1576,23 @@ if __name__ == "__main__":
                 self.entries[cell + 15].insert(0, str(a.ctrgk))
             else:
                 pass
+
+            def get_rgID_combinations():
+                unique_rgIDs = set()
+                cell = 20
+                for i in range(self.tableheight - 1):
+                    unique_rgIDs.update(
+                        filter(lambda x: x not in (None, "", "None"),
+                               [self.entries[cell + j].get() for j in range(0, 12, 2)]))
+                    cell += self.tablewidth
+
+                # Generate unique combinations from collected rgIDs
+                unique_combinations = set(itertools.combinations(sorted(unique_rgIDs), 2))
+
+                return list(unique_combinations)
+
+            print(get_rgID_combinations())
+
 
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
@@ -1781,7 +1795,6 @@ if __name__ == "__main__":
             self.entries[6].delete(0, tkinter.END)
             self.entries[6].insert(0, "Iodine Value =")
             self.entries[6].config(state="readonly")
-
 
 
     class WeightDist(tkinter.Frame):
