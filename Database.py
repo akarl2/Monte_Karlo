@@ -493,6 +493,28 @@ class Trimethylolpropane:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.prgID], [self.prgID]]
 
+class TMPTA:
+    def __init__(self):
+        self.name = "Trimethylolpropane_triacrylate"
+        self.sn = 'TMPTA'
+        self.formula = "C15H20O6"
+        self.mw = 296.319
+        self.density = 1.06
+        self.prgID = "aB_unsat"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID], [self.prgID]]
+
+
 class Cyclohexanedimethanol:
     def __init__(self):
         self.name = "Cyclohexanedimethanol"

@@ -57,8 +57,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     time.sleep(1)
     rg = reactive_groups()
     global test_count, test_interval, sn_dist, in_situ_values, byproducts, running, in_primary, in_situ_values_sec, quick_add, comp_primary, comp_secondary
-    in_situ_values = [[], [], [], [], [], [], [], [], [], [], [], [], []]
-    in_situ_values_sec = [[], [], [], [], [], [], [], [], [], [], [], [], []]
+    in_situ_values = [[], [], [], [], [], [], [], [], [], [], [], [], [], []]
+    in_situ_values_sec = [[], [], [], [], [], [], [], [], [], [], [], [], [], []]
     byproducts, composition, composition_sec = [], [], []
     running, in_primary = True, True
     test_count = 0
@@ -194,10 +194,11 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         Mw = sum_comp_2 / sum_comp
         Mn = sum_comp / total_ct_temp
 
-        amine_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, NH2_ct, NH_ct, N_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0
+        amine_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, NH2_ct, NH_ct, N_ct, totCl_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
         for key in comp_summary:
             key_names = [i[0] for i in key[0]]
+            totCl_ct += key_names.count('Cl') * comp_summary[key]
             NH2_ct += key_names.count('NH2') * comp_summary[key]
             NH_ct += key_names.count('NH') * comp_summary[key]
             N_ct += key_names.count('N') * comp_summary[key]
@@ -246,13 +247,14 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         COC = round((epoxide_ct * 56100) / sum_comp, 2)
         EHC = round((EHC_ct * 35.453) / sum_comp * 100, 2)
         IV = round(((IV_ct * 2) * (127 / sum_comp) * 100), 2)
+        Cl = round((totCl_ct * 35.453) / sum_comp * 100, 2)
         if not in_primary:
             Xn = round((total_ct_sec / workers) / total_ct_temp, 4)
         else:
             Xn = round((total_ct / workers) / total_ct_temp, 4)
 
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
-                   'Iodine Value': IV, 'MW': Mw, 'Mn': Mn, '1° TAV': p_TAV, '2° TAV': s_TAV, '3° TAV': t_TAV, 'Xn': Xn}
+                   'Iodine Value': IV, 'MW': Mw, 'Mn': Mn, '1° TAV': p_TAV, '2° TAV': s_TAV, '3° TAV': t_TAV, 'Xn': Xn, '% Cl': Cl}
 
         if not in_primary:
             if not in_primary:
@@ -359,31 +361,25 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
         RS.append((key[0], key[1], key[2], comp_summary[key]))
     RS = [[[list(x) for x in i[0]], [list(y) for y in i[1]], i[2], i[3]] for i in RS]
     for key in RS:
-        amine_ct, pTAV_ct, sTAV_ct, tTAV_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0
+        amine_ct, pTAV_ct, sTAV_ct, tTAV_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, totalCl_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         key_names = [i[0] for i in key[0]]
+        totalCl_ct += key_names.count('Cl') * key[3]
+        pTAV_ct += key_names.count('NH2') * key[3]
+        sTAV_ct += key_names.count('NH') * key[3]
+        tTAV_ct += key_names.count('N') * key[3]
+        amine_ct = (pTAV_ct + sTAV_ct + tTAV_ct)
+        acid_ct += key_names.count('COOH') * key[3]
+        alcohol_ct += (key_names.count('POH') + key_names.count('SOH')) * key[3]
+        epoxide_ct += key_names.count('COC') * key[3]
+        IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count('CC_1')) * key[3]
         Cl_ct = key_names.count('Cl')
         for group in key[0]:
-            if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
-                amine_ct += key[3]
-                if group[0] == 'NH2':
-                    pTAV_ct += key[3]
-                elif group[0] == 'NH':
-                    sTAV_ct += key[3]
-                elif group[0] == 'N':
-                    tTAV_ct += key[3]
-            elif group[0] == 'COOH':
-                acid_ct += key[3]
-            elif group[0] == 'POH' or group[0] == 'SOH':
+            if group[0] == 'POH' or group[0] == 'SOH':
                 alcohol_ct += key[3]
-                if 'Epi' in sn_dict:
-                    sOHk = sn_dict['Epi'].cprgID[1]
-                    if group[0] == 'SOH' and group[1] == sOHk and Cl_ct > 0:
-                        Cl_ct -= 1
-                        EHC_ct += key[3]
-            elif group[0] == 'COC':
-                epoxide_ct += key[3]
-            elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
-                IV_ct += key[3]
+                if 'Epi' in sn_dict and group[0] == 'SOH' and group[1] == sn_dict['Epi'].cprgID[1] and totalCl_ct > 0:
+                    Cl_ct -= 1
+                    EHC_ct += key[3]
+
         key.append(round((amine_ct * 56100) / sum_comp, 2))
         key.append(round((pTAV_ct * 56100) / sum_comp, 2))
         key.append(round((sTAV_ct * 56100) / sum_comp, 2))
@@ -393,6 +389,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
         key.append(round((epoxide_ct * 56100) / sum_comp, 2))
         key.append(round((EHC_ct * 35.453) / sum_comp * 100, 2))
         key.append(round(((IV_ct * 2) * (127 / sum_comp) * 100), 2))
+        key.append(round((totalCl_ct * 35.453) / sum_comp * 100, 2))
     for key in RS:
         index = 0
         for group in key[1]:
@@ -401,7 +398,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
             index += 1
         key[1] = '_'.join(key[1])
     rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV",
-                                                   'AV', 'OH', 'COC', 'EHC,%', 'IV'])
+                                                   'AV', 'OH', 'COC', 'EHC,%', 'IV', 'Cl, %'])
     rxn_summary_df['MW'] = round(rxn_summary_df['MW'], 4)
     rxn_summary_df.drop(columns=['Groups'], inplace=True)
     rxn_summary_df.set_index('Name', inplace=True)
@@ -414,7 +411,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 2).sum()
     sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 3).sum()
     sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 4).sum()
-    rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
+    rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV', 'Cl, %']]
     rxn_summary_df['Mass'] = rxn_summary_df['Mass'] / total_samples
     rxn_mass = rxn_summary_df['Mass'].sum()
     rxn_summary_df.loc['Sum'] = round(rxn_summary_df.sum(), 3)
@@ -458,6 +455,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     Xn['2° TAV'] = in_situ_values[9]
     Xn['3° TAV'] = in_situ_values[10]
     Xn['Xn'] = in_situ_values[11]
+    Xn['% Cl'] = in_situ_values[12]
     Xn['P'] = -(1 / Xn['Xn']) + 1
 
     show_results(rxn_summary_df)
@@ -474,31 +472,24 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
         RS_2.append((key[0], key[1], key[2], comp_summary_2[key]))
     RS_2 = [[[list(x) for x in i[0]], [list(y) for y in i[1]], i[2], i[3]] for i in RS_2]
     for key in RS_2:
-        amine_ct, pTAV_ct, sTAV_ct, tTAV_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0
+        amine_ct, pTAV_ct, sTAV_ct, tTAV_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, totCl_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         key_names = [i[0] for i in key[0]]
+        totCl_ct += key_names.count('Cl') * key[3]
+        pTAV_ct += key_names.count('NH2') * key[3]
+        sTAV_ct += key_names.count('NH') * key[3]
+        tTAV_ct += key_names.count('N') * key[3]
+        amine_ct = (pTAV_ct + sTAV_ct + tTAV_ct)
+        acid_ct += key_names.count('COOH') * key[3]
+        alcohol_ct += (key_names.count('POH') + key_names.count('SOH')) * key[3]
+        epoxide_ct += key_names.count('COC') * key[3]
+        IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count('CC_1')) * key[3]
         Cl_ct = key_names.count('Cl')
         for group in key[0]:
-            if group[0] == 'NH2' or group[0] == 'NH' or group[0] == 'N':
-                amine_ct += key[3]
-                if group[0] == 'NH2':
-                    pTAV_ct += key[3]
-                elif group[0] == 'NH':
-                    sTAV_ct += key[3]
-                elif group[0] == 'N':
-                    tTAV_ct += key[3]
-            elif group[0] == 'COOH':
-                acid_ct += key[3]
-            elif group[0] == 'POH' or group[0] == 'SOH':
+            if group[0] == 'POH' or group[0] == 'SOH':
                 alcohol_ct += key[3]
-                if 'Epi' in sn_dict:
-                    sOHk = sn_dict['Epi'].cprgID[1]
-                    if group[0] == 'SOH' and group[1] == sOHk and Cl_ct > 0:
-                        Cl_ct -= 1
-                        EHC_ct += key[3]
-            elif group[0] == 'COC':
-                epoxide_ct += key[3]
-            elif group[0] == 'aB_unsat' or group[0] == 'CC_3' or group[0] == 'CC_2' or group[0] == 'CC_1':
-                IV_ct += key[3]
+                if 'Epi' in sn_dict and group[0] == 'SOH' and group[1] == sn_dict['Epi'].cprgID[1] and totCl_ct > 0:
+                    Cl_ct -= 1
+                    EHC_ct += key[3]
         key.append(round((amine_ct * 56100) / sum_comp_2, 2))
         key.append(round((pTAV_ct * 56100) / sum_comp_2, 2))
         key.append(round((sTAV_ct * 56100) / sum_comp_2, 2))
@@ -508,6 +499,7 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
         key.append(round((epoxide_ct * 56100) / sum_comp_2, 2))
         key.append(round((EHC_ct * 35.453) / sum_comp_2 * 100, 2))
         key.append(round(((IV_ct * 2) * (127 / sum_comp_2) * 100), 2))
+        key.append(round((totCl_ct * 35.453) / sum_comp_2 * 100, 2))
     for key in RS_2:
         index = 0
         for group in key[1]:
@@ -517,7 +509,7 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
         key[1] = '_'.join(key[1])
     rxn_summary_df_2 = pandas.DataFrame(RS_2,
                                         columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV",
-                                                 'AV', 'OH', 'COC', 'EHC,%', 'IV'])
+                                                 'AV', 'OH', 'COC', 'EHC,%', 'IV', 'Cl, %'])
     rxn_summary_df_2['MW'] = round(rxn_summary_df_2['MW'], 4)
     rxn_summary_df_2.drop(columns=['Groups'], inplace=True)
     rxn_summary_df_2.set_index('Name', inplace=True)
@@ -531,7 +523,7 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     sumNiMi3 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW']) ** 3).sum()
     sumNiMi4 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW']) ** 4).sum()
     rxn_summary_df_2 = rxn_summary_df_2[
-        ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV']]
+        ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV', 'Cl, %']]
     rxn_summary_df_2['Mass'] = rxn_summary_df_2['Mass'] / total_samples
     rxn_mass = rxn_summary_df_2['Mass'].sum()
     rxn_summary_df_2.loc['Sum'] = round(rxn_summary_df_2.sum(), 3)
@@ -573,6 +565,7 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     Xn_2['2° TAV'] = in_situ_values_sec[9]
     Xn_2['3° TAV'] = in_situ_values_sec[10]
     Xn_2['Xn'] = in_situ_values_sec[11]
+    Xn_2['% Cl'] = in_situ_values_sec[12]
     Xn_2['P'] = -(1 / Xn_2['Xn']) + 1
 
     show_results_sec(rxn_summary_df_2)
