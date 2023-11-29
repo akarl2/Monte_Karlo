@@ -502,7 +502,7 @@ class TMPTA:
         self.density = 1.06
         self.prgID = "aB_unsat"
         self.prgk = 1
-        self.cprgID = "NH"
+        self.cprgID = None
         self.cprgk = 0
         self.srgID = None
         self.srgk = 0

@@ -238,7 +238,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                 for i, (metric_name, variable) in enumerate(metrics.items()):
                     in_situ_values_sec[i].append(variable)
                 RXN_metric_value = metrics[end_metric_selection_sec]
-
             if (RXN_EM_Operator_2_sel == '<=' and RXN_metric_value <= end_metric_value_upper_sec) or (RXN_EM_Operator_2_sel == '>=' and RXN_metric_value >= end_metric_value_lower_sec):
                 test_interval = 1
             if end_metric_selection_sec != '% EHC':
@@ -1590,9 +1589,6 @@ if __name__ == "__main__":
                 unique_combinations = set(itertools.combinations(sorted(unique_rgIDs), 2))
 
                 return list(unique_combinations)
-
-            print(get_rgID_combinations())
-
 
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
