@@ -62,7 +62,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     byproducts, composition, composition_sec = [], [], []
     running, in_primary = True, True
     test_count = 0
-    test_interval = 50
+    test_interval = 1
     try:
         end_metric_value_upper = end_metric_value * 1.15
         end_metric_value_lower = end_metric_value * 0.85
@@ -275,6 +275,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                          enumerate(chemicals[0])])
         weights.extend([group[1] for chemicals in composition for group in chemicals[0]])
         groups = random.choices(chemical, weights, k=2)
+        print(composition)
+        exit()
         start = time.time()
         while groups[0][0] == groups[1][0] or check_react(groups) is False:
             groups = random.choices(chemical, weights, k=2)
@@ -1678,7 +1680,8 @@ if __name__ == "__main__":
             Core_options = [str(i) for i in range(1, multiprocessing.cpu_count() - 1)]
             NUM_OF_SIM_Entry = AutocompleteCombobox(self, completevalues=Core_options, width=15,
                                                     textvariable=NUM_OF_SIM)
-            NUM_OF_SIM_Entry.insert(0, str(int(multiprocessing.cpu_count() * 0.75)))
+            #NUM_OF_SIM_Entry.insert(0, str(int(multiprocessing.cpu_count() * 0.75)))
+            NUM_OF_SIM_Entry.insert(0, 1)
             NUM_OF_SIM_Entry.grid(row=3, column=1)
             NUM_OF_SIM_Entry.config(justify="center")
 
