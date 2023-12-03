@@ -16,38 +16,36 @@ print(modified_test)
 
 # Randomly select a sublist
 selected_sublist_1 = random.choice(modified_test)
-
-# Randomly select a group from the first sublist
 selected_group_1 = random.choice(selected_sublist_1[0])
-
-# Remove the selected sublist to ensure the second selection is from a different sublist
-modified_test.remove(selected_sublist_1)
-
-# Randomly select another sublist
 selected_sublist_2 = random.choice(modified_test)
-
-# Randomly select a group from the second sublist
 selected_group_2 = random.choice(selected_sublist_2[0])
+
+while selected_group_1 == selected_group_2:
+    selected_sublist_2 = random.choice(modified_test)
+    selected_group_2 = random.choice(selected_sublist_2[0])
+
 
 selected_group_1.sort()
 selected_group_2.sort()
 
-rxn_groups = [['COOH','NH2'], ['COOH','SOH']]
-constants = [1, 0.1]
+rxn_groups = [['COOH', 'NH2'], ['COOH', 'SOH']]
+rxn_groups_k = [1.0, 0.9]
+rxn_groups_k_mod = [(x * 100) for x in rxn_groups_k]
+print(rxn_groups_k_mod)
 
 Random_Group = [selected_group_1[0], selected_group_2[0]]
 Random_Group.sort()
 
-random_number = random.uniform(0, 1)
+random_number = random.randint(0, 100)
 
 
 # Display the random number
 print("Random Number:", random_number)
 print("Selected Groups:", Random_Group)
 
-if Random_Group in rxn_groups:
-    if random_number < constants[rxn_groups.index(Random_Group)]:
-        print("Reaction Occurs")
-    elif random_number > constants[rxn_groups.index(Random_Group)]:
-        print("Reaction does not occur")
+if Random_Group in rxn_groups and random_number <= rxn_groups_k_mod[rxn_groups.index(Random_Group)]:
+    print("Reaction Occurred")
+else:
+    print("No Reaction Occurred")
+
 

@@ -48,6 +48,7 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
     RXN_EM_Value, RXN_EM_Entry, rxn_summary_df, rxn_summary_df_2, Xn, Xn_2, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, \
     end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict, samples_value, total_samples, canceled_by_user, metrics, RXN_EM_Operator, RXN_EM_Operator_2
 
+
 # -------------------------------------------Simulate---------------------------------------------------#
 def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec,
              end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, process_queue,
@@ -183,10 +184,14 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         global test_interval, in_situ_values, running, in_primary, comp_primary, comp_secondary, byproducts_primary, byproducts_secondary, metrics
         comp_secondary, byproducts_secondary = None, None
         if not in_primary:
-            comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+            comp_summary = collections.Counter(
+                [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist
+                 in composition])
             sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
         else:
-            comp_summary = collections.Counter([(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist in composition])
+            comp_summary = collections.Counter(
+                [(tuple(tuple(i) for i in sublist[0]), tuple(tuple(i) for i in sublist[1]), sublist[2][0]) for sublist
+                 in composition])
             sum_comp = sum([comp_summary[key] * key[2] for key in comp_summary])
 
         sum_comp_2 = sum([comp_summary[key] * key[2] ** 2 for key in comp_summary])
@@ -206,7 +211,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             acid_ct += key_names.count('COOH') * comp_summary[key]
             alcohol_ct += (key_names.count('POH') + key_names.count('SOH')) * comp_summary[key]
             epoxide_ct += key_names.count('COC') * comp_summary[key]
-            IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count('CC_1')) * comp_summary[key]
+            IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count(
+                'CC_1')) * comp_summary[key]
             Cl_ct = key_names.count('Cl')
             for group in key[0]:
                 if group[0] == 'POH' or group[0] == 'SOH':
@@ -231,19 +237,22 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             Xn = round((total_ct / workers) / total_ct_temp, 4)
 
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
-                   'Iodine Value': IV, 'MW': Mw, 'Mn': Mn, '1° TAV': p_TAV, '2° TAV': s_TAV, '3° TAV': t_TAV, 'Xn': Xn, '% Cl': Cl}
+                   'Iodine Value': IV, 'MW': Mw, 'Mn': Mn, '1° TAV': p_TAV, '2° TAV': s_TAV, '3° TAV': t_TAV, 'Xn': Xn,
+                   '% Cl': Cl}
 
         if not in_primary:
             if not in_primary:
                 for i, (metric_name, variable) in enumerate(metrics.items()):
                     in_situ_values_sec[i].append(variable)
                 RXN_metric_value = metrics[end_metric_selection_sec]
-            if (RXN_EM_Operator_2_sel == '<=' and RXN_metric_value <= end_metric_value_upper_sec) or (RXN_EM_Operator_2_sel == '>=' and RXN_metric_value >= end_metric_value_lower_sec):
+            if (RXN_EM_Operator_2_sel == '<=' and RXN_metric_value <= end_metric_value_upper_sec) or (
+                    RXN_EM_Operator_2_sel == '>=' and RXN_metric_value >= end_metric_value_lower_sec):
                 test_interval = 1
             if end_metric_selection_sec != '% EHC':
                 if currentPID == PID_list[-1]:
                     progress_queue_sec.put(round((end_metric_value_sec / RXN_metric_value) * 100), 2)
-                if (RXN_EM_Operator_2_sel == '<=' and RXN_metric_value <= end_metric_value_sec) or (RXN_EM_Operator_2_sel == '>=' and RXN_metric_value >= end_metric_value_sec):
+                if (RXN_EM_Operator_2_sel == '<=' and RXN_metric_value <= end_metric_value_sec) or (
+                        RXN_EM_Operator_2_sel == '>=' and RXN_metric_value >= end_metric_value_sec):
                     comp_secondary = tuple(composition)
                     byproducts_secondary = byproducts
                     running = False
@@ -251,12 +260,14 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             for i, (metric_name, variable) in enumerate(metrics.items()):
                 in_situ_values[i].append(variable)
             RXN_metric_value = metrics[end_metric_selection]
-            if (RXN_EM_Operator_sel == '<=' and RXN_metric_value <= end_metric_value_upper) or (RXN_EM_Operator_sel == '>=' and RXN_metric_value >= end_metric_value_lower):
+            if (RXN_EM_Operator_sel == '<=' and RXN_metric_value <= end_metric_value_upper) or (
+                    RXN_EM_Operator_sel == '>=' and RXN_metric_value >= end_metric_value_lower):
                 test_interval = 1
             if end_metric_selection != '% EHC':
                 if currentPID == PID_list[-1]:
                     process_queue.put(round((end_metric_value / RXN_metric_value) * 100), 2)
-                if (RXN_EM_Operator_sel == '<=' and RXN_metric_value <= end_metric_value) or (RXN_EM_Operator_sel == '>=' and RXN_metric_value >= end_metric_value):
+                if (RXN_EM_Operator_sel == '<=' and RXN_metric_value <= end_metric_value) or (
+                        RXN_EM_Operator_sel == '>=' and RXN_metric_value >= end_metric_value):
                     comp_primary = tuple(composition)
                     byproducts_primary = byproducts
                     if not RXN_EM_2_Active_status:
@@ -274,20 +285,39 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         chemical.extend([(i, index, group[0]) for i, chemicals in enumerate(composition) for index, group in
                          enumerate(chemicals[0])])
         weights.extend([group[1] for chemicals in composition for group in chemicals[0]])
+
+        rxn_groups = [['NH', 'COOH'], ['COOH', 'POH']]
+        rxn_groups = [sorted(groups) for groups in rxn_groups]
+        rxn_groups_k = [0.5, 5]
+        max_value = max(rxn_groups_k)
+        rxn_groups_k_mod = [(int((x / max_value) * 100)) for x in rxn_groups_k]
+
         groups = random.choices(chemical, weights, k=2)
+        reaction = False
         start = time.time()
-        while groups[0][0] == groups[1][0] or check_react(groups) is False:
-            groups = random.choices(chemical, weights, k=2)
+        while groups[0][0] == groups[1][0] or check_react(groups) is False or reaction is False:
+            while not reaction:
+                groups = random.choices(chemical, weights, k=2)
+                groups_pre_sort = groups
+                groups = [groups[0][2], groups[1][2]]
+                groups.sort()
+                random_number = random.randint(0, 100)
+                if groups in rxn_groups and random_number <= rxn_groups_k_mod[rxn_groups.index(groups)]:
+                    reaction = True
+                    groups = groups_pre_sort
+                    print(groups)
             if time.time() - start > 3:
                 running = False
                 return "Metric Error"
         stop = time.time()
         update_comp(composition, groups)
     if comp_secondary is None:
-        return {"comp_primary": comp_primary, "in_situ_values": in_situ_values, 'byproducts_primary': byproducts_primary}
+        return {"comp_primary": comp_primary, "in_situ_values": in_situ_values,
+                'byproducts_primary': byproducts_primary}
     else:
         return {"comp_primary": comp_primary, "comp_secondary": comp_secondary, "in_situ_values": in_situ_values,
-                'in_situ_values_sec': in_situ_values_sec, 'byproducts_primary': byproducts_primary, 'byproducts_secondary': byproducts_secondary}
+                'in_situ_values_sec': in_situ_values_sec, 'byproducts_primary': byproducts_primary,
+                'byproducts_secondary': byproducts_secondary}
 
 
 def update_metrics(TAV, AV, OH, EHC, COC, IV):
@@ -309,6 +339,7 @@ def update_metrics(TAV, AV, OH, EHC, COC, IV):
     RM.entries[14].delete(0, tkinter.END)
     RM.entries[14].insert(0, IV)
 
+
 def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
     RM2.entries[8].delete(0, tkinter.END)
     RM2.entries[8].insert(0, EHC)
@@ -327,6 +358,8 @@ def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
     RM2.entries[13].insert(0, COC)
     RM2.entries[14].delete(0, tkinter.END)
     RM2.entries[14].insert(0, IV)
+
+
 def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     global rxn_summary_df, Xn, total_samples, byproducts_df, metrics
     comp_summary = collections.Counter(
@@ -348,7 +381,8 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
         acid_ct += key_names.count('COOH') * key[3]
         alcohol_ct += (key_names.count('POH') + key_names.count('SOH')) * key[3]
         epoxide_ct += key_names.count('COC') * key[3]
-        IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count('CC_1')) * key[3]
+        IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count(
+            'CC_1')) * key[3]
         Cl_ct = key_names.count('Cl')
         for group in key[0]:
             if group[0] == 'POH' or group[0] == 'SOH':
@@ -388,7 +422,9 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 2).sum()
     sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 3).sum()
     sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 4).sum()
-    rxn_summary_df = rxn_summary_df[['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV', 'Cl, %']]
+    rxn_summary_df = rxn_summary_df[
+        ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV',
+         'Cl, %']]
     rxn_summary_df['Mass'] = rxn_summary_df['Mass'] / total_samples
     rxn_mass = rxn_summary_df['Mass'].sum()
     rxn_summary_df.loc['Sum'] = round(rxn_summary_df.sum(), 3)
@@ -417,7 +453,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     byproducts_df.set_index('Name', inplace=True)
     byproducts_df['Mass'] = byproducts_df['Mass'] / total_samples
     byproducts_df['Wt, % (Of byproducts)'] = round(byproducts_df['Mass'] / byproducts_df['Mass'].sum() * 100, 4)
-    byproducts_df['Wt, % (Of Final)'] = round(byproducts_df['Mass'] / (rxn_mass + byproducts_df['Mass'])  * 100, 4)
+    byproducts_df['Wt, % (Of Final)'] = round(byproducts_df['Mass'] / (rxn_mass + byproducts_df['Mass']) * 100, 4)
     byproducts_df['Wt, % (Of Initial)'] = round(byproducts_df['Mass'] / (starting_mass / total_samples) * 100, 4)
 
     Xn = pandas.DataFrame(in_situ_values[0], columns=['TAV'])
@@ -438,6 +474,8 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     show_results(rxn_summary_df)
     show_byproducts(byproducts_df)
     show_Xn(Xn)
+
+
 def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values_sec):
     global rxn_summary_df_2, Xn_2, total_samples, byproducts_df_2
     comp_summary_2 = collections.Counter(
@@ -459,7 +497,8 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
         acid_ct += key_names.count('COOH') * key[3]
         alcohol_ct += (key_names.count('POH') + key_names.count('SOH')) * key[3]
         epoxide_ct += key_names.count('COC') * key[3]
-        IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count('CC_1')) * key[3]
+        IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count(
+            'CC_1')) * key[3]
         Cl_ct = key_names.count('Cl')
         for group in key[0]:
             if group[0] == 'POH' or group[0] == 'SOH':
@@ -500,7 +539,8 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     sumNiMi3 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW']) ** 3).sum()
     sumNiMi4 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW']) ** 4).sum()
     rxn_summary_df_2 = rxn_summary_df_2[
-        ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV', 'Cl, %']]
+        ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV',
+         'Cl, %']]
     rxn_summary_df_2['Mass'] = rxn_summary_df_2['Mass'] / total_samples
     rxn_mass = rxn_summary_df_2['Mass'].sum()
     rxn_summary_df_2.loc['Sum'] = round(rxn_summary_df_2.sum(), 3)
@@ -528,7 +568,8 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     byproducts_df_2['Mass'] = byproducts_df_2['Mass'] / total_samples
     byproducts_df_2['Wt, % (Of byproducts)'] = round(byproducts_df_2['Mass'] / byproducts_df_2['Mass'].sum() * 100, 4)
     byproducts_df_2['Wt, % (Of Final)'] = round(byproducts_df_2['Mass'] / (rxn_mass + byproducts_df_2['Mass']) * 100, 4)
-    byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / (starting_mass_sec / total_samples) * 100, 4)
+    byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / (starting_mass_sec / total_samples) * 100,
+                                                  4)
 
     Xn_2 = pandas.DataFrame(in_situ_values_sec[0], columns=['TAV'])
     Xn_2['AV'] = in_situ_values_sec[1]
@@ -820,7 +861,7 @@ def clear_last():
 
 def initialize_sim(workers):
     global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, end_metric_selection_sec, starting_materials, \
-        starting_materials_sec, total_samples, RXN_EM_Operator,RXN_EM_Operator_2, RXN_EM_Operator_sel, RXN_EM_Operator_2_sel
+        starting_materials_sec, total_samples, RXN_EM_Operator, RXN_EM_Operator_2, RXN_EM_Operator_sel, RXN_EM_Operator_2_sel
     starting_mass, starting_mass_sec, total_ct, total_ct_sec = 0, 0, 0, 0
     row_for_sec = RXN_EM_Entry_2_SR.current()
     try:
@@ -901,7 +942,8 @@ def multiprocessing_sim():
             results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value,
                                        end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict,
                                        RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, progress_queue,
-                                       PID_list, progress_queue_sec, RXN_EM_Operator_sel, RXN_EM_Operator_2_sel) for _ in range(workers)]
+                                       PID_list, progress_queue_sec, RXN_EM_Operator_sel, RXN_EM_Operator_2_sel) for _
+                       in range(workers)]
             while len(PID_list) < workers:
                 pass
             while any(result.running() for result in results) and running is True:
@@ -1098,7 +1140,7 @@ def APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_temp, APC_Solvent, rxn_summary_d
         apc_values = np.zeros((len(times), len(APC_comp)))
         for i, row in APC_comp.iterrows():
             apc_values[:, i] = np.exp(-0.5 * np.power((times - row['RT(min)']) / (row['FWHM(min)'] / 2.35), 2)) * (
-                        row['Wt,%'] * 0.5)
+                    row['Wt,%'] * 0.5)
         return pandas.DataFrame(apc_values, index=times, columns=APC_comp['Name'])
 
     APC_df = calc_apc_matrix(APC_comp, APC_df)
@@ -1139,8 +1181,8 @@ def export_primary():
             df = pandas.DataFrame(data)
             df.to_excel(writer, sheet_name='1_Aux', index=False, header=False, startrow=0, startcol=18)
 
-            #export APC_df['Sum'] to excel
- 
+            # export APC_df['Sum'] to excel
+
             APC_df['Sum'].to_excel(writer, sheet_name='1_APC', index=False, header=False)
 
 
@@ -1397,6 +1439,7 @@ if __name__ == "__main__":
             quick_add_comp = [self.e1.get(), float(self.e2.get())]
             self.destroy()
 
+
     class RxnEntryTable(tkinter.Frame):
         def __init__(self, master=tab1):
             tkinter.Frame.__init__(self, master)
@@ -1527,7 +1570,9 @@ if __name__ == "__main__":
                     if Entry_masses[index].get() != "":
                         self.entries[cell + 1].config(state="normal")
                         self.entries[cell + 1].delete(0, tkinter.END)
-                        self.entries[cell + 1].insert(0,str(round((float(Entry_masses[index].get()) / sum_mass()) * 100,3)))
+                        self.entries[cell + 1].insert(0,
+                                                      str(round((float(Entry_masses[index].get()) / sum_mass()) * 100,
+                                                                3)))
                         self.entries[cell + 1].config(state="readonly")
                     cell = cell + self.tablewidth
                     index = index + 1
@@ -1638,7 +1683,8 @@ if __name__ == "__main__":
 
             RXN_EM_Operator = tkinter.StringVar()
             RXN_EM_Operator.set("<=")
-            RXN_EM_Operator_Entry = AutocompleteCombobox(self, completevalues=["<=", ">="], width=15, textvariable=RXN_EM_Operator)
+            RXN_EM_Operator_Entry = AutocompleteCombobox(self, completevalues=["<=", ">="], width=15,
+                                                         textvariable=RXN_EM_Operator)
             RXN_EM_Operator_Entry.grid(row=0, column=1)
             RXN_EM_Operator_Entry.config(justify="center", state="readonly")
 
@@ -1655,10 +1701,10 @@ if __name__ == "__main__":
 
             RXN_EM_Operator_2 = tkinter.StringVar()
             RXN_EM_Operator_2.set("<=")
-            RXN_EM_Operator_Entry_2 = AutocompleteCombobox(self, completevalues=["<=", ">="], width=15, textvariable=RXN_EM_Operator_2)
+            RXN_EM_Operator_Entry_2 = AutocompleteCombobox(self, completevalues=["<=", ">="], width=15,
+                                                           textvariable=RXN_EM_Operator_2)
             RXN_EM_Operator_Entry_2.grid(row=1, column=1)
             RXN_EM_Operator_Entry_2.config(justify="center", state="readonly")
-
 
             RXN_EM_2_SR = tkinter.StringVar()
             RXN_EM_Entry_2_SR = AutocompleteCombobox(self, completevalues=reactants_list, width=15,
@@ -1678,7 +1724,7 @@ if __name__ == "__main__":
             Core_options = [str(i) for i in range(1, multiprocessing.cpu_count() - 1)]
             NUM_OF_SIM_Entry = AutocompleteCombobox(self, completevalues=Core_options, width=15,
                                                     textvariable=NUM_OF_SIM)
-            #NUM_OF_SIM_Entry.insert(0, str(int(multiprocessing.cpu_count() * 0.75)))
+            # NUM_OF_SIM_Entry.insert(0, str(int(multiprocessing.cpu_count() * 0.75)))
             NUM_OF_SIM_Entry.insert(0, 1)
             NUM_OF_SIM_Entry.grid(row=3, column=1)
             NUM_OF_SIM_Entry.config(justify="center")

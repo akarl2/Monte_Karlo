@@ -863,13 +863,13 @@ class DEA:
         self.mw = 105.14
         self.density = 0.955
         self.mass = self.mw
-        self.prgID = "NH₂"
+        self.prgID = "POH"
         self.prgk = 1
-        self.cprgID = "NH"
+        self.cprgID = None
         self.cprgk = 0
-        self.srgID = "SOH"
+        self.srgID = "NH"
         self.srgk = 0
-        self.csrgID = None
+        self.csrgID = "N"
         self.csrgk = 0
         self.trgID = None
         self.trgk = 0
