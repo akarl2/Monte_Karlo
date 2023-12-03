@@ -98,6 +98,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         #         is_EHC = True
         #         if groupB == "OH" and is_EHC:
         #             return True
+        print(groupA, groupB)
         if groupB in getattr(rg, groupA):
             new_group(groupA, groupB)
             return True
@@ -1587,16 +1588,23 @@ if __name__ == "__main__":
                            [self.entries[cell + j].get() for j in range(0, 12, 2)]))
                 cell += self.tablewidth
 
-            # Filter combinations based on reactive groups
-            filtered_combinations = []
-            for combination in itertools.combinations(sorted(unique_rgIDs), 2):
+            unique_combinations = set(itertools.combinations(sorted(unique_rgIDs), 2))
+
+            reaction_combinations = set()
+            for combination in unique_combinations:
                 rg1, rg2 = combination
-                if rg2 == getattr(rg, rg1):
-                    filtered_combinations.append(combination)
+                combination_initial = combination
+                if rg1 == "NH₂":
+                    rg1 = "NH2"
+                if rg2 == "NH₂":
+                    rg2 = "NH2"
+                if rg1 == rg2:
+                    pass
+                elif rg2 in getattr(rg, rg1) or rg1 in getattr(rg, rg2):
+                    reaction_combinations.add(combination_initial)
                 else:
                     pass
-
-            return filtered_combinations
+            return list(reaction_combinations)
 
         def update_rates(self, index, cell):
             if self.entries[cell].get() != "Clear" and self.entries[cell].get() != "":
@@ -1653,7 +1661,7 @@ if __name__ == "__main__":
             self.grid(row=5, column=0, padx=10, pady=10)
 
         def create_widgets(self):
-            self.tree = ttk.Treeview(self, columns=('ID - 1', 'ID - 2','K'), height=20, show="headings")
+            self.tree = ttk.Treeview(self, columns=('ID - 1', 'ID - 2', 'K'), height=20, show="headings")
             self.tree.heading('#1', text='ID - 1')
             self.tree.heading('#2', text='ID - 2')
             self.tree.heading('#3', text='K')
@@ -1667,6 +1675,21 @@ if __name__ == "__main__":
                 self.tree.delete(i)
             for i in combinations:
                 self.tree.insert('', 'end', values=i)
+
+            self.k_entry(combinations)
+
+        def k_entry(self, combinations):
+            for i in range(len(combinations)):
+                self.entries = {}
+                self.entries[i] = tkinter.Entry(self)
+                self.entries[i].grid(row=i, column=2)
+                self.entries[i].config(justify="center", width=10)
+                self.entries[i].insert(0, "K")
+                self.entries[i].config(state="readonly", font=("Helvetica", 8, "bold"))
+
+
+
+
 
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM

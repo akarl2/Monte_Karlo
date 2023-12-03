@@ -24,6 +24,7 @@ class reactive_groups:
     def __init__(self):
         self.NH2 = ['COOH', 'COC', 'Cl','aB_unsat']
         self.NH = ['COC', 'Cl']
+        self.N = ['Cl']
         self.POH = ['COOH', 'COC']
         self.SOH = ['COOH', 'COC']
         self.COOH = ['NH2', 'POH', 'COC', 'SOH']
