@@ -267,7 +267,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                             composition.append(species)
                         test_interval = 50
 
-
     while running:
         test_count += 1
         weights = []

@@ -63,7 +63,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     byproducts, composition, composition_sec = [], [], []
     running, in_primary = True, True
     test_count = 0
-    test_interval = 1
+    test_interval = 50
     try:
         end_metric_value_upper = end_metric_value * 1.15
         end_metric_value_lower = end_metric_value * 0.85
@@ -286,12 +286,11 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                          enumerate(chemicals[0])])
         weights.extend([group[1] for chemicals in composition for group in chemicals[0]])
 
-        rxn_groups = [['NH', 'COOH'], ['COOH', 'POH']]
+        rxn_groups = [['COOH', 'POH'], ['SOH', 'COOH']]
         rxn_groups = [sorted(groups) for groups in rxn_groups]
-        rxn_groups_k = [0.5, 5]
+        rxn_groups_k = [1, .5]
         max_value = max(rxn_groups_k)
         rxn_groups_k_mod = [(int((x / max_value) * 100)) for x in rxn_groups_k]
-
         groups = random.choices(chemical, weights, k=2)
         reaction = False
         start = time.time()
@@ -1579,6 +1578,26 @@ if __name__ == "__main__":
 
             weight_percent()
 
+        def get_rgID_combinations(self):
+            unique_rgIDs = set()
+            cell = 20
+            for i in range(self.tableheight - 1):
+                unique_rgIDs.update(
+                    filter(lambda x: x not in (None, "", "None"),
+                           [self.entries[cell + j].get() for j in range(0, 12, 2)]))
+                cell += self.tablewidth
+
+            # Filter combinations based on reactive groups
+            filtered_combinations = []
+            for combination in itertools.combinations(sorted(unique_rgIDs), 2):
+                rg1, rg2 = combination
+                if rg2 == getattr(rg, rg1):
+                    filtered_combinations.append(combination)
+                else:
+                    pass
+
+            return filtered_combinations
+
         def update_rates(self, index, cell):
             if self.entries[cell].get() != "Clear" and self.entries[cell].get() != "":
                 a = str_to_class(Entry_Reactants[index].get())()
@@ -1618,22 +1637,36 @@ if __name__ == "__main__":
                 self.entries[cell + 14].config(state="readonly")
                 self.entries[cell + 15].delete(0, tkinter.END)
                 self.entries[cell + 15].insert(0, str(a.ctrgk))
+
+                combinations = self.get_rgID_combinations()
+
+                # Update the combinations_table
+                if CT:
+                    CT.display_combinations(combinations)
             else:
                 pass
 
-            def get_rgID_combinations():
-                unique_rgIDs = set()
-                cell = 20
-                for i in range(self.tableheight - 1):
-                    unique_rgIDs.update(
-                        filter(lambda x: x not in (None, "", "None"),
-                               [self.entries[cell + j].get() for j in range(0, 12, 2)]))
-                    cell += self.tablewidth
+    class combinations_table(tkinter.Frame):
+        def __init__(self, master=tab1):
+            tkinter.Frame.__init__(self, master)
+            self.create_widgets()
+            self.grid(row=5, column=0, padx=10, pady=10)
 
-                # Generate unique combinations from collected rgIDs
-                unique_combinations = set(itertools.combinations(sorted(unique_rgIDs), 2))
+        def create_widgets(self):
+            self.tree = ttk.Treeview(self, columns=('ID - 1', 'ID - 2','K'), height=20, show="headings")
+            self.tree.heading('#1', text='ID - 1')
+            self.tree.heading('#2', text='ID - 2')
+            self.tree.heading('#3', text='K')
+            self.tree.column('#1', width=100, anchor='center')
+            self.tree.column('#2', width=100, anchor='center')
+            self.tree.column('#3', width=100, anchor='center')
+            self.tree.grid(row=0, column=0, sticky='nsew')
 
-                return list(unique_combinations)
+        def display_combinations(self, combinations):
+            for i in self.tree.get_children():
+                self.tree.delete(i)
+            for i in combinations:
+                self.tree.insert('', 'end', values=i)
 
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
@@ -2025,6 +2058,7 @@ if __name__ == "__main__":
     RM2 = RxnMetrics_sec()
     Buttons = Buttons()
     sim = SimStatus()
+    CT = combinations_table()
 
     # run update_table if user changes value in RET
     for i in range(16, 305, 16):
