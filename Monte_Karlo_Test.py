@@ -1659,38 +1659,29 @@ if __name__ == "__main__":
             tkinter.Frame.__init__(self, master)
             self.create_widgets()
             self.grid(row=5, column=0, padx=10, pady=10)
+            self.tablewidth = None
+            self.tableheight = None
+            self.entries = None
 
         def create_widgets(self):
-            self.tree = ttk.Treeview(self, columns=('ID - 1', 'ID - 2', 'K'), height=20, show="headings")
+            self.tree = ttk.Treeview(self, columns=('ID - 1', 'ID - 2'), height=20, show="headings")
             self.tree.heading('#1', text='ID - 1')
             self.tree.heading('#2', text='ID - 2')
-            self.tree.heading('#3', text='K')
             self.tree.column('#1', width=100, anchor='center')
             self.tree.column('#2', width=100, anchor='center')
-            self.tree.column('#3', width=100, anchor='center')
             self.tree.grid(row=0, column=0, sticky='nsew')
 
         def display_combinations(self, combinations):
             for i in self.tree.get_children():
                 self.tree.delete(i)
-            for i in combinations:
-                self.tree.insert('', 'end', values=i)
-
-            self.k_entry(combinations)
-
-        def k_entry(self, combinations):
-            for i in range(len(combinations)):
-                self.entries = {}
-                self.entries[i] = tkinter.Entry(self)
-                self.entries[i].grid(row=i, column=2)
-                self.entries[i].config(justify="center", width=10)
-                self.entries[i].insert(0, "K")
-                self.entries[i].config(state="readonly", font=("Helvetica", 8, "bold"))
-
-
-
-
-
+            for row, combination in enumerate(combinations):
+                self.tree.insert('', 'end', values=(combination[0], combination[1]))
+                self.entry_column = []
+                for row in range(len(combinations)):
+                    entry_value = tkinter.StringVar()
+                    entry = ttk.Entry(self, textvariable=entry_value, justify="center", width=10)
+                    entry.grid(row=row, column=1)
+                    self.entry_column.append(entry)
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
 
