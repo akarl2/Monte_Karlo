@@ -905,14 +905,17 @@ def initialize_sim(workers):
                 index += 1
             else:
                 break
-        start = 5
+        start = 3
         ks = []
         k_groups = []
         for i in range(CT.tableheight - 1):
-            if CT.entries[start - 2].get() != "" and CT.entries[start - 1].get() != "" and CT.entries[start].get() != "":
-                ks.append(float(CT.entries[start].get()))
-                k_groups.append([CT.entries[start - 2].get(), CT.entries[start - 1].get()])
+            if CT.entries[start].get() != "" and CT.entries[start + 1].get() != "" and CT.entries[start + 2].get() != "":
+                ks.append(float(CT.entries[start + 2].get()))
+                k_groups.append([CT.entries[start].get(), CT.entries[start + 1].get()])
             start += CT.tablewidth
+        for i in range(len(k_groups)):
+            for j in range(len(k_groups[i])):
+                k_groups[i][j] = k_groups[i][j].replace("₂", "2")
         max_value = max(ks)
         ks_mod = [(int((x / max_value) * 100)) for x in ks]
         total_ct *= workers
