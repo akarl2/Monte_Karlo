@@ -46,13 +46,13 @@ global running, emo_a, results_table, frame_results, expanded_results, groupA, g
     frame_byproducts, low_group, RXN_EM_2, RXN_EM_Entry_2, RXN_EM_2_SR, reactants_list, RXN_EM_2_SR, RXN_EM_Entry_2_SR, results_table_2, \
     frame_results_2, byproducts_table_2, frame_byproducts_2, RXN_EM_2_Active, RXN_EM_2_Check, RXN_EM_Value_2, in_primary, quick_add, quick_add_comp, \
     RXN_EM_Value, RXN_EM_Entry, rxn_summary_df, rxn_summary_df_2, Xn, Xn_2, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, \
-    end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict, samples_value, total_samples, canceled_by_user, metrics, RXN_EM_Operator, RXN_EM_Operator_2
+    end_metric_selection_sec, starting_mass_sec, starting_mass, sn_dict, samples_value, total_samples, canceled_by_user, metrics, RXN_EM_Operator, RXN_EM_Operator_2, ks_mod, k_groups
 
 
 # -------------------------------------------Simulate---------------------------------------------------#
 def simulate(starting_materials, starting_materials_sec, end_metric_value, end_metric_selection, end_metric_value_sec,
              end_metric_selection_sec, sn_dict, RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, process_queue,
-             PID_list, progress_queue_sec, RXN_EM_Operator_sel, RXN_EM_Operator_2_sel):
+             PID_list, progress_queue_sec, RXN_EM_Operator_sel, RXN_EM_Operator_2_sel, ks_mod, k_groups):
     PID_list.append(os.getpid())
     currentPID = os.getpid()
     time.sleep(1)
@@ -98,7 +98,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         #         is_EHC = True
         #         if groupB == "OH" and is_EHC:
         #             return True
-        print(groupA, groupB)
         if groupB in getattr(rg, groupA):
             new_group(groupA, groupB)
             return True
@@ -286,12 +285,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         chemical.extend([(i, index, group[0]) for i, chemicals in enumerate(composition) for index, group in
                          enumerate(chemicals[0])])
         weights.extend([group[1] for chemicals in composition for group in chemicals[0]])
-
-        rxn_groups = [['COOH', 'POH'], ['SOH', 'COOH']]
-        rxn_groups = [sorted(groups) for groups in rxn_groups]
-        rxn_groups_k = [1, .5]
-        max_value = max(rxn_groups_k)
-        rxn_groups_k_mod = [(int((x / max_value) * 100)) for x in rxn_groups_k]
         groups = random.choices(chemical, weights, k=2)
         reaction = False
         start = time.time()
@@ -302,10 +295,9 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                 groups = [groups[0][2], groups[1][2]]
                 groups.sort()
                 random_number = random.randint(0, 100)
-                if groups in rxn_groups and random_number <= rxn_groups_k_mod[rxn_groups.index(groups)]:
+                if groups in k_groups and random_number <= ks_mod[k_groups.index(groups)]:
                     reaction = True
                     groups = groups_pre_sort
-                    print(groups)
             if time.time() - start > 3:
                 running = False
                 return "Metric Error"
@@ -861,7 +853,7 @@ def clear_last():
 
 def initialize_sim(workers):
     global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, end_metric_selection_sec, starting_materials, \
-        starting_materials_sec, total_samples, RXN_EM_Operator, RXN_EM_Operator_2, RXN_EM_Operator_sel, RXN_EM_Operator_2_sel
+        starting_materials_sec, total_samples, RXN_EM_Operator, RXN_EM_Operator_2, RXN_EM_Operator_sel, RXN_EM_Operator_2_sel, ks_mod, k_groups
     starting_mass, starting_mass_sec, total_ct, total_ct_sec = 0, 0, 0, 0
     row_for_sec = RXN_EM_Entry_2_SR.current()
     try:
@@ -916,9 +908,11 @@ def initialize_sim(workers):
                 break
         start = 5
         ks = []
+        k_groups = []
         for i in range(CT.tableheight - 1):
             if CT.entries[start - 2].get() != "" and CT.entries[start - 1].get() != "" and CT.entries[start].get() != "":
                 ks.append(float(CT.entries[start].get()))
+                k_groups.append([CT.entries[start - 2].get(), CT.entries[start - 1].get()])
             start += CT.tablewidth
         max_value = max(ks)
         ks_mod = [(int((x / max_value) * 100)) for x in ks]
@@ -950,7 +944,7 @@ def multiprocessing_sim():
             results = [executor.submit(simulate, starting_materials, starting_materials_sec, end_metric_value,
                                        end_metric_selection, end_metric_value_sec, end_metric_selection_sec, sn_dict,
                                        RXN_EM_2_Active_status, total_ct, total_ct_sec, workers, progress_queue,
-                                       PID_list, progress_queue_sec, RXN_EM_Operator_sel, RXN_EM_Operator_2_sel) for _
+                                       PID_list, progress_queue_sec, RXN_EM_Operator_sel, RXN_EM_Operator_2_sel, ks_mod, k_groups) for _
                        in range(workers)]
             while len(PID_list) < workers:
                 pass
@@ -1693,10 +1687,16 @@ if __name__ == "__main__":
 
         def display_combinations(self, combinations):
             for i in range(len(self.entries)):
-                self.entries[i].delete(0, tkinter.END)
+                if i > 2:
+                    self.entries[i].config(state='normal')
+                    self.entries[i].delete(0, tkinter.END)
             for i in range(len(combinations)):
+                index = (i + 1) * self.tablewidth + 2
+                self.entries[index].insert(0, 1)
                 for j in range(len(combinations[i])):
                     self.entries[(i + 1) * self.tablewidth + j].insert(0, combinations[i][j])
+                    self.entries[(i + 1) * self.tablewidth + j].config(state="readonly")
+
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
 
