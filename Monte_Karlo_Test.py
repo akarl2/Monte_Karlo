@@ -1657,31 +1657,38 @@ if __name__ == "__main__":
     class combinations_table(tkinter.Frame):
         def __init__(self, master=tab1):
             tkinter.Frame.__init__(self, master)
-            self.create_widgets()
-            self.grid(row=5, column=0, padx=10, pady=10)
-            self.tablewidth = None
-            self.tableheight = None
+            self.tablewidth = 3
+            self.tableheight = 20
             self.entries = None
+            self.grid(row=5, column=0, padx=10, pady=10)
+            self.create_table()
 
-        def create_widgets(self):
-            self.tree = ttk.Treeview(self, columns=('ID - 1', 'ID - 2'), height=20, show="headings")
-            self.tree.heading('#1', text='ID - 1')
-            self.tree.heading('#2', text='ID - 2')
-            self.tree.column('#1', width=100, anchor='center')
-            self.tree.column('#2', width=100, anchor='center')
-            self.tree.grid(row=0, column=0, sticky='nsew')
+        def create_table(self):
+            self.entries = {}
+            counter = 0
+            for row in range(self.tableheight):
+                for column in range(self.tablewidth):
+                    self.entries[counter] = tkinter.Entry(self)
+                    self.entries[counter].grid(row=row, column=column)
+                    # self.entries[counter].insert(0, str(counter))
+                    self.entries[counter].config(justify="center", width=10)
+                    counter += 1
+            self.tabel_labels()
+
+        def tabel_labels(self):
+            self.entries[0].insert(0, "ID - 1")
+            self.entries[0].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[1].insert(0, "ID - 2")
+            self.entries[1].config(state="readonly", font=("Helvetica", 8, "bold"))
+            self.entries[2].insert(0, "K")
+            self.entries[2].config(state="readonly", font=("Helvetica", 8, "bold"))
 
         def display_combinations(self, combinations):
-            for i in self.tree.get_children():
-                self.tree.delete(i)
-            for row, combination in enumerate(combinations):
-                self.tree.insert('', 'end', values=(combination[0], combination[1]))
-                self.entry_column = []
-                for row in range(len(combinations)):
-                    entry_value = tkinter.StringVar()
-                    entry = ttk.Entry(self, textvariable=entry_value, justify="center", width=10)
-                    entry.grid(row=row, column=1)
-                    self.entry_column.append(entry)
+            for i in range(len(self.entries)):
+                self.entries[i].delete(0, tkinter.END)
+            for i in range(len(combinations)):
+                for j in range(len(combinations[i])):
+                    self.entries[(i + 1) * self.tablewidth + j].insert(0, combinations[i][j])
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
 
