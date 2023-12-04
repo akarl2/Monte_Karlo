@@ -914,6 +914,14 @@ def initialize_sim(workers):
                 index += 1
             else:
                 break
+        start = 5
+        ks = []
+        for i in range(CT.tableheight - 1):
+            if CT.entries[start - 2].get() != "" and CT.entries[start - 1].get() != "" and CT.entries[start].get() != "":
+                ks.append(float(CT.entries[start].get()))
+            start += CT.tablewidth
+        max_value = max(ks)
+        ks_mod = [(int((x / max_value) * 100)) for x in ks]
         total_ct *= workers
         total_ct_sec *= workers
         starting_mass *= workers
