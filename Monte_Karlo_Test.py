@@ -850,7 +850,6 @@ def clear_last():
     RET.entries[clear_cell].insert(0, "Clear")
     check_entry(entry=clear_cell, index=clear_index, cell=clear_cell)
 
-
 def initialize_sim(workers):
     global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, end_metric_selection_sec, starting_materials, \
         starting_materials_sec, total_samples, RXN_EM_Operator, RXN_EM_Operator_2, RXN_EM_Operator_sel, RXN_EM_Operator_2_sel, ks_mod, k_groups
@@ -1040,6 +1039,10 @@ def reset_entry_table():
     RXN_EM_Value.delete(0, 'end')
     RXN_EM_Entry.insert(0, "")
 
+    for i in range(len(CT.entries)):
+        if i > 2:
+            CT.entries[i].config(state='normal')
+            CT.entries[i].delete(0, tkinter.END)
 
 def check_entry(entry, index, cell):
     RET.entries[entry].get()
@@ -1648,13 +1651,15 @@ if __name__ == "__main__":
                 self.entries[cell + 15].delete(0, tkinter.END)
                 self.entries[cell + 15].insert(0, str(a.ctrgk))
 
-                combinations = self.get_rgID_combinations()
-
-                # Update the combinations_table
-                if CT:
-                    CT.display_combinations(combinations)
             else:
                 pass
+
+            combinations = self.get_rgID_combinations()
+
+            # Update the combinations_table
+            if CT:
+                CT.display_combinations(combinations)
+
 
     class combinations_table(tkinter.Frame):
         def __init__(self, master=tab1):
@@ -1672,7 +1677,6 @@ if __name__ == "__main__":
                 for column in range(self.tablewidth):
                     self.entries[counter] = tkinter.Entry(self)
                     self.entries[counter].grid(row=row, column=column)
-                    # self.entries[counter].insert(0, str(counter))
                     self.entries[counter].config(justify="center", width=10)
                     counter += 1
             self.tabel_labels()
