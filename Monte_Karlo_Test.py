@@ -63,7 +63,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     byproducts, composition, composition_sec = [], [], []
     running, in_primary = True, True
     test_count = 0
-    test_interval = 1
+    test_interval = 50
     try:
         end_metric_value_upper = end_metric_value * 1.15
         end_metric_value_lower = end_metric_value * 0.85
@@ -98,10 +98,13 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         #         is_EHC = True
         #         if groupB == "OH" and is_EHC:
         #             return True
-        if groupB in getattr(rg, groupA):
-            new_group(groupA, groupB)
-            return True
-        else:
+        try:
+            if groupB in getattr(rg, groupA):
+                new_group(groupA, groupB)
+                return True
+            else:
+                return False
+        except TypeError:
             return False
 
     def new_group(groupA, groupB):
@@ -284,11 +287,11 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         chemical = []
         chemical.extend([(i, index, group[0]) for i, chemicals in enumerate(composition) for index, group in
                          enumerate(chemicals[0])])
-        weights.extend([group[1] for chemicals in composition for group in chemicals[0]])
+        # weights.extend([group[1] for chemicals in composition for group in chemicals[0]])
         start = time.time()
         conditions_met = False
         while conditions_met is False:
-            groups = random.choices(chemical, weights, k=2)
+            groups = random.choices(chemical, k=2)
             if groups[0][0] == groups[1][0] or check_react(groups) is False:
                 conditions_met = False
             else:

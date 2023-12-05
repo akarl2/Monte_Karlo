@@ -63,6 +63,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     running, in_primary = True, True
     test_count = 0
     test_interval = 1
+    print()
     try:
         end_metric_value_upper = end_metric_value * 1.15
         end_metric_value_lower = end_metric_value * 0.85
