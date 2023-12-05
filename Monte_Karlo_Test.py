@@ -63,7 +63,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     byproducts, composition, composition_sec = [], [], []
     running, in_primary = True, True
     test_count = 0
-    test_interval = 50
+    test_interval = 1
     try:
         end_metric_value_upper = end_metric_value * 1.15
         end_metric_value_lower = end_metric_value * 0.85
@@ -285,23 +285,23 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         chemical.extend([(i, index, group[0]) for i, chemicals in enumerate(composition) for index, group in
                          enumerate(chemicals[0])])
         weights.extend([group[1] for chemicals in composition for group in chemicals[0]])
-        groups = random.choices(chemical, weights, k=2)
-        reaction = False
         start = time.time()
-        while groups[0][0] == groups[1][0] or check_react(groups) is False or reaction is False:
-            while not reaction:
-                groups = random.choices(chemical, weights, k=2)
+        conditions_met = False
+        while conditions_met is False:
+            groups = random.choices(chemical, weights, k=2)
+            if groups[0][0] == groups[1][0] or check_react(groups) is False:
+                conditions_met = False
+            else:
                 groups_pre_sort = groups
                 groups = [groups[0][2], groups[1][2]]
                 groups.sort()
                 random_number = random.randint(0, 100)
                 if groups in k_groups and random_number <= ks_mod[k_groups.index(groups)]:
-                    reaction = True
                     groups = groups_pre_sort
+                    conditions_met = True
             if time.time() - start > 3:
                 running = False
                 return "Metric Error"
-        stop = time.time()
         update_comp(composition, groups)
     if comp_secondary is None:
         return {"comp_primary": comp_primary, "in_situ_values": in_situ_values,

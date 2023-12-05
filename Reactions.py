@@ -23,16 +23,16 @@ Num_Samples = ["1000", "2500", "5000", "10000", "25000", "50000", "100000"]
 class reactive_groups:
     def __init__(self):
         self.NH2 = ['COOH', 'COC', 'Cl','aB_unsat']
-        self.NH = ['COC', 'Cl']
+        self.NH = ['COC', 'Cl', 'COOH', 'COHH', 'aB_unsat']
         self.N = ['Cl']
         self.POH = ['COOH', 'COC']
         self.SOH = ['COOH', 'COC']
-        self.COOH = ['NH2', 'POH', 'COC', 'SOH']
+        self.COOH = ['NH2', 'NH', 'POH', 'COC', 'SOH']
         self.COC = ['NH2', 'POH', 'SOH', 'COOH', 'NH']
         self.COHH = ['NH2']
         self.imine = ['CC_Nuc']
         self.Cl = ['NH2', 'NH']
-        self.aB_unsat = ['NH2']
+        self.aB_unsat = ['NH2', 'NH']
         self.CC_3 = None
         self.CC_2 = None
         self.CC_1 = None
@@ -79,18 +79,27 @@ class COHH:
         self.NH2 = "imine"
         self.NH2_wl = 18.01528
         self.NH2_wl_id = "H2O"
+        self.NH = "N"
+        self.NH_wl = 18.01528
+        self.NH_wl_id = "H2O"
 
 class aB_unsat:
     def __init__(self):
         self.NH2 = 'NH'
         self.NH2_wl = 0
         self.NH2_wl_id = 'None'
+        self.NH = 'N'
+        self.NH_wl = 0
+        self.NH_wl_id = 'None'
 
 class COOH:
     def __init__(self):
         self.NH2 = "CONH"
         self.NH2_wl = 18.01528
         self.NH2_wl_id = "H2O"
+        self.NH = "CONH"
+        self.NH_wl = 18.01528
+        self.NH_wl_id = "H2O"
         self.POH = 'COOC'
         self.POH_wl = 18.01528
         self.POH_wl_id = "H2O"
@@ -115,6 +124,13 @@ class NH:
         self.COHH = 'CN'
         self.COHH_wl = 18.0158
         self.COHH_wl_id = "H2O"
+        self.COOH = 'COHN'
+        self.COOH_wl = 18.0158
+        self.COOH_wl_id = "H2O"
+        self.aB_unsat = 'N'
+        self.aB_unsat_wl = 0
+        self.aB_unsat_wl_id = 'None'
+
 
 class COC:
     def __init__(self):
