@@ -283,22 +283,21 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
 
     while running:
         test_count += 1
-        weights = []
-        chemical = []
-        chemical.extend([(i, index, group[0]) for i, chemicals in enumerate(composition) for index, group in
-                         enumerate(chemicals[0])])
-        # weights.extend([group[1] for chemicals in composition for group in chemicals[0]])
         start = time.time()
         conditions_met = False
         while conditions_met is False:
-            groups = random.choices(chemical, k=2)
+            #groups = random.choices(chemical, k=2)
+            a_index, b_index = random.randint(0, len(composition) - 1) , random.randint(0, len(composition) - 1)
+            a_i_index, b_i_index = random.randint(0, len(composition[a_index][0]) - 1), random.randint(0, len(composition[b_index][0]) - 1)
+            a_group, b_group = composition[a_index][0][a_i_index][0], composition[b_index][0][b_i_index][0]
+            groups = [(a_index, a_i_index, a_group), (b_index, b_i_index, b_group)]
             if groups[0][0] == groups[1][0] or check_react(groups) is False:
                 conditions_met = False
             else:
                 groups_pre_sort = groups
                 groups = [groups[0][2], groups[1][2]]
                 groups.sort()
-                random_number = random.randint(0, 100)
+                random_number = random.randint(1, 100)
                 if groups in k_groups and random_number <= ks_mod[k_groups.index(groups)]:
                     groups = groups_pre_sort
                     conditions_met = True
@@ -915,6 +914,9 @@ def initialize_sim(workers):
             if CT.entries[start].get() != "" and CT.entries[start + 1].get() != "" and CT.entries[start + 2].get() != "":
                 ks.append(float(CT.entries[start + 2].get()))
                 k_groups.append([CT.entries[start].get(), CT.entries[start + 1].get()])
+                if CT.entries[start].get() != "" and CT.entries[start + 1].get() != "" and CT.entries[start + 2].get() == "":
+                    messagebox.showinfo("Error", "Please select valid k values")
+                    return "Error"
             start += CT.tablewidth
         for i in range(len(k_groups)):
             for j in range(len(k_groups[i])):
@@ -1788,7 +1790,7 @@ if __name__ == "__main__":
             RXN_Samples = tkinter.StringVar()
             RXN_Samples_Entry = AutocompleteCombobox(self, completevalues=Num_Samples, width=15,
                                                      textvariable=RXN_Samples)
-            RXN_Samples_Entry.insert(0, "5000")
+            RXN_Samples_Entry.insert(0, "10000")
             RXN_Samples_Entry.grid(row=2, column=1)
             RXN_Samples_Entry.config(justify="center")
 
@@ -1796,8 +1798,7 @@ if __name__ == "__main__":
             Core_options = [str(i) for i in range(1, multiprocessing.cpu_count() - 1)]
             NUM_OF_SIM_Entry = AutocompleteCombobox(self, completevalues=Core_options, width=15,
                                                     textvariable=NUM_OF_SIM)
-            # NUM_OF_SIM_Entry.insert(0, str(int(multiprocessing.cpu_count() * 0.75)))
-            NUM_OF_SIM_Entry.insert(0, 1)
+            NUM_OF_SIM_Entry.insert(0, str(int(multiprocessing.cpu_count() * 0.75)))
             NUM_OF_SIM_Entry.grid(row=3, column=1)
             NUM_OF_SIM_Entry.config(justify="center")
 

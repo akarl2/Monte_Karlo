@@ -1502,6 +1502,27 @@ class Epichlorohydrin:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.srgID]]
 
+class Dichloropropanol:
+    def __init__(self):
+        self.name = "Dichloropropanol"
+        self.sn = "DCP"
+        self.formula = "C3H6Cl2O"
+        self.mw = 128.98
+        self.density = 1.35
+        self.prgID = "Cl"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = "SOH"
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.srgID], [self.prgID]]
+
 
 class BDO_MGE:
     def __init__(self):

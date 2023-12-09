@@ -40,6 +40,7 @@ class reactive_groups:
         self.COOC = None
         self.CONH = None
         self.EHC = ['OH']
+        self.COCOH = None
 
 class NH2:
     def __init__(self):
