@@ -102,6 +102,9 @@ class COHH:
         self.NH2 = "imine"
         self.NH2_wl = 18.0153
         self.NH2_wl_id = "H2O"
+        self.α_NH2 = "imine"
+        self.α_NH2_wl = 18.0153
+        self.α_NH2_wl_id = "H2O"
         self.NH = "N"
         self.NH_wl = 18.0153
         self.NH_wl_id = "H2O"
@@ -116,7 +119,7 @@ class aB_unsat:
         self.NH_wl_id = 'None'
         self.α_NH2 = 'NH'
         self.α_NH2_wl = 0
-        self.α_NH2_wl = None
+        self.α_NH2_wl_id = None
 
 class COOH:
     def __init__(self):
@@ -124,8 +127,8 @@ class COOH:
         self.NH2_wl = 18.0153
         self.NH2_wl_id = "H2O"
         self.α_NH2 = 'CONH'
-        self.α_NH2_wl = 0
-        self.α_NH2_wl = "H2O"
+        self.α_NH2_wl = 18.0153
+        self.α_NH2_wl_id = "H2O"
         self.NH = "CONH"
         self.NH_wl = 18.0153
         self.NH_wl_id = "H2O"

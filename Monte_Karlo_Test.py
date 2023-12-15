@@ -1627,14 +1627,9 @@ if __name__ == "__main__":
             reaction_combinations = set()
             for combination in unique_combinations:
                 rg1, rg2 = combination
-                print(rg1,rg2)
-                print(combination)
-                exit()
+                rg1 = rg1.replace("₂", "2")
+                rg2 = rg2.replace("₂", "2")
                 combination_initial = combination
-                if rg1 == "NH₂":
-                    rg1 = "NH2"
-                if rg2 == "NH₂":
-                    rg2 = "NH2"
                 if rg1 == rg2:
                     pass
                 elif rg2 in getattr(rg, rg1) or rg1 in getattr(rg, rg2):

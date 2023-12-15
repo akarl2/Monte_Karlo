@@ -1,8 +1,4 @@
-import random
-
-list = [20]
-
-random = random.randint(0, len(list) - 1)
-
-print(list[random])
-print(len(list))
+hello = "test"
+print(type(hello))
+hello = hello.replace("t", "a")
+print(hello)
