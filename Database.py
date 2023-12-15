@@ -902,15 +902,15 @@ class Lysine:
         self.prgk = 1
         self.cprgID = "NH"
         self.cprgk = 0
-        self.srgID = "COOH"
-        self.srgk = 0
-        self.csrgID = None
+        self.srgID = "α_NH₂"
+        self.srgk = 1
+        self.csrgID = "NH"
         self.csrgk = 0
-        self.trgID = None
+        self.trgID = "COOH"
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
-        self.dist = [[self.prgID], [self.srgID], [self.prgID]]
+        self.dist = [[self.prgID], [self.srgID], [self.trgID]]
 
 class PACM:
     def __init__(self):

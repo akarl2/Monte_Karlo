@@ -58,8 +58,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     time.sleep(1)
     rg = reactive_groups()
     global test_count, test_interval, sn_dist, in_situ_values, byproducts, running, in_primary, in_situ_values_sec, quick_add, comp_primary, comp_secondary
-    in_situ_values = [[], [], [], [], [], [], [], [], [], [], [], [], [], []]
-    in_situ_values_sec = [[], [], [], [], [], [], [], [], [], [], [], [], [], []]
+    in_situ_values = [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []]
+    in_situ_values_sec = [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []]
     byproducts, composition, composition_sec = [], [], []
     running, in_primary = True, True
     test_count = 0
@@ -202,12 +202,12 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         Mw = sum_comp_2 / sum_comp
         Mn = sum_comp / total_ct_temp
 
-        amine_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, NH2_ct, NH_ct, N_ct, totCl_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        amine_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, NH2_ct, NH_ct, N_ct, totCl_ct, POH_ct, SOH_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
         for key in comp_summary:
             key_names = [i[0] for i in key[0]]
             totCl_ct += key_names.count('Cl') * comp_summary[key]
-            NH2_ct += key_names.count('NH2') * comp_summary[key]
+            NH2_ct += key_names.count('NH2') * comp_summary[key] + key_names.count('α_NH2') * comp_summary[key]
             NH_ct += key_names.count('NH') * comp_summary[key]
             N_ct += key_names.count('N') * comp_summary[key]
             amine_ct = NH2_ct + NH_ct + N_ct
@@ -217,6 +217,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count(
                 'CC_1')) * comp_summary[key]
             Cl_ct = key_names.count('Cl')
+            POH_ct += key_names.count('POH') * comp_summary[key]
+            SOH_ct += key_names.count('SOH') * comp_summary[key]
             for group in key[0]:
                 if group[0] == 'POH' or group[0] == 'SOH':
                     alcohol_ct += comp_summary[key]
@@ -230,6 +232,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         t_TAV = round((N_ct * 56100) / sum_comp, 2)
         AV = round((acid_ct * 56100) / sum_comp, 2)
         OH = round((alcohol_ct * 56100) / sum_comp, 2)
+        POH = round((POH_ct * 56100) / sum_comp, 2)
+        SOH = round((SOH_ct * 56100) / sum_comp, 2)
         COC = round((epoxide_ct * 56100) / sum_comp, 2)
         EHC = round((EHC_ct * 35.453) / sum_comp * 100, 2)
         IV = round(((IV_ct * 2) * (127 / sum_comp) * 100), 2)
@@ -241,7 +245,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
 
         metrics = {'Amine Value': TAV, 'Acid Value': AV, 'OH Value': OH, 'Epoxide Value': COC, '% EHC': EHC,
                    'Iodine Value': IV, 'MW': Mw, 'Mn': Mn, '1° TAV': p_TAV, '2° TAV': s_TAV, '3° TAV': t_TAV, 'Xn': Xn,
-                   '% Cl': Cl}
+                   '% Cl': Cl, '1° OH': POH, '2° OH': SOH}
 
         if not in_primary:
             if not in_primary:
@@ -286,8 +290,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         start = time.time()
         conditions_met = False
         while conditions_met is False:
-            #groups = random.choices(chemical, k=2)
-            a_index, b_index = random.randint(0, len(composition) - 1) , random.randint(0, len(composition) - 1)
+            a_index, b_index = random.randint(0, len(composition) - 1), random.randint(0, len(composition) - 1)
             a_i_index, b_i_index = random.randint(0, len(composition[a_index][0]) - 1), random.randint(0, len(composition[b_index][0]) - 1)
             a_group, b_group = composition[a_index][0][a_i_index][0], composition[b_index][0][b_i_index][0]
             groups = [(a_index, a_i_index, a_group), (b_index, b_i_index, b_group)]
@@ -365,15 +368,17 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
         RS.append((key[0], key[1], key[2], comp_summary[key]))
     RS = [[[list(x) for x in i[0]], [list(y) for y in i[1]], i[2], i[3]] for i in RS]
     for key in RS:
-        amine_ct, NH2_ct, NH_ct, N_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, totalCl_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        amine_ct, NH2_ct, NH_ct, N_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, totalCl_ct, POH_ct, SOH_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         key_names = [i[0] for i in key[0]]
         totalCl_ct += key_names.count('Cl') * key[3]
-        NH2_ct += key_names.count('NH2') * key[3]
+        NH2_ct += key_names.count('NH2') * key[3] + key_names.count('α_NH2') * key[3]
         NH_ct += key_names.count('NH') * key[3]
         N_ct += key_names.count('N') * key[3]
         amine_ct = NH2_ct + NH_ct + NH_ct
         acid_ct += key_names.count('COOH') * key[3]
-        alcohol_ct += (key_names.count('POH') + key_names.count('SOH')) * key[3]
+        POH_ct += key_names.count('POH') * key[3]
+        SOH_ct += key_names.count('SOH') * key[3]
+        alcohol_ct = (POH_ct + SOH_ct)
         epoxide_ct += key_names.count('COC') * key[3]
         IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count(
             'CC_1')) * key[3]
@@ -395,6 +400,9 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
         key.append(round((EHC_ct * 35.453) / sum_comp * 100, 2))
         key.append(round(((IV_ct * 2) * (127 / sum_comp) * 100), 2))
         key.append(round((totalCl_ct * 35.453) / sum_comp * 100, 2))
+        key.append(round((POH_ct * 56100) / sum_comp, 2))
+        key.append(round((SOH_ct * 56100) / sum_comp, 2))
+
     for key in RS:
         index = 0
         for group in key[1]:
@@ -403,7 +411,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
             index += 1
         key[1] = '_'.join(key[1])
     rxn_summary_df = pandas.DataFrame(RS, columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV",
-                                                   'AV', 'OH', 'COC', 'EHC,%', 'IV', 'Cl, %'])
+                                                   'AV', 'OH', 'COC', 'EHC,%', 'IV', 'Cl, %', "1° OH", "2° OH"])
     rxn_summary_df['MW'] = round(rxn_summary_df['MW'], 4)
     rxn_summary_df.drop(columns=['Groups'], inplace=True)
     rxn_summary_df.set_index('Name', inplace=True)
@@ -418,7 +426,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 4).sum()
     rxn_summary_df = rxn_summary_df[
         ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV',
-         'Cl, %']]
+         'Cl, %', "1° OH", "2° OH"]]
     rxn_summary_df['Mass'] = rxn_summary_df['Mass'] / total_samples
     rxn_mass = rxn_summary_df['Mass'].sum()
     rxn_summary_df.loc['Sum'] = round(rxn_summary_df.sum(), 3)
@@ -463,6 +471,8 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     Xn['3° TAV'] = in_situ_values[10]
     Xn['Xn'] = in_situ_values[11]
     Xn['% Cl'] = in_situ_values[12]
+    Xn['POH'] = in_situ_values[13]
+    Xn['SOH'] = in_situ_values[14]
     Xn['P'] = -(1 / Xn['Xn']) + 1
 
     show_results(rxn_summary_df)
@@ -481,15 +491,18 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
         RS_2.append((key[0], key[1], key[2], comp_summary_2[key]))
     RS_2 = [[[list(x) for x in i[0]], [list(y) for y in i[1]], i[2], i[3]] for i in RS_2]
     for key in RS_2:
-        amine_ct, NH2_ct, NH_ct, N_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, totCl_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        amine_ct, NH2_ct, NH_ct, N_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, totCl_ct, POH_ct, SOH_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         key_names = [i[0] for i in key[0]]
         totCl_ct += key_names.count('Cl') * key[3]
-        NH2_ct += key_names.count('NH2') * key[3]
+        NH2_ct += key_names.count('NH2') * key[3] + key_names.count('α_NH2') * key[3]
         NH_ct += key_names.count('NH') * key[3]
         N_ct += key_names.count('N') * key[3]
         amine_ct = NH2_ct + NH_ct + N_ct
         acid_ct += key_names.count('COOH') * key[3]
         alcohol_ct += (key_names.count('POH') + key_names.count('SOH')) * key[3]
+        POH_ct += key_names.count('POH') * key[3]
+        SOH_ct += key_names.count('SOH') * key[3]
+        alcohol_ct = (POH_ct + SOH_ct)
         epoxide_ct += key_names.count('COC') * key[3]
         IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count(
             'CC_1')) * key[3]
@@ -510,6 +523,9 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
         key.append(round((EHC_ct * 35.453) / sum_comp_2 * 100, 2))
         key.append(round(((IV_ct * 2) * (127 / sum_comp_2) * 100), 2))
         key.append(round((totCl_ct * 35.453) / sum_comp_2 * 100, 2))
+        key.append(round((POH_ct * 56100) / sum_comp_2, 2))
+        key.append(round((SOH_ct * 56100) / sum_comp_2, 2))
+
     for key in RS_2:
         index = 0
         for group in key[1]:
@@ -519,7 +535,7 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
         key[1] = '_'.join(key[1])
     rxn_summary_df_2 = pandas.DataFrame(RS_2,
                                         columns=['Groups', 'Name', 'MW', 'Count', 'TAV', "1° TAV", "2° TAV", "3° TAV",
-                                                 'AV', 'OH', 'COC', 'EHC,%', 'IV', 'Cl, %'])
+                                                 'AV', 'OH', 'COC', 'EHC,%', 'IV', 'Cl, %', "1° OH", "2° OH"])
     rxn_summary_df_2['MW'] = round(rxn_summary_df_2['MW'], 4)
     rxn_summary_df_2.drop(columns=['Groups'], inplace=True)
     rxn_summary_df_2.set_index('Name', inplace=True)
@@ -534,7 +550,7 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     sumNiMi4 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW']) ** 4).sum()
     rxn_summary_df_2 = rxn_summary_df_2[
         ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV',
-         'Cl, %']]
+         'Cl, %', "1° OH", "2° OH"]]
     rxn_summary_df_2['Mass'] = rxn_summary_df_2['Mass'] / total_samples
     rxn_mass = rxn_summary_df_2['Mass'].sum()
     rxn_summary_df_2.loc['Sum'] = round(rxn_summary_df_2.sum(), 3)
@@ -578,6 +594,8 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     Xn_2['3° TAV'] = in_situ_values_sec[10]
     Xn_2['Xn'] = in_situ_values_sec[11]
     Xn_2['% Cl'] = in_situ_values_sec[12]
+    Xn_2['POH'] = in_situ_values_sec[13]
+    Xn_2['SOH'] = in_situ_values_sec[14]
     Xn_2['P'] = -(1 / Xn_2['Xn']) + 1
 
     show_results_sec(rxn_summary_df_2)
@@ -595,16 +613,16 @@ def show_results(rxn_summary_df):
     except NameError:
         pass
     frame_results = tkinter.Frame(tab2)
-    x = ((window.winfo_screenwidth() - frame_results.winfo_reqwidth()) / 2) + 100
+    x = ((window.winfo_screenwidth() - frame_results.winfo_reqwidth()) / 2) + 200
     y = (window.winfo_screenheight() - frame_results.winfo_reqheight()) / 2
     frame_results.place(x=x, y=y, anchor='center')
     results_table = Table(frame_results, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True,
                           width=x, height=y, align='center', )
     # adjust results_table if it is too big
     if results_table.winfo_reqwidth() > window.winfo_screenwidth():
-        results_table.width = window.winfo_screenwidth() - 100
+        results_table.width = window.winfo_screenwidth() - 50
     if results_table.winfo_reqheight() > window.winfo_screenheight():
-        results_table.height = window.winfo_screenheight() - 100
+        results_table.height = window.winfo_screenheight() - 50
     results_table.show()
 
 
@@ -905,6 +923,9 @@ def initialize_sim(workers):
                     total_ct += (float(count) * float(moles_count))
                     starting_materials.append(str_to_class(RDE[index]).comp)
                 index += 1
+            elif RET.entries[cell].get() != "" and RET.entries[cell + 1].get() == "":
+                messagebox.showinfo("Error", "Please enter a mass for each reactant")
+                return "Error"
             else:
                 break
         start = 3
@@ -914,9 +935,9 @@ def initialize_sim(workers):
             if CT.entries[start].get() != "" and CT.entries[start + 1].get() != "" and CT.entries[start + 2].get() != "":
                 ks.append(float(CT.entries[start + 2].get()))
                 k_groups.append([CT.entries[start].get(), CT.entries[start + 1].get()])
-                if CT.entries[start].get() != "" and CT.entries[start + 1].get() != "" and CT.entries[start + 2].get() == "":
-                    messagebox.showinfo("Error", "Please select valid k values")
-                    return "Error"
+            elif CT.entries[start].get() != "" and CT.entries[start + 1].get() != "" and CT.entries[start + 2].get() == "":
+                messagebox.showinfo("Error", "Please enter valid k values")
+                return "Error"
             start += CT.tablewidth
         for i in range(len(k_groups)):
             for j in range(len(k_groups[i])):
@@ -1606,6 +1627,9 @@ if __name__ == "__main__":
             reaction_combinations = set()
             for combination in unique_combinations:
                 rg1, rg2 = combination
+                print(rg1,rg2)
+                print(combination)
+                exit()
                 combination_initial = combination
                 if rg1 == "NH₂":
                     rg1 = "NH2"

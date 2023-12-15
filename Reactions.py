@@ -16,7 +16,7 @@ class Etherification:
         self.name = Etherification
 
 Reactions = ["Condensation", "Etherification", "PolyCondensation"]
-End_Metrics = ["Amine Value", "Acid Value", "OH Value", "Epoxide Value", '% EHC', 'Iodine Value', "1° TAV", "2° TAV", "3° TAV", '% Cl']
+End_Metrics = ["Amine Value", "Acid Value", "OH Value", "Epoxide Value", '% EHC', 'Iodine Value', "1° TAV", "2° TAV", "3° TAV", '% Cl', "1° OH", "2° OH"]
 Num_Samples = ["1000", "2500", "5000", "10000", "25000", "50000", "100000"]
 
 
@@ -27,12 +27,12 @@ class reactive_groups:
         self.N = ['Cl']
         self.POH = ['COOH', 'COC']
         self.SOH = ['COOH', 'COC']
-        self.COOH = ['NH2', 'NH', 'POH', 'COC', 'SOH']
-        self.COC = ['NH2', 'POH', 'SOH', 'COOH', 'NH']
-        self.COHH = ['NH2']
+        self.COOH = ['NH2', 'NH', 'POH', 'COC', 'SOH', 'α_NH2']
+        self.COC = ['NH2', 'POH', 'SOH', 'COOH', 'NH', 'α_NH2']
+        self.COHH = ['NH2', 'α_NH2']
         self.imine = ['CC_Nuc']
-        self.Cl = ['NH2', 'NH']
-        self.aB_unsat = ['NH2', 'NH']
+        self.Cl = ['NH2', 'NH', 'α_NH2']
+        self.aB_unsat = ['NH2', 'NH', 'α_NH2']
         self.CC_3 = None
         self.CC_2 = None
         self.CC_1 = None
@@ -41,8 +41,30 @@ class reactive_groups:
         self.CONH = None
         self.EHC = ['OH']
         self.COCOH = None
+        self.α_NH2 = ['COOH', 'COC', 'Cl','aB_unsat']
 
 class NH2:
+    def __init__(self):
+        self.COOH = "CONH"
+        self.COOH_wl = 18.0153
+        self.COOH_wl_id = "H2O"
+        self.COC = 'NH'
+        self.COC_wl = 0
+        self.COC_wl_id = 'None'
+        self.COC_2 = 'SOH'
+        self.COC_2_wl = 0
+        self.COC_2_wl_id = 'None'
+        self.Cl = 'NH'
+        self.Cl_wl = 36.458
+        self.Cl_wl_id = "HCl"
+        self.aB_unsat = 'NH'
+        self.aB_unsat_wl = 0
+        self.aB_unsat_wl_id = 'None'
+        self.COHH = 'imine'
+        self.COHH_wl = 18.0153
+        self.COHH_wl_id = "H2O"
+
+class α_NH2:
     def __init__(self):
         self.COOH = "CONH"
         self.COOH_wl = 18.0153
@@ -92,12 +114,18 @@ class aB_unsat:
         self.NH = 'N'
         self.NH_wl = 0
         self.NH_wl_id = 'None'
+        self.α_NH2 = 'NH'
+        self.α_NH2_wl = 0
+        self.α_NH2_wl = None
 
 class COOH:
     def __init__(self):
         self.NH2 = "CONH"
         self.NH2_wl = 18.0153
         self.NH2_wl_id = "H2O"
+        self.α_NH2 = 'CONH'
+        self.α_NH2_wl = 0
+        self.α_NH2_wl = "H2O"
         self.NH = "CONH"
         self.NH_wl = 18.0153
         self.NH_wl_id = "H2O"
@@ -141,6 +169,12 @@ class COC:
         self.NH2_2 = 'SOH'
         self.NH2_2_wl = 0
         self.NH2_2_wl_id = 'None'
+        self.α_NH2 = 'NH'
+        self.α_NH2_wl = 0
+        self.α_NH2_wl_id = 'None'
+        self.α_NH2_2 = 'NH'
+        self.α_NH2_2_wl = 0
+        self.α_NH2_2_wl_id = 'None'
         self.POH = 'SOH'
         self.POH_wl = 0
         self.POH_wl_id = 'None'
@@ -181,6 +215,9 @@ class Cl:
         self.NH2 = 'NH'
         self.NH2_wl = 36.458
         self.NH2_wl_id = 'HCl'
+        self.α_NH2 = 'NH'
+        self.α_NH2_wl = 36.458
+        self.α_NH2_wl_id = 'HCl'
         self.NH = 'N'
         self.NH_wl = 36.458
         self.NH_wl_id = 'HCl'
