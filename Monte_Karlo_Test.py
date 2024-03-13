@@ -203,7 +203,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         Mn = sum_comp / total_ct_temp
 
         amine_ct, acid_ct, alcohol_ct, epoxide_ct, EHC_ct, IV_ct, NH2_ct, NH_ct, N_ct, totCl_ct, POH_ct, SOH_ct = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
         for key in comp_summary:
             key_names = [i[0] for i in key[0]]
             totCl_ct += key_names.count('Cl') * comp_summary[key]
@@ -221,7 +220,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             SOH_ct += key_names.count('SOH') * comp_summary[key]
             for group in key[0]:
                 if group[0] == 'POH' or group[0] == 'SOH':
-                    alcohol_ct += comp_summary[key]
                     if 'Epi' in sn_dict and group[0] == 'SOH' and group[1] == sn_dict['Epi'].cprgID[1] and Cl_ct > 0:
                         Cl_ct -= 1
                         EHC_ct += comp_summary[key]
@@ -286,28 +284,45 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                         test_interval = 50
 
     while running:
+        # test_count += 1
+        # start = time.time()
+        # conditions_met = False
+        # while conditions_met is False:
+        #     a_index, b_index = random.randint(0, len(composition) - 1), random.randint(0, len(composition) - 1)
+        #     a_i_index, b_i_index = random.randint(0, len(composition[a_index][0]) - 1), random.randint(0, len(composition[b_index][0]) - 1)
+        #     a_group, b_group = composition[a_index][0][a_i_index][0], composition[b_index][0][b_i_index][0]
+        #     groups = [(a_index, a_i_index, a_group), (b_index, b_i_index, b_group)]
+        #     if groups[0][0] == groups[1][0] or check_react(groups) is False:
+        #         conditions_met = False
+        #     else:
+        #         groups_pre_sort = groups
+        #         groups = [groups[0][2], groups[1][2]]
+        #         groups.sort()
+        #         random_number = random.randint(1, 100)
+        #         if groups in k_groups and random_number <= ks_mod[k_groups.index(groups)]:
+        #             groups = groups_pre_sort
+        #             conditions_met = True
+        #     if time.time() - start > 3:
+        #         running = False
+        #         return "Metric Error"
+        # update_comp(composition, groups)
+
         test_count += 1
+        weights = []
+        chemical = []
+        chemical.extend([(i, index, group[0]) for i, chemicals in enumerate(composition) for index, group in
+                         enumerate(chemicals[0])])
+        weights.extend([group[1] for chemicals in composition for group in chemicals[0]])
+        groups = random.choices(chemical, weights, k=2)
         start = time.time()
-        conditions_met = False
-        while conditions_met is False:
-            a_index, b_index = random.randint(0, len(composition) - 1), random.randint(0, len(composition) - 1)
-            a_i_index, b_i_index = random.randint(0, len(composition[a_index][0]) - 1), random.randint(0, len(composition[b_index][0]) - 1)
-            a_group, b_group = composition[a_index][0][a_i_index][0], composition[b_index][0][b_i_index][0]
-            groups = [(a_index, a_i_index, a_group), (b_index, b_i_index, b_group)]
-            if groups[0][0] == groups[1][0] or check_react(groups) is False:
-                conditions_met = False
-            else:
-                groups_pre_sort = groups
-                groups = [groups[0][2], groups[1][2]]
-                groups.sort()
-                random_number = random.randint(1, 100)
-                if groups in k_groups and random_number <= ks_mod[k_groups.index(groups)]:
-                    groups = groups_pre_sort
-                    conditions_met = True
+        while groups[0][0] == groups[1][0] or check_react(groups) is False:
+            groups = random.choices(chemical, weights, k=2)
             if time.time() - start > 3:
                 running = False
                 return "Metric Error"
+        stop = time.time()
         update_comp(composition, groups)
+
     if comp_secondary is None:
         return {"comp_primary": comp_primary, "in_situ_values": in_situ_values,
                 'byproducts_primary': byproducts_primary}
@@ -378,14 +393,13 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
         acid_ct += key_names.count('COOH') * key[3]
         POH_ct += key_names.count('POH') * key[3]
         SOH_ct += key_names.count('SOH') * key[3]
-        alcohol_ct = (POH_ct + SOH_ct)
+        alcohol_ct = POH_ct + SOH_ct
         epoxide_ct += key_names.count('COC') * key[3]
         IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count(
             'CC_1')) * key[3]
         Cl_ct = key_names.count('Cl')
         for group in key[0]:
             if group[0] == 'POH' or group[0] == 'SOH':
-                alcohol_ct += key[3]
                 if 'Epi' in sn_dict and group[0] == 'SOH' and group[1] == sn_dict['Epi'].cprgID[1] and totalCl_ct > 0:
                     Cl_ct -= 1
                     EHC_ct += key[3]
@@ -499,17 +513,15 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
         N_ct += key_names.count('N') * key[3]
         amine_ct = NH2_ct + NH_ct + N_ct
         acid_ct += key_names.count('COOH') * key[3]
-        alcohol_ct += (key_names.count('POH') + key_names.count('SOH')) * key[3]
         POH_ct += key_names.count('POH') * key[3]
         SOH_ct += key_names.count('SOH') * key[3]
-        alcohol_ct = (POH_ct + SOH_ct)
+        alcohol_ct = POH_ct + SOH_ct
         epoxide_ct += key_names.count('COC') * key[3]
         IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count(
             'CC_1')) * key[3]
         Cl_ct = key_names.count('Cl')
         for group in key[0]:
             if group[0] == 'POH' or group[0] == 'SOH':
-                alcohol_ct += key[3]
                 if 'Epi' in sn_dict and group[0] == 'SOH' and group[1] == sn_dict['Epi'].cprgID[1] and totCl_ct > 0:
                     Cl_ct -= 1
                     EHC_ct += key[3]
@@ -1617,11 +1629,8 @@ if __name__ == "__main__":
             unique_rgIDs = set()
             cell = 20
             for i in range(self.tableheight - 1):
-                unique_rgIDs.update(
-                    filter(lambda x: x not in (None, "", "None"),
-                           [self.entries[cell + j].get() for j in range(0, 12, 2)]))
+                unique_rgIDs.update(filter(lambda x: x not in (None, "", "None"), [self.entries[cell + j].get() for j in range(0, 12, 2)]))
                 cell += self.tablewidth
-
             unique_combinations = set(itertools.combinations(sorted(unique_rgIDs), 2))
 
             reaction_combinations = set()

@@ -62,7 +62,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     byproducts, composition, composition_sec = [], [], []
     running, in_primary = True, True
     test_count = 0
-    test_interval = 1
+    test_interval = 50
     print()
     try:
         end_metric_value_upper = end_metric_value * 1.15
@@ -353,7 +353,6 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
         Cl_ct = key_names.count('Cl')
         for group in key[0]:
             if group[0] == 'POH' or group[0] == 'SOH':
-                alcohol_ct += key[3]
                 if 'Epi' in sn_dict and group[0] == 'SOH' and group[1] == sn_dict['Epi'].cprgID[1] and totalCl_ct > 0:
                     Cl_ct -= 1
                     EHC_ct += key[3]
