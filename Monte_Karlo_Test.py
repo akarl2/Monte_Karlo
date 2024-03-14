@@ -284,44 +284,30 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                         test_interval = 50
 
     while running:
-        # test_count += 1
-        # start = time.time()
-        # conditions_met = False
-        # while conditions_met is False:
-        #     a_index, b_index = random.randint(0, len(composition) - 1), random.randint(0, len(composition) - 1)
-        #     a_i_index, b_i_index = random.randint(0, len(composition[a_index][0]) - 1), random.randint(0, len(composition[b_index][0]) - 1)
-        #     a_group, b_group = composition[a_index][0][a_i_index][0], composition[b_index][0][b_i_index][0]
-        #     groups = [(a_index, a_i_index, a_group), (b_index, b_i_index, b_group)]
-        #     if groups[0][0] == groups[1][0] or check_react(groups) is False:
-        #         conditions_met = False
-        #     else:
-        #         groups_pre_sort = groups
-        #         groups = [groups[0][2], groups[1][2]]
-        #         groups.sort()
-        #         random_number = random.randint(1, 100)
-        #         if groups in k_groups and random_number <= ks_mod[k_groups.index(groups)]:
-        #             groups = groups_pre_sort
-        #             conditions_met = True
-        #     if time.time() - start > 3:
-        #         running = False
-        #         return "Metric Error"
-        # update_comp(composition, groups)
-
         test_count += 1
-        weights = []
-        chemical = []
-        chemical.extend([(i, index, group[0]) for i, chemicals in enumerate(composition) for index, group in
-                         enumerate(chemicals[0])])
-        weights.extend([group[1] for chemicals in composition for group in chemicals[0]])
-        groups = random.choices(chemical, weights, k=2)
         start = time.time()
-        while groups[0][0] == groups[1][0] or check_react(groups) is False:
-            groups = random.choices(chemical, weights, k=2)
+        conditions_met = False
+        outer_weights = [len(groups[0]) for groups in composition]
+        while conditions_met is False:
+            a_index, b_index = random.choices(range(len(composition)), weights=outer_weights)[0], random.choices(range(len(composition)), weights=outer_weights)[0]
+            a_i_index, b_i_index = random.randint(0, len(composition[a_index][0]) - 1), random.randint(0, len(composition[b_index][0]) - 1)
+            a_group, b_group = composition[a_index][0][a_i_index][0], composition[b_index][0][b_i_index][0]
+            groups = [(a_index, a_i_index, a_group), (b_index, b_i_index, b_group)]
+            if groups[0][0] == groups[1][0] or check_react(groups) is False:
+                conditions_met = False
+            else:
+                groups_pre_sort = groups
+                groups = [groups[0][2], groups[1][2]]
+                groups.sort()
+                random_number = random.randint(1, 100)
+                if groups in k_groups and random_number <= ks_mod[k_groups.index(groups)]:
+                    groups = groups_pre_sort
+                    conditions_met = True
             if time.time() - start > 3:
                 running = False
                 return "Metric Error"
-        stop = time.time()
         update_comp(composition, groups)
+
 
     if comp_secondary is None:
         return {"comp_primary": comp_primary, "in_situ_values": in_situ_values,
