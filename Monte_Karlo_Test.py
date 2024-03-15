@@ -211,13 +211,12 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
             N_ct += key_names.count('N') * comp_summary[key]
             amine_ct = NH2_ct + NH_ct + N_ct
             acid_ct += key_names.count('COOH') * comp_summary[key]
-            alcohol_ct += (key_names.count('POH') + key_names.count('SOH')) * comp_summary[key]
             epoxide_ct += key_names.count('COC') * comp_summary[key]
-            IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count(
-                'CC_1')) * comp_summary[key]
+            IV_ct += (key_names.count('aB_unsat') + key_names.count('CC_3') + key_names.count('CC_2') + key_names.count('CC_1')) * comp_summary[key]
             Cl_ct = key_names.count('Cl')
             POH_ct += key_names.count('POH') * comp_summary[key]
             SOH_ct += key_names.count('SOH') * comp_summary[key]
+            alcohol_ct = POH_ct + SOH_ct
             for group in key[0]:
                 if group[0] == 'POH' or group[0] == 'SOH':
                     if 'Epi' in sn_dict and group[0] == 'SOH' and group[1] == sn_dict['Epi'].cprgID[1] and Cl_ct > 0:
@@ -316,46 +315,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         return {"comp_primary": comp_primary, "comp_secondary": comp_secondary, "in_situ_values": in_situ_values,
                 'in_situ_values_sec': in_situ_values_sec, 'byproducts_primary': byproducts_primary,
                 'byproducts_secondary': byproducts_secondary}
-
-
-def update_metrics(TAV, AV, OH, EHC, COC, IV):
-    RM.entries[8].delete(0, tkinter.END)
-    RM.entries[8].insert(0, EHC)
-    RM.entries[9].delete(0, tkinter.END)
-    try:
-        RM.entries[9].insert(0, round((3545.3 / EHC) - 36.4, 2))
-    except ZeroDivisionError:
-        RM.entries[9].insert(0, 'N/A')
-    RM.entries[10].delete(0, tkinter.END)
-    RM.entries[10].insert(0, AV)
-    RM.entries[11].delete(0, tkinter.END)
-    RM.entries[11].insert(0, TAV)
-    RM.entries[12].delete(0, tkinter.END)
-    RM.entries[12].insert(0, OH)
-    RM.entries[13].delete(0, tkinter.END)
-    RM.entries[13].insert(0, COC)
-    RM.entries[14].delete(0, tkinter.END)
-    RM.entries[14].insert(0, IV)
-
-
-def update_metrics_sec(TAV, AV, OH, EHC, COC, IV):
-    RM2.entries[8].delete(0, tkinter.END)
-    RM2.entries[8].insert(0, EHC)
-    RM2.entries[9].delete(0, tkinter.END)
-    try:
-        RM2.entries[9].insert(0, round((3545.3 / EHC) - 36.4, 2))
-    except ZeroDivisionError:
-        RM2.entries[9].insert(0, 'N/A')
-    RM2.entries[10].delete(0, tkinter.END)
-    RM2.entries[10].insert(0, AV)
-    RM2.entries[11].delete(0, tkinter.END)
-    RM2.entries[11].insert(0, TAV)
-    RM2.entries[12].delete(0, tkinter.END)
-    RM2.entries[12].insert(0, OH)
-    RM2.entries[13].delete(0, tkinter.END)
-    RM2.entries[13].insert(0, COC)
-    RM2.entries[14].delete(0, tkinter.END)
-    RM2.entries[14].insert(0, IV)
 
 
 def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
@@ -1054,9 +1013,6 @@ def reset_entry_table():
             RET.entries[(i + 1) * RET.tablewidth + j].delete(0, 'end')
     sim.progress['value'] = 0
     sim.progress_2['value'] = 0
-    for i in range(8, 15):
-        RM.entries[i].delete(0, 'end')
-        RM2.entries[i].delete(0, 'end')
     RXN_EM_2_Active.set(False)
     RXN_EM_Entry_2_SR.set("2° Start")
     RXN_EM_Value_2.delete(0, 'end')
@@ -1329,6 +1285,19 @@ if __name__ == "__main__":
     tkinter.Grid.columnconfigure(window, 0, weight=1)
     tab_control.grid(row=0, column=0, sticky=tkinter.E + tkinter.W + tkinter.N + tkinter.S)
 
+    # Get the screen width and height
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+
+    # Set the window size to a percentage of the screen size
+    window_width = int(screen_width * 0.8)  # 80% of the screen width
+    window_height = int(screen_height * 0.8)  # 80% of the screen height
+    window.geometry(f"{window_width}x{window_height}+0+0")  # "+0+0" positions the window in the top-left corner
+
+    # Set a minimum window size to ensure visibility of the grid
+    window.minsize(800, 600)  # Example minimum siz
+
+
     menubar = tkinter.Menu(window, background="red")
     window.config(menu=menubar)
     filemenu1 = tkinter.Menu(menubar, tearoff=0)
@@ -1478,7 +1447,7 @@ if __name__ == "__main__":
             self.tablewidth = 16
             self.tableheight = 20
             self.entries = None
-            self.grid(row=5, column=1, padx=10, pady=10)
+            self.place(relx=0.5, rely=0.5, anchor=CENTER, relwidth=0.65, relheight=0.5)  # Place the frame in the middle of the window
             self.create_table()
 
         def create_table(self):
@@ -1689,7 +1658,7 @@ if __name__ == "__main__":
             self.tablewidth = 3
             self.tableheight = 20
             self.entries = None
-            self.grid(row=5, column=0, padx=10, pady=10)
+            self.place(relx=0.1, rely=0.5, anchor=CENTER, relwidth=0.13, relheight=0.5)
             self.create_table()
 
         def create_table(self):
@@ -1733,7 +1702,7 @@ if __name__ == "__main__":
             self.tableheight = None
             self.tablewidth = None
             self.entries = None
-            self.grid(row=0, column=0, padx=5, pady=(20, 5))
+            self.place(relx=0.01, rely=0.01, anchor=NW)
             self.create_table()
 
         def create_table(self):
@@ -1831,100 +1800,6 @@ if __name__ == "__main__":
                     cell += RET.tablewidth
             reactants_list = [f'{index + 1}: {reactant}' for index, reactant in enumerate(reactants_list)]
             RXN_EM_Entry_2_SR.config(values=reactants_list, state="readonly")
-
-
-    class RxnMetrics(tkinter.Frame):
-        def __init__(self, master=tab1):
-            tkinter.Frame.__init__(self, master)
-            self.tablewidth = None
-            self.tableheight = None
-            self.entries = None
-            self.grid(row=2, column=1, padx=5, pady=5)
-            self.create_table()
-
-        def create_table(self):
-            self.entries = {}
-            self.tableheight = 8
-            self.tablewidth = 2
-            counter = 0
-            for column in range(self.tablewidth):
-                for row in range(self.tableheight):
-                    self.entries[counter] = tkinter.Entry(self)
-                    self.entries[counter].grid(row=row, column=column)
-                    # self.entries[counter].insert(0, str(counter))
-                    self.entries[counter].config(justify="center", width=18)
-                    counter += 1
-            self.table_labels()
-
-        def table_labels(self):
-            self.entries[0].delete(0, tkinter.END)
-            self.entries[0].insert(0, "EHC, % =")
-            self.entries[0].config(state="readonly")
-            self.entries[1].delete(0, tkinter.END)
-            self.entries[1].insert(0, "Theory WPE =")
-            self.entries[1].config(state="readonly")
-            self.entries[2].delete(0, tkinter.END)
-            self.entries[2].insert(0, "Acid Value =")
-            self.entries[2].config(state="readonly")
-            self.entries[3].delete(0, tkinter.END)
-            self.entries[3].insert(0, "Amine Value =")
-            self.entries[3].config(state="readonly")
-            self.entries[4].delete(0, tkinter.END)
-            self.entries[4].insert(0, "OH Value =")
-            self.entries[4].config(state="readonly")
-            self.entries[5].delete(0, tkinter.END)
-            self.entries[5].insert(0, "COC Value =")
-            self.entries[5].config(state="readonly")
-            self.entries[6].delete(0, tkinter.END)
-            self.entries[6].insert(0, "Iodine Value =")
-            self.entries[6].config(state="readonly")
-
-
-    class RxnMetrics_sec(tkinter.Frame):
-        def __init__(self, master=tab1):
-            tkinter.Frame.__init__(self, master)
-            self.tablewidth = None
-            self.tableheight = None
-            self.entries = None
-            self.grid(row=2, column=1, padx=(500, 0), pady=5)
-            self.create_table()
-
-        def create_table(self):
-            self.entries = {}
-            self.tableheight = 8
-            self.tablewidth = 2
-            counter = 0
-            for column in range(self.tablewidth):
-                for row in range(self.tableheight):
-                    self.entries[counter] = tkinter.Entry(self)
-                    self.entries[counter].grid(row=row, column=column)
-                    # self.entries[counter].insert(0, str(counter))
-                    self.entries[counter].config(justify="center", width=18)
-                    counter += 1
-            self.table_labels()
-
-        def table_labels(self):
-            self.entries[0].delete(0, tkinter.END)
-            self.entries[0].insert(0, "EHC, % =")
-            self.entries[0].config(state="readonly")
-            self.entries[1].delete(0, tkinter.END)
-            self.entries[1].insert(0, "Theory WPE =")
-            self.entries[1].config(state="readonly")
-            self.entries[2].delete(0, tkinter.END)
-            self.entries[2].insert(0, "Acid Value =")
-            self.entries[2].config(state="readonly")
-            self.entries[3].delete(0, tkinter.END)
-            self.entries[3].insert(0, "Amine Value =")
-            self.entries[3].config(state="readonly")
-            self.entries[4].delete(0, tkinter.END)
-            self.entries[4].insert(0, "OH Value =")
-            self.entries[4].config(state="readonly")
-            self.entries[5].delete(0, tkinter.END)
-            self.entries[5].insert(0, "COC Value =")
-            self.entries[5].config(state="readonly")
-            self.entries[6].delete(0, tkinter.END)
-            self.entries[6].insert(0, "Iodine Value =")
-            self.entries[6].config(state="readonly")
 
 
     class WeightDist(tkinter.Frame):
@@ -2034,7 +1909,7 @@ if __name__ == "__main__":
             self.tablewidth = None
             self.tableheight = None
             self.entries = None
-            self.grid(row=1, column=0, padx=5, pady=5)
+            self.place(relx=0.01, rely=0.12, anchor=NW)
             self.create_table()
 
         def create_table(self):
@@ -2069,7 +1944,7 @@ if __name__ == "__main__":
             self.tableheight = None
             self.progress = None
             self.entries = None
-            self.grid(row=0, column=1)
+            self.place(relx=0.5, rely=0.1, anchor=CENTER)
             self.create_table()
 
         def create_table(self):
@@ -2108,8 +1983,6 @@ if __name__ == "__main__":
     WD = WeightDist()
     WD2 = WeightDist_2()
     RD = RxnDetails()
-    RM = RxnMetrics()
-    RM2 = RxnMetrics_sec()
     Buttons = Buttons()
     sim = SimStatus()
     CT = combinations_table()

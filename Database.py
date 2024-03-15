@@ -319,7 +319,7 @@ class C182_1_Gly_1_RA_2:
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
-        self.dist = [[self.prgID]]
+        self.dist = [[self.prgID], [self.prgID]]
 
 class C181_1_C182_1_Gly_1_RA_1:
     def __init__(self):
