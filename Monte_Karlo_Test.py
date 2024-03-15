@@ -1294,9 +1294,6 @@ if __name__ == "__main__":
     window_height = int(screen_height * 0.8)  # 80% of the screen height
     window.geometry(f"{window_width}x{window_height}+0+0")  # "+0+0" positions the window in the top-left corner
 
-    # Set a minimum window size to ensure visibility of the grid
-    window.minsize(800, 600)  # Example minimum siz
-
 
     menubar = tkinter.Menu(window, background="red")
     window.config(menu=menubar)
@@ -1449,8 +1446,8 @@ if __name__ == "__main__":
             self.entries = None
             self.place(relx=0.5, rely=0.5, anchor=CENTER, relwidth=0.65, relheight=0.5)  # Place the frame in the middle of the window
             self.create_table()
-
         def create_table(self):
+
             self.entries = {}
             counter = 0
             for row in range(self.tableheight):
@@ -1458,7 +1455,7 @@ if __name__ == "__main__":
                     self.entries[counter] = tkinter.Entry(self)
                     self.entries[counter].grid(row=row, column=column)
                     # self.entries[counter].insert(0, str(counter))
-                    self.entries[counter].config(justify="center", width=10)
+                    self.entries[counter].config(justify="center", width=12)
                     counter += 1
             self.entries[0].config(width=27)
             self.tabel_labels()
