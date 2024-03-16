@@ -560,234 +560,6 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     show_Xn_sec(Xn_2)
 
 
-# -------------------------------------------Display Results---------------------------------------------------#
-def show_results(rxn_summary_df):
-    global results_table, frame_results
-    try:
-        results_table.destroy()
-        frame_results.destroy()
-    except NameError:
-        pass
-    frame_results = tkinter.Frame(tab2)
-    x = window.winfo_width() / 2
-    y = window.winfo_height() / 2
-    frame_results.place(relx=0.5, rely=0.5, anchor='center')
-    results_table = Table(frame_results, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True,
-                          width=x, height=y, align='center')
-    results_table.show()
-
-def show_results_sec(rxn_summary_df_2):
-    global results_table_2, frame_results_2
-    try:
-        results_table_2.destroy()
-        frame_results_2.destroy()
-    except NameError:
-        pass
-    frame_results_2 = tkinter.Frame(tab4)
-    x = ((window.winfo_screenwidth() - frame_results_2.winfo_reqwidth()) / 2) + 100
-    y = (window.winfo_screenheight() - frame_results_2.winfo_reqheight()) / 2
-    frame_results_2.place(x=x, y=y, anchor='center')
-    results_table_2 = Table(frame_results_2, dataframe=rxn_summary_df_2, showtoolbar=True, showstatusbar=True,
-                            showindex=True,
-                            width=x, height=y, align='center', )
-    # adjust results_table if it is too big
-    if results_table_2.winfo_reqwidth() > window.winfo_screenwidth():
-        results_table_2.width = window.winfo_screenwidth() - 100
-    if results_table_2.winfo_reqheight() > window.winfo_screenheight():
-        results_table_2.height = window.winfo_screenheight() - 100
-    results_table_2.show()
-
-
-def show_byproducts(byproducts_df):
-    global byproducts_table, frame_byproducts
-    try:
-        byproducts_table.destroy()
-        frame_byproducts.destroy()
-    except NameError:
-        pass
-    frame_byproducts = tkinter.Frame(tab2)
-    frame_byproducts.grid(row=0, column=3, padx=(100, 0), pady=(20, 0))
-    byproducts_table = Table(frame_byproducts, dataframe=byproducts_df, showtoolbar=False, showstatusbar=True,
-                             showindex=True, width=600, height=100, align='center', maxcellwidth=1000)
-    byproducts_table.show()
-
-
-def show_byproducts_sec(byproducts_df_2):
-    global byproducts_table_2, frame_byproducts_2
-    try:
-        byproducts_table_2.destroy()
-        frame_byproducts_2.destroy()
-    except NameError:
-        pass
-    frame_byproducts_2 = tkinter.Frame(tab4)
-    frame_byproducts_2.grid(row=0, column=3, padx=(100, 0), pady=(20, 0))
-    byproducts_table_2 = Table(frame_byproducts_2, dataframe=byproducts_df_2, showtoolbar=False, showstatusbar=True,
-                               showindex=True, width=600, height=100, align='center', maxcellwidth=1000)
-    byproducts_table_2.show()
-
-
-def show_Xn(Xn):
-    global Xn_table, frame_Xn
-    try:
-        Xn_table.destroy()
-        frame_Xn.destroy()
-    except NameError:
-        pass
-    frame_Xn = tkinter.Frame(tab3)
-    frame_Xn.pack()
-    Xn_table = Table(frame_Xn, dataframe=Xn, showtoolbar=True, showstatusbar=True, showindex=True, width=2000,
-                     height=1000, align='center', maxcellwidth=1000)
-    Xn_table.show()
-
-
-def show_Xn_sec(Xn_2):
-    global Xn_table_2, frame_Xn_2
-    try:
-        Xn_table_2.destroy()
-        frame_Xn_2.destroy()
-    except NameError:
-        pass
-    frame_Xn_2 = tkinter.Frame(tab5)
-    frame_Xn_2.pack()
-    Xn_table_2 = Table(frame_Xn_2, dataframe=Xn_2, showtoolbar=True, showstatusbar=True, showindex=True, width=2000,
-                       height=1000, align='center', maxcellwidth=1000)
-    Xn_table_2.show()
-
-
-def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, label):
-    global start_time, end_time, dragging_start, dragging_end
-    fig, ax = plt.subplots(figsize=(15, 6))
-    ax.plot(APC_df.index, APC_df['Sum'], linewidth=0.75)
-    ax.set_xlabel('Time (min)')
-    ax.set_ylabel('Intensity (a.u.)')
-    ax.set_title(f'{label} Theoretical APC')
-    if APC_Solvent == "THF":
-        ax.set_xticks(np.arange(0, 12.25, 0.25))
-        ax.set_xticklabels(np.arange(0, 12.25, 0.25), rotation=-35)
-        ax.set_xlim(0, 12)
-        start_time = 1.0
-        end_time = 11.0
-    elif APC_Solvent == "Water":
-        ax.set_xticks(np.arange(12, 25.25, 0.25))
-        ax.set_xticklabels(np.arange(12, 25.25, 0.25), rotation=-35)
-        ax.set_xlim(12, 25)
-        start_time = 13.0
-        end_time = 24.0
-
-    textstr = f'Solvent: {APC_Solvent} \nFlow Rate: {APC_Flow_Rate:.1f} ml/min\nFWHM (100 MW): {APC_FWHM:.3f} min\nFWHM (100K MW): {APC_FWHM2:.3f} min'
-    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-    a = ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
-    time_textstr = f'Time, min: '
-    b = ax.text(0.05, 0.7, time_textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
-    ingegrated_area = f'Integrated Area, %: '
-    c = ax.text(0.05, 0.6, ingegrated_area, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
-
-    # Create vertical bars for start and end times
-    start_time_line = ax.axvline(start_time, color='blue', linestyle='-', linewidth=1, picker=True)
-    end_time_line = ax.axvline(end_time, color='red', linestyle='-', linewidth=1, picker=True)
-
-    fig.canvas.draw()
-
-    def on_move(event):
-        xdata = event.xdata
-        if xdata is not None:
-            closest_peaks = APC_comp.iloc[(APC_comp['RT(min)'] - xdata).abs().argsort()[:5]]
-            tolerence = 0.05
-            peak_info = []
-            for i, peak in closest_peaks.iterrows():
-                if abs(peak['RT(min)'] - xdata) <= tolerence:
-                    peak_info.append(
-                        [peak['Name'], f"{peak['RT(min)']:.3f}", f"{10 ** peak['Log(MW)']:.2f}", f"{peak['Wt,%']:.2f}"])
-            table.delete(*table.get_children())
-            for info in peak_info:
-                table.insert("", "end", values=info)
-            b.set_text(f'Time, min: {xdata:.3f}')
-        else:
-            table.delete(*table.get_children())
-            b.set_text(f'Time, min: ')
-        fig.canvas.draw()
-
-    def calculate_area():
-        global start_time, end_time
-
-        x = np.array(APC_df.index)
-        y = np.array(APC_df['Sum'])
-
-        # Filter data based on the time range
-        x_times = sorted([start_time, end_time])
-        indicies = np.where((x > x_times[0]) & (x < x_times[1]))
-
-        x_range = x[indicies]
-        y_range = y[indicies]
-
-        area_range = simps(y_range, x_range)
-        total_area = simps(y, x)
-        area_percent = area_range / total_area * 100
-        c.set_text(f'Integrated Area, %: {area_percent:.2f}')
-
-        fig.canvas.draw()
-
-    fig.canvas.mpl_connect('motion_notify_event', lambda event: on_move(event))
-
-    root = tkinter.Tk()
-    root.title(f'Monte Karlo - {label} Theoretical APC')
-    root.iconbitmap("testtube.ico")
-    canvas = FigureCanvasTkAgg(fig, master=root)
-    canvas.draw()
-    canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
-    toolbar = NavigationToolbar2Tk(canvas, root)
-    toolbar.update()
-    toolbar.pack()
-    columns = ("Name", "Retention Time (min)", "MW(g/mol)", "Wt,%")
-    table = ttk.Treeview(root, columns=columns, show="headings", height=5)
-    for col in columns:
-        table.heading(col, text=col)
-    table.pack()
-    button_close = tkinter.Button(root, text="Close", command=root.destroy)
-    button_close.pack()
-
-    # Variables to track the dragging state
-    dragging_start = False
-    dragging_end = False
-
-    # Function to handle mouse button press events
-    def on_press(event):
-        global dragging_start, dragging_end
-        if event.button == 1:
-            if start_time_line.contains(event)[0]:
-                dragging_start = True
-            elif end_time_line.contains(event)[0]:
-                dragging_end = True
-
-    # Function to handle mouse button release events
-    def on_release(event):
-        global dragging_start, dragging_end
-        if event.button == 1:
-            dragging_start = False
-            dragging_end = False
-
-    # Function to handle mouse motion events (dragging)
-    def on_motion(event):
-        global start_time, end_time
-        if dragging_start == False and dragging_end == False:
-            return
-        elif dragging_start:
-            start_time = event.xdata
-            start_time_line.set_xdata([start_time, start_time])
-        elif dragging_end:
-            end_time = event.xdata
-            end_time_line.set_xdata([end_time, end_time])
-        calculate_area()
-
-        fig.canvas.draw()
-
-    fig.canvas.mpl_connect('button_press_event', on_press)
-    fig.canvas.mpl_connect('button_release_event', on_release)
-    fig.canvas.mpl_connect('motion_notify_event', on_motion)
-
-    root.mainloop()
-
-
 # -------------------------------------------Auxiliary Functions---------------------------------------------------#
 
 def str_to_class(classname):
@@ -1249,6 +1021,218 @@ def export_all():
             sheet_names = ['1_Summary', '1_In_Situ', '1_Aux', '2_Summary', '2_In_Situ', '2_Aux']
             workbook._sheets.sort(key=lambda ws: sheet_names.index(ws.title))
 
+# -------------------------------------------Display Results---------------------------------------------------#
+def show_results(rxn_summary_df):
+    global results_table, frame_results
+    try:
+        results_table.destroy()
+        frame_results.destroy()
+    except NameError:
+        pass
+    frame_results = tkinter.Frame(tab2)
+    frame_results.place(relx=0.5, rely=0.6, anchor='center', relwidth=0.8, relheight=0.6)
+    results_table = Table(frame_results, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True, align='center')
+    results_table.show()
+
+def show_results_sec(rxn_summary_df_2):
+    global results_table_2, frame_results_2
+    try:
+        results_table_2.destroy()
+        frame_results_2.destroy()
+    except NameError:
+        pass
+    frame_results_2 = tkinter.Frame(tab4)
+    frame_results_2.place(relx=0.5, rely=0.6, anchor='center', relwidth=0.8, relheight=0.6)
+    results_table_2 = Table(frame_results_2, dataframe=rxn_summary_df_2, showtoolbar=True, showstatusbar=True, showindex=True, align='center', )
+    results_table_2.show()
+
+
+def show_byproducts(byproducts_df):
+    global byproducts_table, frame_byproducts
+    try:
+        byproducts_table.destroy()
+        frame_byproducts.destroy()
+    except NameError:
+        pass
+    frame_byproducts = tkinter.Frame(tab2)
+    frame_byproducts.place(relx=0.5, rely=0.15, anchor='center', relwidth=0.3, relheight=0.15)
+    byproducts_table = Table(frame_byproducts, dataframe=byproducts_df, showtoolbar=False, showstatusbar=True, showindex=True, align='center', maxcellwidth=1000)
+    byproducts_table.show()
+
+
+def show_byproducts_sec(byproducts_df_2):
+    global byproducts_table_2, frame_byproducts_2
+    try:
+        byproducts_table_2.destroy()
+        frame_byproducts_2.destroy()
+    except NameError:
+        pass
+    frame_byproducts_2 = tkinter.Frame(tab4)
+    frame_byproducts_2.place(relx=0.5, rely=0.15, anchor='center', relwidth=0.3, relheight=0.15)
+    byproducts_table_2 = Table(frame_byproducts_2, dataframe=byproducts_df_2, showtoolbar=False, showstatusbar=True, showindex=True, align='center', maxcellwidth=1000)
+    byproducts_table_2.show()
+
+
+def show_Xn(Xn):
+    global Xn_table, frame_Xn
+    try:
+        Xn_table.destroy()
+        frame_Xn.destroy()
+    except NameError:
+        pass
+    frame_Xn = tkinter.Frame(tab3)
+    frame_Xn.pack()
+    Xn_table = Table(frame_Xn, dataframe=Xn, showtoolbar=True, showstatusbar=True, showindex=True, width=2000,
+                     height=1000, align='center', maxcellwidth=1000)
+    Xn_table.show()
+
+
+def show_Xn_sec(Xn_2):
+    global Xn_table_2, frame_Xn_2
+    try:
+        Xn_table_2.destroy()
+        frame_Xn_2.destroy()
+    except NameError:
+        pass
+    frame_Xn_2 = tkinter.Frame(tab5)
+    frame_Xn_2.pack()
+    Xn_table_2 = Table(frame_Xn_2, dataframe=Xn_2, showtoolbar=True, showstatusbar=True, showindex=True, width=2000,
+                       height=1000, align='center', maxcellwidth=1000)
+    Xn_table_2.show()
+
+
+def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, label):
+    global start_time, end_time, dragging_start, dragging_end
+    fig, ax = plt.subplots(figsize=(15, 6))
+    ax.plot(APC_df.index, APC_df['Sum'], linewidth=0.75)
+    ax.set_xlabel('Time (min)')
+    ax.set_ylabel('Intensity (a.u.)')
+    ax.set_title(f'{label} Theoretical APC')
+    if APC_Solvent == "THF":
+        ax.set_xticks(np.arange(0, 12.25, 0.25))
+        ax.set_xticklabels(np.arange(0, 12.25, 0.25), rotation=-35)
+        ax.set_xlim(0, 12)
+        start_time = 1.0
+        end_time = 11.0
+    elif APC_Solvent == "Water":
+        ax.set_xticks(np.arange(12, 25.25, 0.25))
+        ax.set_xticklabels(np.arange(12, 25.25, 0.25), rotation=-35)
+        ax.set_xlim(12, 25)
+        start_time = 13.0
+        end_time = 24.0
+
+    textstr = f'Solvent: {APC_Solvent} \nFlow Rate: {APC_Flow_Rate:.1f} ml/min\nFWHM (100 MW): {APC_FWHM:.3f} min\nFWHM (100K MW): {APC_FWHM2:.3f} min'
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    a = ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+    time_textstr = f'Time, min: '
+    b = ax.text(0.05, 0.7, time_textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+    ingegrated_area = f'Integrated Area, %: '
+    c = ax.text(0.05, 0.6, ingegrated_area, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+
+    # Create vertical bars for start and end times
+    start_time_line = ax.axvline(start_time, color='blue', linestyle='-', linewidth=1, picker=True)
+    end_time_line = ax.axvline(end_time, color='red', linestyle='-', linewidth=1, picker=True)
+
+    fig.canvas.draw()
+
+    def on_move(event):
+        xdata = event.xdata
+        if xdata is not None:
+            closest_peaks = APC_comp.iloc[(APC_comp['RT(min)'] - xdata).abs().argsort()[:5]]
+            tolerence = 0.05
+            peak_info = []
+            for i, peak in closest_peaks.iterrows():
+                if abs(peak['RT(min)'] - xdata) <= tolerence:
+                    peak_info.append(
+                        [peak['Name'], f"{peak['RT(min)']:.3f}", f"{10 ** peak['Log(MW)']:.2f}", f"{peak['Wt,%']:.2f}"])
+            table.delete(*table.get_children())
+            for info in peak_info:
+                table.insert("", "end", values=info)
+            b.set_text(f'Time, min: {xdata:.3f}')
+        else:
+            table.delete(*table.get_children())
+            b.set_text(f'Time, min: ')
+        fig.canvas.draw()
+
+    def calculate_area():
+        global start_time, end_time
+
+        x = np.array(APC_df.index)
+        y = np.array(APC_df['Sum'])
+
+        # Filter data based on the time range
+        x_times = sorted([start_time, end_time])
+        indicies = np.where((x > x_times[0]) & (x < x_times[1]))
+
+        x_range = x[indicies]
+        y_range = y[indicies]
+
+        area_range = simps(y_range, x_range)
+        total_area = simps(y, x)
+        area_percent = area_range / total_area * 100
+        c.set_text(f'Integrated Area, %: {area_percent:.2f}')
+
+        fig.canvas.draw()
+
+    fig.canvas.mpl_connect('motion_notify_event', lambda event: on_move(event))
+
+    root = tkinter.Tk()
+    root.title(f'Monte Karlo - {label} Theoretical APC')
+    root.iconbitmap("testtube.ico")
+    canvas = FigureCanvasTkAgg(fig, master=root)
+    canvas.draw()
+    canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+    toolbar = NavigationToolbar2Tk(canvas, root)
+    toolbar.update()
+    toolbar.pack()
+    columns = ("Name", "Retention Time (min)", "MW(g/mol)", "Wt,%")
+    table = ttk.Treeview(root, columns=columns, show="headings", height=5)
+    for col in columns:
+        table.heading(col, text=col)
+    table.pack()
+    button_close = tkinter.Button(root, text="Close", command=root.destroy)
+    button_close.pack()
+
+    # Variables to track the dragging state
+    dragging_start = False
+    dragging_end = False
+
+    # Function to handle mouse button press events
+    def on_press(event):
+        global dragging_start, dragging_end
+        if event.button == 1:
+            if start_time_line.contains(event)[0]:
+                dragging_start = True
+            elif end_time_line.contains(event)[0]:
+                dragging_end = True
+
+    # Function to handle mouse button release events
+    def on_release(event):
+        global dragging_start, dragging_end
+        if event.button == 1:
+            dragging_start = False
+            dragging_end = False
+
+    # Function to handle mouse motion events (dragging)
+    def on_motion(event):
+        global start_time, end_time
+        if dragging_start == False and dragging_end == False:
+            return
+        elif dragging_start:
+            start_time = event.xdata
+            start_time_line.set_xdata([start_time, start_time])
+        elif dragging_end:
+            end_time = event.xdata
+            end_time_line.set_xdata([end_time, end_time])
+        calculate_area()
+
+        fig.canvas.draw()
+
+    fig.canvas.mpl_connect('button_press_event', on_press)
+    fig.canvas.mpl_connect('button_release_event', on_release)
+    fig.canvas.mpl_connect('motion_notify_event', on_motion)
+
+    root.mainloop()
 
 # ---------------------------------------------------User-Interface----------------------------------------------#
 if __name__ == "__main__":
@@ -1277,6 +1261,7 @@ if __name__ == "__main__":
     tkinter.Grid.rowconfigure(window, 0, weight=1)
     tkinter.Grid.columnconfigure(window, 0, weight=1)
     tab_control.grid(row=0, column=0, sticky=tkinter.E + tkinter.W + tkinter.N + tkinter.S)
+
 
     # Get the screen width and height
     screen_width = window.winfo_screenwidth()
