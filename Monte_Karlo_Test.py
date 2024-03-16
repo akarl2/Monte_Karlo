@@ -561,7 +561,6 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
 
 
 # -------------------------------------------Display Results---------------------------------------------------#
-
 def show_results(rxn_summary_df):
     global results_table, frame_results
     try:
@@ -570,18 +569,12 @@ def show_results(rxn_summary_df):
     except NameError:
         pass
     frame_results = tkinter.Frame(tab2)
-    x = ((window.winfo_screenwidth() - frame_results.winfo_reqwidth()) / 2) + 200
-    y = (window.winfo_screenheight() - frame_results.winfo_reqheight()) / 2
-    frame_results.place(x=x, y=y, anchor='center')
+    x = window.winfo_width() / 2
+    y = window.winfo_height() / 2
+    frame_results.place(relx=0.5, rely=0.5, anchor='center')
     results_table = Table(frame_results, dataframe=rxn_summary_df, showtoolbar=True, showstatusbar=True, showindex=True,
-                          width=x, height=y, align='center', )
-    # adjust results_table if it is too big
-    if results_table.winfo_reqwidth() > window.winfo_screenwidth():
-        results_table.width = window.winfo_screenwidth() - 50
-    if results_table.winfo_reqheight() > window.winfo_screenheight():
-        results_table.height = window.winfo_screenheight() - 50
+                          width=x, height=y, align='center')
     results_table.show()
-
 
 def show_results_sec(rxn_summary_df_2):
     global results_table_2, frame_results_2
@@ -1441,21 +1434,23 @@ if __name__ == "__main__":
     class RxnEntryTable(tkinter.Frame):
         def __init__(self, master=tab1):
             tkinter.Frame.__init__(self, master)
+            self.cell_width = 10
+            self.rel_width = 0.65
+            self.rel_height = 0.5
             self.tablewidth = 16
             self.tableheight = 20
             self.entries = None
-            self.place(relx=0.5, rely=0.5, anchor=CENTER, relwidth=0.65, relheight=0.5)  # Place the frame in the middle of the window
+            self.place(relx=0.5, rely=0.5, anchor=CENTER, relwidth=self.rel_width, relheight=self.rel_height)  # Place the frame in the middle of the window
             self.create_table()
-        def create_table(self):
 
+        def create_table(self):
             self.entries = {}
             counter = 0
             for row in range(self.tableheight):
                 for column in range(self.tablewidth):
                     self.entries[counter] = tkinter.Entry(self)
                     self.entries[counter].grid(row=row, column=column)
-                    # self.entries[counter].insert(0, str(counter))
-                    self.entries[counter].config(justify="center", width=12)
+                    self.entries[counter].config(justify="center", width=self.cell_width)
                     counter += 1
             self.entries[0].config(width=27)
             self.tabel_labels()
@@ -1502,8 +1497,7 @@ if __name__ == "__main__":
             index = 0
             for species in range(self.tableheight - 1):
                 Entry_Reactants[index] = tkinter.StringVar()
-                self.entries[cell] = AutocompleteCombobox(self, completevalues=Reactants, width=24,
-                                                          textvariable=Entry_Reactants[index])
+                self.entries[cell] = AutocompleteCombobox(self, completevalues=Reactants, width=24, textvariable=Entry_Reactants[index])
                 self.entries[cell].grid(row=row, column=0)
                 self.entries[cell].config(justify="center")
                 cell = cell + self.tablewidth
@@ -1517,7 +1511,6 @@ if __name__ == "__main__":
                 cell = cell + self.tablewidth
                 row = row + 1
                 index = index + 1
-
         def update_table(self, index, cell):
             if self.entries[cell + 1].get() == "" or self.entries[cell + 1].get() == "0":
                 self.entries[cell + 1].delete(0, tkinter.END)
