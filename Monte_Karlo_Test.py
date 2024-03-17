@@ -6,6 +6,7 @@ import random
 import sys
 import tkinter
 import time
+import sv_ttk
 from tkinter import *
 import mplcursors
 from scipy.integrate import trapz, simps
@@ -1242,6 +1243,7 @@ if __name__ == "__main__":
     style.configure('TNotebook.Tab', background='#355C7D', foreground='#ffffff')
     style.configure("red.Horizontal.TProgressbar", troughcolor='green')
     style.map('TNotebook.Tab', background=[('selected', 'green3')], foreground=[('selected', '#000000')])
+    # sv_ttk.set_theme("dark")
     window.iconbitmap("testtube.ico")
     window.title("Monte Karlo")
     window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
