@@ -1443,61 +1443,30 @@ if __name__ == "__main__":
             self.tabel_labels()
 
         def tabel_labels(self):
+            labels = [
+                "Component", "Mass (g)", "wt, %", "Moles", "1° - ID", "1° - K", "C1° - ID",
+                "1° - Child K", "2° - ID", "2° - K", "C2° - ID", "2° - Child K", "3° - ID",
+                "3° - K", "C3° - ID", "3° - Child K"]
             offset = 0
-            self.entries[offset + 0].insert(0, "Component")
-            self.entries[offset + 0].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[offset + 1].insert(0, "Mass (g)")
-            self.entries[offset + 1].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[offset + 2].insert(0, "wt, %")
-            self.entries[offset + 2].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[offset + 3].insert(0, "Moles")
-            self.entries[offset + 3].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[offset + 4].insert(0, "1° - ID")
-            self.entries[offset + 4].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[offset + 5].insert(0, "1° - K")
-            self.entries[offset + 5].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[offset + 6].insert(0, "C1° - ID")
-            self.entries[offset + 6].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[offset + 7].insert(0, "1° - Child K")
-            self.entries[offset + 7].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[offset + 8].insert(0, "2° - ID")
-            self.entries[offset + 8].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[offset + 9].insert(0, "2° - K")
-            self.entries[offset + 9].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[offset + 10].insert(0, "C2° - ID")
-            self.entries[offset + 10].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[offset + 11].insert(0, "2° - Child K")
-            self.entries[offset + 11].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[offset + 12].insert(0, "3° - ID")
-            self.entries[offset + 12].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[offset + 13].insert(0, "3° - K")
-            self.entries[offset + 13].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[offset + 14].insert(0, "C3° - ID")
-            self.entries[offset + 14].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[offset + 15].insert(0, "3° - Child K")
-            self.entries[offset + 15].config(state="readonly", font=("Helvetica", 8, "bold"))
+            for i, label in enumerate(labels):
+                self.entries[offset + i].insert(0, label)
+                self.entries[offset + i].config(state="readonly", font=("Helvetica", 8, "bold"))
             self.user_entry()
 
         def user_entry(self):
             cell = starting_cell
-            row = 1
-            index = 0
-            for species in range(self.tableheight - 1):
+            for index in range(self.tableheight - 1):
                 Entry_Reactants[index] = tkinter.StringVar()
-                self.entries[cell] = AutocompleteCombobox(self, completevalues=Reactants, width=24, textvariable=Entry_Reactants[index])
-                self.entries[cell].grid(row=row, column=0)
+                self.entries[cell] = AutocompleteCombobox(
+                    self, completevalues=Reactants, width=24, textvariable=Entry_Reactants[index])
+                self.entries[cell].grid(row=index + 1, column=0)
                 self.entries[cell].config(justify="center")
-                cell = cell + self.tablewidth
-                row = row + 1
-                index = index + 1
+                cell += self.tablewidth
+
             cell = starting_cell + 1
-            row = 1
-            index = 0
-            for species in range(self.tableheight - 1):
+            for index in range(self.tableheight - 1):
                 Entry_masses[index] = self.entries[cell]
-                cell = cell + self.tablewidth
-                row = row + 1
-                index = index + 1
+                cell += self.tablewidth
         def update_table(self, index, cell):
             if self.entries[cell + 1].get() == "" or self.entries[cell + 1].get() == "0":
                 self.entries[cell + 1].delete(0, tkinter.END)
