@@ -6,7 +6,7 @@ import random
 import sys
 import tkinter
 import time
-import sv_ttk
+#import sv_ttk
 from tkinter import *
 import mplcursors
 from scipy.integrate import trapz, simps
@@ -1467,35 +1467,20 @@ if __name__ == "__main__":
             for index in range(self.tableheight - 1):
                 Entry_masses[index] = self.entries[cell]
                 cell += self.tablewidth
+
         def update_table(self, index, cell):
-            if self.entries[cell + 1].get() == "" or self.entries[cell + 1].get() == "0":
+            # If the next cell is empty or contains "0", clear it and enable the following cell
+            if self.entries[cell + 1].get() in ("", "0"):
                 self.entries[cell + 1].delete(0, tkinter.END)
                 self.entries[cell + 2].config(state="normal")
                 self.entries[cell + 2].delete(0, tkinter.END)
+
+            # If the current cell is "Clear", clear subsequent cells and enable following cells
             if self.entries[cell].get() == "Clear":
-                self.entries[cell].delete(0, tkinter.END)
-                self.entries[cell + 1].delete(0, tkinter.END)
-                self.entries[cell + 2].config(state="normal")
-                self.entries[cell + 2].delete(0, tkinter.END)
-                self.entries[cell + 3].delete(0, tkinter.END)
-                self.entries[cell + 4].config(state="normal")
-                self.entries[cell + 4].delete(0, tkinter.END)
-                self.entries[cell + 5].delete(0, tkinter.END)
-                self.entries[cell + 6].config(state="normal")
-                self.entries[cell + 6].delete(0, tkinter.END)
-                self.entries[cell + 7].delete(0, tkinter.END)
-                self.entries[cell + 8].config(state="normal")
-                self.entries[cell + 8].delete(0, tkinter.END)
-                self.entries[cell + 9].delete(0, tkinter.END)
-                self.entries[cell + 10].config(state="normal")
-                self.entries[cell + 10].delete(0, tkinter.END)
-                self.entries[cell + 11].delete(0, tkinter.END)
-                self.entries[cell + 12].config(state="normal")
-                self.entries[cell + 12].delete(0, tkinter.END)
-                self.entries[cell + 13].delete(0, tkinter.END)
-                self.entries[cell + 14].config(state="normal")
-                self.entries[cell + 14].delete(0, tkinter.END)
-                self.entries[cell + 15].delete(0, tkinter.END)
+                for i in range(1, 16, 3):
+                    self.entries[cell + i].delete(0, tkinter.END)
+                    self.entries[cell + i + 1].config(state="normal")
+                    self.entries[cell + i + 1].delete(0, tkinter.END)
             else:
                 if self.entries[cell].get() != "" and self.entries[cell + 1].get() != "":
                     a = str_to_class(Entry_Reactants[index].get())()
@@ -1551,43 +1536,14 @@ if __name__ == "__main__":
         def update_rates(self, index, cell):
             if self.entries[cell].get() != "Clear" and self.entries[cell].get() != "":
                 a = str_to_class(Entry_Reactants[index].get())()
-                self.entries[cell + 4].config(state="normal")
-                self.entries[cell + 4].delete(0, tkinter.END)
-                self.entries[cell + 4].insert(0, str(a.prgID))
-                self.entries[cell + 4].config(state="readonly")
-                self.entries[cell + 5].delete(0, tkinter.END)
-                self.entries[cell + 5].insert(0, str(a.prgk))
-                self.entries[cell + 6].config(state="normal")
-                self.entries[cell + 6].delete(0, tkinter.END)
-                self.entries[cell + 6].insert(0, str(a.cprgID))
-                self.entries[cell + 6].config(state="readonly")
-                self.entries[cell + 7].delete(0, tkinter.END)
-                self.entries[cell + 7].insert(0, str(a.cprgk))
-                self.entries[cell + 8].config(state="normal")
-                self.entries[cell + 8].delete(0, tkinter.END)
-                self.entries[cell + 8].insert(0, str(a.srgID))
-                self.entries[cell + 8].config(state="readonly")
-                self.entries[cell + 9].delete(0, tkinter.END)
-                self.entries[cell + 9].insert(0, str(a.srgk))
-                self.entries[cell + 10].config(state="normal")
-                self.entries[cell + 10].delete(0, tkinter.END)
-                self.entries[cell + 10].insert(0, str(a.csrgID))
-                self.entries[cell + 10].config(state="readonly")
-                self.entries[cell + 11].delete(0, tkinter.END)
-                self.entries[cell + 11].insert(0, str(a.csrgk))
-                self.entries[cell + 12].config(state="normal")
-                self.entries[cell + 12].delete(0, tkinter.END)
-                self.entries[cell + 12].insert(0, str(a.trgID))
-                self.entries[cell + 12].config(state="readonly")
-                self.entries[cell + 13].delete(0, tkinter.END)
-                self.entries[cell + 13].insert(0, str(a.trgk))
-                self.entries[cell + 14].config(state="normal")
-                self.entries[cell + 14].delete(0, tkinter.END)
-                self.entries[cell + 14].insert(0, str(a.ctrgID))
-                self.entries[cell + 14].config(state="readonly")
-                self.entries[cell + 15].delete(0, tkinter.END)
-                self.entries[cell + 15].insert(0, str(a.ctrgk))
+                attributes = ["prgID", "prgk", "cprgID", "cprgk", "srgID", "srgk",
+                              "csrgID", "csrgk", "trgID", "trgk", "ctrgID", "ctrgk"]
 
+                for i, attr in enumerate(attributes, start=4):
+                    self.entries[cell + i].config(state="normal")
+                    self.entries[cell + i].delete(0, tkinter.END)
+                    self.entries[cell + i].insert(0, str(getattr(a, attr)))
+                    self.entries[cell + i].config(state="readonly")
             else:
                 pass
 
@@ -1772,30 +1728,18 @@ if __name__ == "__main__":
             self.table_labels()
 
         def table_labels(self):
-            self.entries[0].delete(0, tkinter.END)
-            self.entries[0].insert(0, "Mn (Number Average) =")
-            self.entries[0].config(width=25)
-            self.entries[0].config(state="readonly")
-            self.entries[1].delete(0, tkinter.END)
-            self.entries[1].insert(0, "Mw (Weight Average) =")
-            self.entries[1].config(width=25)
-            self.entries[1].config(state="readonly")
-            self.entries[2].delete(0, tkinter.END)
-            self.entries[2].insert(0, "PDI (Dispersity Index) =")
-            self.entries[2].config(width=25)
-            self.entries[2].config(state="readonly")
-            self.entries[3].delete(0, tkinter.END)
-            self.entries[3].insert(0, "Mz =")
-            self.entries[3].config(width=25)
-            self.entries[3].config(state="readonly")
-            self.entries[4].delete(0, tkinter.END)
-            self.entries[4].insert(0, "Mz + 1 =")
-            self.entries[4].config(width=25)
-            self.entries[4].config(state="readonly")
-            self.entries[5].delete(0, tkinter.END)
-            self.entries[5].insert(0, "Xn DOP = ")
-            self.entries[5].config(width=25)
-            self.entries[5].config(state="readonly")
+            labels = [
+                "Mn (Number Average) =",
+                "Mw (Weight Average) =",
+                "PDI (Dispersity Index) =",
+                "Mz =",
+                "Mz + 1 =",
+                "Xn DOP ="]
+
+            for i, label_text in enumerate(labels):
+                self.entries[i].delete(0, tkinter.END)
+                self.entries[i].insert(0, label_text)
+                self.entries[i].config(width=25, state="readonly")
 
 
     class WeightDist_2(tkinter.Frame):
@@ -1822,30 +1766,18 @@ if __name__ == "__main__":
             self.table_labels()
 
         def table_labels(self):
-            self.entries[0].delete(0, tkinter.END)
-            self.entries[0].insert(0, "Mn (Number Average) =")
-            self.entries[0].config(width=25)
-            self.entries[0].config(state="readonly")
-            self.entries[1].delete(0, tkinter.END)
-            self.entries[1].insert(0, "Mw (Weight Average) =")
-            self.entries[1].config(width=25)
-            self.entries[1].config(state="readonly")
-            self.entries[2].delete(0, tkinter.END)
-            self.entries[2].insert(0, "PDI (Dispersity Index) =")
-            self.entries[2].config(width=25)
-            self.entries[2].config(state="readonly")
-            self.entries[3].delete(0, tkinter.END)
-            self.entries[3].insert(0, "Mz =")
-            self.entries[3].config(width=25)
-            self.entries[3].config(state="readonly")
-            self.entries[4].delete(0, tkinter.END)
-            self.entries[4].insert(0, "Mz + 1 =")
-            self.entries[4].config(width=25)
-            self.entries[4].config(state="readonly")
-            self.entries[5].delete(0, tkinter.END)
-            self.entries[5].insert(0, "Xn DOP = ")
-            self.entries[5].config(width=25)
-            self.entries[5].config(state="readonly")
+            labels = [
+                "Mn (Number Average) =",
+                "Mw (Weight Average) =",
+                "PDI (Dispersity Index) =",
+                "Mz =",
+                "Mz + 1 =",
+                "Xn DOP ="]
+
+            for i, label_text in enumerate(labels):
+                self.entries[i].delete(0, tkinter.END)
+                self.entries[i].insert(0, label_text)
+                self.entries[i].config(width=25, state="readonly")
 
 
     class Buttons(tkinter.Frame):
@@ -1862,14 +1794,6 @@ if __name__ == "__main__":
             self.entries = {}
             self.tableheight = 4
             self.tablewidth = 1
-            counter = 0
-            for column in range(self.tablewidth):
-                for row in range(self.tableheight):
-                    self.entries[counter] = tkinter.Entry(self)
-                    self.entries[counter].grid(row=row, column=column)
-                    self.entries[counter].insert(0, str(counter))
-                    self.entries[counter].config(justify="center", width=18)
-                    counter += 1
             self.add_buttons()
 
         def add_buttons(self):
