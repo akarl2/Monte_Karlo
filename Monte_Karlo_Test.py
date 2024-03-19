@@ -1270,8 +1270,9 @@ if __name__ == "__main__":
     screen_height = window.winfo_screenheight()
 
     # Set the window size to a percentage of the screen size
-    window_width = int(screen_width * 0.8)  # 80% of the screen width
-    window_height = int(screen_height * 0.8)  # 80% of the screen height
+    screen_size = 0.8  # 80% of the screen
+    window_width = int(screen_width * screen_size)
+    window_height = int(screen_height * screen_size)
     window.geometry(f"{window_width}x{window_height}+0+0")  # "+0+0" positions the window in the top-left corner
 
 
@@ -1457,15 +1458,10 @@ if __name__ == "__main__":
             cell = starting_cell
             for index in range(self.tableheight - 1):
                 Entry_Reactants[index] = tkinter.StringVar()
-                self.entries[cell] = AutocompleteCombobox(
-                    self, completevalues=Reactants, width=24, textvariable=Entry_Reactants[index])
+                self.entries[cell] = AutocompleteCombobox(self, completevalues=Reactants, width=24,textvariable=Entry_Reactants[index])
                 self.entries[cell].grid(row=index + 1, column=0)
                 self.entries[cell].config(justify="center")
-                cell += self.tablewidth
-
-            cell = starting_cell + 1
-            for index in range(self.tableheight - 1):
-                Entry_masses[index] = self.entries[cell]
+                Entry_masses[index] = self.entries[cell + 1]
                 cell += self.tablewidth
 
         def update_table(self, index, cell):
@@ -1518,7 +1514,6 @@ if __name__ == "__main__":
                 unique_rgIDs.update(filter(lambda x: x not in (None, "", "None"), [self.entries[cell + j].get() for j in range(0, 12, 2)]))
                 cell += self.tablewidth
             unique_combinations = set(itertools.combinations(sorted(unique_rgIDs), 2))
-
             reaction_combinations = set()
             for combination in unique_combinations:
                 rg1, rg2 = combination
@@ -1561,26 +1556,29 @@ if __name__ == "__main__":
             self.tableheight = 20
             self.entries = None
             self.place(relx=0.1, rely=0.5, anchor=CENTER, relwidth=0.13, relheight=0.5)
+            self.update()
+            self.bind("<Configure>", self.on_resize)
+            table_width = self.winfo_width()
+            self.cell_width = int(table_width / self.tablewidth / 6)
             self.create_table()
+
 
         def create_table(self):
             self.entries = {}
             counter = 0
             for row in range(self.tableheight):
                 for column in range(self.tablewidth):
-                    self.entries[counter] = tkinter.Entry(self)
-                    self.entries[counter].grid(row=row, column=column)
-                    self.entries[counter].config(justify="center", width=10)
+                    entry = tkinter.Entry(self, width=self.cell_width, justify="center")
+                    entry.grid(row=row, column=column)  # Use grid manager
+                    self.entries[counter] = entry
                     counter += 1
             self.tabel_labels()
 
         def tabel_labels(self):
-            self.entries[0].insert(0, "ID - 1")
-            self.entries[0].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[1].insert(0, "ID - 2")
-            self.entries[1].config(state="readonly", font=("Helvetica", 8, "bold"))
-            self.entries[2].insert(0, "K")
-            self.entries[2].config(state="readonly", font=("Helvetica", 8, "bold"))
+            labels = ["ID - 1", "ID - 2", "K"]
+            for i, label in enumerate(labels):
+                self.entries[i].insert(0, label)
+                self.entries[i].config(state="readonly", font=("Helvetica", 8, "bold"))
 
         def display_combinations(self, combinations):
             for i in range(len(self.entries)):
@@ -1593,6 +1591,13 @@ if __name__ == "__main__":
                 for j in range(len(combinations[i])):
                     self.entries[(i + 1) * self.tablewidth + j].insert(0, combinations[i][j])
                     self.entries[(i + 1) * self.tablewidth + j].config(state="readonly")
+
+        def on_resize(self, event):
+            print(self.cell_width)
+            table_width = self.winfo_width()
+            self.cell_width = int(table_width / self.tablewidth / 6)
+            for entry in self.entries.values():
+                entry.config(width=self.cell_width)
 
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
