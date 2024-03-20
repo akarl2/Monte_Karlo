@@ -381,7 +381,10 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     rxn_summary_df['Wt,%'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
     rxn_summary_df['p*Mw'] = rxn_summary_df['MW'] * (rxn_summary_df['Wt,%'] / 100)
     rxn_summary_df['p*Mw2'] = (rxn_summary_df['MW'] ** 2) * (rxn_summary_df['Wt,%'] / 100)
+    rxn_summary_df['p*Count'] = rxn_summary_df['Count'] * (rxn_summary_df['Wt,%'] / 100)
+    rxn_summary_df['p*Count2'] = (rxn_summary_df['Count'] ** 2) * (rxn_summary_df['Wt,%'] / 100)
     Mw_variance = ((rxn_summary_df['p*Mw2'].sum()) - (rxn_summary_df['p*Mw'].sum() ** 2))
+    Mn_variance = ((rxn_summary_df['p*Count2'].sum()) - (rxn_summary_df['p*Count'].sum() ** 2))
     sumNi = rxn_summary_df['Count'].sum()
     sumNiMi = (rxn_summary_df['Count'] * rxn_summary_df['MW']).sum()
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 2).sum()
@@ -405,6 +408,11 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     Mw_std_err = Mw_std_dev / math.sqrt(total_samples)
     Mw_low_95, Mw_high_95 = Mw - (1.96 * Mw_std_err), Mw + (1.96 * Mw_std_err)
 
+    Mn_std_dev = math.sqrt(Mn_variance)
+    Mn_std_err = Mn_std_dev / math.sqrt(total_samples)
+    Mn_low_95, Mn_high_95 = Mn - (1.96 * Mn_std_err), Mn + (1.96 * Mn_std_err)
+
+
     WD.entries[6].delete(0, tkinter.END)
     WD.entries[6].insert(0, round(Mn, 4))
     WD.entries[7].delete(0, tkinter.END)
@@ -417,8 +425,12 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     WD.entries[10].insert(0, round(Mz1, 4))
     WD.entries[11].delete(0, tkinter.END)
     WD.entries[11].insert(0, round(total_ct / sumNi, 4))
+    WD.entries[12].delete(0, tkinter.END)
+    WD.entries[12].insert(0, round(Mn_low_95, 4))
     WD.entries[13].delete(0, tkinter.END)
     WD.entries[13].insert(0, round(Mw_low_95, 4))
+    WD.entries[18].delete(0, tkinter.END)
+    WD.entries[18].insert(0, round(Mn_high_95, 4))
     WD.entries[19].delete(0, tkinter.END)
     WD.entries[19].insert(0, round(Mw_high_95, 4))
 
