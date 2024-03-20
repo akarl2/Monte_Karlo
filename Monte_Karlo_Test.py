@@ -381,7 +381,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     rxn_summary_df['Wt,%'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
     rxn_summary_df['p*Mw'] = rxn_summary_df['MW'] * (rxn_summary_df['Wt,%'] / 100)
     rxn_summary_df['p*Mw2'] = (rxn_summary_df['MW'] ** 2) * (rxn_summary_df['Wt,%'] / 100)
-    variance = ((rxn_summary_df['p*Mw2'].sum()) - (rxn_summary_df['p*Mw'].sum() ** 2))
+    Mw_variance = ((rxn_summary_df['p*Mw2'].sum()) - (rxn_summary_df['p*Mw'].sum() ** 2))
     sumNi = rxn_summary_df['Count'].sum()
     sumNiMi = (rxn_summary_df['Count'] * rxn_summary_df['MW']).sum()
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 2).sum()
@@ -400,11 +400,10 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     PDI = Mw / Mn
     Mz = sumNiMi3 / sumNiMi2
     Mz1 = sumNiMi4 / sumNiMi3
-    std_dev = math.sqrt(variance)
-    std_err = std_dev / math.sqrt(total_samples)
-    low_95 = Mw - (1.96 * std_err)
-    high_95 = Mw + (1.96 * std_err)
-    print(std_dev, std_err, low_95, high_95, Mw)
+    
+    Mw_std_dev = math.sqrt(Mw_variance)
+    Mw_std_err = Mw_std_dev / math.sqrt(total_samples)
+    Mw_low_95, Mw_high_95 = Mw - (1.96 * Mw_std_err), Mw + (1.96 * Mw_std_err)
 
     WD.entries[6].delete(0, tkinter.END)
     WD.entries[6].insert(0, round(Mn, 4))
@@ -418,6 +417,10 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     WD.entries[10].insert(0, round(Mz1, 4))
     WD.entries[11].delete(0, tkinter.END)
     WD.entries[11].insert(0, round(total_ct / sumNi, 4))
+    WD.entries[13].delete(0, tkinter.END)
+    WD.entries[13].insert(0, round(Mw_low_95, 4))
+    WD.entries[19].delete(0, tkinter.END)
+    WD.entries[19].insert(0, round(Mw_high_95, 4))
 
     byproducts_df = pandas.DataFrame(byproducts_primary, columns=['Name', 'Mass'])
     byproducts_df.set_index('Name', inplace=True)
@@ -1733,7 +1736,7 @@ if __name__ == "__main__":
         def create_table(self):
             self.entries = {}
             self.tableheight = 6
-            self.tablewidth = 2
+            self.tablewidth = 4
             counter = 0
             for column in range(self.tablewidth):
                 for row in range(self.tableheight):
