@@ -1437,11 +1437,17 @@ if __name__ == "__main__":
             for row in range(self.tableheight):
                 for column in range(self.tablewidth):
                     self.entries[counter] = tkinter.Entry(self)
-                    self.entries[counter].grid(row=row, column=column)
-                    self.entries[counter].config(justify="center", width=self.cell_width)
+                    self.entries[counter].grid(row=row, column=column, sticky="nsew")
+                    self.entries[counter].config(justify="center")
                     counter += 1
-            self.entries[0].config(width=27)
             self.tabel_labels()
+
+            for row in range(self.tableheight):
+                tkinter.Grid.rowconfigure(self, row, weight=1)
+            for column in range(self.tablewidth):
+                tkinter.Grid.columnconfigure(self, column, weight=3)
+                if column == 0:
+                    self.columnconfigure(column, weight=1)
 
         def tabel_labels(self):
             labels = [
@@ -1459,7 +1465,7 @@ if __name__ == "__main__":
             for index in range(self.tableheight - 1):
                 Entry_Reactants[index] = tkinter.StringVar()
                 self.entries[cell] = AutocompleteCombobox(self, completevalues=Reactants, width=24,textvariable=Entry_Reactants[index])
-                self.entries[cell].grid(row=index + 1, column=0)
+                self.entries[cell].grid(row=index + 1, column=0, sticky="nsew")
                 self.entries[cell].config(justify="center")
                 Entry_masses[index] = self.entries[cell + 1]
                 cell += self.tablewidth
@@ -1498,9 +1504,7 @@ if __name__ == "__main__":
                     if Entry_masses[index].get() != "":
                         self.entries[cell + 1].config(state="normal")
                         self.entries[cell + 1].delete(0, tkinter.END)
-                        self.entries[cell + 1].insert(0,
-                                                      str(round((float(Entry_masses[index].get()) / sum_mass()) * 100,
-                                                                3)))
+                        self.entries[cell + 1].insert(0,str(round((float(Entry_masses[index].get()) / sum_mass()) * 100, 3)))
                         self.entries[cell + 1].config(state="readonly")
                     cell = cell + self.tablewidth
                     index = index + 1
@@ -1556,10 +1560,6 @@ if __name__ == "__main__":
             self.tableheight = 20
             self.entries = None
             self.place(relx=0.1, rely=0.5, anchor=CENTER, relwidth=0.13, relheight=0.5)
-            self.update()
-            self.bind("<Configure>", self.on_resize)
-            table_width = self.winfo_width()
-            self.cell_width = int(table_width / self.tablewidth / 6)
             self.create_table()
 
 
@@ -1568,11 +1568,16 @@ if __name__ == "__main__":
             counter = 0
             for row in range(self.tableheight):
                 for column in range(self.tablewidth):
-                    entry = tkinter.Entry(self, width=self.cell_width, justify="center")
-                    entry.grid(row=row, column=column)  # Use grid manager
+                    entry = tkinter.Entry(self, justify="center")
+                    entry.grid(row=row, column=column, sticky="nsew")
                     self.entries[counter] = entry
                     counter += 1
             self.tabel_labels()
+
+            for row in range(self.tableheight):
+                tkinter.Grid.rowconfigure(self, row, weight=1)
+            for column in range(self.tablewidth):
+                tkinter.Grid.columnconfigure(self, column, weight=3)
 
         def tabel_labels(self):
             labels = ["ID - 1", "ID - 2", "K"]
@@ -1592,11 +1597,6 @@ if __name__ == "__main__":
                     self.entries[(i + 1) * self.tablewidth + j].insert(0, combinations[i][j])
                     self.entries[(i + 1) * self.tablewidth + j].config(state="readonly")
 
-        def on_resize(self, event):
-            table_width = self.winfo_width()
-            self.cell_width = int(table_width / self.tablewidth / 6)
-            for entry in self.entries.values():
-                entry.config(width=self.cell_width)
 
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
@@ -1787,19 +1787,21 @@ if __name__ == "__main__":
     class Buttons(tkinter.Frame):
         def __init__(self, master=tab1):
             tkinter.Frame.__init__(self, master)
-            self.place(relx=0.01, rely=0.12, anchor=NW)
+            self.place(relx=0.01, rely=0.12, anchor=NW, relwidth=0.08, relheight=0.1)
             self.add_buttons()
 
         def add_buttons(self):
-            self.update()
             self.Simulate = tkinter.Button(self, text="Simulate", command=multiprocessing_sim, bg="Green")
-            self.Simulate.grid(row=0, column=0, sticky="ew")
+            self.Simulate.grid(row=0, column=0, sticky="nsew")
             self.stop_button = tkinter.Button(self, text="Terminate", command=stop, bg="Red")
-            self.stop_button.grid(row=1, column=0, sticky='ew')
+            self.stop_button.grid(row=1, column=0, sticky='nsew')
             self.clear_last_row = tkinter.Button(self, text="Clear Last", command=clear_last, bg="Yellow")
-            self.clear_last_row.grid(row=2, column=0, sticky='ew')
+            self.clear_last_row.grid(row=2, column=0, sticky='nsew')
             self.Reset = tkinter.Button(self, text="Reset", command=reset_entry_table, bg="Orange")
-            self.Reset.grid(row=3, column=0, sticky='ew')
+            self.Reset.grid(row=3, column=0, sticky='nsew')
+            self.grid_columnconfigure(0, weight=1)
+            for i in range(4):
+                self.grid_rowconfigure(i, weight=1)
 
 
     class SimStatus(tkinter.Frame):
@@ -1809,7 +1811,7 @@ if __name__ == "__main__":
             self.tableheight = None
             self.progress = None
             self.entries = None
-            self.place(relx=0.5, rely=0.1, anchor=CENTER)
+            self.place(relx=0.5, rely=0.2, anchor=CENTER, relwidth=0.3, relheight=0.04)
             self.create_table()
 
         def create_table(self):
@@ -1820,11 +1822,16 @@ if __name__ == "__main__":
             for column in range(self.tablewidth):
                 for row in range(self.tableheight):
                     self.entries[counter] = tkinter.Entry(self)
-                    self.entries[counter].grid(row=row, column=column)
+                    self.entries[counter].grid(row=row, column=column, sticky="nsew")
                     self.entries[counter].insert(0, str(counter))
                     self.entries[counter].config(justify="center", width=18)
                     counter += 1
             self.tabel_labels()
+
+            self.grid_columnconfigure(0, weight=1)
+            self.grid_columnconfigure(1, weight=4)
+            for i in range(2):
+                self.grid_rowconfigure(i, weight=1)
 
         def tabel_labels(self):
             self.entries[0].delete(0, tkinter.END)
@@ -1836,12 +1843,10 @@ if __name__ == "__main__":
             self.add_buttons()
 
         def add_buttons(self):
-            self.progress = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate",
-                                            style="red.Horizontal.TProgressbar")
-            self.progress.grid(row=0, column=1)
-            self.progress_2 = ttk.Progressbar(self, orient="horizontal", length=300, mode="determinate",
-                                              style="red.Horizontal.TProgressbar")
-            self.progress_2.grid(row=1, column=1)
+            self.progress = ttk.Progressbar(self, orient="horizontal", mode="determinate", style="red.Horizontal.TProgressbar")
+            self.progress.grid(row=0, column=1, sticky="nsew")
+            self.progress_2 = ttk.Progressbar(self, orient="horizontal", mode="determinate", style="red.Horizontal.TProgressbar")
+            self.progress_2.grid(row=1, column=1, sticky="nsew")
 
 
     RET = RxnEntryTable()
