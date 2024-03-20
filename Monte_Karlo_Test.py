@@ -379,6 +379,9 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     rxn_summary_df['Mass'] = rxn_summary_df['MW'] * rxn_summary_df['Count']
     rxn_summary_df['Mol,%'] = round(rxn_summary_df['Count'] / rxn_summary_df['Count'].sum() * 100, 4)
     rxn_summary_df['Wt,%'] = round(rxn_summary_df['Mass'] / rxn_summary_df['Mass'].sum() * 100, 4)
+    rxn_summary_df['p*Mw'] = rxn_summary_df['MW'] * (rxn_summary_df['Wt,%'] / 100)
+    rxn_summary_df['p*Mw2'] = (rxn_summary_df['MW'] ** 2) * (rxn_summary_df['Wt,%'] / 100)
+    variance = ((rxn_summary_df['p*Mw2'].sum()) - (rxn_summary_df['p*Mw'].sum() ** 2))
     sumNi = rxn_summary_df['Count'].sum()
     sumNiMi = (rxn_summary_df['Count'] * rxn_summary_df['MW']).sum()
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 2).sum()
@@ -397,6 +400,11 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     PDI = Mw / Mn
     Mz = sumNiMi3 / sumNiMi2
     Mz1 = sumNiMi4 / sumNiMi3
+    std_dev = math.sqrt(variance)
+    std_err = std_dev / math.sqrt(total_samples)
+    low_95 = Mw - (1.96 * std_err)
+    high_95 = Mw + (1.96 * std_err)
+    print(std_dev, std_err, low_95, high_95, Mw)
 
     WD.entries[6].delete(0, tkinter.END)
     WD.entries[6].insert(0, round(Mn, 4))
@@ -1852,7 +1860,6 @@ if __name__ == "__main__":
             self.progress.grid(row=0, column=1, sticky="nsew")
             self.progress_2 = ttk.Progressbar(self, orient="horizontal", mode="determinate", style="red.Horizontal.TProgressbar")
             self.progress_2.grid(row=1, column=1, sticky="nsew")
-
 
     RET = RxnEntryTable()
     WD = WeightDist()
