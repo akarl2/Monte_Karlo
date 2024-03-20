@@ -1608,7 +1608,7 @@ if __name__ == "__main__":
             self.tableheight = None
             self.tablewidth = None
             self.entries = None
-            self.place(relx=0.01, rely=0.01, anchor=NW)
+            self.place(relx=0.01, rely=0.01, anchor=NW, relwidth=0.3, relheight=0.1)
             self.create_table()
 
         def create_table(self):
@@ -1619,11 +1619,16 @@ if __name__ == "__main__":
             for column in range(self.tablewidth):
                 for row in range(self.tableheight):
                     self.entries[counter] = tkinter.Entry(self)
-                    self.entries[counter].grid(row=row, column=column)
+                    self.entries[counter].grid(row=row, column=column, sticky="nsew")
                     # self.entries[counter].insert(0, str(counter))
                     self.entries[counter].config(justify="center", width=18)
                     counter += 1
             self.table_labels()
+
+            for row in range(self.tableheight):
+                tkinter.Grid.rowconfigure(self, row, weight=1)
+            for column in range(self.tablewidth):
+                tkinter.Grid.columnconfigure(self, column, weight=1)
 
         def table_labels(self):
             self.entries[2].delete(0, tkinter.END)
@@ -1640,7 +1645,7 @@ if __name__ == "__main__":
             RXN_EM.set("1º End Metric")
             reactants_list = []
             RXN_EM_Entry = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM)
-            RXN_EM_Entry.grid(row=0, column=0)
+            RXN_EM_Entry.grid(row=0, column=0, sticky="nsew")
             RXN_EM_Entry.config(justify="center", state="readonly")
             RXN_EM_Value = self.entries[8]
 
@@ -1648,16 +1653,16 @@ if __name__ == "__main__":
             RXN_EM_Operator.set("<=")
             RXN_EM_Operator_Entry = AutocompleteCombobox(self, completevalues=["<=", ">="], width=15,
                                                          textvariable=RXN_EM_Operator)
-            RXN_EM_Operator_Entry.grid(row=0, column=1)
+            RXN_EM_Operator_Entry.grid(row=0, column=1, sticky="nsew")
             RXN_EM_Operator_Entry.config(justify="center", state="readonly")
 
             RXN_EM_2_Active = tkinter.BooleanVar()
             RXN_EM_2_Check = tkinter.Checkbutton(self, text="2º Active?", variable=RXN_EM_2_Active, onvalue=True,
                                                  offvalue=False)
-            RXN_EM_2_Check.grid(row=0, column=3)
+            RXN_EM_2_Check.grid(row=0, column=3, sticky="nsew")
             RXN_EM_2 = tkinter.StringVar()
             RXN_EM_Entry_2 = AutocompleteCombobox(self, completevalues=End_Metrics, width=15, textvariable=RXN_EM_2)
-            RXN_EM_Entry_2.grid(row=1, column=0)
+            RXN_EM_Entry_2.grid(row=1, column=0, sticky="nsew")
             RXN_EM_Entry_2.insert(0, "2º End Metric")
             RXN_EM_Entry_2.config(justify="center", state="readonly")
             RXN_EM_Value_2 = self.entries[9]
@@ -1666,13 +1671,13 @@ if __name__ == "__main__":
             RXN_EM_Operator_2.set("<=")
             RXN_EM_Operator_Entry_2 = AutocompleteCombobox(self, completevalues=["<=", ">="], width=15,
                                                            textvariable=RXN_EM_Operator_2)
-            RXN_EM_Operator_Entry_2.grid(row=1, column=1)
+            RXN_EM_Operator_Entry_2.grid(row=1, column=1, sticky="nsew")
             RXN_EM_Operator_Entry_2.config(justify="center", state="readonly")
 
             RXN_EM_2_SR = tkinter.StringVar()
             RXN_EM_Entry_2_SR = AutocompleteCombobox(self, completevalues=reactants_list, width=15,
                                                      textvariable=RXN_EM_2_SR)
-            RXN_EM_Entry_2_SR.grid(row=1, column=3)
+            RXN_EM_Entry_2_SR.grid(row=1, column=3, sticky="nsew")
             if RXN_EM_Entry_2_SR.get() == "":
                 RXN_EM_Entry_2_SR.insert(0, "2º Start")
             RXN_EM_Entry_2_SR.config(justify="center")
@@ -1680,7 +1685,7 @@ if __name__ == "__main__":
             RXN_Samples_Entry = AutocompleteCombobox(self, completevalues=Num_Samples, width=15,
                                                      textvariable=RXN_Samples)
             RXN_Samples_Entry.insert(0, "10000")
-            RXN_Samples_Entry.grid(row=2, column=1)
+            RXN_Samples_Entry.grid(row=2, column=1, sticky="nsew")
             RXN_Samples_Entry.config(justify="center")
 
             NUM_OF_SIM = tkinter.StringVar()
@@ -1688,7 +1693,7 @@ if __name__ == "__main__":
             NUM_OF_SIM_Entry = AutocompleteCombobox(self, completevalues=Core_options, width=15,
                                                     textvariable=NUM_OF_SIM)
             NUM_OF_SIM_Entry.insert(0, str(int(multiprocessing.cpu_count() * 0.75)))
-            NUM_OF_SIM_Entry.grid(row=3, column=1)
+            NUM_OF_SIM_Entry.grid(row=3, column=1, sticky="nsew")
             NUM_OF_SIM_Entry.config(justify="center")
 
             self.get_reactants()
