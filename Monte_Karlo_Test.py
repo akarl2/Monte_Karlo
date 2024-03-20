@@ -1593,7 +1593,6 @@ if __name__ == "__main__":
                     self.entries[(i + 1) * self.tablewidth + j].config(state="readonly")
 
         def on_resize(self, event):
-            print(self.cell_width)
             table_width = self.winfo_width()
             self.cell_width = int(table_width / self.tablewidth / 6)
             for entry in self.entries.values():
@@ -1788,28 +1787,19 @@ if __name__ == "__main__":
     class Buttons(tkinter.Frame):
         def __init__(self, master=tab1):
             tkinter.Frame.__init__(self, master)
-            self.Simulate = None
-            self.tablewidth = None
-            self.tableheight = None
-            self.entries = None
             self.place(relx=0.01, rely=0.12, anchor=NW)
-            self.create_table()
-
-        def create_table(self):
-            self.entries = {}
-            self.tableheight = 4
-            self.tablewidth = 1
             self.add_buttons()
 
         def add_buttons(self):
-            self.Simulate = tkinter.Button(self, text="Simulate", command=multiprocessing_sim, width=15, bg="Green")
-            self.Simulate.grid(row=0, column=0)
-            stop_button = tkinter.Button(self, text="Terminate", command=stop, width=15, bg="Red")
-            stop_button.grid(row=1, column=0)
-            clear_last_row = tkinter.Button(self, text="Clear Last", command=clear_last, width=15, bg="Yellow")
-            clear_last_row.grid(row=2, column=0)
-            self.Reset = tkinter.Button(self, text="Reset", command=reset_entry_table, width=15, bg="Orange")
-            self.Reset.grid(row=3, column=0)
+            self.update()
+            self.Simulate = tkinter.Button(self, text="Simulate", command=multiprocessing_sim, bg="Green")
+            self.Simulate.grid(row=0, column=0, sticky="ew")
+            self.stop_button = tkinter.Button(self, text="Terminate", command=stop, bg="Red")
+            self.stop_button.grid(row=1, column=0, sticky='ew')
+            self.clear_last_row = tkinter.Button(self, text="Clear Last", command=clear_last, bg="Yellow")
+            self.clear_last_row.grid(row=2, column=0, sticky='ew')
+            self.Reset = tkinter.Button(self, text="Reset", command=reset_entry_table, bg="Orange")
+            self.Reset.grid(row=3, column=0, sticky='ew')
 
 
     class SimStatus(tkinter.Frame):
