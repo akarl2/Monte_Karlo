@@ -383,8 +383,14 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     rxn_summary_df['p*Mw2'] = (rxn_summary_df['MW'] ** 2) * (rxn_summary_df['Wt,%'] / 100)
     rxn_summary_df['p*Count'] = rxn_summary_df['Count'] * (rxn_summary_df['Wt,%'] / 100)
     rxn_summary_df['p*Count2'] = (rxn_summary_df['Count'] ** 2) * (rxn_summary_df['Wt,%'] / 100)
+
+
+
     Mw_variance = ((rxn_summary_df['p*Mw2'].sum()) - (rxn_summary_df['p*Mw'].sum() ** 2))
     Mn_variance = ((rxn_summary_df['p*Count2'].sum()) - (rxn_summary_df['p*Count'].sum() ** 2))
+
+
+
     sumNi = rxn_summary_df['Count'].sum()
     sumNiMi = (rxn_summary_df['Count'] * rxn_summary_df['MW']).sum()
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 2).sum()
@@ -403,6 +409,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     PDI = Mw / Mn
     Mz = sumNiMi3 / sumNiMi2
     Mz1 = sumNiMi4 / sumNiMi3
+    DOP = total_ct / sumNi
     
     Mw_std_dev = math.sqrt(Mw_variance)
     Mw_std_err = Mw_std_dev / math.sqrt(total_samples)
@@ -424,7 +431,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     WD.entries[10].delete(0, tkinter.END)
     WD.entries[10].insert(0, round(Mz1, 4))
     WD.entries[11].delete(0, tkinter.END)
-    WD.entries[11].insert(0, round(total_ct / sumNi, 4))
+    WD.entries[11].insert(0, round(DOP, 4))
     WD.entries[12].delete(0, tkinter.END)
     WD.entries[12].insert(0, round(Mn_low_95, 4))
     WD.entries[13].delete(0, tkinter.END)
@@ -433,6 +440,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     WD.entries[18].insert(0, round(Mn_high_95, 4))
     WD.entries[19].delete(0, tkinter.END)
     WD.entries[19].insert(0, round(Mw_high_95, 4))
+
 
     byproducts_df = pandas.DataFrame(byproducts_primary, columns=['Name', 'Mass'])
     byproducts_df.set_index('Name', inplace=True)
@@ -524,6 +532,14 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     rxn_summary_df_2['Mass'] = rxn_summary_df_2['MW'] * rxn_summary_df_2['Count']
     rxn_summary_df_2['Mol,%'] = round(rxn_summary_df_2['Count'] / rxn_summary_df_2['Count'].sum() * 100, 4)
     rxn_summary_df_2['Wt,%'] = round(rxn_summary_df_2['Mass'] / rxn_summary_df_2['Mass'].sum() * 100, 4)
+    rxn_summary_df_2['p*Mw'] = rxn_summary_df_2['MW'] * (rxn_summary_df_2['Wt,%'] / 100)
+    rxn_summary_df_2['p*Mw2'] = (rxn_summary_df_2['MW'] ** 2) * (rxn_summary_df_2['Wt,%'] / 100)
+    rxn_summary_df_2['p*Count'] = rxn_summary_df_2['Count'] * (rxn_summary_df_2['Wt,%'] / 100)
+    rxn_summary_df_2['p*Count2'] = (rxn_summary_df_2['Count'] ** 2) * (rxn_summary_df_2['Wt,%'] / 100)
+
+    Mw_variance = ((rxn_summary_df_2['p*Mw2'].sum()) - (rxn_summary_df_2['p*Mw'].sum() ** 2))
+    Mn_variance = ((rxn_summary_df_2['p*Count2'].sum()) - (rxn_summary_df_2['p*Count'].sum() ** 2))
+
     sumNi = rxn_summary_df_2['Count'].sum()
     sumNiMi = (rxn_summary_df_2['Count'] * rxn_summary_df_2['MW']).sum()
     sumNiMi2 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW']) ** 2).sum()
@@ -536,11 +552,22 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     rxn_mass = rxn_summary_df_2['Mass'].sum()
     rxn_summary_df_2.loc['Sum'] = round(rxn_summary_df_2.sum(), 3)
     rxn_summary_df_2 = rxn_summary_df_2.groupby(['MW', 'Name']).sum()
+
     Mn = sumNiMi / sumNi
     Mw = sumNiMi2 / sumNiMi
     PDI = Mw / Mn
     Mz = sumNiMi3 / sumNiMi2
     Mz1 = sumNiMi4 / sumNiMi3
+    DOP = total_ct_sec / sumNi
+
+    Mw_std_dev = math.sqrt(Mw_variance)
+    Mw_std_err = Mw_std_dev / math.sqrt(total_samples)
+    Mw_low_95, Mw_high_95 = Mw - (1.96 * Mw_std_err), Mw + (1.96 * Mw_std_err)
+
+    Mn_std_dev = math.sqrt(Mn_variance)
+    Mn_std_err = Mn_std_dev / math.sqrt(total_samples)
+    Mn_low_95, Mn_high_95 = Mn - (1.96 * Mn_std_err), Mn + (1.96 * Mn_std_err)
+
     WD2.entries[6].delete(0, tkinter.END)
     WD2.entries[6].insert(0, round(Mn, 4))
     WD2.entries[7].delete(0, tkinter.END)
@@ -552,15 +579,23 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     WD2.entries[10].delete(0, tkinter.END)
     WD2.entries[10].insert(0, round(Mz1, 4))
     WD2.entries[11].delete(0, tkinter.END)
-    WD2.entries[11].insert(0, round(total_ct_sec / sumNi, 4))
+    WD2.entries[11].insert(0, round(DOP, 4))
+    WD2.entries[12].delete(0, tkinter.END)
+    WD2.entries[12].insert(0, round(Mn_low_95, 4))
+    WD2.entries[13].delete(0, tkinter.END)
+    WD2.entries[13].insert(0, round(Mw_low_95, 4))
+    WD2.entries[18].delete(0, tkinter.END)
+    WD2.entries[18].insert(0, round(Mn_high_95, 4))
+    WD2.entries[19].delete(0, tkinter.END)
+    WD2.entries[19].insert(0, round(Mw_high_95, 4))
+
 
     byproducts_df_2 = pandas.DataFrame(byproducts_secondary, columns=['Name', 'Mass'])
     byproducts_df_2.set_index('Name', inplace=True)
     byproducts_df_2['Mass'] = byproducts_df_2['Mass'] / total_samples
     byproducts_df_2['Wt, % (Of byproducts)'] = round(byproducts_df_2['Mass'] / byproducts_df_2['Mass'].sum() * 100, 4)
     byproducts_df_2['Wt, % (Of Final)'] = round(byproducts_df_2['Mass'] / (rxn_mass + byproducts_df_2['Mass']) * 100, 4)
-    byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / (starting_mass_sec / total_samples) * 100,
-                                                  4)
+    byproducts_df_2['Wt, % (Of Initial)'] = round(byproducts_df_2['Mass'] / (starting_mass_sec / total_samples) * 100, 4)
 
     Xn_2 = pandas.DataFrame(in_situ_values_sec[0], columns=['TAV'])
     Xn_2['AV'] = in_situ_values_sec[1]
@@ -1786,7 +1821,7 @@ if __name__ == "__main__":
         def create_table(self):
             self.entries = {}
             self.tableheight = 6
-            self.tablewidth = 2
+            self.tablewidth = 4
             counter = 0
             for column in range(self.tablewidth):
                 for row in range(self.tableheight):
@@ -1839,7 +1874,7 @@ if __name__ == "__main__":
             self.tableheight = None
             self.progress = None
             self.entries = None
-            self.place(relx=0.5, rely=0.2, anchor=CENTER, relwidth=0.3, relheight=0.04)
+            self.place(relx=0.5, rely=0.18, anchor=CENTER, relwidth=0.3, relheight=0.06)
             self.create_table()
 
         def create_table(self):
