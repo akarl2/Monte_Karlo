@@ -383,19 +383,21 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     rxn_summary_df['p*Mw2'] = (rxn_summary_df['MW'] ** 2) * (rxn_summary_df['Wt,%'] / 100)
     rxn_summary_df['p*Count'] = rxn_summary_df['Count'] * (rxn_summary_df['Wt,%'] / 100)
     rxn_summary_df['p*Count2'] = (rxn_summary_df['Count'] ** 2) * (rxn_summary_df['Wt,%'] / 100)
-
-
-
     Mw_variance = ((rxn_summary_df['p*Mw2'].sum()) - (rxn_summary_df['p*Mw'].sum() ** 2))
     Mn_variance = ((rxn_summary_df['p*Count2'].sum()) - (rxn_summary_df['p*Count'].sum() ** 2))
-
-
-
-    sumNi = rxn_summary_df['Count'].sum()
-    sumNiMi = (rxn_summary_df['Count'] * rxn_summary_df['MW']).sum()
+    rxn_summary_df['XiMi'] = (rxn_summary_df['Mol,%']/100) * rxn_summary_df['MW']
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 2).sum()
     sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 3).sum()
     sumNiMi4 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 4).sum()
+
+    Mn = rxn_summary_df['XiMi'].sum()
+    Mw = rxn_summary_df['p*Mw'].sum()
+    PDI = Mw / Mn
+    Mz = sumNiMi3 / sumNiMi2
+    Mz1 = sumNiMi4 / sumNiMi3
+    DOP = total_ct / rxn_summary_df['Count'].sum()
+
+
     rxn_summary_df = rxn_summary_df[
         ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV',
          'Cl, %', "1° OH", "2° OH"]]
@@ -404,12 +406,6 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     rxn_summary_df.loc['Sum'] = round(rxn_summary_df.sum(), 3)
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
 
-    Mn = sumNiMi / sumNi
-    Mw = sumNiMi2 / sumNiMi
-    PDI = Mw / Mn
-    Mz = sumNiMi3 / sumNiMi2
-    Mz1 = sumNiMi4 / sumNiMi3
-    DOP = total_ct / sumNi
     
     Mw_std_dev = math.sqrt(Mw_variance)
     Mw_std_err = Mw_std_dev / math.sqrt(total_samples)
@@ -536,15 +532,22 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     rxn_summary_df_2['p*Mw2'] = (rxn_summary_df_2['MW'] ** 2) * (rxn_summary_df_2['Wt,%'] / 100)
     rxn_summary_df_2['p*Count'] = rxn_summary_df_2['Count'] * (rxn_summary_df_2['Wt,%'] / 100)
     rxn_summary_df_2['p*Count2'] = (rxn_summary_df_2['Count'] ** 2) * (rxn_summary_df_2['Wt,%'] / 100)
+    rxn_summary_df_2['XiMi'] = (rxn_summary_df_2['Mol,%'] / 100) * rxn_summary_df_2['MW']
 
     Mw_variance = ((rxn_summary_df_2['p*Mw2'].sum()) - (rxn_summary_df_2['p*Mw'].sum() ** 2))
     Mn_variance = ((rxn_summary_df_2['p*Count2'].sum()) - (rxn_summary_df_2['p*Count'].sum() ** 2))
 
-    sumNi = rxn_summary_df_2['Count'].sum()
-    sumNiMi = (rxn_summary_df_2['Count'] * rxn_summary_df_2['MW']).sum()
     sumNiMi2 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW']) ** 2).sum()
     sumNiMi3 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW']) ** 3).sum()
     sumNiMi4 = (rxn_summary_df_2['Count'] * (rxn_summary_df_2['MW']) ** 4).sum()
+
+    Mn = rxn_summary_df_2['XiMi'].sum()
+    Mw = rxn_summary_df_2['p*Mw'].sum()
+    PDI = Mw / Mn
+    Mz = sumNiMi3 / sumNiMi2
+    Mz1 = sumNiMi4 / sumNiMi3
+    DOP = total_ct_sec / rxn_summary_df_2['Count'].sum()
+
     rxn_summary_df_2 = rxn_summary_df_2[
         ['Count', 'Mass', 'Mol,%', 'Wt,%', 'MW', 'TAV', '1° TAV', '2° TAV', '3° TAV', 'AV', 'OH', 'COC', 'EHC,%', 'IV',
          'Cl, %', "1° OH", "2° OH"]]
@@ -553,12 +556,7 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     rxn_summary_df_2.loc['Sum'] = round(rxn_summary_df_2.sum(), 3)
     rxn_summary_df_2 = rxn_summary_df_2.groupby(['MW', 'Name']).sum()
 
-    Mn = sumNiMi / sumNi
-    Mw = sumNiMi2 / sumNiMi
-    PDI = Mw / Mn
-    Mz = sumNiMi3 / sumNiMi2
-    Mz1 = sumNiMi4 / sumNiMi3
-    DOP = total_ct_sec / sumNi
+
 
     Mw_std_dev = math.sqrt(Mw_variance)
     Mw_std_err = Mw_std_dev / math.sqrt(total_samples)
