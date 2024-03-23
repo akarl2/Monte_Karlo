@@ -589,7 +589,6 @@ def RXN_Results_sec(secondary_comp_summary, byproducts_secondary, in_situ_values
     WD2.entries[19].delete(0, tkinter.END)
     WD2.entries[19].insert(0, round(Mw_high_95, 4))
 
-
     byproducts_df_2 = pandas.DataFrame(byproducts_secondary, columns=['Name', 'Mass'])
     byproducts_df_2.set_index('Name', inplace=True)
     byproducts_df_2['Mass'] = byproducts_df_2['Mass'] / total_samples
@@ -1304,7 +1303,6 @@ if __name__ == "__main__":
     # sv_ttk.set_theme("dark")
     window.iconbitmap("testtube.ico")
     window.title("Monte Karlo")
-    window.geometry("{0}x{1}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
     window.configure(background="#000000")
 
     tab_control = ttk.Notebook(window)
@@ -1854,13 +1852,13 @@ if __name__ == "__main__":
             self.add_buttons()
 
         def add_buttons(self):
-            self.Simulate = tkinter.Button(self, text="Simulate", command=multiprocessing_sim, bg="Green")
+            self.Simulate = tkinter.Button(self, text="Simulate", command=multiprocessing_sim, bg="Green", relief="groove")
             self.Simulate.grid(row=0, column=0, sticky="nsew")
-            self.stop_button = tkinter.Button(self, text="Terminate", command=stop, bg="Red")
+            self.stop_button = tkinter.Button(self, text="Terminate", command=stop, bg="Red", relief="groove")
             self.stop_button.grid(row=1, column=0, sticky='nsew')
-            self.clear_last_row = tkinter.Button(self, text="Clear Last", command=clear_last, bg="Yellow")
+            self.clear_last_row = tkinter.Button(self, text="Clear Last", command=clear_last, bg="Yellow", relief="groove")
             self.clear_last_row.grid(row=2, column=0, sticky='nsew')
-            self.Reset = tkinter.Button(self, text="Reset", command=reset_entry_table, bg="Orange")
+            self.Reset = tkinter.Button(self, text="Reset", command=reset_entry_table, bg="Orange", relief="groove")
             self.Reset.grid(row=3, column=0, sticky='nsew')
             self.grid_columnconfigure(0, weight=1)
             for i in range(4):
