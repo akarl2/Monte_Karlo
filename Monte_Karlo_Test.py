@@ -1320,7 +1320,6 @@ if __name__ == "__main__":
     tkinter.Grid.columnconfigure(window, 0, weight=1)
     tab_control.grid(row=0, column=0, sticky=tkinter.E + tkinter.W + tkinter.N + tkinter.S)
 
-
     # Get the screen width and height
     screen_width = window.winfo_screenwidth()
     screen_height = window.winfo_screenheight()
