@@ -303,7 +303,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                 if groups in k_groups and random_number <= ks_mod[k_groups.index(groups)]:
                     groups = groups_pre_sort
                     conditions_met = True
-            if time.time() - start > 3:
+            if time.time() - start > 10:
                 running = False
                 return "Metric Error"
         update_comp(composition, groups)
@@ -385,6 +385,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     rxn_summary_df['p*Count2'] = (rxn_summary_df['Count'] ** 2) * (rxn_summary_df['Wt,%'] / 100)
     Mw_variance = ((rxn_summary_df['p*Mw2'].sum()) - (rxn_summary_df['p*Mw'].sum() ** 2))
     Mn_variance = ((rxn_summary_df['p*Count2'].sum()) - (rxn_summary_df['p*Count'].sum() ** 2))
+
     rxn_summary_df['XiMi'] = (rxn_summary_df['Mol,%']/100) * rxn_summary_df['MW']
     sumNiMi2 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 2).sum()
     sumNiMi3 = (rxn_summary_df['Count'] * (rxn_summary_df['MW']) ** 3).sum()
@@ -406,7 +407,6 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     rxn_summary_df.loc['Sum'] = round(rxn_summary_df.sum(), 3)
     rxn_summary_df = rxn_summary_df.groupby(['MW', 'Name']).sum()
 
-    
     Mw_std_dev = math.sqrt(Mw_variance)
     Mw_std_err = Mw_std_dev / math.sqrt(total_samples)
     Mw_low_95, Mw_high_95 = Mw - (1.96 * Mw_std_err), Mw + (1.96 * Mw_std_err)
@@ -414,7 +414,6 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     Mn_std_dev = math.sqrt(Mn_variance)
     Mn_std_err = Mn_std_dev / math.sqrt(total_samples)
     Mn_low_95, Mn_high_95 = Mn - (1.96 * Mn_std_err), Mn + (1.96 * Mn_std_err)
-
 
     WD.entries[6].delete(0, tkinter.END)
     WD.entries[6].insert(0, round(Mn, 4))
@@ -436,7 +435,6 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
     WD.entries[18].insert(0, round(Mn_high_95, 4))
     WD.entries[19].delete(0, tkinter.END)
     WD.entries[19].insert(0, round(Mw_high_95, 4))
-
 
     byproducts_df = pandas.DataFrame(byproducts_primary, columns=['Name', 'Mass'])
     byproducts_df.set_index('Name', inplace=True)
@@ -1481,7 +1479,7 @@ if __name__ == "__main__":
             self.tablewidth = 16
             self.tableheight = 20
             self.entries = None
-            self.place(relx=0.5, rely=0.5, anchor=CENTER, relwidth=self.rel_width, relheight=self.rel_height)  # Place the frame in the middle of the window
+            self.place(relx=0.55, rely=0.5, anchor=CENTER, relwidth=self.rel_width, relheight=self.rel_height)  # Place the frame in the middle of the window
             self.create_table()
 
         def create_table(self):
@@ -1532,16 +1530,19 @@ if __name__ == "__main__":
 
             # If the current cell is "Clear", clear subsequent cells and enable following cells
             if self.entries[cell].get() == "Clear":
-                for i in range(1, 16, 3):
+                self.entries[cell].delete(0, tkinter.END)
+                for i in range(1, 16):
+                    self.entries[cell + i].config(state="normal")
                     self.entries[cell + i].delete(0, tkinter.END)
-                    self.entries[cell + i + 1].config(state="normal")
-                    self.entries[cell + i + 1].delete(0, tkinter.END)
+
             else:
                 if self.entries[cell].get() != "" and self.entries[cell + 1].get() != "":
                     a = str_to_class(Entry_Reactants[index].get())()
                     molesA = float(Entry_masses[index].get()) / float(a.mw)
                     self.entries[cell + 3].delete(0, tkinter.END)
                     self.entries[cell + 3].insert(0, str(round(molesA, 6)))
+                    for i in range(5, 15, 2):
+                        self.entries[cell + i].config(state="normal")
 
             def sum_mass():
                 total = 0
@@ -1612,7 +1613,7 @@ if __name__ == "__main__":
             self.tablewidth = 3
             self.tableheight = 20
             self.entries = None
-            self.place(relx=0.1, rely=0.5, anchor=CENTER, relwidth=0.13, relheight=0.5)
+            self.place(relx=0.15, rely=0.5, anchor=CENTER, relwidth=0.13, relheight=0.5)
             self.create_table()
 
 
