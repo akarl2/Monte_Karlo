@@ -42,6 +42,7 @@ class reactive_groups:
         self.EHC = ['OH']
         self.COCOH = None
         self.α_NH2 = ['COOH', 'COC', 'Cl','aB_unsat']
+        self.H2O = None
 
 class NH2:
     def __init__(self):

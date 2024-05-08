@@ -245,7 +245,7 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
                    'Iodine Value': IV, 'MW': Mw, 'Mn': Mn, '1° TAV': p_TAV, '2° TAV': s_TAV, '3° TAV': t_TAV, 'Xn': Xn,
                    '% Cl': Cl, '1° OH': POH, '2° OH': SOH}
 
-        if not in_primary:
+        if not in_primary: 
             if not in_primary:
                 for i, (metric_name, variable) in enumerate(metrics.items()):
                     in_situ_values_sec[i].append(variable)
@@ -335,7 +335,7 @@ def RXN_Results(primary_comp_summary, byproducts_primary, in_situ_values):
         NH2_ct += key_names.count('NH2') * key[3] + key_names.count('α_NH2') * key[3]
         NH_ct += key_names.count('NH') * key[3]
         N_ct += key_names.count('N') * key[3]
-        amine_ct = NH2_ct + NH_ct + NH_ct
+        amine_ct = NH2_ct + NH_ct + N_ct
         acid_ct += key_names.count('COOH') * key[3]
         POH_ct += key_names.count('POH') * key[3]
         SOH_ct += key_names.count('SOH') * key[3]
@@ -988,7 +988,13 @@ def export_primary():
             df = pandas.DataFrame(data)
             df.to_excel(writer, sheet_name='1_Aux', index=False, header=False, startrow=0, startcol=18)
 
-            # export APC_df['Sum'] to excel
+            #export ks_mod and k_groups
+            ks_mod_df = pandas.DataFrame(ks_mod)
+            k_groups_df = pandas.DataFrame(k_groups)
+            ks_mod_df.columns = ['Reactivity (0 - 100)']
+            k_groups_df.columns = ['Group A', 'Group B']
+            ks_mod_df.to_excel(writer, sheet_name='1_Aux_2', index=False, header=True, startrow=0, startcol=0)
+            k_groups_df.to_excel(writer, sheet_name='1_Aux_2', index=False, header=True, startrow=0, startcol=1)
 
             APC_df['Sum'].to_excel(writer, sheet_name='1_APC', index=False, header=False)
 
@@ -1605,6 +1611,7 @@ if __name__ == "__main__":
             # Update the combinations_table
             if CT:
                 CT.display_combinations(combinations)
+
 
 
     class combinations_table(tkinter.Frame):

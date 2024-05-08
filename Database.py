@@ -615,6 +615,50 @@ class Butyl_Acetate:
         self.ctrgk = 0
         self.dist = [[self.prgID]]
 
+class Ethylene_Oxide:
+    def __init__(self):
+        self.name = "Ethylene Oxide"
+        self.sn = "EO"
+        self.formula = "C2H4O"
+        self.mw = 44.053
+        self.density = 1.52
+        self.mass = self.mw
+        self.prgID = "COC"
+        self.prgk = 1
+        self.cprgID = "POH"
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+class Ethylene_Glycol:
+    def __init__(self):
+        self.name = "Ethylene Glycol"
+        self.sn = "EG"
+        self.formula = "C2H6O2"
+        self.mw = 62.0688
+        self.density = 1.11
+        self.mass = self.mw
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
 
 #-------------------------------------------Amines----------------------------#
 class DETA:
@@ -854,6 +898,27 @@ class Hydroxyethylpiperazine:
         self.ctrgID = None
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.srgID], [self.trgID]]
+
+class Piperazine:
+    def __init__(self):
+        self.name = "Piperazine"
+        self.sn = "Pip"
+        self.formula = "C4H10N2"
+        self.mw = 86.136
+        self.density = 1.03
+        self.prgID = "NH"
+        self.prgk = 1
+        self.cprgID = "N"
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
 
 class DEA:
     def __init__(self):
@@ -1476,10 +1541,20 @@ class Water:
         self.sn = "H2O"
         self.formula = "H2O"
         self.mw = 18.01528
-        self.density = 1.000
-        self.prg = 1
-        self.srg = 0
-        self.tg = self.prg + self.srg
+        self.density = 1.18
+        self.prgID = "H2O"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
 
 class Epichlorohydrin:
     def __init__(self):
