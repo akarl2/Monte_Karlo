@@ -18,6 +18,7 @@ import matplotlib.backends.backend_tkagg as tkagg
 
 import numpy as np
 from openpyxl import Workbook
+import openpyxl
 import customtkinter
 from tkinter import ttk, messagebox, simpledialog, filedialog
 import pandas
@@ -970,7 +971,7 @@ def export_primary():
             data = []
             for row in range(RET.tableheight):
                 row_data = []
-                for column in range(RET.tablewidth):
+                for column in range(4):
                     entry = RET.entries[row * RET.tablewidth + column]
                     row_data.append(entry.get())
                 data.append(row_data)
@@ -986,17 +987,24 @@ def export_primary():
                 data.append(column_data)
             data = list(map(list, zip(*data)))
             df = pandas.DataFrame(data)
-            df.to_excel(writer, sheet_name='1_Aux', index=False, header=False, startrow=0, startcol=18)
+            df.to_excel(writer, sheet_name='1_Aux', index=False, header=False, startrow=0, startcol=11)
 
-            #export ks_mod and k_groups
             ks_mod_df = pandas.DataFrame(ks_mod)
             k_groups_df = pandas.DataFrame(k_groups)
             ks_mod_df.columns = ['Reactivity (0 - 100)']
             k_groups_df.columns = ['Group A', 'Group B']
-            ks_mod_df.to_excel(writer, sheet_name='1_Aux_2', index=False, header=True, startrow=0, startcol=0)
-            k_groups_df.to_excel(writer, sheet_name='1_Aux_2', index=False, header=True, startrow=0, startcol=1)
+            ks_mod_df.to_excel(writer, sheet_name='1_Aux', index=False, header=True, startcol=6)
+            k_groups_df.to_excel(writer, sheet_name='1_Aux', index=False, header=True, startcol=7)
 
-            APC_df['Sum'].to_excel(writer, sheet_name='1_APC', index=False, header=False)
+            workbook = writer.book
+            worksheet = workbook['1_Aux']
+            worksheet.sheet_state = 'visible'
+            columns_to_adjust = ['A', 'G', 'L']
+            for column in columns_to_adjust:
+                worksheet.column_dimensions[column].width = 20
+
+            APC_selected_columns = APC_df.iloc[:, -1]
+            APC_selected_columns.to_excel(writer, sheet_name='1_APC', index=True)
 
 
 def export_secondary():
@@ -1029,6 +1037,23 @@ def export_secondary():
             data = list(map(list, zip(*data)))
             df = pandas.DataFrame(data)
             df.to_excel(writer, sheet_name='2_Aux', index=False, header=False, startrow=0, startcol=18)
+
+            ks_mod_df = pandas.DataFrame(ks_mod)
+            k_groups_df = pandas.DataFrame(k_groups)
+            ks_mod_df.columns = ['Reactivity (0 - 100)']
+            k_groups_df.columns = ['Group A', 'Group B']
+            ks_mod_df.to_excel(writer, sheet_name='2_Aux', index=False, header=True, startcol=6)
+            k_groups_df.to_excel(writer, sheet_name='2_Aux', index=False, header=True, startcol=7)
+
+            workbook = writer.book
+            worksheet = workbook['2_Aux']
+            worksheet.sheet_state = 'visible'
+            columns_to_adjust = ['A', 'G', 'L']
+            for column in columns_to_adjust:
+                worksheet.column_dimensions[column].width = 20
+
+            APC_selected_columns = APC_df.iloc[:, -1]
+            APC_selected_columns.to_excel(writer, sheet_name='1_APC', index=True)
 
 
 def export_all():
@@ -1077,8 +1102,25 @@ def export_all():
             df = pandas.DataFrame(data)
             df.to_excel(writer, sheet_name='2_Aux', index=False, header=False, startrow=0, startcol=18)
 
+            ks_mod_df = pandas.DataFrame(ks_mod)
+            k_groups_df = pandas.DataFrame(k_groups)
+            ks_mod_df.columns = ['Reactivity (0 - 100)']
+            k_groups_df.columns = ['Group A', 'Group B']
+            ks_mod_df.to_excel(writer, sheet_name='1_Aux', index=False, header=True, startcol=6)
+            k_groups_df.to_excel(writer, sheet_name='1_Aux', index=False, header=True, startcol=7)
+
             workbook = writer.book
-            sheet_names = ['1_Summary', '1_In_Situ', '1_Aux', '2_Summary', '2_In_Situ', '2_Aux']
+            worksheet = workbook['1_Aux']
+            worksheet.sheet_state = 'visible'
+            columns_to_adjust = ['A', 'G', 'L']
+            for column in columns_to_adjust:
+                worksheet.column_dimensions[column].width = 20
+
+            APC_selected_columns = APC_df.iloc[:, -1]
+            APC_selected_columns.to_excel(writer, sheet_name='1_APC', index=True)
+
+            workbook = writer.book
+            sheet_names = ['1_Summary', '1_In_Situ', '1_Aux', '2_Summary', '2_In_Situ', '2_Aux', '1_APC']
             workbook._sheets.sort(key=lambda ws: sheet_names.index(ws.title))
 
 # -------------------------------------------Display Results---------------------------------------------------#
