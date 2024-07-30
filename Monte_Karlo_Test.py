@@ -1628,10 +1628,11 @@ if __name__ == "__main__":
                 combination_initial = combination
                 if rg1 == rg2:
                     pass
-                elif rg2 in getattr(rg, rg1) or rg1 in getattr(rg, rg2):
-                    reaction_combinations.add(combination_initial)
                 else:
-                    pass
+                    rg1_attr = getattr(rg, rg1, None)
+                    rg2_attr = getattr(rg, rg2, None)
+                    if (rg1_attr is not None and rg2 in rg1_attr) or (rg2_attr is not None and rg1 in rg2_attr):
+                        reaction_combinations.add(combination_initial)
             return list(reaction_combinations)
 
         def update_rates(self, index, cell):
