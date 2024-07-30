@@ -447,6 +447,27 @@ class Pentaerythritol:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.prgID], [self.prgID], [self.prgID]]
 
+class Dipentaerythritol:
+    def __init__(self):
+        self.name = "Dipentaerythritol"
+        self.sn = "DiPE"
+        self.formula = "C5H12O4"
+        self.mw = 254.28
+        self.density = 1.396
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID], [self.prgID], [self.prgID], [self.prgID], [self.prgID]]
+
 class Butanediol:
     def __init__(self):
         self.name = "1,4-Butanediol"
@@ -1019,6 +1040,27 @@ class MXDA:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.prgID]]
 
+class HMDA:
+    def __init__(self):
+        self.name = "HMDA"
+        self.sn = "HMDA"
+        self.formula = "C6H16N2"
+        self.mw = 116.208
+        self.density = 0.84
+        self.prgID = "NH₂"
+        self.prgk = 1
+        self.cprgID = "NH"
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
 
 #---------------------------------------------------------Acids------------------------------------------------#
 
@@ -1093,52 +1135,19 @@ class Isostearic_Acid:
         self.ctrgk = 0
         self.dist = [[self.prgID]]
 
-class PAA:
+class C5:
     def __init__(self):
-        self.name = "PAA"
-        self.sn = "PAA"
-        self.formula = "C2H4O3"
-        self.mw = 76.0514
-        self.density = 104
-        self.prg = 1
-        self.srg = 0
-        self.tg = self.prg + self.srg
-
-class FormicAcid:
-    def __init__(self):
-        self.name = "Formic Acid"
-        self.sn = "FA"
-        self.formula = "CH2O2"
-        self.mw = 46.03
-        self.density = 1.22
-        self.prg = 1
-        self.srg = 0
-        self.tg = self.prg + self.srg
-
-class AceticAcid:
-    def __init__(self):
-        self.name = "Acetic Acid"
-        self.sn = "AA"
-        self.formula = "CH3COOH"
-        self.mw = 60.052
-        self.density = 1.05
-        self.prg = 1
-        self.srg = 0
-        self.tg = self.prg + self.srg
-
-class C181:
-    def __init__(self):
-        self.name = "C181"
-        self.sn = "C18:1"
-        self.formula = "C18H34O2"
-        self.mw = 282.47
-        self.density = 0.895
+        self.name = "C5"
+        self.sn = "C5"
+        self.formula = "C5H10O2"
+        self.mw = 102.13
+        self.density = 0.946
         self.mass = self.mw
         self.prgID = "COOH"
         self.prgk = 1
         self.cprgID = None
         self.cprgk = 0
-        self.srgID = "CC_1"
+        self.srgID = None
         self.srgk = 0
         self.csrgID = None
         self.csrgk = 0
@@ -1146,21 +1155,21 @@ class C181:
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
-        self.dist = [[self.prgID], [self.srgID]]
+        self.dist = [[self.prgID]]
 
-class Oleic_Acid:
+class C7:
     def __init__(self):
-        self.name = "Oleic Acid"
-        self.sn = "OA"
-        self.formula = "C18H34O2"
-        self.mw = 274.596
-        self.density = 0.895
+        self.name = "C7"
+        self.sn = "C7"
+        self.formula = "C7H14O2"
+        self.mw = 130.19
+        self.density = 0.946
         self.mass = self.mw
         self.prgID = "COOH"
         self.prgk = 1
         self.cprgID = None
         self.cprgk = 0
-        self.srgID = "CC_1"
+        self.srgID = None
         self.srgk = 0
         self.csrgID = None
         self.csrgk = 0
@@ -1168,7 +1177,29 @@ class Oleic_Acid:
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
-        self.dist = [[self.prgID], [self.srgID]]
+        self.dist = [[self.prgID]]
+
+class C9:
+    def __init__(self):
+        self.name = "C9"
+        self.sn = "C9"
+        self.formula = "C9H18O2"
+        self.mw = 158.24
+        self.density = 0.946
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
 
 class C14:
     def __init__(self):
@@ -1214,6 +1245,28 @@ class C16:
         self.ctrgk = 0
         self.dist = [[self.prgID]]
 
+class C161:
+    def __init__(self):
+        self.name = "C161"
+        self.sn = "C16:1"
+        self.formula = "C16H30O2"
+        self.mw = 254.414
+        self.density = 0.895
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
 class C18:
     def __init__(self):
         self.name = "C18"
@@ -1236,19 +1289,19 @@ class C18:
         self.ctrgk = 0
         self.dist = [[self.prgID]]
 
-class C161:
+class C181:
     def __init__(self):
-        self.name = "C161"
-        self.sn = "C16:1"
-        self.formula = "C16H30O2"
-        self.mw = 254.414
+        self.name = "C181"
+        self.sn = "C18:1"
+        self.formula = "C18H34O2"
+        self.mw = 282.47
         self.density = 0.895
         self.mass = self.mw
         self.prgID = "COOH"
         self.prgk = 1
         self.cprgID = None
         self.cprgk = 0
-        self.srgID = None
+        self.srgID = "CC_1"
         self.srgk = 0
         self.csrgID = None
         self.csrgk = 0
@@ -1256,7 +1309,7 @@ class C161:
         self.trgk = 0
         self.ctrgID = None
         self.ctrgk = 0
-        self.dist = [[self.prgID]]
+        self.dist = [[self.prgID], [self.srgID]]
 
 class C182:
     def __init__(self):
@@ -1302,12 +1355,34 @@ class C183:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.srgID], [self.trgID]]
 
+class C20:
+    def __init__(self):
+        self.name = "C20"
+        self.sn = "C20"
+        self.formula = "C20H40O2"
+        self.mw = 312.538
+        self.density = 0.824
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
 class Dimer:
     def __init__(self):
         self.name = "Dimer"
         self.sn = "Dimer"
         self.formula = "C18H30O2"
-        self.mw = 581.347
+        self.mw = 572.449
         self.density = 0.9164
         self.mass = self.mw
         self.prgID = "COOH"
@@ -1329,7 +1404,7 @@ class Trimer:
         self.name = "Timer"
         self.sn = "Timer"
         self.formula = "C18H30O2"
-        self.mw = 872.021
+        self.mw = 858.6735
         self.density = 0.9164
         self.mass = self.mw
         self.prgID = "COOH"
@@ -1896,8 +1971,10 @@ class BPADGE:
 
 quick_add_dict = {
     "Dimer acid 1017": [["C18", .02], ["Dimer", .78], ["Trimer", .2]],
+    "Dimer acid 1006": [["Dimer", .97], ["Trimer", .03]],
     "TOFA": [["C14", .03], ["C16", .05], ["C161", 0.05], ["C18", 0.02], ["C181", 0.70], ["C182", 0.13], ["C183", 0.02]],
     "Linseed FA": [["C16", .0658], ["C18", 0.0443], ["C181", 0.1851], ["C182", 0.1725], ["C183", 0.5324]],
+    "Oleic (Dist)": [["C16", .0726], ["C18", 0.0202], ["C181", 0.7843], ["C182", 0.1210], ["C20", 0.0020]],
     "TETA (Dist)": [["LTETA", 0.53933], ["Branched_TETA", 0.02738], ["Bis_AEP", 0.25383], ["PEEDA", 0.17608], ["Hydroxyethylpiperazine", 0.00335]],
     "TEPA (Dist)": [["LTEPA", 0.45057], ["AETETA", 0.10475], ["AEPEEDA", 0.32109], ["PEDETA", 0.10282], ["PEHA", 0.02077]],
     'C8-18_OH': [['C8_OH', 0.00043], ['C10_OH', 0.00144], ['C12_OH', 0.6786], ['C14_OH', 0.24907], ['C16_OH', 0.06759], ['C18_OH', 0.00288]],
