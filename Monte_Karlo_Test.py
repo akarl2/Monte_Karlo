@@ -9,7 +9,7 @@ import time
 #import sv_ttk
 from tkinter import *
 import mplcursors
-from scipy.integrate import trapz, simps
+#from scipy.integrate import trapz, simps
 
 from matplotlib.widgets import Cursor, Slider, SpanSelector
 from mpl_toolkits import *
@@ -17,16 +17,19 @@ from matplotlib.backends.backend_tkagg import *
 import matplotlib.backends.backend_tkagg as tkagg
 
 import numpy as np
+from numpy.polynomial.polynomial import Polynomial
 from openpyxl import Workbook
 import openpyxl
 import customtkinter
 from tkinter import ttk, messagebox, simpledialog, filedialog
 import pandas
 import concurrent.futures
+import platform
 
 import scipy
 from ttkwidgets.autocomplete import AutocompleteCombobox
 from Database import *
+from Logistic_Reg import run_regression
 from Reactions import reactive_groups, NH2, NH, COOH, COC, POH, SOH
 from Reactions import *
 import itertools
@@ -1340,7 +1343,11 @@ def show_APC(APC_Flow_Rate, APC_FWHM, APC_FWHM2, APC_Solvent, APC_comp, APC_df, 
 if __name__ == "__main__":
     window = tkinter.Tk()
     style = ttk.Style(window)
-    style.theme_use('clam')
+    # Set theme based on the operating system
+    if platform.system() == "Darwin":  # macOS
+        style.theme_use('default')  # or another theme that looks good on macOS
+    else:  # Assume Windows or Linux
+        style.theme_use('clam')  # Choose a different theme for Windows/Linux
     style.configure('TNotebook.Tab', background='#355C7D', foreground='#ffffff')
     style.configure("red.Horizontal.TProgressbar", troughcolor='green')
     style.map('TNotebook.Tab', background=[('selected', 'green3')], foreground=[('selected', '#000000')])
@@ -1355,11 +1362,13 @@ if __name__ == "__main__":
     tab3 = ttk.Frame(tab_control, style='TNotebook.Tab')
     tab4 = ttk.Frame(tab_control, style='TNotebook.Tab')
     tab5 = ttk.Frame(tab_control, style='TNotebook.Tab')
+    tab6 = ttk.Frame(tab_control, style='TNotebook.Tab')
     tab_control.add(tab1, text='Reactor')
     tab_control.add(tab2, text='1° Reaction Results')
     tab_control.add(tab3, text='1° In-Situ Results')
     tab_control.add(tab4, text='2° Reaction Results')
     tab_control.add(tab5, text='2° In-Situ Results')
+    tab_control.add(tab6, text='Machine Learning')
     tkinter.Grid.rowconfigure(window, 0, weight=1)
     tkinter.Grid.columnconfigure(window, 0, weight=1)
     tab_control.grid(row=0, column=0, sticky=tkinter.E + tkinter.W + tkinter.N + tkinter.S)
@@ -1656,7 +1665,6 @@ if __name__ == "__main__":
                 CT.display_combinations(combinations)
 
 
-
     class combinations_table(tkinter.Frame):
         def __init__(self, master=tab1):
             tkinter.Frame.__init__(self, master)
@@ -1701,6 +1709,152 @@ if __name__ == "__main__":
                     self.entries[(i + 1) * self.tablewidth + j].insert(0, combinations[i][j])
                     self.entries[(i + 1) * self.tablewidth + j].config(state="readonly")
 
+
+    class DataFrameEditor(tkinter.Frame):
+        def __init__(self, master=tab6):
+            tkinter.Frame.__init__(self, master, background="#355C7D")
+
+            # Initialize the DataFrame with 30 rows and placeholder column headers
+            self.data = pandas.DataFrame("", index=range(30),
+                                         columns=[f"Column {i + 1}" for i in range(14)])  # Placeholder headers
+
+            # Create a frame for the pandastable
+            self.table_frame = tkinter.Frame(self)
+            self.table_frame.place(relx=0.5, rely=0.5, anchor='center', relwidth=0.9, relheight=0.8)
+
+            # Initialize the pandastable with the DataFrame
+            self.table = Table(self.table_frame, dataframe=self.data, showtoolbar=True, showstatusbar=True,
+                               showindex=True)
+            self.table.show()
+
+            # Pack the main frame to ensure it's visible
+            self.pack(fill=tkinter.BOTH, expand=True)
+
+            self.run_button = tkinter.Button(
+                self,
+                text="Run Logistic Regression",
+                command=self.prompt_for_columns,
+                background="#355C7D",  # Set button background color
+                highlightthickness=0,  # Remove highlight thickness
+                borderwidth=0,  # Remove border width
+                relief="flat"  # Make the button appear flat (no relief)
+            )
+            self.run_button.pack(side=tkinter.BOTTOM, pady=10)
+
+        def prompt_for_columns(self):
+            # Dynamically gather the column headers from the current DataFrame in the Pandas Table
+            current_data = self.table.model.df  # Access the current DataFrame directly from the table's model
+            column_headers = list(current_data.columns)
+
+            # Create a new popup window to select X and Y columns
+            popup = tkinter.Toplevel(self)
+            popup.title("Select X and Y Columns")
+
+            # X Columns selection (multiple)
+            tkinter.Label(popup, text="Select X columns:").pack(anchor=tkinter.W, padx=10, pady=5)
+            self.x_columns_vars = {}
+            for col in column_headers:
+                var = tkinter.BooleanVar()
+                checkbutton = tkinter.Checkbutton(popup, text=col, variable=var)
+                checkbutton.pack(anchor=tkinter.W, padx=10)
+                self.x_columns_vars[col] = var
+
+            # Y Column selection (single)
+            tkinter.Label(popup, text="Select Y column:").pack(anchor=tkinter.W, padx=10, pady=10)
+            self.y_column_var = tkinter.StringVar()
+            # Set the default value for the Y dropdown to the last column
+            self.y_column_var.set(column_headers[-1])  # Set default to the last column
+            y_dropdown = ttk.Combobox(popup, textvariable=self.y_column_var, values=column_headers)
+            y_dropdown.pack(anchor=tkinter.W, padx=10)
+
+            #give the user the option to select StandardScaler
+            tkinter.Label(popup, text="Standard Scaler:").pack(anchor=tkinter.W, padx=10, pady=5)
+            self.scaler_var = tkinter.BooleanVar(value=False)
+            scaler_checkbutton = tkinter.Checkbutton(popup, text="Apply Standard Scaler",
+                                                    variable=self.scaler_var)
+            scaler_checkbutton.pack(anchor=tkinter.W, padx=10)
+
+            # Additional input for learning rate, iterations, and loss method
+            tkinter.Label(popup, text="Learning Rate (alpha):").pack(anchor=tkinter.W, padx=10, pady=5)
+            self.learning_rate_var = tkinter.DoubleVar(value=0.0001)  # Default value
+            learning_rate_entry = tkinter.Entry(popup, textvariable=self.learning_rate_var)
+            learning_rate_entry.pack(anchor=tkinter.W, padx=10)
+
+            tkinter.Label(popup, text="Max Iterations:").pack(anchor=tkinter.W, padx=10, pady=5)
+            self.max_iter_var = tkinter.IntVar(value=1000000)  # Default value
+            max_iter_entry = tkinter.Entry(popup, textvariable=self.max_iter_var)
+            max_iter_entry.pack(anchor=tkinter.W, padx=10)
+
+            tkinter.Label(popup, text="Loss Method:").pack(anchor=tkinter.W, padx=10, pady=5)
+            self.loss_method_var = tkinter.StringVar(value="log_loss")  # Default value
+            loss_method_dropdown = ttk.Combobox(popup, textvariable=self.loss_method_var,
+                                                values=["log_loss", "hinge", "squared_hinge"])
+            loss_method_dropdown.pack(anchor=tkinter.W, padx=10)
+
+            # Penalty Method selection
+            tkinter.Label(popup, text="Penalty Method:").pack(anchor=tkinter.W, padx=10, pady=5)
+            self.penalty_method_var = tkinter.StringVar(value="None")  # Default value as a string
+            penalty_method_dropdown = ttk.Combobox(popup, textvariable=self.penalty_method_var,
+                                                   values=["None", "l2", "l1", "elasticnet"])
+            penalty_method_dropdown.pack(anchor=tkinter.W, padx=10)
+
+            tkinter.Label(popup, text="Polynomial Degree:").pack(anchor=tkinter.W, padx=10, pady=5)
+            self.degree_var = tkinter.IntVar(value=1)  # Default value is 1
+            degree_combobox = ttk.Combobox(popup, textvariable=self.degree_var, values=[1, 2, 3], state="readonly")
+            degree_combobox.pack(anchor=tkinter.W, padx=10)
+
+            # Train/Test Split Checkbox
+            tkinter.Label(popup, text="Train/Test Split:").pack(anchor=tkinter.W, padx=10, pady=5)
+            self.train_test_split_var = tkinter.BooleanVar(value=False)
+            train_test_split_checkbutton = tkinter.Checkbutton(popup, text="Apply Train/Test Split",
+                                                               variable=self.train_test_split_var)
+            train_test_split_checkbutton.pack(anchor=tkinter.W, padx=10)
+
+            # Train/Test Split Fraction input
+            tkinter.Label(popup, text="Test Fraction (0.0 - 1.0):").pack(anchor=tkinter.W, padx=10, pady=5)
+            self.test_fraction_var = tkinter.DoubleVar(value=0.2)  # Default test size as 20%
+            test_fraction_entry = tkinter.Entry(popup, textvariable=self.test_fraction_var)
+            test_fraction_entry.pack(anchor=tkinter.W, padx=10)
+
+            # Add button to confirm selection and run logistic regression
+            confirm_button = tkinter.Button(popup, text="Run Logistic Regression",
+                                            command=lambda: self.run_logistic_regression(popup))
+            confirm_button.pack(pady=10)
+
+        def run_logistic_regression(self, popup):
+            # Gather the selected X and Y columns
+            x_columns = [col for col, var in self.x_columns_vars.items() if var.get()]
+            y_column = self.y_column_var.get()
+
+            # Get the current DataFrame
+            current_data = self.table.model.df  # Access the current DataFrame directly from the table's model
+
+            # Create a new DataFrame with the selected X and Y columns
+            selected_data = current_data[x_columns + [y_column]]
+
+            # Get learning rate, iterations, loss method, and penalty
+            alpha = self.learning_rate_var.get()
+            max_iter = self.max_iter_var.get()
+            loss_method = self.loss_method_var.get()
+            penalty_method = self.penalty_method_var.get()
+            degree_var = self.degree_var.get()
+            to_scale = self.scaler_var.get()
+
+            # Convert "None" string to None
+            penalty_method = None if penalty_method == "None" else penalty_method
+
+            # Get Train/Test split info
+            apply_train_test_split = self.train_test_split_var.get()
+            test_size = self.test_fraction_var.get()
+
+            # Run regression with/without train-test split
+            if apply_train_test_split:
+                # If train/test split is selected, call the function with the test_size
+                run_regression(selected_data, alpha=alpha, max_iter=max_iter, loss=loss_method, penalty=penalty_method,
+                               test_size=test_size, degree=degree_var, to_scale=to_scale)
+            else:
+                # Run without splitting the data
+                run_regression(selected_data, alpha=alpha, max_iter=max_iter, loss=loss_method, penalty=penalty_method, degree=degree_var, to_scale=to_scale)
 
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
@@ -1964,6 +2118,7 @@ if __name__ == "__main__":
     Buttons = Buttons()
     sim = SimStatus()
     CT = combinations_table()
+    DFE = DataFrameEditor()
 
     # run update_table if user changes value in RET
     for i in range(16, 305, 16):
