@@ -142,7 +142,7 @@ def plot_2d_model(X_train, y_train, model, df, parent):
     canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
 def display_results_in_window(X_train, y_train, model, df, train_accuracy, train_confusion_matrix,
-                              train_r2, X_test=None, y_test=None, test_accuracy=None, test_confusion_matrix=None,
+                              train_r2, X_test=None, y_test=None, test_confusion_matrix=None,
                               feat_before_poly=None, degree=1, alpha=None, max_iter=None, loss=None, penalty=None):
     # Ensure degree is assigned a value, defaulting to 1 if not provided
     degree = degree if degree is not None else 1
@@ -212,11 +212,7 @@ def display_results_in_window(X_train, y_train, model, df, train_accuracy, train
     canvas_cm_train.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
     # If test data is provided, display test accuracy, R^2 score, and confusion matrix
-    if X_test is not None and y_test is not None and test_accuracy is not None and test_confusion_matrix is not None:
-        # Display test accuracy and R^2 score
-        test_accuracy_label = tk.Label(scrollable_frame, text=f"Test Accuracy: {test_accuracy:.4f}")
-        test_accuracy_label.pack(pady=10)
-
+    if X_test is not None and y_test is not None and test_confusion_matrix is not None:
         # Display the labeled test confusion matrix
         fig_cm_test, ax_cm_test = plt.subplots()
         disp_test = ConfusionMatrixDisplay(confusion_matrix=test_confusion_matrix, display_labels=['0', '1'])
@@ -372,12 +368,11 @@ def run_regression(files, alpha=0.01, max_iter=10000000, loss="log_loss", penalt
         y_test_pred = model.predict(X_test)
 
         # Compute accuracy, confusion matrix, and R^2 score for test data
-        test_accuracy = accuracy_score(y_test, y_test_pred)
         test_cm = confusion_matrix(y_test, y_test_pred)
 
         # Display results for both train and test sets
         display_results_in_window(X_train, y_train, model, df, train_accuracy, train_cm,
-                                  train_r2, X_test=X_test, y_test=y_test, test_accuracy=test_accuracy,
+                                  train_r2, X_test=X_test, y_test=y_test,
                                   test_confusion_matrix=test_cm, feat_before_poly=feat_before_poly,
                                   degree=degree, alpha=alpha, max_iter=max_iter, loss=loss, penalty=penalty)
     else:

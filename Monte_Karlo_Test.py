@@ -10,12 +10,10 @@ import time
 from tkinter import *
 import mplcursors
 #from scipy.integrate import trapz, simps
-
 from matplotlib.widgets import Cursor, Slider, SpanSelector
 from mpl_toolkits import *
 from matplotlib.backends.backend_tkagg import *
 import matplotlib.backends.backend_tkagg as tkagg
-
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 from openpyxl import Workbook
@@ -25,9 +23,11 @@ from tkinter import ttk, messagebox, simpledialog, filedialog
 import pandas
 import concurrent.futures
 import platform
-
+import Correlation_Matrix
 import scipy
 from ttkwidgets.autocomplete import AutocompleteCombobox
+
+from Correlation_Matrix import calc_corr_matrix
 from Database import *
 from Logistic_Reg import run_regression
 from Reactions import reactive_groups, NH2, NH, COOH, COC, POH, SOH
@@ -1730,16 +1730,22 @@ if __name__ == "__main__":
             # Pack the main frame to ensure it's visible
             self.pack(fill=tkinter.BOTH, expand=True)
 
-            self.run_button = tkinter.Button(
-                self,
-                text="Run Logistic Regression",
-                command=self.prompt_for_columns,
-                background="#355C7D",  # Set button background color
-                highlightthickness=0,  # Remove highlight thickness
-                borderwidth=0,  # Remove border width
-                relief="flat"  # Make the button appear flat (no relief)
-            )
-            self.run_button.pack(side=tkinter.BOTTOM, pady=10)
+            self.run_button = tkinter.Button(self,
+                text="Run Logistic Regression", command=self.prompt_for_columns, background="#355C7D",
+                highlightthickness=0, borderwidth=0, relief="flat")
+            self.run_button.pack(side=tkinter.TOP, anchor='w', pady=10, padx=5)
+
+
+            self.show_corr_matrix = tkinter.Button(self, text="Calculate Correlation Matrix",
+                                                   command=lambda: calc_corr_matrix(self.table.model.df),
+                                                   background="#355C7D", highlightthickness=0,
+                                                   borderwidth=0, relief="flat")
+            self.show_corr_matrix.pack(side=tkinter.TOP, anchor='w', pady=5, padx = 5)
+
+            self_neural_network = tkinter.Button(self, text="Neural Network Analysis", command=self.machine_learning, background="#355C7D",
+                highlightthickness=0, borderwidth=0, relief="flat")
+            self_neural_network.pack(side=tkinter.TOP, anchor='w', pady=5, padx=5)
+
 
         def prompt_for_columns(self):
             # Dynamically gather the column headers from the current DataFrame in the Pandas Table
@@ -1821,7 +1827,7 @@ if __name__ == "__main__":
                                             command=lambda: self.run_logistic_regression(popup))
             confirm_button.pack(pady=10)
 
-        def run_logistic_regression(self, popup):
+        def run_logistic_regression(self):
             # Gather the selected X and Y columns
             x_columns = [col for col, var in self.x_columns_vars.items() if var.get()]
             y_column = self.y_column_var.get()
@@ -1856,6 +1862,280 @@ if __name__ == "__main__":
                 # Run without splitting the data
                 run_regression(selected_data, alpha=alpha, max_iter=max_iter, loss=loss_method, penalty=penalty_method, degree=degree_var, to_scale=to_scale)
 
+        def machine_learning(self):
+            self.pack(fill=tkinter.BOTH, expand=True)
+
+            # Dynamically gather column headers from the current DataFrame in the Pandas Table
+            current_data = self.table.model.df  # Access DataFrame directly from the table's model
+            column_headers = list(current_data.columns)
+
+            # Create a new popup window for X and Y column selection
+            popup = tkinter.Toplevel(self)
+            popup.title("Build Neural Network")
+
+            # X Columns selection (multiple)
+            tkinter.Label(popup, text="Select X columns:").pack(anchor=tkinter.W, padx=10, pady=5)
+            self.x_columns_vars = {}
+            for col in column_headers:
+                var = tkinter.BooleanVar()
+                checkbutton = tkinter.Checkbutton(popup, text=col, variable=var)
+                checkbutton.pack(anchor=tkinter.W, padx=10)
+                self.x_columns_vars[col] = var
+
+            # Button to add another Y column
+            add_y_button = tkinter.Button(popup, text="Add Another Y Column",
+                                          command=lambda: self.add_y_column_selection(popup, column_headers))
+            add_y_button.pack(padx=10, pady=5, anchor=tkinter.W)
+
+            # Y Column selection (multiple)
+            tkinter.Label(popup, text="Select Y column(s):").pack(anchor=tkinter.W, padx=10, pady=10)
+            self.y_columns_vars = []
+            self.add_y_column_selection(popup, column_headers)
+
+            # Confirm button to proceed to the next step for configuring NN layers
+            confirm_button = tkinter.Button(popup, text="Configure Neural Network",
+                                            command=lambda: self.configure_NN_architecture())
+            confirm_button.pack(pady=10, anchor=tkinter.W, side=tkinter.BOTTOM)
+
+        def add_y_column_selection(self, popup, column_headers):
+            y_var = tkinter.StringVar()
+            y_var.set(column_headers[-1])  # Default to last column
+            self.y_columns_vars.append(y_var)
+
+            y_dropdown = ttk.Combobox(popup, textvariable=y_var, values=column_headers)
+            y_dropdown.pack(anchor=tkinter.W, padx=10)
+
+        def configure_NN_architecture(self):
+            # Create a new popup for NN layer configuration and visualization
+            self.layer_nodes_vars = []
+            self.layer_activations = []
+            self.layer_types = []
+            self.layer_kernel_sizes = []
+            self.layer_dropout_rates = []
+
+            config_popup = tkinter.Toplevel(self)
+            config_popup.title("Neural Network Architecture Builder")
+
+            # Select the number of layers
+            tkinter.Label(config_popup, text="Number of Layers:").pack(anchor=tkinter.W, padx=10, pady=5)
+            self.num_layers_var = tkinter.IntVar(value=1)
+            num_layers_spinbox = tkinter.Spinbox(config_popup, from_=1, to=10, textvariable=self.num_layers_var,
+                                                 command=self.update_layer_fields)
+            num_layers_spinbox.pack(anchor=tkinter.W, padx=10)
+
+            # Frame to hold layer configuration fields
+            self.layers_frame = tkinter.Frame(config_popup)
+            self.layers_frame.pack(pady=10, fill="x")
+
+            # Frame to hold the visualization
+            self.visualization_frame = tkinter.Frame(config_popup)
+            self.visualization_frame.pack(pady=10, fill="both", expand=True)
+
+            # Initial update for layer fields and visual key
+            self.update_layer_fields()
+
+            # Button to run training
+            start_training_button = tkinter.Button(config_popup, text="Start Training", command=self.run_training)
+            start_training_button.pack(pady=10, anchor="s")
+
+        def update_layer_fields(self):
+            # Clear existing layer configuration fields
+            for widget in self.layers_frame.winfo_children():
+                widget.destroy()
+
+            # Track configuration details for each layer
+            self.layer_nodes_vars = []
+            self.layer_activations = []
+            self.layer_types = []
+            self.layer_kernel_sizes = []
+            self.layer_dropout_rates = []  # New list to store dropout rates
+
+            for i in range(self.num_layers_var.get()):
+                # Layer type selection dropdown
+                tkinter.Label(self.layers_frame, text=f"Layer {i + 1} Type:").grid(row=i, column=0, padx=10, pady=5)
+
+                layer_type_var = tkinter.StringVar(value="Dense")
+                layer_type_dropdown = ttk.Combobox(self.layers_frame, textvariable=layer_type_var,
+                                                   values=["Dense", "Convolutional", "Pooling", "Flatten", "Dropout"])
+                layer_type_dropdown.grid(row=i, column=1, padx=10)
+                layer_type_dropdown.bind("<<ComboboxSelected>>", lambda e: self.show_visual_key())
+                self.layer_types.append(layer_type_var)
+
+                # Nodes or Dropout Rate Label (initially set to "Nodes")
+                nodes_label = tkinter.Label(self.layers_frame, text="Nodes:")
+                nodes_label.grid(row=i, column=2, padx=10)
+
+                # Nodes or Dropout Rate Entry
+                nodes_var = tkinter.IntVar(value=10)
+                nodes_entry = tkinter.Entry(self.layers_frame, textvariable=nodes_var, width=5)
+                nodes_entry.grid(row=i, column=3, padx=10)
+                nodes_entry.bind("<KeyRelease>", lambda e: self.show_visual_key())
+                self.layer_nodes_vars.append(nodes_var)
+
+                # Activation function dropdown
+                activation_label = tkinter.Label(self.layers_frame, text="Activation:")
+                activation_label.grid(row=i, column=4, padx=10)
+
+                activation_var = tkinter.StringVar(value="relu" if i < self.num_layers_var.get() - 1 else "softmax")
+                activation_dropdown = ttk.Combobox(self.layers_frame, textvariable=activation_var,
+                                                   values=["relu", "sigmoid", "tanh", "linear", "softmax"])
+                activation_dropdown.grid(row=i, column=5, padx=10)
+                activation_dropdown.bind("<<ComboboxSelected>>", lambda e: self.show_visual_key())
+                self.layer_activations.append(activation_var)
+
+                # Kernel size entry for Conv and Pooling layers
+                kernel_label = tkinter.Label(self.layers_frame, text="Kernel Size:")
+                kernel_label.grid(row=i, column=6, padx=10)
+
+                kernel_size_var = tkinter.IntVar(value=3)  # Default kernel size
+                kernel_size_entry = tkinter.Entry(self.layers_frame, textvariable=kernel_size_var, width=5)
+                kernel_size_entry.grid(row=i, column=7, padx=10)
+                kernel_size_entry.bind("<KeyRelease>", lambda e: self.show_visual_key())
+                self.layer_kernel_sizes.append(kernel_size_var)
+
+                # Dropout rate entry (initially hidden)
+                dropout_rate_var = tkinter.DoubleVar(value=0.5)
+                self.layer_dropout_rates.append(dropout_rate_var)
+
+                # Place the dropout rate entry; initially hidden, visible only for Dropout layers
+                dropout_rate_entry = tkinter.Entry(self.layers_frame, textvariable=dropout_rate_var, width=5)
+
+                # Dynamic option updates based on selected layer type
+                layer_type_var.trace("w", lambda *args, i=i, nodes_label=nodes_label, kernel_label=kernel_label,
+                                                 activation_label=activation_label,
+                                                 activation_dropdown=activation_dropdown,
+                                                 nodes_entry=nodes_entry, kernel_size_entry=kernel_size_entry,
+                                                 dropout_rate_entry=dropout_rate_entry:
+                self.update_layer_options(i, nodes_label, kernel_label, activation_label,
+                                          activation_dropdown, dropout_rate_entry,
+                                          nodes_entry, kernel_size_entry))
+
+            # Initial visualization of the updated layers
+            self.show_visual_key()
+
+        def update_layer_options(self, layer_index, nodes_label, kernel_label, activation_label,
+                                 activation_dropdown, dropout_rate_entry, nodes_entry, kernel_size_entry):
+            """
+            Update the layer configuration options dynamically based on the selected layer type.
+            """
+            layer_type = self.layer_types[layer_index].get()
+
+            # Adjust the widget visibility and labels based on layer type
+            if layer_type == "Dense":
+                nodes_label.config(text="Nodes:")
+                nodes_entry.grid()  # Show nodes for Dense layers
+                kernel_label.grid_remove()  # Hide kernel size for Dense layers
+                kernel_size_entry.grid_remove()
+                activation_label.grid()  # Show activation
+                activation_dropdown.grid()
+                dropout_rate_entry.grid_remove()  # Hide dropout rate for Dense
+
+            elif layer_type == "Convolutional":
+                nodes_label.config(text="Filters:")
+                nodes_entry.grid()  # Show filters for Conv layers
+                kernel_label.grid()  # Show kernel size for Conv layers
+                kernel_size_entry.grid()
+                activation_label.grid()  # Show activation
+                activation_dropdown.grid()
+                dropout_rate_entry.grid_remove()  # Hide dropout rate for Conv
+
+            elif layer_type == "Pooling":
+                nodes_label.grid_remove()  # Hide nodes for Pooling layers
+                nodes_entry.grid_remove()  # Hide nodes for Pooling layers
+                kernel_label.grid()  # Show kernel size for Pooling layers
+                kernel_size_entry.grid()
+                activation_label.grid_remove()  # Pooling layers don’t have activation
+                activation_dropdown.grid_remove()
+                dropout_rate_entry.grid_remove()  # Hide dropout rate for Pooling
+
+            elif layer_type == "Dropout":
+                nodes_label.config(text="Dropout Rate:")  # Label becomes Dropout Rate
+                nodes_entry.grid_remove()  # Hide nodes entry for Dropout
+                kernel_label.grid_remove()  # Hide kernel size for Dropout
+                kernel_size_entry.grid_remove()
+                activation_label.grid_remove()  # Dropout layers don’t have activation
+                activation_dropdown.grid_remove()
+                dropout_rate_entry.grid()  # Show dropout rate for Dropout layers
+
+            elif layer_type in ["Flatten"]:
+                nodes_entry.grid_remove()  # Hide nodes for Flatten layers
+                kernel_label.grid_remove()  # Hide kernel size for Flatten layers
+                kernel_size_entry.grid_remove()
+                activation_label.grid_remove()  # Flatten layers don’t have activation
+                activation_dropdown.grid_remove()
+                dropout_rate_entry.grid_remove()  # Hide dropout rate for Flatten
+
+        def show_visual_key(self):
+            """
+            Show a visual representation of the neural network architecture in a horizontal layout.
+            Each layer box displays the layer number, layer type, nodes/filters, kernel size, and activation function.
+            """
+            # Gather details for each layer
+            layers = [int(nodes_var.get()) for nodes_var in self.layer_nodes_vars]
+            layer_types = [layer_type.get() for layer_type in self.layer_types]
+            activations = [activation_var.get() for activation_var in self.layer_activations]
+            kernel_sizes = [int(kernel_size.get()) for kernel_size in self.layer_kernel_sizes]
+            num_layers = len(layers)
+
+            # Create a new figure for the visualization
+            fig, ax = plt.subplots(figsize=(12, 6))
+            ax.axis('off')  # Turn off the axis
+
+            # Define positions for each layer
+            x_positions = np.linspace(0.1, 0.9, num_layers)  # Horizontal spacing
+            y_offset = 0.5  # Vertical center position for the layers
+
+            for i, (x, nodes, layer_type, activation, kernel_size) in enumerate(
+                    zip(x_positions, layers, layer_types, activations, kernel_sizes)):
+                # Display type, nodes, kernel size, and activation for each layer
+                layer_text = f"Layer {i + 1} ({layer_type})\n"
+                if layer_type == "Dense":
+                    layer_text += f"{nodes} Nodes\n"
+                elif layer_type == "Convolutional":
+                    layer_text += f"{nodes} Filters\nKernel Size: {kernel_size}\n"
+                elif layer_type == "Pooling":
+                    layer_text += f"Kernel Size: {kernel_size}\n"
+                layer_text += f"{activation} Activation"
+
+                ax.text(x, y_offset, layer_text, ha="center", va="center", fontsize=10,
+                        bbox=dict(boxstyle="square,pad=0.5", edgecolor="black", facecolor="lightblue"))
+
+                # Draw arrows to the next layer
+                if i < num_layers - 1:
+                    ax.annotate("", xy=(x + 0.15, y_offset), xytext=(x + 0.05, y_offset),
+                                arrowprops=dict(arrowstyle="->", lw=1.5, color='black'))
+
+            # Embed the figure in the Tkinter interface
+            for widget in self.visualization_frame.winfo_children():
+                widget.destroy()  # Clear previous visualization
+            canvas = FigureCanvasTkAgg(fig, master=self.visualization_frame)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        def run_training(self):
+            # Gather selected X and Y columns
+            x_columns = [col for col, var in self.x_columns_vars.items() if var.get()]
+            y_columns = [var.get() for var in self.y_columns_vars]
+
+            # Get current DataFrame
+            current_data = self.table.model.df  # Access DataFrame from table's model
+
+            # Filter the selected data
+            selected_data = current_data[x_columns + y_columns].dropna()
+
+            # Gather neural network configuration
+            layers_config = []
+            for nodes_var, activation_var in zip(self.layer_nodes_vars, self.layer_activations):
+                layers_config.append((nodes_var.get(), activation_var.get()))
+
+            print("Selected Data:", selected_data)
+            print("Layers Configuration:", layers_config)
+
+            # Here, implement the code to actually build and train the neural network
+            # For instance, you can use TensorFlow or PyTorch with layers_config details
+            # Example: create a Sequential model, add layers based on layers_config, and start training
+
+            # This function would display any model outputs or training results
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
 
