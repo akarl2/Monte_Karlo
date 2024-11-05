@@ -633,7 +633,6 @@ def stop():
     else:
         pass
 
-
 def clear_last():
     cell = 16
     for i in range(RET.tableheight - 1):
@@ -650,6 +649,7 @@ def clear_last():
     RET.entries[clear_cell].delete(0, 'end')
     RET.entries[clear_cell].insert(0, "Clear")
     check_entry(entry=clear_cell, index=clear_index, cell=clear_cell)
+
 
 def initialize_sim(workers):
     global total_ct, sn_dict, starting_mass, total_ct_sec, starting_mass_sec, end_metric_value, end_metric_value_sec, RXN_EM_2_Active_status, end_metric_selection, end_metric_selection_sec, starting_materials, \
@@ -850,6 +850,7 @@ def reset_entry_table():
         if i > 2:
             CT.entries[i].config(state='normal')
             CT.entries[i].delete(0, tkinter.END)
+
 
 def check_entry(entry, index, cell):
     RET.entries[entry].get()
