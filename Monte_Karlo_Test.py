@@ -1893,6 +1893,14 @@ if __name__ == "__main__":
             self.y_columns_vars = []
             self.add_y_column_selection(column_headers)
 
+        def add_y_column_selection(self, column_headers):
+            y_var = tkinter.StringVar()
+            y_var.set(column_headers[-1])  # Default to last column
+            self.y_columns_vars.append(y_var)
+
+            y_dropdown = ttk.Combobox(self.popup, textvariable=y_var, values=column_headers)
+            y_dropdown.pack(anchor=tkinter.W, padx=10)
+
             # Confirm button to proceed to the next step for configuring NN layers
             confirm_button = tkinter.Button(self.popup, text="Confirm Selection",
                                        command=lambda: self.confirm_nn_selection(column_headers))
@@ -1920,40 +1928,13 @@ if __name__ == "__main__":
                 # Create a new instance of NeuralNetworkArchitectureBuilder with the selected data
                 X_data = self.table.model.df[selected_x_columns]
                 y_data = self.table.model.df[selected_y_columns]
+                print("X Data:", X_data)
+                print("Y Data:", y_data)
 
                 # Open a new popup for configuring the neural network
                 nn_popup = tkinter.Toplevel(self)
                 nn_builder = NeuralNetworkArchitectureBuilder(nn_popup, X_data, y_data)
                 nn_builder.configure_nn_popup()  # Open the configuration popup
-
-        def add_y_column_selection(self, column_headers):
-            y_var = tkinter.StringVar()
-            y_var.set(column_headers[-1])  # Default to last column
-            self.y_columns_vars.append(y_var)
-
-            y_dropdown = ttk.Combobox(self.popup, textvariable=y_var, values=column_headers)
-            y_dropdown.pack(anchor=tkinter.W, padx=10)
-
-
-        def run_training(self):
-            # Gather selected X and Y columns
-            x_columns = [col for col, var in self.x_columns_vars.items() if var.get()]
-            y_columns = [var.get() for var in self.y_columns_vars]
-
-            # Get current DataFrame
-            current_data = self.table.model.df  # Access DataFrame from table's model
-
-            # Filter the selected data
-            selected_data = current_data[x_columns + y_columns].dropna()
-            print("Selected Data:", selected_data)
-
-            # Gather neural network configuration
-            layers_config = []
-            for nodes_var, activation_var in zip(self.layer_nodes_vars, self.layer_activations):
-                layers_config.append((nodes_var.get(), activation_var.get()))
-
-            print("Selected Data:", selected_data)
-            print("Layers Configuration:", layers_config)
 
             # Here, implement the code to actually build and train the neural network
             # For instance, you can use TensorFlow or PyTorch with layers_config details
