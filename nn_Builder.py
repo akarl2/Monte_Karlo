@@ -45,6 +45,17 @@ class NeuralNetworkArchitectureBuilder:
 
     def on_layer_type_change(self, index):
         """ Handle the layer type change event. """
+        layer_type = self.layer_types[index].get()
+
+        # Disable activation dropdown if the layer type is Dropout
+        if layer_type == "Dropout":
+            self.layer_activation_widgets[index].config(state="disabled")
+            # Set the activation to None (since Dropout doesn't have an activation function)
+            self.layer_activations[index].set(None)
+        else:
+            self.layer_activation_widgets[index].config(state="normal")
+
+        # Update kernel size field
         self.update_kernel_size_field(index)
         self.show_visual_key()  # This runs after updating the kernel size
 
@@ -69,7 +80,6 @@ class NeuralNetworkArchitectureBuilder:
         layer_type_dropdown.grid(row=layer_index, column=2, padx=10, pady=5, sticky="w")
         layer_type_dropdown.bind("<<ComboboxSelected>>", lambda e: self.on_layer_type_change(layer_index))
 
-
         self.layer_types.append(layer_type_var)
         self.layer_type_widgets.append(layer_type_dropdown)
 
@@ -81,7 +91,6 @@ class NeuralNetworkArchitectureBuilder:
         nodes_entry = tk.Entry(self.layers_frame, textvariable=nodes_var, width=5)
         nodes_entry.grid(row=layer_index, column=4, padx=10, pady=5, sticky="w")
         nodes_entry.bind("<FocusOut>", lambda e: self.show_visual_key())  # Trigger visualization update
-        nodes_entry.bind("<KeyRelease>", lambda e: self.show_visual_key())  # Trigger immediately after typing
         self.layer_nodes_vars.append(nodes_var)
         self.layer_node_widgets.append(nodes_entry)
 
@@ -91,16 +100,25 @@ class NeuralNetworkArchitectureBuilder:
 
         activation_var = tk.StringVar(value="relu" if layer_index < 1 else "softmax")
         activation_dropdown = ttk.Combobox(self.layers_frame, textvariable=activation_var,
-                                           values=["relu", "sigmoid", "tanh", "linear", "softmax"])
+                                           values=["relu", "sigmoid", "tanh", "linear", "softmax",
+                                                   "None"])  # Add "None"
         activation_dropdown.grid(row=layer_index, column=6, padx=10, pady=5, sticky="w")
-        activation_dropdown.bind("<<ComboboxSelected>>",
-                                 lambda e: self.show_visual_key())  # Trigger visualization update
+        activation_dropdown.bind("<<ComboboxSelected>>", lambda e: self.show_visual_key())  # Trigger visualization update
+
+        # Disable activation dropdown for Dropout layers
+        if layer_type_var.get() == "Dropout":
+            activation_dropdown.config(state="disabled")  # Grey out the dropdown
+
         self.layer_activations.append(activation_var)
         self.layer_activation_widgets.append(activation_dropdown)
 
         # Columns 5 and 6: Kernel Size label and entry (conditionally displayed)
+        kernel_size_intvar = tk.IntVar(value=3)
         kernel_size_label = tk.Label(self.layers_frame, text="Kernel Size:")
-        kernel_size_entry = tk.Entry(self.layers_frame, textvariable=tk.IntVar(value=3), width=5)
+        kernel_size_entry = tk.Entry(self.layers_frame, textvariable=kernel_size_intvar, width=5)
+
+        # Add kernel size entry to the list for later reference
+        self.layer_kernel_sizes.append(kernel_size_intvar)
 
         # Store kernel size widgets for later display control
         self.layer_kernel_labels.append(kernel_size_label)
@@ -129,7 +147,7 @@ class NeuralNetworkArchitectureBuilder:
             self.layer_kernel_widgets[index].grid_forget()
 
     def remove_layer_fields(self, index):
-        """ Removes fields for the specified layer. """
+        """ Removes fields for the specified layer and updates the layout. """
         # Remove the widgets from the grid
         for widget in self.layers_frame.grid_slaves(row=index):
             widget.grid_forget()
@@ -149,14 +167,19 @@ class NeuralNetworkArchitectureBuilder:
         del self.layer_kernel_labels[index]
         del self.layer_remove_buttons[index]
 
-        # Reorder rows after deletion
+        # Reorder rows after deletion to maintain correct indexing and reassign labels
         for i in range(len(self.layer_fields)):
+            # Reassign layer labels (Layer 1, Layer 2, etc.)
+            self.layer_remove_buttons[i].grid(row=i, column=0, padx=10)
             self.layer_type_widgets[i].grid(row=i, column=2, padx=10, pady=5)
             self.layer_node_widgets[i].grid(row=i, column=3, padx=10)
             self.layer_activation_widgets[i].grid(row=i, column=4, padx=10)
+
             # Update kernel size field visibility
             self.update_kernel_size_field(i)
             self.layer_remove_buttons[i].grid(row=i, column=0, padx=10)
+
+            # Reassign layer info labels (Layer 1, Layer 2, etc
 
         # Refresh the visualization
         self.show_visual_key()
@@ -172,6 +195,12 @@ class NeuralNetworkArchitectureBuilder:
 
         num_layers = len(layers)
 
+        print(f"Layers: {layers}")
+        print(f"Layer Types: {layer_types}")
+        print(f"Activations: {activations}")
+        print(f"Kernel Sizes: {kernel_sizes}")
+
+
         # Create a new figure for the visualization
         fig, ax = plt.subplots(figsize=(12, 6))
         ax.axis('off')
@@ -180,14 +209,10 @@ class NeuralNetworkArchitectureBuilder:
         x_positions = np.linspace(0.1, 0.9, num_layers)
         y_offset = 0.5
 
-        # Deal with potentially empty Kernel sizes list
-        if not kernel_sizes:
-            kernel_sizes = [None] * num_layers
-
         for i, (x, nodes, layer_type, activation, kernel_size) in enumerate(
                 zip(x_positions, layers, layer_types, activations, kernel_sizes)):
             # Start with basic layer text
-            layer_text = f"Layer {i + 1}: ({layer_type})\n"
+            layer_text = f"Layer {i + 1}: {layer_type}\n"
 
             # Handle different layer types
             if layer_type == "Dense":
@@ -196,7 +221,7 @@ class NeuralNetworkArchitectureBuilder:
                 if kernel_size:  # Only add kernel size if it's valid
                     layer_text += f" Filters: {nodes}\nKernel Size: {kernel_size}\n"
                 else:
-                    layer_text += f"Filters: {nodes}\nNo Kernel Size Defined\n"
+                    layer_text += f"Kernel Size: Not Defined\n"
             elif layer_type == "Pooling":
                 if kernel_size:  # Only add kernel size if it's valid
                     layer_text += f"Kernel Size: {kernel_size}\n"
@@ -205,8 +230,9 @@ class NeuralNetworkArchitectureBuilder:
             elif layer_type == "Dropout":
                 layer_text += f"Dropout Rate: {nodes}\n"
 
-            # Update to the new format for activation function
-            layer_text += f"Activation: {activation}"  # Change made here
+            # Skip activation for Dropout layers
+            if layer_type != "Dropout":
+                layer_text += f"Activation: {activation}"  # Add activation for non-Dropout layerse
 
             # Add the layer text to the plot
             ax.text(x, y_offset, layer_text, ha="center", va="center", fontsize=10,

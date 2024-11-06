@@ -1921,21 +1921,16 @@ if __name__ == "__main__":
                 messagebox.showwarning("No Y Columns Selected", "Please select at least one Y column.")
                 return
 
-            confirmation_message = f"You have selected:\n\nX Columns: {', '.join(selected_x_columns)}\nY Columns: {', '.join(selected_y_columns)}\n\nProceed to configure the neural network?"
-            if messagebox.askyesno("Confirm Selection", confirmation_message):
-                # If confirmed, destroy the popup for selection
-                self.popup.destroy()
+            self.popup.destroy()
 
-                # Create a new instance of NeuralNetworkArchitectureBuilder with the selected data
-                X_data = self.table.model.df[selected_x_columns]
-                y_data = self.table.model.df[selected_y_columns]
-                print("X Data:", X_data)
-                print("Y Data:", y_data)
+            # Create a new instance of NeuralNetworkArchitectureBuilder with the selected data
+            X_data = self.table.model.df[selected_x_columns]
+            y_data = self.table.model.df[selected_y_columns]
 
-                # Open a new popup for configuring the neural network
-                nn_popup = tkinter.Toplevel(self)
-                nn_builder = NeuralNetworkArchitectureBuilder(nn_popup, X_data, y_data)
-                nn_builder.configure_nn_popup()  # Open the configuration popup
+            # Open a new popup for configuring the neural network
+            nn_popup = tkinter.Toplevel(self)
+            nn_builder = NeuralNetworkArchitectureBuilder(nn_popup, X_data, y_data)
+            nn_builder.configure_nn_popup()  # Open the configuration popup
 
             # Here, implement the code to actually build and train the neural network
             # For instance, you can use TensorFlow or PyTorch with layers_config details
