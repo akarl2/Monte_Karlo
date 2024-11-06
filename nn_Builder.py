@@ -19,6 +19,9 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_kernel_widgets = []
         self.layer_kernel_labels = []
         self.layer_remove_buttons = []
+        self.layer_info_labels = []
+        self.layer_nodes_labels = []
+        self.layer_activations_labels = []
 
     def configure_nn_popup(self):
         self.master.title("Neural Network Architecture Builder")
@@ -35,8 +38,7 @@ class NeuralNetworkArchitectureBuilder:
         self.visualization_frame = tk.Frame(self.master)
         self.visualization_frame.pack(pady=10, fill="both", expand=True)
 
-        # Initialize with two layers by default
-        self.add_layer_fields()
+        # Initialize with a single layer
         self.add_layer_fields()
 
         # Start training button
@@ -72,6 +74,7 @@ class NeuralNetworkArchitectureBuilder:
         # Column 1: Layer Information Label
         layer_info_label = tk.Label(self.layers_frame, text=f"Layer {layer_index + 1}:")
         layer_info_label.grid(row=layer_index, column=1, padx=10, pady=5, sticky="w")
+        self.layer_info_labels.append(layer_info_label)
 
         # Column 2: Layer Type Dropdown
         layer_type_var = tk.StringVar(value="Dense")
@@ -83,9 +86,11 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_types.append(layer_type_var)
         self.layer_type_widgets.append(layer_type_dropdown)
 
+
         # Column 3: Nodes, Kernels, or Dropout Rate Entry
         nodes_label = tk.Label(self.layers_frame, text="Nodes/Rate:")
         nodes_label.grid(row=layer_index, column=3, sticky="e", padx=(5, 2), pady=5)
+        self.layer_nodes_labels.append(nodes_label)
 
         nodes_var = tk.IntVar(value=10)
         nodes_entry = tk.Entry(self.layers_frame, textvariable=nodes_var, width=5)
@@ -97,6 +102,7 @@ class NeuralNetworkArchitectureBuilder:
         # Column 4: Activation Function Dropdown
         activation_label = tk.Label(self.layers_frame, text="Activation:")
         activation_label.grid(row=layer_index, column=5, sticky="e", padx=(5, 2), pady=5)
+        self.layer_activations_labels.append(activation_label)
 
         activation_var = tk.StringVar(value="relu" if layer_index < 1 else "softmax")
         activation_dropdown = ttk.Combobox(self.layers_frame, textvariable=activation_var,
@@ -159,27 +165,32 @@ class NeuralNetworkArchitectureBuilder:
         del self.layer_activations[index]
         del self.layer_kernel_sizes[index]
 
-        # Also remove the corresponding widgets from their respective lists
+        # Remove associated widgets and labels from lists
         del self.layer_type_widgets[index]
         del self.layer_node_widgets[index]
         del self.layer_activation_widgets[index]
         del self.layer_kernel_widgets[index]
         del self.layer_kernel_labels[index]
         del self.layer_remove_buttons[index]
+        del self.layer_info_labels[index]  # Update Layer info label list
+        del self.layer_nodes_labels[index]  # Remove Nodes/Rate label
+        del self.layer_activations_labels[index]  # Remove Activation label
 
-        # Reorder rows after deletion to maintain correct indexing and reassign labels
+        # Reorder rows and reassign labels
         for i in range(len(self.layer_fields)):
-            # Reassign layer labels (Layer 1, Layer 2, etc.)
-            self.layer_remove_buttons[i].grid(row=i, column=0, padx=10)
+            # Explicitly set the label text for each layer
+            self.layer_info_labels[i].config(text=f"Layer {i + 1}:")  # This renumbers each Layer label correctly
+            # Update positions for all widgets in the row
+            self.layer_remove_buttons[i].grid(row=i, column=0, padx=10, pady=5)
+            self.layer_info_labels[i].grid(row=i, column=1, padx=10, pady=5, sticky="w")
             self.layer_type_widgets[i].grid(row=i, column=2, padx=10, pady=5)
-            self.layer_node_widgets[i].grid(row=i, column=3, padx=10)
-            self.layer_activation_widgets[i].grid(row=i, column=4, padx=10)
+            self.layer_nodes_labels[i].grid(row=i, column=3, sticky="e", padx=(5, 2), pady=5)  # Nodes/Rate label
+            self.layer_node_widgets[i].grid(row=i, column=4, padx=10, pady=5)
+            self.layer_activations_labels[i].grid(row=i, column=5, sticky="e", padx=(5, 2), pady=5)  # Activation label
+            self.layer_activation_widgets[i].grid(row=i, column=6, padx=10, pady=5, sticky="w")
 
-            # Update kernel size field visibility
+            # Update kernel size fields as needed
             self.update_kernel_size_field(i)
-            self.layer_remove_buttons[i].grid(row=i, column=0, padx=10)
-
-            # Reassign layer info labels (Layer 1, Layer 2, etc
 
         # Refresh the visualization
         self.show_visual_key()
@@ -251,5 +262,8 @@ class NeuralNetworkArchitectureBuilder:
         canvas = FigureCanvasTkAgg(fig, master=self.visualization_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        def run_training(self):
+            print("Training started...")
 
 
