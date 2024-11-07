@@ -51,12 +51,11 @@ class NeuralNetworkArchitectureBuilder:
         start_training_button.pack(pady=10)
 
     def on_layer_type_change(self, index):
-        print(index)
         """ Handle the layer type change event. """
         layer_type = self.layer_types[index].get()
 
         # Disable activation dropdown if the layer type is Dropout
-        if layer_type == "Dropout":
+        if layer_type == "Dropout" or layer_type == "Flatten" or layer_type == "Pooling":
             self.layer_activation_widgets[index].config(state="disabled")
             # Set the activation to None (since Dropout doesn't have an activation function)
             self.layer_activations[index].set(None)
@@ -109,7 +108,7 @@ class NeuralNetworkArchitectureBuilder:
         activation_label.grid(row=layer_index, column=5, sticky="e", padx=(5, 2), pady=5)
         self.layer_activations_labels.append(activation_label)
 
-        activation_var = tk.StringVar(value="relu" if layer_index < 1 else "softmax")
+        activation_var = tk.StringVar(value="relu" if layer_index < 1 else "relu")  # Default to ReLU for hidden layers
         activation_dropdown = ttk.Combobox(self.layers_frame, textvariable=activation_var,
                                            values=["relu", "sigmoid", "tanh", "linear", "softmax",
                                                    "None"])  # Add "None"
@@ -141,7 +140,6 @@ class NeuralNetworkArchitectureBuilder:
 
         # Show/hide kernel size fields based on the selected layer type
         self.update_kernel_size_field(layer_index)
-
         # Refresh the visualization
         self.show_visual_key()
 
@@ -157,6 +155,8 @@ class NeuralNetworkArchitectureBuilder:
             # Hide kernel size label and entry if not needed
             self.layer_kernel_labels[index].grid_forget()
             self.layer_kernel_widgets[index].grid_forget()
+
+
 
     def remove_layer_fields(self, index):
         """ Removes fields for the specified layer and updates the layout. """
@@ -195,7 +195,10 @@ class NeuralNetworkArchitectureBuilder:
             self.layer_activations_labels[i].grid(row=i, column=5, sticky="e", padx=(5, 2), pady=5)  # Activation label
             self.layer_activation_widgets[i].grid(row=i, column=6, padx=10, pady=5, sticky="w")
 
-            # Update kernel size fields as needed
+            # Rebind combobox to capture updated index `i`
+            self.layer_type_widgets[i].unbind("<<ComboboxSelected>>")
+            self.layer_type_widgets[i].bind("<<ComboboxSelected>>", lambda event, idx=i: self.on_layer_type_change(idx))
+            # Update kernel size field visibility based on new index
             self.update_kernel_size_field(i)
 
         # Refresh the visualization
@@ -211,9 +214,6 @@ class NeuralNetworkArchitectureBuilder:
                         for layer_type, kernel_size in zip(layer_types, self.layer_kernel_sizes)]
 
         num_layers = len(layers)
-
-        print(f"Layer Types: {layer_types}")
-
 
         # Create a new figure for the visualization
         fig, ax = plt.subplots(figsize=(12, 6))
@@ -245,8 +245,8 @@ class NeuralNetworkArchitectureBuilder:
                 layer_text += f"Dropout Rate: {nodes}\n"
 
             # Skip activation for Dropout layers
-            if layer_type != "Dropout":
-                layer_text += f"Activation: {activation}"  # Add activation for non-Dropout layerse
+            if layer_type != "Dropout" or layer_type != "Flatten" or layer_type != "Pooling":
+                layer_text += f"Activation: {activation}"
 
             # Add the layer text to the plot
             ax.text(x, y_offset, layer_text, ha="center", va="center", fontsize=10,
@@ -279,6 +279,41 @@ class NeuralNetworkArchitectureBuilder:
         from sklearn.datasets import make_classification
         from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
         from sklearn.ensemble import RandomForestClassifier
+
+        # Collect current layer configurations
+        layers = [nodes_var.get() for nodes_var in self.layer_nodes_vars]
+        layer_types = [layer_type.get() for layer_type in self.layer_types]
+        activations = [activation.get() for activation in self.layer_activations]
+        kernel_sizes = [kernel_size.get() if layer_type in ["Convolutional", "Pooling"] else None
+                        for layer_type, kernel_size in zip(layer_types, self.layer_kernel_sizes)]
+
+        # zip the layer configurations
+        layer_configs = zip(layers, layer_types, activations, kernel_sizes)
+        for layer in layer_configs:
+            print(layer)
+
+        # Create a Sequential model
+        model = Sequential()
+
+        # Add the input layer
+        model.add(Dense(layers[0], input_shape=(X_data.shape[1],), activation=activations[0]))
+
+        # Add the remaining layers
+        for i in range(1, len(layers)):
+            if layer_types[i] == "Dense":
+                model.add(Dense(layers[i], activation=activations[i]))
+            elif layer_types[i] == "Convolutional":
+                model.add(Conv2D(layers[i], kernel_size=kernel_sizes[i], activation=activations[i]))
+            elif layer_types[i] == "Pooling":
+                model.add(MaxPooling2D(pool_size=kernel_sizes[i]))
+            elif layer_types[i] == "Dropout":
+                model.add(Dropout(layers[i]))
+            elif layer_types[i] == "Flatten":
+                model.add(Flatten())
+
+
+
+
 
 
 
