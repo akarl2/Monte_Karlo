@@ -1,6 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
 import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib
+
+
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -42,10 +47,11 @@ class NeuralNetworkArchitectureBuilder:
         self.add_layer_fields()
 
         # Start training button
-        start_training_button = tk.Button(self.master, text="Start Training", command=self.run_training)
+        start_training_button = tk.Button(self.master, text="Start Training", command=lambda: self.run_training())
         start_training_button.pack(pady=10)
 
     def on_layer_type_change(self, index):
+        print(index)
         """ Handle the layer type change event. """
         layer_type = self.layer_types[index].get()
 
@@ -86,7 +92,6 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_types.append(layer_type_var)
         self.layer_type_widgets.append(layer_type_dropdown)
 
-
         # Column 3: Nodes, Kernels, or Dropout Rate Entry
         nodes_label = tk.Label(self.layers_frame, text="Nodes/Rate:")
         nodes_label.grid(row=layer_index, column=3, sticky="e", padx=(5, 2), pady=5)
@@ -122,6 +127,7 @@ class NeuralNetworkArchitectureBuilder:
         kernel_size_intvar = tk.IntVar(value=3)
         kernel_size_label = tk.Label(self.layers_frame, text="Kernel Size:")
         kernel_size_entry = tk.Entry(self.layers_frame, textvariable=kernel_size_intvar, width=5)
+        kernel_size_entry.bind("<FocusOut>", lambda e: self.show_visual_key())  # Trigger visualization update
 
         # Add kernel size entry to the list for later reference
         self.layer_kernel_sizes.append(kernel_size_intvar)
@@ -206,10 +212,7 @@ class NeuralNetworkArchitectureBuilder:
 
         num_layers = len(layers)
 
-        print(f"Layers: {layers}")
         print(f"Layer Types: {layer_types}")
-        print(f"Activations: {activations}")
-        print(f"Kernel Sizes: {kernel_sizes}")
 
 
         # Create a new figure for the visualization
@@ -263,7 +266,19 @@ class NeuralNetworkArchitectureBuilder:
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
-        def run_training(self):
-            print("Training started...")
+    def run_training(self):
+        import tensorflow as tf
+        from tensorflow.keras.models import Sequential
+        from tensorflow.keras.layers import Dense
+        from tensorflow.keras.optimizers import Adam
+        from tensorflow.keras.losses import BinaryCrossentropy
+        from sklearn.model_selection import train_test_split
+        from sklearn.metrics import confusion_matrix
+        from sklearn.utils import class_weight
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.datasets import make_classification
+        from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+        from sklearn.ensemble import RandomForestClassifier
+
 
 
