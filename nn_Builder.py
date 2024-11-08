@@ -28,6 +28,7 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_nodes_labels = []
         self.layer_activations_labels = []
 
+
     def configure_nn_popup(self):
         self.master.title("Neural Network Architecture Builder")
 
@@ -55,7 +56,7 @@ class NeuralNetworkArchitectureBuilder:
         layer_type = self.layer_types[index].get()
 
         # Disable activation dropdown if the layer type is Dropout
-        if layer_type == "Dropout" or layer_type == "Flatten" or layer_type == "Pooling":
+        if layer_type == "Dropout" or layer_type == "Flatten" or layer_type == "2D Pooling" or layer_type == "3D Pooling":
             self.layer_activation_widgets[index].config(state="disabled")
             self.layer_activations[index].set(None)
         else:
@@ -123,17 +124,16 @@ class NeuralNetworkArchitectureBuilder:
         kernel_size_intvar = tk.IntVar(value=3)
         kernel_size_label = tk.Label(self.layers_frame, text="Kernel Size:")
         kernel_size_entry = tk.Entry(self.layers_frame, textvariable=kernel_size_intvar, width=5)
+        kernel_size_entry2 = tk.Entry(self.layers_frame, textvariable=kernel_size_intvar, width=5)
         kernel_size_entry.bind("<FocusOut>", lambda e: self.show_visual_key())  # Trigger visualization update
-
-        # Add kernel size entry to the list for later reference
-        self.layer_kernel_sizes.append(kernel_size_intvar)
+        kernel_size_entry2.bind("<FocusOut>", lambda e: self.show_visual_key())  # Trigger visualization update
 
         # Store kernel size widgets for later display control
         self.layer_kernel_labels.append(kernel_size_label)
-        self.layer_kernel_widgets.append(kernel_size_entry)
+        self.layer_kernel_widgets.append([kernel_size_entry, kernel_size_entry2])
 
         # Add kernel size widgets to lists for tracking
-        self.layer_fields.append((layer_type_var, nodes_var, activation_var, kernel_size_label))
+        self.layer_fields.append((layer_type_var, nodes_var, activation_var, kernel_size_intvar))
 
         # Show/hide kernel size fields based on the selected layer type
         self.update_kernel_size_field(layer_index)
@@ -147,11 +147,19 @@ class NeuralNetworkArchitectureBuilder:
         if layer_type in ["2D Convolutional", "3D Convolutional", "2D Pooling", "3D Pooling"]:
             # Show kernel size label and entry in columns 7 and 8
             self.layer_kernel_labels[index].grid(row=index, column=7, padx=10, pady=5, sticky="e")
-            self.layer_kernel_widgets[index].grid(row=index, column=8, padx=10, pady=5, sticky="w")
+            self.layer_kernel_widgets[index][0].grid(row=index, column=8, padx=10, pady=5, sticky="w")
+            self.layer_kernel_widgets[index][1].grid(row=index, column=9, padx=10, pady=5, sticky="w")
+
+
         else:
-            # Hide kernel size label and entry if not needed
+
+            # Hide kernel size label and both entries if not needed
+
             self.layer_kernel_labels[index].grid_forget()
-            self.layer_kernel_widgets[index].grid_forget()
+
+            self.layer_kernel_widgets[index][0].grid_forget()
+
+            self.layer_kernel_widgets[index][1].grid_forget()
 
     def remove_layer_fields(self, index):
         """ Removes fields for the specified layer and updates the layout. """
@@ -164,7 +172,6 @@ class NeuralNetworkArchitectureBuilder:
         del self.layer_types[index]
         del self.layer_nodes_vars[index]
         del self.layer_activations[index]
-        del self.layer_kernel_sizes[index]
 
         # Remove associated widgets and labels from lists
         del self.layer_type_widgets[index]
@@ -205,10 +212,14 @@ class NeuralNetworkArchitectureBuilder:
         layers = [nodes_var.get() for nodes_var in self.layer_nodes_vars]
         layer_types = [layer_type.get() for layer_type in self.layer_types]
         activations = [activation.get() for activation in self.layer_activations]
-        kernel_sizes = [kernel_size.get() if layer_type in ["2D Convolutional", "3D Convolutional", "2D Pooling", "3D Pooling"] else None
-                        for kernel_size, layer_type in zip(self.layer_kernel_sizes, layer_types)]
+        kernel_sizes = [(kernel_size[0].get(), kernel_size[1].get()) if layer_type in ["2D Convolutional", "3D Convolutional",
+                                                                           "2D Pooling", "3D Pooling"]
+            else None
+            for kernel_size, layer_type in zip(self.layer_kernel_widgets, layer_types)]
 
         num_layers = len(layers)
+
+        print(kernel_sizes)
 
         # Create a new figure for the visualization
         fig, ax = plt.subplots(figsize=(12, 6))
@@ -226,22 +237,23 @@ class NeuralNetworkArchitectureBuilder:
             # Handle different layer types
             if layer_type == "Dense":
                 layer_text += f" Nodes: {nodes}\n"
-            elif layer_type == "Convolutional":
-                if kernel_size:  # Only add kernel size if it's valid
-                    layer_text += f" Filters: {nodes}\nKernel Size: {kernel_size}\n"
+            elif layer_type == "2D Convolutional":
+                layer_text += f" Filters: {nodes}\n"
+                if kernel_size:  # Add kernel size if available
+                    layer_text += f"Kernel Size: {kernel_size[0]} x {kernel_size[1]}\n"
                 else:
-                    layer_text += f"Kernel Size: Not Defined\n"
-            elif layer_type == "Pooling":
-                if kernel_size:  # Only add kernel size if it's valid
-                    layer_text += f"Kernel Size: {kernel_size}\n"
+                    layer_text += "Kernel Size: Not Defined\n"
+            elif layer_type == "2D Pooling":
+                if kernel_size:
+                    layer_text += f"Kernel Size: {kernel_size[0]} x {kernel_size[1]}\n"
                 else:
-                    layer_text += f"Kernel Size: Not Defined\n"
+                    layer_text += "Kernel Size: Not Defined\n"
             elif layer_type == "Dropout":
                 layer_text += f"Dropout Rate: {nodes}\n"
 
-            # Skip activation for Dropout layers
-            if layer_type != "Dropout" or layer_type != "Flatten" or layer_type != "Pooling":
-                layer_text += f"Activation: {activation}"
+            # Add activation, excluding certain layer types
+            if layer_type not in ["Dropout", "Flatten", "2D Pooling", "3D Pooling"]:
+                layer_text += f"Activation: {activation}\n"
 
             # Add the layer text to the plot
             ax.text(x, y_offset, layer_text, ha="center", va="center", fontsize=10,
@@ -249,7 +261,7 @@ class NeuralNetworkArchitectureBuilder:
 
             # Add arrows between layers (except the last layer)
             if i < num_layers - 1:
-                ax.annotate("", xy=(x + 0.15, y_offset), xytext=(x + 0.05, y_offset),
+                ax.annotate("", xy=(x + 0.15, y_offset), xytext=(x + 0.1, y_offset),
                             arrowprops=dict(arrowstyle="->", lw=1.5, color='black'))
 
         # Clear previous visualization

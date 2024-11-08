@@ -1744,7 +1744,7 @@ if __name__ == "__main__":
                                                    borderwidth=0, relief="flat")
             self.show_corr_matrix.pack(side=tkinter.TOP, anchor='w', pady=5, padx = 5)
 
-            self_neural_network = tkinter.Button(self, text="Neural Network Analysis", command=self.machine_learning, background="#355C7D",
+            self_neural_network = tkinter.Button(self, text="Neural Network", command=self.machine_learning, background="#355C7D",
                 highlightthickness=0, borderwidth=0, relief="flat")
             self_neural_network.pack(side=tkinter.TOP, anchor='w', pady=5, padx=5)
 
