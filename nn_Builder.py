@@ -57,7 +57,6 @@ class NeuralNetworkArchitectureBuilder:
         # Disable activation dropdown if the layer type is Dropout
         if layer_type == "Dropout" or layer_type == "Flatten" or layer_type == "Pooling":
             self.layer_activation_widgets[index].config(state="disabled")
-            # Set the activation to None (since Dropout doesn't have an activation function)
             self.layer_activations[index].set(None)
         else:
             self.layer_activation_widgets[index].config(state="normal")
@@ -71,8 +70,7 @@ class NeuralNetworkArchitectureBuilder:
         layer_index = len(self.layer_fields)
 
         # Column 0: Remove Layer button (red "X")
-        remove_button = tk.Button(self.layers_frame, text="X", fg="red",
-                                  command=lambda: self.remove_layer_fields(layer_index))
+        remove_button = tk.Button(self.layers_frame, text="X", fg="red", command=lambda: self.remove_layer_fields(layer_index))
         remove_button.grid(row=layer_index, column=0, padx=10, pady=5)
         self.layer_remove_buttons.append(remove_button)
 
@@ -84,7 +82,7 @@ class NeuralNetworkArchitectureBuilder:
         # Column 2: Layer Type Dropdown
         layer_type_var = tk.StringVar(value="Dense")
         layer_type_dropdown = ttk.Combobox(self.layers_frame, textvariable=layer_type_var,
-                                           values=["Dense", "Convolutional", "Pooling", "Flatten", "Dropout"])
+                                           values=["Dense", "2D Convolutional", "3D Convolutional", "2D Pooling", "3D Pooling", "Flatten", "Dropout"], width=15)
         layer_type_dropdown.grid(row=layer_index, column=2, padx=10, pady=5, sticky="w")
         layer_type_dropdown.bind("<<ComboboxSelected>>", lambda e: self.on_layer_type_change(layer_index))
 
@@ -110,8 +108,7 @@ class NeuralNetworkArchitectureBuilder:
 
         activation_var = tk.StringVar(value="relu" if layer_index < 1 else "relu")  # Default to ReLU for hidden layers
         activation_dropdown = ttk.Combobox(self.layers_frame, textvariable=activation_var,
-                                           values=["relu", "sigmoid", "tanh", "linear", "softmax",
-                                                   "None"])  # Add "None"
+                                           values=["relu", "sigmoid", "tanh", "linear", "softmax", "None"], width=10)  # Add "None"
         activation_dropdown.grid(row=layer_index, column=6, padx=10, pady=5, sticky="w")
         activation_dropdown.bind("<<ComboboxSelected>>", lambda e: self.show_visual_key())  # Trigger visualization update
 
@@ -147,7 +144,7 @@ class NeuralNetworkArchitectureBuilder:
         """ Adds the kernel size fields at the end (columns 7 and 8) when needed, without rearranging other columns. """
         layer_type = self.layer_types[index].get()
 
-        if layer_type in ["Convolutional", "Pooling"]:
+        if layer_type in ["2D Convolutional", "3D Convolutional", "2D Pooling", "3D Pooling"]:
             # Show kernel size label and entry in columns 7 and 8
             self.layer_kernel_labels[index].grid(row=index, column=7, padx=10, pady=5, sticky="e")
             self.layer_kernel_widgets[index].grid(row=index, column=8, padx=10, pady=5, sticky="w")
@@ -155,8 +152,6 @@ class NeuralNetworkArchitectureBuilder:
             # Hide kernel size label and entry if not needed
             self.layer_kernel_labels[index].grid_forget()
             self.layer_kernel_widgets[index].grid_forget()
-
-
 
     def remove_layer_fields(self, index):
         """ Removes fields for the specified layer and updates the layout. """
@@ -210,8 +205,8 @@ class NeuralNetworkArchitectureBuilder:
         layers = [nodes_var.get() for nodes_var in self.layer_nodes_vars]
         layer_types = [layer_type.get() for layer_type in self.layer_types]
         activations = [activation.get() for activation in self.layer_activations]
-        kernel_sizes = [kernel_size.get() if layer_type in ["Convolutional", "Pooling"] else None
-                        for layer_type, kernel_size in zip(layer_types, self.layer_kernel_sizes)]
+        kernel_sizes = [kernel_size.get() if layer_type in ["2D Convolutional", "3D Convolutional", "2D Pooling", "3D Pooling"] else None
+                        for kernel_size, layer_type in zip(self.layer_kernel_sizes, layer_types)]
 
         num_layers = len(layers)
 
@@ -267,53 +262,4 @@ class NeuralNetworkArchitectureBuilder:
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
     def run_training(self):
-        import tensorflow as tf
-        from tensorflow.keras.models import Sequential
-        from tensorflow.keras.layers import Dense
-        from tensorflow.keras.optimizers import Adam
-        from tensorflow.keras.losses import BinaryCrossentropy
-        from sklearn.model_selection import train_test_split
-        from sklearn.metrics import confusion_matrix
-        from sklearn.utils import class_weight
-        from sklearn.preprocessing import StandardScaler
-        from sklearn.datasets import make_classification
-        from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-        from sklearn.ensemble import RandomForestClassifier
-
-        # Collect current layer configurations
-        layers = [nodes_var.get() for nodes_var in self.layer_nodes_vars]
-        layer_types = [layer_type.get() for layer_type in self.layer_types]
-        activations = [activation.get() for activation in self.layer_activations]
-        kernel_sizes = [kernel_size.get() if layer_type in ["Convolutional", "Pooling"] else None
-                        for layer_type, kernel_size in zip(layer_types, self.layer_kernel_sizes)]
-
-        # zip the layer configurations
-        layer_configs = zip(layers, layer_types, activations, kernel_sizes)
-        for layer in layer_configs:
-            print(layer)
-
-        # Create a Sequential model
-        model = Sequential()
-
-        # Add the input layer
-        model.add(Dense(layers[0], input_shape=(X_data.shape[1],), activation=activations[0]))
-
-        # Add the remaining layers
-        for i in range(1, len(layers)):
-            if layer_types[i] == "Dense":
-                model.add(Dense(layers[i], activation=activations[i]))
-            elif layer_types[i] == "Convolutional":
-                model.add(Conv2D(layers[i], kernel_size=kernel_sizes[i], activation=activations[i]))
-            elif layer_types[i] == "Pooling":
-                model.add(MaxPooling2D(pool_size=kernel_sizes[i]))
-            elif layer_types[i] == "Dropout":
-                model.add(Dropout(layers[i]))
-            elif layer_types[i] == "Flatten":
-                model.add(Flatten())
-
-
-
-
-
-
-
+        print("Starting training...")
