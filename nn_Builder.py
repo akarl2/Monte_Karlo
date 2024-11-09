@@ -27,6 +27,9 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_info_labels = []
         self.layer_nodes_labels = []
         self.layer_activations_labels = []
+        self.layer_regularizer_labels = []
+        self.layer_regularizer_widgets = []
+        self.layer_regularizer_vars = []
 
 
     def configure_nn_popup(self):
@@ -55,11 +58,25 @@ class NeuralNetworkArchitectureBuilder:
         """ Handle the layer type change event. """
         layer_type = self.layer_types[index].get()
 
-        # Disable activation dropdown if the layer type is Dropout
+        # Disable activation dropdown if the layer type is Dropout, Flatten, 2D Pooling, or 3D Pooling
         if layer_type == "Dropout" or layer_type == "Flatten" or layer_type == "2D Pooling" or layer_type == "3D Pooling":
             self.layer_activation_widgets[index].config(state="disabled")
+            self.layer_regularizer_labels[index].grid_forget()
+            self.layer_regularizer_widgets[index].grid_forget()
             self.layer_activations[index].set(None)
+        elif layer_type == "Dense":
+            # Show regularizer for Dense layer
+            self.layer_regularizer_widgets[index].grid(row=index, column=11, padx=10, pady=5)
+            self.layer_activations[index].set(None)
+        elif layer_type in ["2D Convolutional", "3D Convolutional"]:
+            # Show regularizer for 2D and 3D convolutional layers
+            self.layer_regularizer_widgets[index].grid(row=index, column=11, padx=10, pady=5)
+            self.layer_activation_widgets[index].config(state="normal")  # Enable activation for these layers
         else:
+            # Hide the regularizer for other layer types
+            self.layer_regularizer_widgets[index].grid_forget()
+
+            # Enable activation for non-Dropout and non-Pooling layers
             self.layer_activation_widgets[index].config(state="normal")
 
         # Update kernel size field
@@ -121,23 +138,34 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_activation_widgets.append(activation_dropdown)
 
         # Columns 5 and 6: Kernel Size label and entry (conditionally displayed)
-        kernel_size_intvar = tk.IntVar(value=3)
+        kernel_size_x_var = tk.IntVar(value=3)
+        kernel_size_y_var = tk.IntVar(value=3)
         kernel_size_label = tk.Label(self.layers_frame, text="Kernel Size:")
-        kernel_size_entry = tk.Entry(self.layers_frame, textvariable=kernel_size_intvar, width=5)
-        kernel_size_entry2 = tk.Entry(self.layers_frame, textvariable=kernel_size_intvar, width=5)
-        kernel_size_entry.bind("<FocusOut>", lambda e: self.show_visual_key())  # Trigger visualization update
-        kernel_size_entry2.bind("<FocusOut>", lambda e: self.show_visual_key())  # Trigger visualization update
+        kernel_size_entry_x = tk.Entry(self.layers_frame, textvariable=kernel_size_x_var, width=5)
+        kernel_size_entry_y = tk.Entry(self.layers_frame, textvariable=kernel_size_y_var, width=5)
+        kernel_size_entry_x.bind("<FocusOut>", lambda e: self.show_visual_key())  # Trigger visualization update
+        kernel_size_entry_y.bind("<FocusOut>", lambda e: self.show_visual_key())  # Trigger visualization update
 
-        # Store kernel size widgets for later display control
+        # Store kernel size widgets and variables for independent control
         self.layer_kernel_labels.append(kernel_size_label)
-        self.layer_kernel_widgets.append([kernel_size_entry, kernel_size_entry2])
+        self.layer_kernel_widgets.append([kernel_size_entry_x, kernel_size_entry_y])
+        self.layer_fields.append((layer_type_var, nodes_var, activation_var, kernel_size_x_var, kernel_size_y_var))
 
-        # Add kernel size widgets to lists for tracking
-        self.layer_fields.append((layer_type_var, nodes_var, activation_var, kernel_size_intvar))
+        # Regularizer Dropdown (initially hidden unless Dense is selected)
+        regularizer_var = tk.StringVar(value="None")
+        regularizer_label = tk.Label(self.layers_frame, text="Regularizer:")
+        regularizer_label.grid(row=layer_index, column=10, sticky="e", padx=(5, 2), pady=5)
+        regularizer_dropdown = ttk.Combobox(self.layers_frame, textvariable=regularizer_var, values=["None", "l1", "l2"], width=10)
+        regularizer_dropdown.bind("<<ComboboxSelected>>", lambda e: self.show_visual_key())  # Trigger visualization update
+        regularizer_dropdown.grid(row=layer_index, column=11, padx=10, pady=5)
+        self.layer_regularizer_widgets.append(regularizer_dropdown)
+        self.layer_regularizer_labels.append(regularizer_label)
+        self.layer_regularizer_vars.append(regularizer_var)
+
+
 
         # Show/hide kernel size fields based on the selected layer type
         self.update_kernel_size_field(layer_index)
-        # Refresh the visualization
         self.show_visual_key()
 
     def update_kernel_size_field(self, index):
@@ -150,15 +178,21 @@ class NeuralNetworkArchitectureBuilder:
             self.layer_kernel_widgets[index][0].grid(row=index, column=8, padx=10, pady=5, sticky="w")
             self.layer_kernel_widgets[index][1].grid(row=index, column=9, padx=10, pady=5, sticky="w")
 
+            # Adjust second kernel entry behavior based on layer type
+            if layer_type in ["2D Convolutional", "2D Pooling"]:
+                # Set second entry to 1 and disable it
+                self.layer_kernel_widgets[index][1].config(state="normal")  # Temporarily enable to set value
+                self.layer_kernel_widgets[index][1].delete(0, tk.END)  # Clear current value
+                self.layer_kernel_widgets[index][1].insert(0, "1")  # Set to 1
+                self.layer_kernel_widgets[index][1].config(state="disabled")  # Disable again
+            else:
+                # Enable second entry for 3D types
+                self.layer_kernel_widgets[index][1].config(state="normal")
 
         else:
-
             # Hide kernel size label and both entries if not needed
-
             self.layer_kernel_labels[index].grid_forget()
-
             self.layer_kernel_widgets[index][0].grid_forget()
-
             self.layer_kernel_widgets[index][1].grid_forget()
 
     def remove_layer_fields(self, index):
@@ -172,6 +206,8 @@ class NeuralNetworkArchitectureBuilder:
         del self.layer_types[index]
         del self.layer_nodes_vars[index]
         del self.layer_activations[index]
+        del self.layer_regularizer_vars[index]
+
 
         # Remove associated widgets and labels from lists
         del self.layer_type_widgets[index]
@@ -183,6 +219,8 @@ class NeuralNetworkArchitectureBuilder:
         del self.layer_info_labels[index]  # Update Layer info label list
         del self.layer_nodes_labels[index]  # Remove Nodes/Rate label
         del self.layer_activations_labels[index]  # Remove Activation label
+        del self.layer_regularizer_labels[index]  # Remove Regularizer label
+        del self.layer_regularizer_widgets[index]  # Remove Regularizer widget
 
         # Reorder rows and reassign labels
         for i in range(len(self.layer_fields)):
@@ -196,10 +234,16 @@ class NeuralNetworkArchitectureBuilder:
             self.layer_node_widgets[i].grid(row=i, column=4, padx=10, pady=5)
             self.layer_activations_labels[i].grid(row=i, column=5, sticky="e", padx=(5, 2), pady=5)  # Activation label
             self.layer_activation_widgets[i].grid(row=i, column=6, padx=10, pady=5, sticky="w")
+            self.layer_regularizer_labels[i].grid(row=i, column=8, sticky="e", padx=(5, 2), pady=5)  # Regularizer label
+            self.layer_regularizer_widgets[i].grid(row=i, column=9, padx=10, pady=5)
+
 
             # Rebind combobox to capture updated index `i`
             self.layer_type_widgets[i].unbind("<<ComboboxSelected>>")
             self.layer_type_widgets[i].bind("<<ComboboxSelected>>", lambda event, idx=i: self.on_layer_type_change(idx))
+
+            # Regularizer label and widget
+
             # Update kernel size field visibility based on new index
             self.update_kernel_size_field(i)
 
@@ -212,13 +256,16 @@ class NeuralNetworkArchitectureBuilder:
         layers = [nodes_var.get() for nodes_var in self.layer_nodes_vars]
         layer_types = [layer_type.get() for layer_type in self.layer_types]
         activations = [activation.get() for activation in self.layer_activations]
-        kernel_sizes = [(kernel_size[0].get(), kernel_size[1].get()) if layer_type in ["2D Convolutional", "3D Convolutional",
+        kernel_sizes = [
+            (kernel_size[0].get(), kernel_size[1].get()) if layer_type in ["2D Convolutional", "3D Convolutional",
                                                                            "2D Pooling", "3D Pooling"]
             else None
             for kernel_size, layer_type in zip(self.layer_kernel_widgets, layer_types)]
+        regularizer_types = [regularizer.get() for regularizer in self.layer_regularizer_vars]
 
         num_layers = len(layers)
 
+        print(regularizer_types)
         print(kernel_sizes)
 
         # Create a new figure for the visualization
@@ -229,8 +276,8 @@ class NeuralNetworkArchitectureBuilder:
         x_positions = np.linspace(0.1, 0.9, num_layers)
         y_offset = 0.5
 
-        for i, (x, nodes, layer_type, activation, kernel_size) in enumerate(
-                zip(x_positions, layers, layer_types, activations, kernel_sizes)):
+        for i, (x, nodes, layer_type, activation, kernel_size, regularizer) in enumerate(
+                zip(x_positions, layers, layer_types, activations, kernel_sizes, regularizer_types)):
             # Start with basic layer text
             layer_text = f"Layer {i + 1}: {layer_type}\n"
 
@@ -255,6 +302,10 @@ class NeuralNetworkArchitectureBuilder:
             if layer_type not in ["Dropout", "Flatten", "2D Pooling", "3D Pooling"]:
                 layer_text += f"Activation: {activation}\n"
 
+            # Add regularizer if defined
+            if regularizer:  # If there is a regularizer for this layer
+                layer_text += f"Regularizer: {regularizer}\n"
+
             # Add the layer text to the plot
             ax.text(x, y_offset, layer_text, ha="center", va="center", fontsize=10,
                     bbox=dict(boxstyle="square,pad=0.5", edgecolor="black", facecolor="lightblue"))
@@ -273,5 +324,3 @@ class NeuralNetworkArchitectureBuilder:
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
-    def run_training(self):
-        print("Starting training...")
