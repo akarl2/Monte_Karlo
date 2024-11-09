@@ -23,6 +23,9 @@ from tkinter import ttk, messagebox, simpledialog, filedialog
 import pandas
 import concurrent.futures
 import platform
+
+from scipy.integrate import simps
+
 import Correlation_Matrix
 import scipy
 from ttkwidgets.autocomplete import AutocompleteCombobox

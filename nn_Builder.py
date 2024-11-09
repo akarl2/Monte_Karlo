@@ -4,8 +4,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib
-
-
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -31,6 +29,8 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_regularizer_widgets = []
         self.layer_regularizer_type = []
         self.layer_regularizer_vars = []
+        self.X_data = X_data
+        self.y_data = y_data
 
 
     def configure_nn_popup(self):
@@ -255,9 +255,6 @@ class NeuralNetworkArchitectureBuilder:
             self.layer_regularizer_widgets[i].unbind("<<ComboboxSelected>>")
             self.layer_regularizer_widgets[i].bind("<<ComboboxSelected>>", lambda event, idx=i: self.on_layer_type_change(idx))
 
-
-
-
             # Update kernel size field visibility based on new index
             self.update_kernel_size_field(i)
 
@@ -265,7 +262,7 @@ class NeuralNetworkArchitectureBuilder:
         self.show_visual_key()
 
     def show_visual_key(self):
-        """ Show a visual representation of the neural network architecture. """
+        """ Show a visual representation of the neural network architecture, including data shapes and layer parameters. """
         # Collect current layer configurations
         layers = [nodes_var.get() for nodes_var in self.layer_nodes_vars]
         layer_types = [layer_type.get() for layer_type in self.layer_types]
@@ -278,14 +275,18 @@ class NeuralNetworkArchitectureBuilder:
         regularizer_types = [regularizer.get() for regularizer in self.layer_regularizer_type]
         regularizer_values = [regularizer.get() for regularizer in self.layer_regularizer_vars]
 
-        print(regularizer_types)
-        print(regularizer_values)
-
         num_layers = len(layers)
+        total_params = 0
 
         # Create a new figure for the visualization
         fig, ax = plt.subplots(figsize=(12, 6))
         ax.axis('off')
+
+        # Display X_data and y_data shapes at the top of the plot
+        x_shape = self.X_data.shape if self.X_data is not None else "N/A"
+        y_shape = self.y_data.shape if self.y_data is not None else "N/A"
+        ax.text(0.5, 0.9, f"Data Shape (X): {x_shape}    Target Shape (y): {y_shape}", ha="center", va="center",
+                fontsize=12, weight="bold")
 
         # Define positions for each layer
         x_positions = np.linspace(0.1, 0.9, num_layers)
@@ -297,22 +298,25 @@ class NeuralNetworkArchitectureBuilder:
             # Start with basic layer text
             layer_text = f"Layer {i + 1}: {layer_type}\n"
 
-            # Handle different layer types
+            # Calculate the number of parameters based on layer type
+            layer_params = 0
             if layer_type == "Dense":
+                prev_nodes = layers[i - 1] if i > 0 else x_shape[1]
+                layer_params = int(nodes) * (int(prev_nodes) + 1)  # including bias term
                 layer_text += f" Nodes: {nodes}\n"
             elif layer_type == "2D Convolutional":
-                layer_text += f" Filters: {nodes}\n"
-                if kernel_size:  # Add kernel size if available
-                    layer_text += f"Kernel Size: {kernel_size[0]} x {kernel_size[1]}\n"
-                else:
-                    layer_text += "Kernel Size: Not Defined\n"
+                filters = int(nodes)
+                kernel_height, kernel_width = int(kernel_size[0]), int(kernel_size[1])
+                input_channels = layers[i - 1] if i > 0 else x_shape[-1]  # assuming last dimension as channels
+                layer_params = filters * (kernel_height * kernel_width * input_channels + 1)  # +1 for bias
+                layer_text += f" Filters: {filters}\nKernel Size: {kernel_height} x {kernel_width}\n"
             elif layer_type == "2D Pooling":
-                if kernel_size:
-                    layer_text += f"Kernel Size: {kernel_size[0]} x {kernel_size[1]}\n"
-                else:
-                    layer_text += "Kernel Size: Not Defined\n"
+                kernel_height, kernel_width = int(kernel_size[0]), int(kernel_size[1])
+                layer_text += f"Kernel Size: {kernel_height} x {kernel_width}\n"
             elif layer_type == "Dropout":
                 layer_text += f"Dropout Rate: {nodes}\n"
+            elif layer_type == "Flatten":
+                layer_text += "Flatten layer\n"
 
             # Add activation, excluding certain layer types
             if layer_type not in ["Dropout", "Flatten", "2D Pooling", "3D Pooling"]:
@@ -321,6 +325,10 @@ class NeuralNetworkArchitectureBuilder:
             # Add regularizer if defined
             if regularizer_type and regularizer_value:  # If both regularizer type and value are defined
                 layer_text += f"Regularizer: {regularizer_type} ({regularizer_value})\n"
+
+            # Add the number of parameters to the text
+            total_params += layer_params
+            layer_text += f"Parameters: {layer_params}\n"
 
             # Add the layer text to the plot
             ax.text(x, y_offset, layer_text, ha="center", va="center", fontsize=10,
@@ -331,6 +339,10 @@ class NeuralNetworkArchitectureBuilder:
                 ax.annotate("", xy=(x + 0.15, y_offset), xytext=(x + 0.1, y_offset),
                             arrowprops=dict(arrowstyle="->", lw=1.5, color='black'))
 
+        # Display total parameters at the bottom
+        ax.text(0.5, 0.1, f"Total Parameters: {total_params}", ha="center", va="center",
+                fontsize=12, weight="bold")
+
         # Clear previous visualization
         for widget in self.visualization_frame.winfo_children():
             widget.destroy()
@@ -340,4 +352,10 @@ class NeuralNetworkArchitectureBuilder:
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
+    def run_training(self):
+        """ Run the training process using the specified neural network architecture. """
+        print("Training Neural Network...")
 
+        #zip layers, layer_types, activations, kernel_sizes, regularizer_types, regularizer_values
+        for layer, layer_type, activation, kernel_size, regularizer_type, regularizer_value in zip(self.layer_fields, self.layer_types, self.layer_activations, self.layer_kernel_widgets, self.layer_regularizer_type, self.layer_regularizer_vars):
+            print(layer, layer_type.get(), activation.get(), kernel_size, regularizer_type.get(), regularizer_value.get())
