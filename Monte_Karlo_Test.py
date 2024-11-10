@@ -1926,20 +1926,20 @@ if __name__ == "__main__":
 
             self.popup.destroy()
 
-            # Create a new instance of NeuralNetworkArchitectureBuilder with the selected data
-            X_data = self.table.model.df[selected_x_columns]
-            y_data = self.table.model.df[selected_y_columns]
+            combinations_data = self.table.model.df[selected_x_columns + selected_y_columns]
+
+            #remove rows with NaN values
+            combinations_data = combinations_data.dropna()
+
+            X_data = combinations_data[selected_x_columns]
+            y_data = combinations_data[selected_y_columns]
 
             # Open a new popup for configuring the neural network
             nn_popup = tkinter.Toplevel(self)
             nn_builder = NeuralNetworkArchitectureBuilder(nn_popup, X_data, y_data)
             nn_builder.configure_nn_popup()  # Open the configuration popup
 
-            # Here, implement the code to actually build and train the neural network
-            # For instance, you can use TensorFlow or PyTorch with layers_config details
-            # Example: create a Sequential model, add layers based on layers_config, and start training
 
-            # This function would display any model outputs or training results
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
 

@@ -406,29 +406,46 @@ class NeuralNetworkArchitectureBuilder:
         from tensorflow.keras.regularizers import l1, l2
 
         # Define a function to build the neural network model
-        def build_model(layers):
+        def build_model(layers, input_shape):
             model = Sequential()
             for i, layer in enumerate(layers):
                 if layer.layer_type == "Dense":
-                    model.add(Dense(layer.nodes, activation=layer.activation,
-                                    kernel_regularizer=l1(float(layer.regularizer_value)) if layer.regularizer_type == "l1"
-                                    else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
-                                    else None))
+                    if i == 0:  # Add input shape only to the first layer
+                        model.add(Dense(units=layer.nodes, activation=layer.activation,
+                                        kernel_regularizer=l1(
+                                            float(layer.regularizer_value)) if layer.regularizer_type == "l1"
+                                        else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
+                                        else None,
+                                        input_shape=input_shape))
+                    else:
+                        model.add(Dense(units=layer.nodes, activation=layer.activation,
+                                        kernel_regularizer=l1(
+                                            float(layer.regularizer_value)) if layer.regularizer_type == "l1"
+                                        else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
+                                        else None))
                 elif layer.layer_type == "2D Convolutional":
-                    model.add(Conv2D(layer.nodes, layer.kernel_size, activation=layer.activation,
-                                    kernel_regularizer=l1(float(layer.regularizer_value)) if layer.regularizer_type == "l1"
-                                    else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
-                                    else None))
+                    model.add(Conv2D(filters=layer.nodes, kernel_size=layer.kernel_size, activation=layer.activation,
+                                     kernel_regularizer=l1(
+                                         float(layer.regularizer_value)) if layer.regularizer_type == "l1"
+                                     else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
+                                     else None))
                 elif layer.layer_type == "2D Pooling":
                     model.add(MaxPooling2D(pool_size=layer.kernel_size))
                 elif layer.layer_type == "Dropout":
-                    model.add(Dropout(layer.nodes))
+                    model.add(Dropout(rate=layer.nodes))
                 elif layer.layer_type == "Flatten":
                     model.add(Flatten())
             return model
 
-        # Build the model using the specified layers
-        model = build_model(layers)
+        # Build and print the model summary
+        input_shape = self.X_data.shape[1:]
+        model = build_model(layers, input_shape)
         model.summary()
+
+        # Train the model
+        model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+        model.fit(self.X_data, self.y_data, epochs=5, batch_size=32)
+
+        print("Training Complete!")
 
 
