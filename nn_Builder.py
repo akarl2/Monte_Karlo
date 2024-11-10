@@ -151,7 +151,7 @@ class NeuralNetworkArchitectureBuilder:
         # Store kernel size widgets and variables for independent control
         self.layer_kernel_labels.append(kernel_size_label)
         self.layer_kernel_widgets.append([kernel_size_entry_x, kernel_size_entry_y])
-        self.layer_fields.append((layer_type_var, nodes_var, activation_var, kernel_size_x_var, kernel_size_y_var))
+
 
         # Regularizer Dropdown (initially hidden unless Dense is selected)
         regularizer_var = tk.StringVar(value="None")
@@ -170,6 +170,8 @@ class NeuralNetworkArchitectureBuilder:
         regularizer_entry.insert(0, "0.001")  # Default value
         regularizer_entry.bind("<FocusOut>", lambda e: self.show_visual_key())  # Trigger visualization update
         self.layer_regularizer_vars.append(regularizer_entry)
+
+        self.layer_fields.append((layer_type_var, nodes_var, activation_var, kernel_size_x_var, kernel_size_y_var, regularizer_var, regularizer_entry))
 
         # Show/hide kernel size fields based on the selected layer type
         self.update_kernel_size_field(layer_index)
@@ -356,13 +358,43 @@ class NeuralNetworkArchitectureBuilder:
         """ Run the training process using the specified neural network architecture. """
         print("Training Neural Network...")
 
-        #zip layers, layer_types, activations, kernel_sizes, regularizer_types, regularizer_values
-        for layer, layer_type, activation, kernel_size, regularizer_type, regularizer_value in zip(self.layer_fields, self.layer_types, self.layer_activations, self.layer_kernel_widgets, self.layer_regularizer_type, self.layer_regularizer_vars):
-            print(layer, layer_type.get(), activation.get(), kernel_size, regularizer_type.get(), regularizer_value.get())
+        # Define a class to store layer information
+        class Layer:
+            def __init__(self, layer_type, nodes, activation, kernel_size, regularizer_type, regularizer_value):
+                self.layer_type = layer_type
+                self.nodes = nodes
+                self.activation = activation
+                self.kernel_size = kernel_size
+                self.regularizer_type = regularizer_type
+                self.regularizer_value = regularizer_value
 
-        # Placeholder for training process
-        # Replace this with your actual training code
-        # For demonstration purposes, we will only print the layer configurations
-        # and not actually train a neural network
+        # Collect current layer configurations
+        layers = []
+        for layer_type_var, nodes_var, activation_var, kernel_size_x_var, kernel_size_y_var, regularizer_var, regularizer_entry in self.layer_fields:
+            # Get kernel size (handle cases where kernel size is None or not applicable)
+            kernel_size = (
+                (kernel_size_x_var.get(), kernel_size_y_var.get())
+                if layer_type_var.get() in ["2D Convolutional", "3D Convolutional", "2D Pooling", "3D Pooling"]
+                else None
+            )
+
+            # Handle regularizer type and value (check if the regularizer is "None")
+            regularizer_type = None if regularizer_var.get() == "None" else regularizer_var.get()
+
+            # Create and append layer object
+            layers.append(
+                Layer(
+                    layer_type_var.get(),
+                    nodes_var.get(),
+                    activation_var.get(),
+                    kernel_size,
+                    regularizer_type,
+                    regularizer_entry.get()
+                )
+            )
+
+        # Print the layer information for verification
+        for i, layer in enumerate(layers):
+            print(f"Layer {i + 1}: {layer.__dict__}")
+
         print("Training complete.")
-
