@@ -110,7 +110,7 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_type_widgets.append(layer_type_dropdown)
 
         # Column 3: Nodes, Kernels, or Dropout Rate Entry
-        nodes_label = tk.Label(self.layers_frame, text="Nodes/Rate:")
+        nodes_label = tk.Label(self.layers_frame, text="Nodes/Filters/Rate:")
         nodes_label.grid(row=layer_index, column=3, sticky="e", padx=(5, 2), pady=5)
         self.layer_nodes_labels.append(nodes_label)
 
@@ -266,7 +266,9 @@ class NeuralNetworkArchitectureBuilder:
     def show_visual_key(self):
         """ Show a visual representation of the neural network architecture, including data shapes and layer parameters. """
         # Collect current layer configurations
-        layers = [nodes_var.get() for nodes_var in self.layer_nodes_vars]
+        layers = [
+            nodes_var.get() if layer_type.get() in ["Dense", "2D Convolutional", "3D Convolutional"] else None
+            for layer_type, nodes_var in zip(self.layer_types, self.layer_nodes_vars)]
         layer_types = [layer_type.get() for layer_type in self.layer_types]
         activations = [activation.get() for activation in self.layer_activations]
         kernel_sizes = [
@@ -397,4 +399,36 @@ class NeuralNetworkArchitectureBuilder:
         for i, layer in enumerate(layers):
             print(f"Layer {i + 1}: {layer.__dict__}")
 
-        print("Training complete.")
+
+        import tensorflow as tf
+        from tensorflow.keras.models import Sequential
+        from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout
+        from tensorflow.keras.regularizers import l1, l2
+
+        # Define a function to build the neural network model
+        def build_model(layers):
+            model = Sequential()
+            for i, layer in enumerate(layers):
+                if layer.layer_type == "Dense":
+                    model.add(Dense(layer.nodes, activation=layer.activation,
+                                    kernel_regularizer=l1(float(layer.regularizer_value)) if layer.regularizer_type == "l1"
+                                    else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
+                                    else None))
+                elif layer.layer_type == "2D Convolutional":
+                    model.add(Conv2D(layer.nodes, layer.kernel_size, activation=layer.activation,
+                                    kernel_regularizer=l1(float(layer.regularizer_value)) if layer.regularizer_type == "l1"
+                                    else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
+                                    else None))
+                elif layer.layer_type == "2D Pooling":
+                    model.add(MaxPooling2D(pool_size=layer.kernel_size))
+                elif layer.layer_type == "Dropout":
+                    model.add(Dropout(layer.nodes))
+                elif layer.layer_type == "Flatten":
+                    model.add(Flatten())
+            return model
+
+        # Build the model using the specified layers
+        model = build_model(layers)
+        model.summary()
+
+
