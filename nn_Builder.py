@@ -359,3 +359,10 @@ class NeuralNetworkArchitectureBuilder:
         #zip layers, layer_types, activations, kernel_sizes, regularizer_types, regularizer_values
         for layer, layer_type, activation, kernel_size, regularizer_type, regularizer_value in zip(self.layer_fields, self.layer_types, self.layer_activations, self.layer_kernel_widgets, self.layer_regularizer_type, self.layer_regularizer_vars):
             print(layer, layer_type.get(), activation.get(), kernel_size, regularizer_type.get(), regularizer_value.get())
+
+        # Placeholder for training process
+        # Replace this with your actual training code
+        # For demonstration purposes, we will only print the layer configurations
+        # and not actually train a neural network
+        print("Training complete.")
+
