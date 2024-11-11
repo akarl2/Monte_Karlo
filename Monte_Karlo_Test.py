@@ -1911,7 +1911,7 @@ if __name__ == "__main__":
             confirm_button.pack(pady=10, anchor=tkinter.W, side=tkinter.BOTTOM)
 
         def confirm_nn_selection(self, column_headers):
-            # Gather selected X columns
+            # Gather selected X and Y columns
             selected_x_columns = [col for col, var in self.x_columns_vars.items() if var.get()]
             selected_y_columns = [y_var.get() for y_var in self.y_columns_vars if y_var.get()]
 
@@ -1924,20 +1924,32 @@ if __name__ == "__main__":
                 messagebox.showwarning("No Y Columns Selected", "Please select at least one Y column.")
                 return
 
+            # Close the selection popup
             self.popup.destroy()
 
-            combinations_data = self.table.model.df[selected_x_columns + selected_y_columns]
+            # Combine selected X and Y data, drop rows with NaN values to ensure alignment
+            combinations_data = self.table.model.df[selected_x_columns + selected_y_columns].dropna()
 
-            #remove rows with NaN values
-            combinations_data = combinations_data.dropna()
-
+            # Split back into X and Y data
             X_data = combinations_data[selected_x_columns]
             y_data = combinations_data[selected_y_columns]
+
+            # Ensure all data is numeric (converting non-numeric entries to NaN and dropping them)
+            X_data = X_data.apply(pandas.to_numeric, errors='coerce').dropna()
+            y_data = y_data.apply(pandas.to_numeric, errors='coerce').dropna()
+
+            # Convert to numpy arrays after ensuring they’re numeric
+            X_data = X_data.to_numpy()
+            y_data = y_data.to_numpy()
+
+            # Print data for verification
+            print("X_data:\n", X_data)
+            print("y_data:\n", y_data)
 
             # Open a new popup for configuring the neural network
             nn_popup = tkinter.Toplevel(self)
             nn_builder = NeuralNetworkArchitectureBuilder(nn_popup, X_data, y_data)
-            nn_builder.configure_nn_popup()  # Open the configuration popup
+            nn_builder.configure_nn_popup()
 
 
 
