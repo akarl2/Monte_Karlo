@@ -4,16 +4,17 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib
+from tensorflow.keras.callbacks import TensorBoard
 import matplotlib.pyplot as plt
 from keras.src.utils.module_utils import tensorflow
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import sys
 import io
+import subprocess
+import webbrowser
+import datetime
 
 from tkinter import Toplevel, Text, Scrollbar
-
-from openpyxl.styles.builtins import output
-from tensorflow.python.keras.utils.version_utils import training
 
 
 class NeuralNetworkArchitectureBuilder:
@@ -69,7 +70,7 @@ class NeuralNetworkArchitectureBuilder:
 
         self.loss_label = tk.Label(self.master, text="Loss Function:")
         self.loss_var = tk.StringVar(value="BinaryCrossentropy")
-        self.loss_dropdown = ttk.Combobox(self.master, textvariable=self.loss_var, values=["BinaryCrossentropy", "CategoricalCrossentropy", "MeanSquaredError"], width=20)
+        self.loss_dropdown = ttk.Combobox(self.master, textvariable=self.loss_var, values=["Binary Cross-Entropy", "Categorical Cross-Entropy", "Sparse Categorical Cross-Entropy", "Mean Square Error"], width=20)
 
         self.optimizer_label = tk.Label(self.master, text="Optimizer:")
         self.optimizer_entry = tk.Entry(self.master)
@@ -80,12 +81,16 @@ class NeuralNetworkArchitectureBuilder:
         self.metrics_label = tk.Label(self.master, text="Metrics:")
         self.metrics_entry = tk.Entry(self.master)
 
+        self.validation_split_label = tk.Label(self.master, text="Validation Split:")
+        self.validation_split_entry = tk.Entry(self.master)
+
         #set the default values
         self.epochs_entry.insert(0, "10")
         self.batch_entry.insert(0, "32")
         self.optimizer_entry.insert(0, "Adam")
         self.learning_rate_entry.insert(0, "0.001")
         self.metrics_entry.insert(0, "accuracy")
+        self.validation_split_entry.insert(0, "0.2")
 
         # Initialize with a single layer
         self.add_layer_fields()
@@ -398,6 +403,7 @@ class NeuralNetworkArchitectureBuilder:
         self.learning_rate_entry.pack(side="left", anchor="sw", padx=5, pady=5)
         self.metrics_label.pack(side="left", anchor="sw", padx=5, pady=5)
         self.metrics_entry.pack(side="left", anchor="sw", padx=5, pady=5)
+        self.validation_split_label.pack(side="left", anchor="sw", padx=5, pady=5)
 
 
         # Create a new canvas for the updated visualization
@@ -405,41 +411,8 @@ class NeuralNetworkArchitectureBuilder:
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
-    def show_verbose_popup(self):
-        """ Create a popup window that shows verbose updates during training """
-        popup = Toplevel(self.master)
-        popup.title("Verbose Updates")
-        popup.geometry("400x300")  # Set the size of the popup window
-
-        # Create a Text widget to display the updates
-        self.text_widget = Text(popup, wrap="word", height=15, width=50)
-        self.text_widget.pack(padx=10, pady=10, fill="both", expand=True)
-
-        # Add a Scrollbar to the Text widget
-        scrollbar = Scrollbar(popup, command=self.text_widget.yview)
-        scrollbar.pack(side="right", fill="y")
-        self.text_widget.config(yscrollcommand=scrollbar.set)
-
-    def update_verbose(self, message):
-        """ Update the Text widget with training progress messages """
-        self.text_widget.insert("end", message + "\n")
-        self.text_widget.yview("end")
-
-    class TrainingCallback(tensorflow.keras.callbacks.Callback):
-        def __init__(self, update_func):
-            self.update_func = update_func
-
-        def on_epoch_end(self, epoch, logs=None):
-            """Callback function called after each epoch."""
-            logs = logs or {}
-            epoch_info = f"Epoch {epoch + 1}: Loss={logs.get('loss'):.4f}, Accuracy={logs.get('accuracy'):.4f}"
-            self.update_func(epoch_info)  # Update the GUI with the current epoch info
-
 
     def run_training(self):
-        """ Run the training process using the specified neural network architecture. """
-        print("Training Neural Network...")
-
         # Get the number of epochs and batch size
         epochs = int(self.epochs_entry.get())
         batch_size = int(self.batch_entry.get())
@@ -447,9 +420,6 @@ class NeuralNetworkArchitectureBuilder:
         optimizer = self.optimizer_entry.get()
         learning_rate = float(self.learning_rate_entry.get())
         metrics = self.metrics_entry.get()
-
-        self.show_verbose_popup()
-        self.update_verbose("Training Neural Network...\n")
 
         # Define a class to store layer information
         class Layer:
@@ -485,10 +455,6 @@ class NeuralNetworkArchitectureBuilder:
                     regularizer_entry.get()
                 )
             )
-
-        # Print the layer information for verification
-        for i, layer in enumerate(layers):
-            print(f"Layer {i + 1}: {layer.__dict__}")
 
 
         import tensorflow as tf
@@ -535,21 +501,28 @@ class NeuralNetworkArchitectureBuilder:
 
         # Compile the model
         model.compile(
-            loss=tf.keras.losses.BinaryCrossentropy() if loss_function == "BinaryCrossentropy"
-            else tf.keras.losses.CategoricalCrossentropy() if loss_function == "CategoricalCrossentropy"
+            loss=tf.keras.losses.BinaryCrossentropy() if loss_function == "Binary Cross-Entropy"
+            else tf.keras.losses.CategoricalCrossentropy() if loss_function == "Categorical Cross-Entropy"
+            else tf.keras.losses.SparseCategoricalCrossentropy() if loss_function == "Sparse Categorical Cross-Entropy"
             else tf.keras.losses.MeanSquaredError(),
-            optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+            optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate) if optimizer == "Adam" else None,
             metrics=[metrics]
         )
 
-        # Initialize the callback
-        training_callback = self.TrainingCallback(self.update_verbose)
+        # Set up TensorBoard callback
+        log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
-        # Start training with the callback for real-time updates
-        model.fit(self.X_data, self.y_data, epochs=epochs, batch_size=batch_size, verbose=0,
-                  callbacks=[training_callback])
 
-        print("Training Complete!")
+        # Start training with the callback for real-time updates and TensorBoard logging
+        history = model.fit(self.X_data, self.y_data, epochs=epochs, batch_size=batch_size, verbose=2,
+                  callbacks=[tensorboard_callback], validation_split=float(self.validation_split_entry.get()))
+
+        # Launch TensorBoard using subprocess (in the background)
+        subprocess.Popen(['tensorboard', '--logdir', log_dir])
+
+        # Open the TensorBoard URL in the default web browser, pointing to the new log_dir
+        webbrowser.open(f'http://localhost:6006/#scalars&run={log_dir}')
 
 
 

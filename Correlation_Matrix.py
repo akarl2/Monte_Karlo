@@ -36,6 +36,7 @@ def calc_corr_matrix(df):
 
     # Define a callback function to generate the profiling report
     def run_report(event):
+        print("Generating profiling report...")
         profile = ProfileReport(df_numeric, title="Pandas Profiling Report")
         output_file = "output.html"
         profile.to_file(output_file)  # Save the report as an HTML file
