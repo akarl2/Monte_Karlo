@@ -1927,22 +1927,11 @@ if __name__ == "__main__":
             # Close the selection popup
             self.popup.destroy()
 
-            # Combine selected X and Y data, drop rows with NaN values to ensure alignment
+            # Combine selected X and Y data, drop rows with NaN values to ensure alignment. Convert to numpy arrays
             combinations_data = self.table.model.df[selected_x_columns + selected_y_columns].dropna()
+            X_data = combinations_data[selected_x_columns].to_numpy()
+            y_data = combinations_data[selected_y_columns].to_numpy()
 
-            # Split back into X and Y data
-            X_data = combinations_data[selected_x_columns]
-            y_data = combinations_data[selected_y_columns]
-
-            # Ensure all data is numeric (converting non-numeric entries to NaN and dropping them)
-            X_data = X_data.apply(pandas.to_numeric, errors='coerce').dropna()
-            y_data = y_data.apply(pandas.to_numeric, errors='coerce').dropna()
-
-            # Convert to numpy arrays after ensuring they’re numeric
-            X_data = X_data.to_numpy()
-            y_data = y_data.to_numpy()
-
-            # Print data for verification
             print("X_data:\n", X_data)
             print("y_data:\n", y_data)
 

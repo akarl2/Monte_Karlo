@@ -1,11 +1,19 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, Toplevel
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib
 import matplotlib.pyplot as plt
+from keras.src.utils.module_utils import tensorflow
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import sys
+import io
+
+from tkinter import Toplevel, Text, Scrollbar
+
+from openpyxl.styles.builtins import output
+from tensorflow.python.keras.utils.version_utils import training
 
 
 class NeuralNetworkArchitectureBuilder:
@@ -48,12 +56,39 @@ class NeuralNetworkArchitectureBuilder:
         self.visualization_frame = tk.Frame(self.master)
         self.visualization_frame.pack(pady=10, fill="both", expand=True)
 
-        # Initialize with a single layer
-        self.add_layer_fields()
-
         # Start training button
         start_training_button = tk.Button(self.master, text="Start Training", command=lambda: self.run_training())
         start_training_button.pack(pady=10)
+
+        #input for the number of epochs
+        self.epochs_label = tk.Label(self.master, text="Number of Epochs:")
+        self.epochs_entry = tk.Entry(self.master)
+
+        self.batch_label = tk.Label(self.master, text="Batch Size:")
+        self.batch_entry = tk.Entry(self.master)
+
+        self.loss_label = tk.Label(self.master, text="Loss Function:")
+        self.loss_var = tk.StringVar(value="BinaryCrossentropy")
+        self.loss_dropdown = ttk.Combobox(self.master, textvariable=self.loss_var, values=["BinaryCrossentropy", "CategoricalCrossentropy", "MeanSquaredError"], width=20)
+
+        self.optimizer_label = tk.Label(self.master, text="Optimizer:")
+        self.optimizer_entry = tk.Entry(self.master)
+
+        self.learning_rate_label = tk.Label(self.master, text="Learning Rate:")
+        self.learning_rate_entry = tk.Entry(self.master)
+
+        self.metrics_label = tk.Label(self.master, text="Metrics:")
+        self.metrics_entry = tk.Entry(self.master)
+
+        #set the default values
+        self.epochs_entry.insert(0, "10")
+        self.batch_entry.insert(0, "32")
+        self.optimizer_entry.insert(0, "Adam")
+        self.learning_rate_entry.insert(0, "0.001")
+        self.metrics_entry.insert(0, "accuracy")
+
+        # Initialize with a single layer
+        self.add_layer_fields()
 
     def on_layer_type_change(self, index):
         """ Handle the layer type change event. """
@@ -278,7 +313,6 @@ class NeuralNetworkArchitectureBuilder:
             for kernel_size, layer_type in zip(self.layer_kernel_widgets, layer_types)]
         regularizer_types = [regularizer.get() for regularizer in self.layer_regularizer_type]
         regularizer_values = [regularizer.get() for regularizer in self.layer_regularizer_vars]
-
         num_layers = len(layers)
         total_params = 0
 
@@ -351,14 +385,71 @@ class NeuralNetworkArchitectureBuilder:
         for widget in self.visualization_frame.winfo_children():
             widget.destroy()
 
+        # Use pack to place the epochs_label and epochs_entry at the bottom left corner, horizontally
+        self.epochs_label.pack(side="left", anchor="sw", padx=5, pady=5)
+        self.epochs_entry.pack(side="left", anchor="sw", padx=5, pady=5)
+        self.batch_label.pack(side="left", anchor="sw", padx=5, pady=5)
+        self.batch_entry.pack(side="left", anchor="sw", padx=5, pady=5)
+        self.loss_label.pack(side="left", anchor="sw", padx=5, pady=5)
+        self.loss_dropdown.pack(side="left", anchor="sw", padx=5, pady=5)
+        self.optimizer_label.pack(side="left", anchor="sw", padx=5, pady=5)
+        self.optimizer_entry.pack(side="left", anchor="sw", padx=5, pady=5)
+        self.learning_rate_label.pack(side="left", anchor="sw", padx=5, pady=5)
+        self.learning_rate_entry.pack(side="left", anchor="sw", padx=5, pady=5)
+        self.metrics_label.pack(side="left", anchor="sw", padx=5, pady=5)
+        self.metrics_entry.pack(side="left", anchor="sw", padx=5, pady=5)
+
+
         # Create a new canvas for the updated visualization
         canvas = FigureCanvasTkAgg(fig, master=self.visualization_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
+    def show_verbose_popup(self):
+        """ Create a popup window that shows verbose updates during training """
+        popup = Toplevel(self.master)
+        popup.title("Verbose Updates")
+        popup.geometry("400x300")  # Set the size of the popup window
+
+        # Create a Text widget to display the updates
+        self.text_widget = Text(popup, wrap="word", height=15, width=50)
+        self.text_widget.pack(padx=10, pady=10, fill="both", expand=True)
+
+        # Add a Scrollbar to the Text widget
+        scrollbar = Scrollbar(popup, command=self.text_widget.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.text_widget.config(yscrollcommand=scrollbar.set)
+
+    def update_verbose(self, message):
+        """ Update the Text widget with training progress messages """
+        self.text_widget.insert("end", message + "\n")
+        self.text_widget.yview("end")
+
+    class TrainingCallback(tensorflow.keras.callbacks.Callback):
+        def __init__(self, update_func):
+            self.update_func = update_func
+
+        def on_epoch_end(self, epoch, logs=None):
+            """Callback function called after each epoch."""
+            logs = logs or {}
+            epoch_info = f"Epoch {epoch + 1}: Loss={logs.get('loss'):.4f}, Accuracy={logs.get('accuracy'):.4f}"
+            self.update_func(epoch_info)  # Update the GUI with the current epoch info
+
+
     def run_training(self):
         """ Run the training process using the specified neural network architecture. """
         print("Training Neural Network...")
+
+        # Get the number of epochs and batch size
+        epochs = int(self.epochs_entry.get())
+        batch_size = int(self.batch_entry.get())
+        loss_function = self.loss_dropdown.get()
+        optimizer = self.optimizer_entry.get()
+        learning_rate = float(self.learning_rate_entry.get())
+        metrics = self.metrics_entry.get()
+
+        self.show_verbose_popup()
+        self.update_verbose("Training Neural Network...\n")
 
         # Define a class to store layer information
         class Layer:
@@ -442,10 +533,23 @@ class NeuralNetworkArchitectureBuilder:
         model = build_model(layers, input_shape)
         model.summary()
 
-        # Train the model
-        model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-        model.fit(self.X_data, self.y_data, epochs=5, batch_size=32)
+        # Compile the model
+        model.compile(
+            loss=tf.keras.losses.BinaryCrossentropy() if loss_function == "BinaryCrossentropy"
+            else tf.keras.losses.CategoricalCrossentropy() if loss_function == "CategoricalCrossentropy"
+            else tf.keras.losses.MeanSquaredError(),
+            optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+            metrics=[metrics]
+        )
+
+        # Initialize the callback
+        training_callback = self.TrainingCallback(self.update_verbose)
+
+        # Start training with the callback for real-time updates
+        model.fit(self.X_data, self.y_data, epochs=epochs, batch_size=batch_size, verbose=0,
+                  callbacks=[training_callback])
 
         print("Training Complete!")
+
 
 
