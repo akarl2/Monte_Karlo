@@ -16,9 +16,15 @@ import datetime
 
 from tkinter import Toplevel, Text, Scrollbar
 
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout
+from tensorflow.keras.regularizers import l1, l2
+from sklearn.model_selection import train_test_split
+
 
 class NeuralNetworkArchitectureBuilder:
-    def __init__(self, master, X_data=None, y_data=None):
+    def __init__(self, master, X_data=None, y_data=None, train_test_split_var=None):
         self.master = master
         self.layer_fields = []
         self.layer_types = []
@@ -40,7 +46,7 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_regularizer_vars = []
         self.X_data = X_data
         self.y_data = y_data
-
+        self.train_test_split_var = train_test_split_var
 
     def configure_nn_popup(self):
         self.master.title("Neural Network Architecture Builder")
@@ -91,6 +97,15 @@ class NeuralNetworkArchitectureBuilder:
         self.learning_rate_entry.insert(0, "0.001")
         self.metrics_entry.insert(0, "accuracy")
         self.validation_split_entry.insert(0, "0.2")
+
+        if self.train_test_split_var is not None:
+            print("Train test split is not None")
+            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X_data, self.y_data,
+                                                                                test_size=self.train_test_split_var)
+        else:
+            self.X_train = self.X_data
+            self.y_train = self.y_data
+
 
         # Initialize with a single layer
         self.add_layer_fields()
@@ -326,9 +341,9 @@ class NeuralNetworkArchitectureBuilder:
         ax.axis('off')
 
         # Display X_data and y_data shapes at the top of the plot
-        x_shape = self.X_data.shape if self.X_data is not None else "N/A"
-        y_shape = self.y_data.shape if self.y_data is not None else "N/A"
-        ax.text(0.5, 0.9, f"Data Shape (X): {x_shape}    Target Shape (y): {y_shape}", ha="center", va="center",
+        x_shape = self.X_train.shape if self.X_train is not None else "N/A"
+        y_shape = self.y_train.shape if self.y_train is not None else "N/A"
+        ax.text(0.5, 0.9, f"Train Data Shape (X): {x_shape}    Train Target Shape (y): {y_shape}", ha="center", va="center",
                 fontsize=12, weight="bold")
 
         # Define positions for each layer
@@ -413,6 +428,18 @@ class NeuralNetworkArchitectureBuilder:
 
 
     def run_training(self):
+
+       #Give a warning if last layer nodes is not equal to the number of classes
+        if self.layer_fields[-1][1].get() != self.y_data.shape[1]:
+            tk.messagebox.showwarning("Warning", "The number of nodes in the last layer should be equal to the number of classes in the target data.")
+            return
+
+        #Give a warning if the laste layer activation is not suitable for the target data.  Ie. softmax for multi-class classification, sigmoid for binary classification, etc.
+        if self.layer_fields[-1][2].get() == "relu" and np.unique(self.y_data).shape[0] == 2:
+            tk.messagebox.showwarning("Warning", "Binary classification should use sigmoid activation in the last layer.")
+            return
+
+
         # Get the number of epochs and batch size
         epochs = int(self.epochs_entry.get())
         batch_size = int(self.batch_entry.get())
@@ -420,6 +447,7 @@ class NeuralNetworkArchitectureBuilder:
         optimizer = self.optimizer_entry.get()
         learning_rate = float(self.learning_rate_entry.get())
         metrics = self.metrics_entry.get()
+
 
         # Define a class to store layer information
         class Layer:
@@ -457,10 +485,7 @@ class NeuralNetworkArchitectureBuilder:
             )
 
 
-        import tensorflow as tf
-        from tensorflow.keras.models import Sequential
-        from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout
-        from tensorflow.keras.regularizers import l1, l2
+
 
         # Define a function to build the neural network model
         def build_model(layers, input_shape):
@@ -499,6 +524,8 @@ class NeuralNetworkArchitectureBuilder:
         model = build_model(layers, input_shape)
         model.summary()
 
+        print(optimizer)
+
         # Compile the model
         model.compile(
             loss=tf.keras.losses.BinaryCrossentropy() if loss_function == "Binary Cross-Entropy"
@@ -509,20 +536,29 @@ class NeuralNetworkArchitectureBuilder:
             metrics=[metrics]
         )
 
-        # Set up TensorBoard callback
+
+       # Set up TensorBoard callback with a unique directory for each session
+
         log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
+        # Start training with the callback for TensorBoard logging
+        history = model.fit(self.X_train, self.y_train, epochs=epochs, batch_size=batch_size, verbose=2,
+                            callbacks=[tensorboard_callback], validation_split=float(self.validation_split_entry.get()))
 
-        # Start training with the callback for real-time updates and TensorBoard logging
-        history = model.fit(self.X_data, self.y_data, epochs=epochs, batch_size=batch_size, verbose=2,
-                  callbacks=[tensorboard_callback], validation_split=float(self.validation_split_entry.get()))
+        # Launch TensorBoard and point to the parent 'logs/fit' directory
+        subprocess.Popen(['tensorboard', '--logdir', 'logs/fit'])
 
-        # Launch TensorBoard using subprocess (in the background)
-        subprocess.Popen(['tensorboard', '--logdir', log_dir])
+        # Open the TensorBoard URL in the default web browser
+        webbrowser.open('http://localhost:6006')
 
-        # Open the TensorBoard URL in the default web browser, pointing to the new log_dir
-        webbrowser.open(f'http://localhost:6006/#scalars&run={log_dir}')
+        if self.train_test_split > 0:
+            model.evaluate(self.X_test, self.y_test)
+        else:
+            model.evaluate(self.X_data, self.y_data)
+
+
+
 
 
 

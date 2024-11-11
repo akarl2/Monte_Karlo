@@ -1897,6 +1897,19 @@ if __name__ == "__main__":
             self.y_columns_vars = []
             self.add_y_column_selection(column_headers)
 
+            # Train/Test Split Checkbox
+            tkinter.Label(self.popup, text="Train/Test Split:").pack(anchor=tkinter.W, padx=10, pady=5)
+            self.train_test_split_var_nn = tkinter.BooleanVar(value=False)
+            train_test_split_checkbutton_nn = tkinter.Checkbutton(self.popup, text="Apply Train/Test Split",
+                                                               variable=self.train_test_split_var_nn)
+            train_test_split_checkbutton_nn.pack(anchor=tkinter.W, padx=10)
+
+            # Train/Test Split Fraction input
+            tkinter.Label(self.popup, text="Test Fraction (0.0 - 1.0):").pack(anchor=tkinter.W, padx=10, pady=5)
+            self.test_fraction_var_nn = tkinter.DoubleVar(value=0.2)  # Default test size as 20%
+            test_fraction_entry_nn = tkinter.Entry(self.popup, textvariable=self.test_fraction_var_nn)
+            test_fraction_entry_nn.pack(anchor=tkinter.W, padx=10)
+
         def add_y_column_selection(self, column_headers):
             y_var = tkinter.StringVar()
             y_var.set(column_headers[-1])  # Default to last column
@@ -1924,9 +1937,6 @@ if __name__ == "__main__":
                 messagebox.showwarning("No Y Columns Selected", "Please select at least one Y column.")
                 return
 
-            # Close the selection popup
-            self.popup.destroy()
-
             # Combine selected X and Y data
             combinations_data = self.table.model.df[selected_x_columns + selected_y_columns]
 
@@ -1943,8 +1953,17 @@ if __name__ == "__main__":
 
             # Open a new popup for configuring the neural network
             nn_popup = tkinter.Toplevel(self)
-            nn_builder = NeuralNetworkArchitectureBuilder(nn_popup, X_data, y_data)
-            nn_builder.configure_nn_popup()
+
+            #include train_test_split if selecte
+            if self.train_test_split_var_nn.get():
+                test_size = self.test_fraction_var_nn.get()
+                print("Train Test Split")
+                nn_builder = NeuralNetworkArchitectureBuilder(nn_popup, X_data, y_data, train_test_split_var=test_size)
+                nn_builder.configure_nn_popup()
+            else:
+                print("No train_test_split")
+                nn_builder = NeuralNetworkArchitectureBuilder(nn_popup, X_data, y_data)
+                nn_builder.configure_nn_popup()
 
 
 
