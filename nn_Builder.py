@@ -13,17 +13,17 @@ import io
 import subprocess
 import webbrowser
 import datetime
-
-from tkinter import Toplevel, Text, Scrollbar
-
+from tkinter import Toplevel, Text, Scrollbar, Label, Button
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout, InputLayer
 from tensorflow.keras.regularizers import l1, l2
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import TensorBoard
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix, classification_report
+from io import BytesIO
+from PIL import Image, ImageTk
+
 
 
 
@@ -263,6 +263,9 @@ class NeuralNetworkArchitectureBuilder:
 
     def remove_layer_fields(self, index):
         """ Removes fields for the specified layer and updates the layout. """
+
+        print(f"Index to delete: {index}, List length: {len(self.layer_fields)}")
+
         # Remove the widgets from the grid
         for widget in self.layers_frame.grid_slaves(row=index):
             widget.grid_forget()
@@ -308,9 +311,11 @@ class NeuralNetworkArchitectureBuilder:
             self.layer_type_widgets[i].unbind("<<ComboboxSelected>>")
             self.layer_type_widgets[i].bind("<<ComboboxSelected>>", lambda event, idx=i: self.on_layer_type_change(idx))
             self.layer_activation_widgets[i].unbind("<<ComboboxSelected>>")
-            self.layer_activation_widgets[i].bind("<<ComboboxSelected>>", lambda event, idx=i: self.on_layer_type_change(idx))
+            self.layer_activation_widgets[i].bind("<<ComboboxSelected>>",
+                                                  lambda event, idx=i: self.on_layer_type_change(idx))
             self.layer_regularizer_widgets[i].unbind("<<ComboboxSelected>>")
-            self.layer_regularizer_widgets[i].bind("<<ComboboxSelected>>", lambda event, idx=i: self.on_layer_type_change(idx))
+            self.layer_regularizer_widgets[i].bind("<<ComboboxSelected>>",
+                                                   lambda event, idx=i: self.on_layer_type_change(idx))
 
             # Update kernel size field visibility based on new index
             self.update_kernel_size_field(i)
@@ -540,10 +545,20 @@ class NeuralNetworkArchitectureBuilder:
 
         # Build and print the model summary
         input_shape = self.X_data.shape[1:]
-        print("Input Shape:", input_shape)
 
         model = build_model(layers, input_shape)
         model.summary()
+
+        for layer in model.layers:
+            print(f"Layer Type: {layer.__class__.__name__}")
+            print(f"Activation: {layer.activation.__name__ if layer.activation else None}")
+            if hasattr(layer, 'kernel_size'):
+                print(f"Kernel Size: {layer.kernel_size}")
+            if hasattr(layer, 'units'):
+                print(f"Units: {layer.units}")
+            if hasattr(layer, 'filters'):
+                print(f"Filters: {layer.filters}")
+            print("-" * 30)
 
         # Compile the model
         model.compile(
@@ -573,33 +588,77 @@ class NeuralNetworkArchitectureBuilder:
        #display the training results in a new window
         self.display_training_results(history, model)
 
-    def display_training_results(self, history, model):
-        # Create a new window for displaying the training results
-        results_window = Toplevel(self.master)
-        results_window.title("Training Results")
 
-        # Create a text widget for displaying the training history
-        results_text = Text(results_window, wrap="word", height=30, width=100)
+    def display_training_results(self, history, model):
+        # Create a new window for displaying the results
+        heatmap_window = Toplevel(self.master)
+        heatmap_window.title("Confusion Matrix and Classification Report")
+
+        # Create a Text widget for displaying confusion matrix and classification report
+        results_text = Text(heatmap_window, wrap="word", height=30, width=100)
         results_text.pack(fill="both", expand=True)
 
         # Create a scrollbar for the text widget
-        scrollbar = Scrollbar(results_window, command=results_text.yview)
+        scrollbar = Scrollbar(heatmap_window, command=results_text.yview)
         scrollbar.pack(side="right", fill="y")
         results_text.config(yscrollcommand=scrollbar.set)
 
-        # Calculate predictions and convert them to class labels
-        y_pred = model.predict(self.X_test)
-        y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
+        if self.train_test_split_var is not None:
+            # Evaluate on the test data
+            y_pred = model.predict(self.X_test)
+            y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
+            cm = confusion_matrix(self.y_test, y_pred_classes)
+            cr = classification_report(self.y_test, y_pred_classes)
+            cr_dict = classification_report(self.y_test, y_pred_classes, output_dict=True)
+            results_text.insert("end", "Test Data Confusion Matrix:\n")
+        else:
+            # Evaluate on the train data
+            y_pred = model.predict(self.X_train)
+            y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
+            cm = confusion_matrix(self.y_data, y_pred_classes)
+            cr = classification_report(self.y_data, y_pred_classes)
+            cr_dict = classification_report(self.y_data, y_pred_classes, output_dict=True)
+            results_text.insert("end", "Train Data Confusion Matrix:\n")
 
-        # Calculate confusion matrix and classification report
-        cm = confusion_matrix(self.y_test, y_pred_classes)
-        cr = classification_report(self.y_test, y_pred_classes)
-
-        # Display results in `results_text`
-        results_text.insert("end", "Confusion Matrix:\n")
+        # Insert confusion matrix and classification report into the text widget
         results_text.insert("end", str(cm) + "\n\n")
         results_text.insert("end", "Classification Report:\n")
         results_text.insert("end", cr + "\n\n")
+
+        # Plot confusion matrix as a heatmap
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=np.unique(self.y_test),
+                    yticklabels=np.unique(self.y_test))
+        plt.xlabel('Predicted')
+        plt.ylabel('Actual')
+        plt.title('Confusion Matrix Heatmap')
+
+        # Save the figure to a BytesIO object to display in Tkinter
+        img_buf = BytesIO()
+        plt.savefig(img_buf, format='png')
+        img_buf.seek(0)
+
+        # Convert the plot to an image format suitable for Tkinter
+        img = Image.open(img_buf)
+        img_tk = ImageTk.PhotoImage(img)
+
+        # Create a label to display the image in Tkinter
+        label = Label(heatmap_window, image=img_tk)
+        label.image = img_tk  # Keep a reference to avoid garbage collection
+        label.pack()
+
+        # Close the figure to avoid displaying it in a new window
+        plt.close()
+
+        # Add a button to this window for future functionality (e.g., display another result)
+        def button_action():
+            print("Button pressed!")  # Placeholder for future actions
+
+        button = Button(heatmap_window, text="Add Another Feature", command=button_action)
+        button.pack()
+
+
+
 
 
 
