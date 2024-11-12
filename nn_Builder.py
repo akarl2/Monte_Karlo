@@ -147,7 +147,8 @@ class NeuralNetworkArchitectureBuilder:
         layer_index = len(self.layer_fields)
 
         # Column 0: Remove Layer button (red "X")
-        remove_button = tk.Button(self.layers_frame, text="X", fg="red", command=lambda: self.remove_layer_fields(layer_index))
+        remove_button = tk.Button(self.layers_frame, text="X", fg="red",
+                                  command=lambda b=layer_index: self.remove_layer_fields(b))
         remove_button.grid(row=layer_index, column=0, padx=10, pady=5)
         self.layer_remove_buttons.append(remove_button)
 
@@ -281,13 +282,13 @@ class NeuralNetworkArchitectureBuilder:
         # Remove associated widgets and labels from lists
         del self.layer_type_widgets[index]
         del self.layer_node_widgets[index]
-        del self.layer_activation_widgets[index]
         del self.layer_kernel_widgets[index]
         del self.layer_kernel_labels[index]
         del self.layer_remove_buttons[index]
         del self.layer_info_labels[index]  # Update Layer info label list
         del self.layer_nodes_labels[index]  # Remove Nodes/Rate label
         del self.layer_activations_labels[index]  # Remove Activation label
+        del self.layer_activation_widgets[index]
         del self.layer_regularizer_labels[index]  # Remove Regularizer label
         del self.layer_regularizer_widgets[index]  # Remove Regularizer widget
 
@@ -305,6 +306,9 @@ class NeuralNetworkArchitectureBuilder:
             self.layer_activation_widgets[i].grid(row=i, column=6, padx=10, pady=5, sticky="w")
             self.layer_regularizer_labels[i].grid(row=i, column=8, sticky="e", padx=(5, 2), pady=5)  # Regularizer label
             self.layer_regularizer_widgets[i].grid(row=i, column=9, padx=10, pady=5)
+            self.layer_kernel_widgets[i][0].grid(row=i, column=11, padx=10, pady=5, sticky="w")  # Kernel size entry X
+            self.layer_kernel_widgets[i][1].grid(row=i, column=12, padx=10, pady=5, sticky="w")  # Kernel size entry Y
+            self.layer_kernel_labels[i].grid(row=i, column=13, padx=10, pady=5, sticky="e")  # Kernel size label
             self.layer_regularizer_vars[i].grid(row=i, column=10, padx=10, pady=5)
 
             # Rebind combobox to capture updated index `i`
@@ -609,16 +613,12 @@ class NeuralNetworkArchitectureBuilder:
             y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
             cm = confusion_matrix(self.y_test, y_pred_classes)
             cr = classification_report(self.y_test, y_pred_classes)
-            cr_dict = classification_report(self.y_test, y_pred_classes, output_dict=True)
-            results_text.insert("end", "Test Data Confusion Matrix:\n")
         else:
             # Evaluate on the train data
             y_pred = model.predict(self.X_train)
             y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
             cm = confusion_matrix(self.y_data, y_pred_classes)
             cr = classification_report(self.y_data, y_pred_classes)
-            cr_dict = classification_report(self.y_data, y_pred_classes, output_dict=True)
-            results_text.insert("end", "Train Data Confusion Matrix:\n")
 
         # Insert confusion matrix and classification report into the text widget
         results_text.insert("end", str(cm) + "\n\n")
