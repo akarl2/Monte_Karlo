@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib
-from tensorflow.keras.callbacks import TensorBoard
+
 import matplotlib.pyplot as plt
 from keras.src.utils.module_utils import tensorflow
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -18,9 +18,13 @@ from tkinter import Toplevel, Text, Scrollbar
 
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout
+from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout, InputLayer
 from tensorflow.keras.regularizers import l1, l2
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.callbacks import TensorBoard
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report
+
 
 
 class NeuralNetworkArchitectureBuilder:
@@ -75,7 +79,7 @@ class NeuralNetworkArchitectureBuilder:
         self.batch_entry = tk.Entry(self.master)
 
         self.loss_label = tk.Label(self.master, text="Loss Function:")
-        self.loss_var = tk.StringVar(value="BinaryCrossentropy")
+        self.loss_var = tk.StringVar(value="Binary Cross-Entropy")
         self.loss_dropdown = ttk.Combobox(self.master, textvariable=self.loss_var, values=["Binary Cross-Entropy", "Categorical Cross-Entropy", "Sparse Categorical Cross-Entropy", "Mean Square Error"], width=20)
 
         self.optimizer_label = tk.Label(self.master, text="Optimizer:")
@@ -99,13 +103,11 @@ class NeuralNetworkArchitectureBuilder:
         self.validation_split_entry.insert(0, "0.2")
 
         if self.train_test_split_var is not None:
-            print("Train test split is not None")
             self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X_data, self.y_data,
                                                                                 test_size=self.train_test_split_var)
         else:
             self.X_train = self.X_data
             self.y_train = self.y_data
-
 
         # Initialize with a single layer
         self.add_layer_fields()
@@ -169,7 +171,7 @@ class NeuralNetworkArchitectureBuilder:
         nodes_label.grid(row=layer_index, column=3, sticky="e", padx=(5, 2), pady=5)
         self.layer_nodes_labels.append(nodes_label)
 
-        nodes_var = tk.IntVar(value=10)
+        nodes_var = tk.DoubleVar(value=10)
         nodes_entry = tk.Entry(self.layers_frame, textvariable=nodes_var, width=5)
         nodes_entry.grid(row=layer_index, column=4, padx=10, pady=5, sticky="w")
         nodes_entry.bind("<FocusOut>", lambda e: self.show_visual_key())  # Trigger visualization update
@@ -305,10 +307,8 @@ class NeuralNetworkArchitectureBuilder:
             # Rebind combobox to capture updated index `i`
             self.layer_type_widgets[i].unbind("<<ComboboxSelected>>")
             self.layer_type_widgets[i].bind("<<ComboboxSelected>>", lambda event, idx=i: self.on_layer_type_change(idx))
-
             self.layer_activation_widgets[i].unbind("<<ComboboxSelected>>")
             self.layer_activation_widgets[i].bind("<<ComboboxSelected>>", lambda event, idx=i: self.on_layer_type_change(idx))
-
             self.layer_regularizer_widgets[i].unbind("<<ComboboxSelected>>")
             self.layer_regularizer_widgets[i].bind("<<ComboboxSelected>>", lambda event, idx=i: self.on_layer_type_change(idx))
 
@@ -321,8 +321,9 @@ class NeuralNetworkArchitectureBuilder:
     def show_visual_key(self):
         """ Show a visual representation of the neural network architecture, including data shapes and layer parameters. """
         # Collect current layer configurations
-        layers = [
-            nodes_var.get() if layer_type.get() in ["Dense", "2D Convolutional", "3D Convolutional"] else None
+        layer_val_entry = [
+            nodes_var.get() if layer_type.get() == "Dropout" else int(nodes_var.get())
+            if layer_type.get() in ["Dense", "2D Convolutional", "3D Convolutional"] else None
             for layer_type, nodes_var in zip(self.layer_types, self.layer_nodes_vars)]
         layer_types = [layer_type.get() for layer_type in self.layer_types]
         activations = [activation.get() for activation in self.layer_activations]
@@ -333,7 +334,7 @@ class NeuralNetworkArchitectureBuilder:
             for kernel_size, layer_type in zip(self.layer_kernel_widgets, layer_types)]
         regularizer_types = [regularizer.get() for regularizer in self.layer_regularizer_type]
         regularizer_values = [regularizer.get() for regularizer in self.layer_regularizer_vars]
-        num_layers = len(layers)
+        num_layers = len(layer_val_entry)
         total_params = 0
 
         # Create a new figure for the visualization
@@ -350,35 +351,46 @@ class NeuralNetworkArchitectureBuilder:
         x_positions = np.linspace(0.1, 0.9, num_layers)
         y_offset = 0.5
 
-        for i, (x, nodes, layer_type, activation, kernel_size, regularizer_type, regularizer_value) in enumerate(
-                zip(x_positions, layers, layer_types, activations, kernel_sizes, regularizer_types,
+        for i, (x, layer_val, layer_type, activation, kernel_size, regularizer_type, regularizer_value) in enumerate(
+                zip(x_positions, layer_val_entry, layer_types, activations, kernel_sizes, regularizer_types,
                     regularizer_values)):
             # Start with basic layer text
             layer_text = f"Layer {i + 1}: {layer_type}\n"
 
             # Calculate the number of parameters based on layer type
             layer_params = 0
+
+            # Find the previous valid node count for Dense layers, ignoring Dropout and Flatten layers
             if layer_type == "Dense":
-                prev_nodes = layers[i - 1] if i > 0 else x_shape[1]
-                layer_params = int(nodes) * (int(prev_nodes) + 1)  # including bias term
-                layer_text += f" Nodes: {nodes}\n"
+                prev_nodes = None
+                for j in range(i - 1, -1, -1):  # Traverse backward to find the previous valid node count
+                    if isinstance(layer_val_entry[j], int):  # Check if it's a valid integer node count
+                        prev_nodes = layer_val_entry[j]
+                        break
+                if prev_nodes is None:  # Default to input shape if no previous valid layer was found
+                    prev_nodes = x_shape[1]
+
+                layer_params = int(layer_val) * (int(prev_nodes) + 1)  # Including bias term
+                layer_text += f" Nodes: {layer_val}\n"
             elif layer_type == "2D Convolutional":
-                filters = int(nodes)
+                filters = int(layer_val)
                 kernel_height, kernel_width = int(kernel_size[0]), int(kernel_size[1])
-                input_channels = layers[i - 1] if i > 0 else x_shape[-1]  # assuming last dimension as channels
+                input_channels = layer_val[i - 1] if i > 0 else x_shape[-1]  # Assuming last dimension as channels
                 layer_params = filters * (kernel_height * kernel_width * input_channels + 1)  # +1 for bias
                 layer_text += f" Filters: {filters}\nKernel Size: {kernel_height} x {kernel_width}\n"
             elif layer_type == "2D Pooling":
                 kernel_height, kernel_width = int(kernel_size[0]), int(kernel_size[1])
                 layer_text += f"Kernel Size: {kernel_height} x {kernel_width}\n"
             elif layer_type == "Dropout":
-                layer_text += f"Dropout Rate: {nodes}\n"
+                dropout_rate = float(layer_val)
+                layer_text += f"Dropout Rate: {dropout_rate}\n"
             elif layer_type == "Flatten":
                 layer_text += "Flatten layer\n"
 
             # Add activation, excluding certain layer types
             if layer_type not in ["Dropout", "Flatten", "2D Pooling", "3D Pooling"]:
                 layer_text += f"Activation: {activation}\n"
+
 
             # Add regularizer if defined
             if regularizer_type and regularizer_value:  # If both regularizer type and value are defined
@@ -420,25 +432,23 @@ class NeuralNetworkArchitectureBuilder:
         self.metrics_entry.pack(side="left", anchor="sw", padx=5, pady=5)
         self.validation_split_label.pack(side="left", anchor="sw", padx=5, pady=5)
 
-
         # Create a new canvas for the updated visualization
         canvas = FigureCanvasTkAgg(fig, master=self.visualization_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
-
     def run_training(self):
-
-       #Give a warning if last layer nodes is not equal to the number of classes
+        # Give a warning if the last layer nodes are not equal to the number of classes
         if self.layer_fields[-1][1].get() != self.y_data.shape[1]:
-            tk.messagebox.showwarning("Warning", "The number of nodes in the last layer should be equal to the number of classes in the target data.")
+            tk.messagebox.showwarning("Warning",
+                                      "The number of nodes in the last layer should be equal to the number of classes in the target data.")
             return
 
-        #Give a warning if the laste layer activation is not suitable for the target data.  Ie. softmax for multi-class classification, sigmoid for binary classification, etc.
+        # Give a warning if the last layer activation is not suitable for the target data. E.g., softmax for multi-class classification, sigmoid for binary classification, etc.
         if self.layer_fields[-1][2].get() == "relu" and np.unique(self.y_data).shape[0] == 2:
-            tk.messagebox.showwarning("Warning", "Binary classification should use sigmoid activation in the last layer.")
+            tk.messagebox.showwarning("Warning",
+                                      "Binary classification should use sigmoid activation in the last layer.")
             return
-
 
         # Get the number of epochs and batch size
         epochs = int(self.epochs_entry.get())
@@ -447,7 +457,6 @@ class NeuralNetworkArchitectureBuilder:
         optimizer = self.optimizer_entry.get()
         learning_rate = float(self.learning_rate_entry.get())
         metrics = self.metrics_entry.get()
-
 
         # Define a class to store layer information
         class Layer:
@@ -472,11 +481,16 @@ class NeuralNetworkArchitectureBuilder:
             # Handle regularizer type and value (check if the regularizer is "None")
             regularizer_type = None if regularizer_var.get() == "None" else regularizer_var.get()
 
+            # Ensure proper types for layer configurations
+            nodes = int(nodes_var.get())  # Ensure nodes are integers
+            if layer_type_var.get() == "Dropout":
+                nodes = float(nodes_var.get())  # Dropout rate should be float
+
             # Create and append layer object
             layers.append(
                 Layer(
                     layer_type_var.get(),
-                    nodes_var.get(),
+                    nodes,
                     activation_var.get(),
                     kernel_size,
                     regularizer_type,
@@ -484,47 +498,52 @@ class NeuralNetworkArchitectureBuilder:
                 )
             )
 
-
-
-
         # Define a function to build the neural network model
         def build_model(layers, input_shape):
             model = Sequential()
+
+            # Loop through the layers
             for i, layer in enumerate(layers):
                 if layer.layer_type == "Dense":
                     if i == 0:  # Add input shape only to the first layer
+                        # First layer - explicit input layer
+                        model.add(InputLayer(input_shape=input_shape))
                         model.add(Dense(units=layer.nodes, activation=layer.activation,
                                         kernel_regularizer=l1(
                                             float(layer.regularizer_value)) if layer.regularizer_type == "l1"
                                         else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
-                                        else None,
-                                        input_shape=input_shape))
+                                        else None))
                     else:
                         model.add(Dense(units=layer.nodes, activation=layer.activation,
                                         kernel_regularizer=l1(
                                             float(layer.regularizer_value)) if layer.regularizer_type == "l1"
                                         else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
                                         else None))
+
                 elif layer.layer_type == "2D Convolutional":
                     model.add(Conv2D(filters=layer.nodes, kernel_size=layer.kernel_size, activation=layer.activation,
                                      kernel_regularizer=l1(
                                          float(layer.regularizer_value)) if layer.regularizer_type == "l1"
                                      else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
                                      else None))
+
                 elif layer.layer_type == "2D Pooling":
                     model.add(MaxPooling2D(pool_size=layer.kernel_size))
+
                 elif layer.layer_type == "Dropout":
-                    model.add(Dropout(rate=layer.nodes))
+                    model.add(Dropout(rate=layer.nodes))  # Dropout rate is a float
+
                 elif layer.layer_type == "Flatten":
                     model.add(Flatten())
+
             return model
 
         # Build and print the model summary
         input_shape = self.X_data.shape[1:]
+        print("Input Shape:", input_shape)
+
         model = build_model(layers, input_shape)
         model.summary()
-
-        print(optimizer)
 
         # Compile the model
         model.compile(
@@ -535,7 +554,6 @@ class NeuralNetworkArchitectureBuilder:
             optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate) if optimizer == "Adam" else None,
             metrics=[metrics]
         )
-
 
        # Set up TensorBoard callback with a unique directory for each session
 
@@ -552,10 +570,46 @@ class NeuralNetworkArchitectureBuilder:
         # Open the TensorBoard URL in the default web browser
         webbrowser.open('http://localhost:6006')
 
-        if self.train_test_split > 0:
-            model.evaluate(self.X_test, self.y_test)
-        else:
-            model.evaluate(self.X_data, self.y_data)
+       #display the training results in a new window
+        self.display_training_results(history, model)
+
+    def display_training_results(self, history, model):
+        # Create a new window for displaying the training results
+        results_window = Toplevel(self.master)
+        results_window.title("Training Results")
+
+        # Create a text widget for displaying the training history
+        results_text = Text(results_window, wrap="word", height=30, width=100)
+        results_text.pack(fill="both", expand=True)
+
+        # Create a scrollbar for the text widget
+        scrollbar = Scrollbar(results_window, command=results_text.yview)
+        scrollbar.pack(side="right", fill="y")
+        results_text.config(yscrollcommand=scrollbar.set)
+
+        # Calculate predictions and convert them to class labels
+        y_pred = model.predict(self.X_test)
+        y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
+
+        # Calculate confusion matrix and classification report
+        cm = confusion_matrix(self.y_test, y_pred_classes)
+        cr = classification_report(self.y_test, y_pred_classes)
+
+        # Display results in `results_text`
+        results_text.insert("end", "Confusion Matrix:\n")
+        results_text.insert("end", str(cm) + "\n\n")
+        results_text.insert("end", "Classification Report:\n")
+        results_text.insert("end", cr + "\n\n")
+
+
+
+
+
+
+
+
+
+
 
 
 

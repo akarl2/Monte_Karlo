@@ -1829,7 +1829,7 @@ if __name__ == "__main__":
 
             # Add button to confirm selection and run logistic regression
             confirm_button = tkinter.Button(popup, text="Run Logistic Regression",
-                                            command=lambda: self.run_logistic_regression(popup))
+                                            command=lambda: self.run_logistic_regression())
             confirm_button.pack(pady=10)
 
         def run_logistic_regression(self):
@@ -1957,11 +1957,9 @@ if __name__ == "__main__":
             #include train_test_split if selecte
             if self.train_test_split_var_nn.get():
                 test_size = self.test_fraction_var_nn.get()
-                print("Train Test Split")
                 nn_builder = NeuralNetworkArchitectureBuilder(nn_popup, X_data, y_data, train_test_split_var=test_size)
                 nn_builder.configure_nn_popup()
             else:
-                print("No train_test_split")
                 nn_builder = NeuralNetworkArchitectureBuilder(nn_popup, X_data, y_data)
                 nn_builder.configure_nn_popup()
 
