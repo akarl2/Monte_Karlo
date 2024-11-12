@@ -19,12 +19,30 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout, InputLayer
 from tensorflow.keras.regularizers import l1, l2
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.callbacks import TensorBoard
 from sklearn.metrics import confusion_matrix, classification_report
 from io import BytesIO
 from PIL import Image, ImageTk
 
 
+# Define a custom callback to update training status in real-time
+class TrainingStatusCallback(Callback):
+    def __init__(self, text_widget):
+        super().__init__()
+        self.text_widget = text_widget
+
+    def on_epoch_end(self, epoch, logs=None):
+        # Update text widget with current epoch's status
+        status = f"Epoch {epoch + 1}/{self.params['epochs']} - "
+        for key, value in logs.items():
+            status += f"{key}: {value:.4f}  "
+        status += "\n"
+
+        # Insert the status into the text widget and scroll to the end
+        self.text_widget.insert(tk.END, status)
+        self.text_widget.see(tk.END)
+        self.text_widget.update_idletasks()
 
 
 class NeuralNetworkArchitectureBuilder:
@@ -323,7 +341,6 @@ class NeuralNetworkArchitectureBuilder:
                                                    lambda event, idx=i: self.on_layer_type_change(idx))
             self.layer_remove_buttons[i].config(command=lambda b=i: self.remove_layer_fields(b))
 
-
             # Update kernel size field visibility based on new index
             self.update_kernel_size_field(i)
 
@@ -576,23 +593,40 @@ class NeuralNetworkArchitectureBuilder:
             metrics=[metrics]
         )
 
-       # Set up TensorBoard callback with a unique directory for each session
+        # Create a new window to display the training status
 
+        status_window = Toplevel(self.master)
+        status_window.title("Training Progress")
+
+        # Create Text widget for training progress with scrollbar
+        progress_text = Text(status_window, wrap="word", height=20, width=80)
+        progress_text.pack(fill="both", expand=True)
+        scrollbar = Scrollbar(status_window, command=progress_text.yview)
+        scrollbar.pack(side="right", fill="y")
+        progress_text.config(yscrollcommand=scrollbar.set)
+
+        # Add our custom callback for training status updates
+        training_status_callback = TrainingStatusCallback(progress_text)
+
+        # Start TensorBoard logging
         log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
-        # Start training with the callback for TensorBoard logging
-        history = model.fit(self.X_train, self.y_train, epochs=epochs, batch_size=batch_size, verbose=2,
-                            callbacks=[tensorboard_callback], validation_split=float(self.validation_split_entry.get()))
+        # Start training with the callback for real-time progress display
+        history = model.fit(
+            self.X_train, self.y_train,
+            epochs=epochs,
+            batch_size=batch_size,
+            verbose=0,  # Disable standard verbose to control output in the custom callback
+            callbacks=[tensorboard_callback, training_status_callback],
+            validation_split=float(self.validation_split_entry.get())
+        )
 
-        # Launch TensorBoard and point to the parent 'logs/fit' directory
+        # Launch TensorBoard in a new subprocess
         subprocess.Popen(['tensorboard', '--logdir', 'logs/fit'])
 
-        # Open the TensorBoard URL in the default web browser
+        # Open TensorBoard in the default browser
         webbrowser.open('http://localhost:6006')
-
-       #display the training results in a new window
-        self.display_training_results(history, model)
 
     def display_training_results(self, history, model):
         # Create a new window for displaying the results
