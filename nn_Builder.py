@@ -148,7 +148,8 @@ class NeuralNetworkArchitectureBuilder:
 
         # Column 0: Remove Layer button (red "X")
         remove_button = tk.Button(self.layers_frame, text="X", fg="red",
-                                  command=lambda b=layer_index: self.remove_layer_fields(b))
+                                  command=lambda b=layer_index: (
+                                  print(f"Button clicked for layer {b}"), self.remove_layer_fields(b))) # Use dynamic index
         remove_button.grid(row=layer_index, column=0, padx=10, pady=5)
         self.layer_remove_buttons.append(remove_button)
 
@@ -233,6 +234,7 @@ class NeuralNetworkArchitectureBuilder:
 
         # Show/hide kernel size fields based on the selected layer type
         self.update_kernel_size_field(layer_index)
+
         self.show_visual_key()
 
     def update_kernel_size_field(self, index):
@@ -264,7 +266,6 @@ class NeuralNetworkArchitectureBuilder:
 
     def remove_layer_fields(self, index):
         """ Removes fields for the specified layer and updates the layout. """
-
         print(f"Index to delete: {index}, List length: {len(self.layer_fields)}")
 
         # Remove the widgets from the grid
@@ -320,11 +321,13 @@ class NeuralNetworkArchitectureBuilder:
             self.layer_regularizer_widgets[i].unbind("<<ComboboxSelected>>")
             self.layer_regularizer_widgets[i].bind("<<ComboboxSelected>>",
                                                    lambda event, idx=i: self.on_layer_type_change(idx))
+            self.layer_remove_buttons[i].config(command=lambda b=i: self.remove_layer_fields(b))
+
 
             # Update kernel size field visibility based on new index
             self.update_kernel_size_field(i)
 
-        # Refresh the visualization
+        # After the rows are adjusted, refresh the visual key
         self.show_visual_key()
 
     def show_visual_key(self):
@@ -384,8 +387,7 @@ class NeuralNetworkArchitectureBuilder:
             elif layer_type == "2D Convolutional":
                 filters = int(layer_val)
                 kernel_height, kernel_width = int(kernel_size[0]), int(kernel_size[1])
-                input_channels = layer_val[i - 1] if i > 0 else x_shape[-1]  # Assuming last dimension as channels
-                layer_params = filters * (kernel_height * kernel_width * input_channels + 1)  # +1 for bias
+                layer_params = filters * (kernel_height * kernel_width + 1)  # +1 for bias
                 layer_text += f" Filters: {filters}\nKernel Size: {kernel_height} x {kernel_width}\n"
             elif layer_type == "2D Pooling":
                 kernel_height, kernel_width = int(kernel_size[0]), int(kernel_size[1])
@@ -591,7 +593,6 @@ class NeuralNetworkArchitectureBuilder:
 
        #display the training results in a new window
         self.display_training_results(history, model)
-
 
     def display_training_results(self, history, model):
         # Create a new window for displaying the results
