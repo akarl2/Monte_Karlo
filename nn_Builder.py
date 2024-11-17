@@ -13,7 +13,8 @@ import io
 import subprocess
 import webbrowser
 import datetime
-from tkinter import Toplevel, Text, Scrollbar, Label, Button
+from tkinter import Toplevel, Text, Scrollbar, Button, Label, Canvas, Frame
+import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout, InputLayer
@@ -628,19 +629,32 @@ class NeuralNetworkArchitectureBuilder:
         # Open TensorBoard in the default browser
         webbrowser.open('http://localhost:6006')
 
+        # Display the training results
+        self.display_training_results(history, model)
+
     def display_training_results(self, history, model):
-        # Create a new window for displaying the results
+        # Create a new window for displaying results
         heatmap_window = Toplevel(self.master)
-        heatmap_window.title("Confusion Matrix and Classification Report")
+        heatmap_window.title("Training Results")
+
+        # Create a canvas and a frame for scrollable content
+        canvas = Canvas(heatmap_window)
+        scrollable_frame = Frame(canvas)
+        scrollbar = Scrollbar(heatmap_window, orient="vertical", command=canvas.yview)
+
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        def configure_scroll_region(event):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+
+        scrollable_frame.bind("<Configure>", configure_scroll_region)
 
         # Create a Text widget for displaying confusion matrix and classification report
-        results_text = Text(heatmap_window, wrap="word", height=30, width=100)
-        results_text.pack(fill="both", expand=True)
-
-        # Create a scrollbar for the text widget
-        scrollbar = Scrollbar(heatmap_window, command=results_text.yview)
-        scrollbar.pack(side="right", fill="y")
-        results_text.config(yscrollcommand=scrollbar.set)
+        results_text = Text(scrollable_frame, wrap="word", height=15, width=80)
+        results_text.pack(pady=10)
 
         if self.train_test_split_var is not None:
             # Evaluate on the test data
@@ -655,12 +669,11 @@ class NeuralNetworkArchitectureBuilder:
             cm = confusion_matrix(self.y_data, y_pred_classes)
             cr = classification_report(self.y_data, y_pred_classes)
 
-        # Insert confusion matrix and classification report into the text widget
-        results_text.insert("end", str(cm) + "\n\n")
-        results_text.insert("end", "Classification Report:\n")
-        results_text.insert("end", cr + "\n\n")
+        # Insert confusion matrix and classification report into the Text widget
+        results_text.insert("end", "Confusion Matrix:\n" + str(cm) + "\n\n")
+        results_text.insert("end", "Classification Report:\n" + cr + "\n\n")
 
-        # Plot confusion matrix as a heatmap
+        # Generate and save the heatmap
         plt.figure(figsize=(8, 6))
         sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=np.unique(self.y_test),
                     yticklabels=np.unique(self.y_test))
@@ -668,29 +681,24 @@ class NeuralNetworkArchitectureBuilder:
         plt.ylabel('Actual')
         plt.title('Confusion Matrix Heatmap')
 
-        # Save the figure to a BytesIO object to display in Tkinter
         img_buf = BytesIO()
         plt.savefig(img_buf, format='png')
         img_buf.seek(0)
-
-        # Convert the plot to an image format suitable for Tkinter
         img = Image.open(img_buf)
         img_tk = ImageTk.PhotoImage(img)
-
-        # Create a label to display the image in Tkinter
-        label = Label(heatmap_window, image=img_tk)
-        label.image = img_tk  # Keep a reference to avoid garbage collection
-        label.pack()
-
-        # Close the figure to avoid displaying it in a new window
         plt.close()
 
-        # Add a button to this window for future functionality (e.g., display another result)
-        def button_action():
-            print("Button pressed!")  # Placeholder for future actions
+        # Display the heatmap as an image
+        label = Label(scrollable_frame, image=img_tk)
+        label.image = img_tk  # Keep a reference to avoid garbage collection
+        label.pack(pady=10)
 
-        button = Button(heatmap_window, text="Add Another Feature", command=button_action)
-        button.pack()
+        # Add a button for future functionality
+        def button_action():
+            print("Feature button pressed!")  # Placeholder for action
+
+        action_button = Button(scrollable_frame, text="Add Another Feature", command=button_action)
+        action_button.pack(pady=10)
 
 
 

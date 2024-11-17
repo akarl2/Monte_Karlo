@@ -1735,21 +1735,70 @@ if __name__ == "__main__":
             # Pack the main frame to ensure it's visible
             self.pack(fill=tkinter.BOTH, expand=True)
 
-            self.run_button = tkinter.Button(self,
-                text="Run Logistic Regression", command=self.prompt_for_columns, background="#355C7D",
-                highlightthickness=0, borderwidth=0, relief="flat")
-            self.run_button.pack(side=tkinter.TOP, anchor='w', pady=10, padx=5)
+            # Create a single frame for the top row of buttons
+            self.button_frame = tkinter.Frame(self, background="#355C7D")
+            self.button_frame.pack(side=tkinter.TOP, fill=tkinter.X, pady=10)
 
+            # Add buttons to the top row
+            self.run_button = tkinter.Button(self.button_frame, text="Run Logistic Regression",
+                                             command=self.prompt_for_columns, background="#355C7D",
+                                             highlightthickness=0, borderwidth=0, relief="flat")
+            self.run_button.pack(side=tkinter.LEFT, padx=5)
 
-            self.show_corr_matrix = tkinter.Button(self, text="Calculate Correlation Matrix",
+            self.show_corr_matrix = tkinter.Button(self.button_frame, text="Calculate Correlation Matrix",
                                                    command=lambda: calc_corr_matrix(self.table.model.df),
                                                    background="#355C7D", highlightthickness=0,
                                                    borderwidth=0, relief="flat")
-            self.show_corr_matrix.pack(side=tkinter.TOP, anchor='w', pady=5, padx = 5)
+            self.show_corr_matrix.pack(side=tkinter.LEFT, padx=5)
 
-            self_neural_network = tkinter.Button(self, text="Neural Network", command=self.machine_learning, background="#355C7D",
-                highlightthickness=0, borderwidth=0, relief="flat")
-            self_neural_network.pack(side=tkinter.TOP, anchor='w', pady=5, padx=5)
+            self.neural_network_button = tkinter.Button(self.button_frame, text="Neural Network",
+                                                        command=self.machine_learning, background="#355C7D",
+                                                        highlightthickness=0, borderwidth=0, relief="flat")
+            self.neural_network_button.pack(side=tkinter.LEFT, padx=5)
+
+            self.one_hot_button = tkinter.Button(self.button_frame, text="One-Hot Encode Columns",
+                                                 command=self.one_hot_encode_columns, background="#355C7D",
+                                                 highlightthickness=0, borderwidth=0, relief="flat")
+            self.one_hot_button.pack(side=tkinter.LEFT, padx=5)
+
+        def one_hot_encode_columns(self):
+            # Get current DataFrame
+            current_data = self.table.model.df
+
+            # Create a new popup window to select columns for one-hot encoding
+            popup = tkinter.Toplevel(self)
+            popup.title("Select Columns for One-Hot Encoding")
+
+            # Column selection
+            tkinter.Label(popup, text="Select columns:").pack(anchor=tkinter.W, padx=10, pady=5)
+            self.columns_to_encode_vars = {}
+            for col in current_data.columns:
+                var = tkinter.BooleanVar()
+                checkbutton = tkinter.Checkbutton(popup, text=col, variable=var)
+                checkbutton.pack(anchor=tkinter.W, padx=10)
+                self.columns_to_encode_vars[col] = var
+
+            # Confirm button to apply one-hot encoding
+            confirm_button = tkinter.Button(popup, text="Apply One-Hot Encoding",
+                                            command=lambda: self.apply_one_hot_encoding(current_data, popup))
+            confirm_button.pack(pady=10)
+
+        def apply_one_hot_encoding(self, data, popup):
+            # Get selected columns
+            selected_columns = [col for col, var in self.columns_to_encode_vars.items() if var.get()]
+            if not selected_columns:
+                messagebox.showwarning("No Columns Selected", "Please select at least one column.")
+                return
+
+            # Apply one-hot encoding
+            encoded_data = pandas.get_dummies(data, columns=selected_columns, dtype=int)
+
+            # Update the DataFrame in the table
+            self.table.updateModel(TableModel(encoded_data))
+            self.table.redraw()
+
+            # Close the popup
+            popup.destroy()
 
 
         def prompt_for_columns(self):
