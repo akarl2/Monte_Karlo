@@ -25,6 +25,7 @@ from tensorflow.keras.callbacks import TensorBoard
 from sklearn.metrics import confusion_matrix, classification_report, mean_squared_error
 from io import BytesIO
 from PIL import Image, ImageTk
+from pandastable import Table
 
 from NN_Optimal_Settings import LOSS_METRICS_DICT
 
@@ -85,10 +86,13 @@ class NeuralNetworkArchitectureBuilder:
         self.notebook.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
         self.tab1 = ttk.Frame(self.notebook)
-        self.notebook.add(self.tab1, text="Neural Network Builder")
+        self.notebook.add(self.tab1, text="Data Preview")
 
         self.tab2 = ttk.Frame(self.notebook)
-        self.notebook.add(self.tab2, text="Neural Network Results")
+        self.notebook.add(self.tab2, text="Neural Network Builder")
+
+        self.tab3 = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab3, text="Neural Network Results")
 
         # Create custom style for modern design
         style = ttk.Style()
@@ -97,7 +101,7 @@ class NeuralNetworkArchitectureBuilder:
         style.configure("TCombobox", fieldbackground="white", background="#f4f4f4", relief="flat")
 
         # Frame for training parameters
-        self.params_frame = ttk.Frame(self.tab1)
+        self.params_frame = ttk.LabelFrame(self.tab2)
         self.params_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
         # Store variables for retrieving input later
@@ -145,7 +149,7 @@ class NeuralNetworkArchitectureBuilder:
         self.validation_split_entry.grid(row=2, column=3, sticky="w", padx=5, pady=5)
 
         # Frame for layer configuration (move below the params frame)
-        self.layers_frame = ttk.Frame(self.tab1)
+        self.layers_frame = ttk.Frame(self.tab2)
         self.layers_frame.grid(row=1, column=0, pady=10, padx=10, sticky="nsew")
 
         # Add Layer button
@@ -153,11 +157,11 @@ class NeuralNetworkArchitectureBuilder:
         add_layer_button.grid(row=1000, column=0, pady=5, padx=10)
 
         # Frame for visualization
-        self.visualization_frame = ttk.Frame(self.tab1)
+        self.visualization_frame = ttk.Frame(self.tab2)
         self.visualization_frame.grid(row=2, column=0, pady=10, padx=10, sticky="nsew")
 
         # Start training button
-        start_training_button = ttk.Button(self.tab1, text="Start Training", command=lambda: self.run_training())
+        start_training_button = ttk.Button(self.tab2, text="Start Training", command=lambda: self.run_training())
         start_training_button.grid(row=0, column=1, pady=10, padx=10, sticky="e")
 
         # Handle train/test split if specified
@@ -168,8 +172,43 @@ class NeuralNetworkArchitectureBuilder:
             self.X_train = self.X_data
             self.y_train = self.y_data
 
+        # Display the data preview in the first tab
+        self.display_data_preview()
+
+        self.notebook.select(self.tab2)
+
         # Initialize with a single layer
         self.add_layer_fields()
+
+    def display_data_preview(self):
+        """Display the NN_PD_DATA_X and NN_PD_DATA_Y as separate tables using pandastable."""
+        if self.NN_PD_DATA_X is not None and self.NN_PD_DATA_Y is not None:
+            # Create a frame for the X data table
+            x_table_frame = tk.Frame(self.tab1)
+            x_table_frame.place(relx=0.25, rely=0.5, anchor='center', relwidth=0.45, relheight=0.8)
+
+            x_label = ttk.Label(self.tab1, text="X Data (Features):")
+            x_label.place(relx=0.25, rely=0.1, anchor='center')
+
+            # Initialize and display the pandastable for X data
+            x_table = Table(x_table_frame, dataframe=self.NN_PD_DATA_X, showtoolbar=False, showstatusbar=False)
+            x_table.show()
+
+            # Create a frame for the Y data table
+            y_table_frame = tk.Frame(self.tab1)
+            y_table_frame.place(relx=0.75, rely=0.5, anchor='center', relwidth=0.45, relheight=0.8)
+
+            y_label = ttk.Label(self.tab1, text="Y Data (Target):")
+            y_label.place(relx=0.75, rely=0.1, anchor='center')
+
+            # Initialize and display the pandastable for Y data
+            y_table = Table(y_table_frame, dataframe=self.NN_PD_DATA_Y, showtoolbar=False, showstatusbar=False)
+            y_table.show()
+        else:
+            # If no data is available, display a message
+            no_data_label = ttk.Label(self.tab1, text="No data available to preview.")
+            no_data_label.place(relx=0.5, rely=0.5, anchor='center')
+
 
     def on_layer_type_change(self, index):
         """ Handle the layer type change event. """
@@ -656,9 +695,9 @@ class NeuralNetworkArchitectureBuilder:
     def display_training_results(self, history, model, scaler=None, degree=1):
 
         # Create a canvas and a frame for scrollable content
-        canvas = Canvas(self.tab2)
+        canvas = Canvas(self.tab3)
         scrollable_frame = Frame(canvas)
-        scrollbar = Scrollbar(self.tab2, orient="vertical", command=canvas.yview)
+        scrollbar = Scrollbar(self.tab3, orient="vertical", command=canvas.yview)
 
         scrollbar.pack(side="right", fill="y")
         canvas.pack(side="left", fill="both", expand=True)
