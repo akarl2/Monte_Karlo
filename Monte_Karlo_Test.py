@@ -1987,18 +1987,21 @@ if __name__ == "__main__":
                 return
 
             # Combine selected X and Y data
-            combinations_data = self.table.model.df[selected_x_columns + selected_y_columns]
+            NN_PD_DATA = self.table.model.df[selected_x_columns + selected_y_columns]
 
             # Clean the data by removing '\xa0' (non-breaking space) and converting to numeric
-            combinations_data = combinations_data.applymap(lambda x: str(x).replace('\xa0', '').strip())  # Remove non-breaking space
-            combinations_data = combinations_data.apply(pandas.to_numeric, errors='coerce')  # Convert to numeric, invalid values become NaN
+            NN_PD_DATA = NN_PD_DATA.applymap(lambda x: str(x).replace('\xa0', '').strip())  # Remove non-breaking space
+            NN_PD_DATA = NN_PD_DATA.apply(pandas.to_numeric, errors='coerce')  # Convert to numeric, invalid values become NaN
 
             # Drop rows with NaN values across any selected column (ensuring alignment)
-            combinations_data = combinations_data.dropna(subset=selected_x_columns + selected_y_columns)
+            NN_PD_DATA = NN_PD_DATA.dropna(subset=selected_x_columns + selected_y_columns)
+
+            NN_PD_DATA_X = NN_PD_DATA[selected_x_columns]
+            NN_PD_DATA_Y = NN_PD_DATA[selected_y_columns]
 
             # Convert to NumPy arrays
-            X_data = combinations_data[selected_x_columns].to_numpy()
-            y_data = combinations_data[selected_y_columns].to_numpy()
+            X_data = NN_PD_DATA_X.to_numpy()
+            y_data = NN_PD_DATA_Y.to_numpy()
 
             # Open a new popup for configuring the neural network
             nn_popup = tkinter.Toplevel(self)
@@ -2006,13 +2009,11 @@ if __name__ == "__main__":
             #include train_test_split if selecte
             if self.train_test_split_var_nn.get():
                 test_size = self.test_fraction_var_nn.get()
-                nn_builder = NeuralNetworkArchitectureBuilder(nn_popup, X_data, y_data, train_test_split_var=test_size)
+                nn_builder = NeuralNetworkArchitectureBuilder(nn_popup, X_data, y_data, NN_PD_DATA_X, NN_PD_DATA_Y, train_test_split_var=test_size)
                 nn_builder.configure_nn_popup()
             else:
-                nn_builder = NeuralNetworkArchitectureBuilder(nn_popup, X_data, y_data)
+                nn_builder = NeuralNetworkArchitectureBuilder(nn_popup, X_data, y_data, NN_PD_DATA_X, NN_PD_DATA_Y)
                 nn_builder.configure_nn_popup()
-
-
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
 

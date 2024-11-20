@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib
-
+import NN_Optimal_Settings
 import matplotlib.pyplot as plt
 from keras.src.utils.module_utils import tensorflow
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -13,7 +13,7 @@ import io
 import subprocess
 import webbrowser
 import datetime
-from tkinter import Toplevel, Text, Scrollbar, Button, Label, Canvas, Frame
+from tkinter import Toplevel, Text, Scrollbar, Button, Label, Canvas, Frame, Entry, messagebox
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
@@ -22,9 +22,11 @@ from tensorflow.keras.regularizers import l1, l2
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.callbacks import TensorBoard
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import confusion_matrix, classification_report, mean_squared_error
 from io import BytesIO
 from PIL import Image, ImageTk
+
+from NN_Optimal_Settings import LOSS_METRICS_DICT
 
 
 # Define a custom callback to update training status in real-time
@@ -47,7 +49,7 @@ class TrainingStatusCallback(Callback):
 
 
 class NeuralNetworkArchitectureBuilder:
-    def __init__(self, master, X_data=None, y_data=None, train_test_split_var=None):
+    def __init__(self, master, X_data=None, y_data=None, NN_PD_DATA_X = None, NN_PD_DATA_Y = None, train_test_split_var=None):
         self.master = master
         self.layer_fields = []
         self.layer_types = []
@@ -69,6 +71,8 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_regularizer_vars = []
         self.X_data = X_data
         self.y_data = y_data
+        self.NN_PD_DATA_X = NN_PD_DATA_X
+        self.NN_PD_DATA_Y = NN_PD_DATA_Y
         self.train_test_split_var = train_test_split_var
 
     def configure_nn_popup(self):
@@ -100,6 +104,7 @@ class NeuralNetworkArchitectureBuilder:
         self.loss_label = tk.Label(self.master, text="Loss Function:")
         self.loss_var = tk.StringVar(value="Binary Cross-Entropy")
         self.loss_dropdown = ttk.Combobox(self.master, textvariable=self.loss_var, values=["Binary Cross-Entropy", "Categorical Cross-Entropy", "Sparse Categorical Cross-Entropy", "Mean Square Error"], width=20)
+        self.loss_dropdown.bind("<<ComboboxSelected>>", self.update_metrics_based_on_loss)
 
         self.optimizer_label = tk.Label(self.master, text="Optimizer:")
         self.optimizer_entry = tk.Entry(self.master)
@@ -130,6 +135,31 @@ class NeuralNetworkArchitectureBuilder:
 
         # Initialize with a single layer
         self.add_layer_fields()
+
+    def update_metrics_based_on_loss(self, event):
+        loss_function = self.loss_var.get()
+        if loss_function == "Binary Cross-Entropy":
+            metrics = LOSS_METRICS_DICT["BinaryCrossEntropy"]["metrics"]
+            self.metrics_entry.delete(0, tk.END)
+            self.metrics_entry.insert(0, metrics)
+        elif loss_function == "Categorical Cross-Entropy":
+            metrics = LOSS_METRICS_DICT["CategoricalCrossEntropy"]["metrics"]
+            self.metrics_entry.delete(0, tk.END)
+            self.metrics_entry.insert(0, metrics)
+        elif loss_function == "Sparse Categorical Cross-Entropy":
+            metrics = LOSS_METRICS_DICT["SparseCategoricalCrossEntropy"]["metrics"]
+            self.metrics_entry.delete(0, tk.END)
+            self.metrics_entry.insert(0, metrics)
+        elif loss_function == "Mean Square Error":
+            metrics = LOSS_METRICS_DICT["MeanSquareError"]["metrics"]
+            self.metrics_entry.delete(0, tk.END)
+            self.metrics_entry.insert(0, metrics)
+        else:
+            metrics = ["accuracy"]
+            self.metrics_entry.delete(0, tk.END)
+            self.metrics_entry.insert(0, metrics)
+
+        self.show_visual_key()
 
     def on_layer_type_change(self, index):
         """ Handle the layer type change event. """
@@ -229,7 +259,6 @@ class NeuralNetworkArchitectureBuilder:
         # Store kernel size widgets and variables for independent control
         self.layer_kernel_labels.append(kernel_size_label)
         self.layer_kernel_widgets.append([kernel_size_entry_x, kernel_size_entry_y])
-
 
         # Regularizer Dropdown (initially hidden unless Dense is selected)
         regularizer_var = tk.StringVar(value="None")
@@ -335,11 +364,9 @@ class NeuralNetworkArchitectureBuilder:
             self.layer_type_widgets[i].unbind("<<ComboboxSelected>>")
             self.layer_type_widgets[i].bind("<<ComboboxSelected>>", lambda event, idx=i: self.on_layer_type_change(idx))
             self.layer_activation_widgets[i].unbind("<<ComboboxSelected>>")
-            self.layer_activation_widgets[i].bind("<<ComboboxSelected>>",
-                                                  lambda event, idx=i: self.on_layer_type_change(idx))
+            self.layer_activation_widgets[i].bind("<<ComboboxSelected>>", lambda event, idx=i: self.on_layer_type_change(idx))
             self.layer_regularizer_widgets[i].unbind("<<ComboboxSelected>>")
-            self.layer_regularizer_widgets[i].bind("<<ComboboxSelected>>",
-                                                   lambda event, idx=i: self.on_layer_type_change(idx))
+            self.layer_regularizer_widgets[i].bind("<<ComboboxSelected>>", lambda event, idx=i: self.on_layer_type_change(idx))
             self.layer_remove_buttons[i].config(command=lambda b=i: self.remove_layer_fields(b))
 
             # Update kernel size field visibility based on new index
@@ -419,7 +446,6 @@ class NeuralNetworkArchitectureBuilder:
             # Add activation, excluding certain layer types
             if layer_type not in ["Dropout", "Flatten", "2D Pooling", "3D Pooling"]:
                 layer_text += f"Activation: {activation}\n"
-
 
             # Add regularizer if defined
             if regularizer_type and regularizer_value:  # If both regularizer type and value are defined
@@ -504,8 +530,7 @@ class NeuralNetworkArchitectureBuilder:
             kernel_size = (
                 (kernel_size_x_var.get(), kernel_size_y_var.get())
                 if layer_type_var.get() in ["2D Convolutional", "3D Convolutional", "2D Pooling", "3D Pooling"]
-                else None
-            )
+                else None)
 
             # Handle regularizer type and value (check if the regularizer is "None")
             regularizer_type = None if regularizer_var.get() == "None" else regularizer_var.get()
@@ -538,21 +563,18 @@ class NeuralNetworkArchitectureBuilder:
                         # First layer - explicit input layer
                         model.add(InputLayer(input_shape=input_shape))
                         model.add(Dense(units=layer.nodes, activation=layer.activation,
-                                        kernel_regularizer=l1(
-                                            float(layer.regularizer_value)) if layer.regularizer_type == "l1"
+                                        kernel_regularizer=l1(float(layer.regularizer_value)) if layer.regularizer_type == "l1"
                                         else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
                                         else None))
                     else:
                         model.add(Dense(units=layer.nodes, activation=layer.activation,
-                                        kernel_regularizer=l1(
-                                            float(layer.regularizer_value)) if layer.regularizer_type == "l1"
+                                        kernel_regularizer=l1(float(layer.regularizer_value)) if layer.regularizer_type == "l1"
                                         else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
                                         else None))
 
                 elif layer.layer_type == "2D Convolutional":
                     model.add(Conv2D(filters=layer.nodes, kernel_size=layer.kernel_size, activation=layer.activation,
-                                     kernel_regularizer=l1(
-                                         float(layer.regularizer_value)) if layer.regularizer_type == "l1"
+                                     kernel_regularizer=l1(float(layer.regularizer_value)) if layer.regularizer_type == "l1"
                                      else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
                                      else None))
 
@@ -632,15 +654,24 @@ class NeuralNetworkArchitectureBuilder:
         # Display the training results
         self.display_training_results(history, model)
 
-    def display_training_results(self, history, model):
+    def display_training_results(self, history, model, scaler=None, degree=1):
         # Create a new window for displaying results
-        heatmap_window = Toplevel(self.master)
-        heatmap_window.title("Training Results")
+        results_window = Toplevel(self.master)
+        results_window.title("Training Results")
+
+        # Set the window size to 1/4 of the screen size and center it
+        screen_width = self.master.winfo_screenwidth()
+        screen_height = self.master.winfo_screenheight()
+        window_width = screen_width // 2
+        window_height = screen_height // 2
+        x_position = (screen_width - window_width) // 2
+        y_position = (screen_height - window_height) // 2
+        results_window.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
 
         # Create a canvas and a frame for scrollable content
-        canvas = Canvas(heatmap_window)
+        canvas = Canvas(results_window)
         scrollable_frame = Frame(canvas)
-        scrollbar = Scrollbar(heatmap_window, orient="vertical", command=canvas.yview)
+        scrollbar = Scrollbar(results_window, orient="vertical", command=canvas.yview)
 
         scrollbar.pack(side="right", fill="y")
         canvas.pack(side="left", fill="both", expand=True)
@@ -652,53 +683,132 @@ class NeuralNetworkArchitectureBuilder:
 
         scrollable_frame.bind("<Configure>", configure_scroll_region)
 
-        # Create a Text widget for displaying confusion matrix and classification report
-        results_text = Text(scrollable_frame, wrap="word", height=15, width=80)
-        results_text.pack(pady=10)
+        # Display loss and metrics from training history
+        if history.history:
+            results_text = Text(scrollable_frame, wrap="word", height=15, width=80)
+            results_text.pack(pady=10)
+            results_text.insert("end", "Training Metrics:\n")
+            for key, values in history.history.items():
+                results_text.insert("end", f"{key}: {values[-1]:.4f}\n")
+            results_text.insert("end", "\n")
 
-        if self.train_test_split_var is not None:
-            # Evaluate on the test data
-            y_pred = model.predict(self.X_test)
-            y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
-            cm = confusion_matrix(self.y_test, y_pred_classes)
-            cr = classification_report(self.y_test, y_pred_classes)
-        else:
-            # Evaluate on the train data
-            y_pred = model.predict(self.X_train)
-            y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
-            cm = confusion_matrix(self.y_data, y_pred_classes)
-            cr = classification_report(self.y_data, y_pred_classes)
+        # Determine the type of model (classification or regression)
+        loss_name = model.loss.__class__.__name__
+        if "Crossentropy" in loss_name or "Hinge" in loss_name:  # Classification tasks
+            # Evaluate on the test or train data
+            if self.train_test_split_var is not None:
+                y_pred = model.predict(self.X_test)
+                y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
+                cm = confusion_matrix(self.y_test, y_pred_classes)
+                cr = classification_report(self.y_test, y_pred_classes)
+            else:
+                y_pred = model.predict(self.X_train)
+                y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
+                cm = confusion_matrix(self.y_data, y_pred_classes)
+                cr = classification_report(self.y_data, y_pred_classes)
 
-        # Insert confusion matrix and classification report into the Text widget
-        results_text.insert("end", "Confusion Matrix:\n" + str(cm) + "\n\n")
-        results_text.insert("end", "Classification Report:\n" + cr + "\n\n")
+            # Display classification report
+            results_text.insert("end", "Classification Report:\n" + cr + "\n\n")
 
-        # Generate and save the heatmap
-        plt.figure(figsize=(8, 6))
-        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=np.unique(self.y_test),
-                    yticklabels=np.unique(self.y_test))
-        plt.xlabel('Predicted')
-        plt.ylabel('Actual')
-        plt.title('Confusion Matrix Heatmap')
+            # Generate and display the confusion matrix heatmap
+            plt.figure(figsize=(8, 6))
+            sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+                        xticklabels=np.unique(self.y_test if self.train_test_split_var else self.y_data),
+                        yticklabels=np.unique(self.y_test if self.train_test_split_var else self.y_data))
+            plt.xlabel('Predicted')
+            plt.ylabel('Actual')
+            plt.title('Confusion Matrix Heatmap')
 
-        img_buf = BytesIO()
-        plt.savefig(img_buf, format='png')
-        img_buf.seek(0)
-        img = Image.open(img_buf)
-        img_tk = ImageTk.PhotoImage(img)
-        plt.close()
+            img_buf = BytesIO()
+            plt.savefig(img_buf, format='png')
+            img_buf.seek(0)
+            img = Image.open(img_buf)
+            img_tk = ImageTk.PhotoImage(img)
+            plt.close()
 
-        # Display the heatmap as an image
-        label = Label(scrollable_frame, image=img_tk)
-        label.image = img_tk  # Keep a reference to avoid garbage collection
-        label.pack(pady=10)
+            heatmap_label = Label(scrollable_frame, image=img_tk)
+            heatmap_label.image = img_tk  # Keep a reference to avoid garbage collection
+            heatmap_label.pack(pady=10)
 
-        # Add a button for future functionality
-        def button_action():
-            print("Feature button pressed!")  # Placeholder for action
+        elif loss_name == "MeanSquaredError":  # Regression tasks
+            # Evaluate and display regression-specific metrics
+            if self.train_test_split_var is not None:
+                y_pred = model.predict(self.X_test)
+                mse = mean_squared_error(self.y_test, y_pred)
+            else:
+                y_pred = model.predict(self.X_train)
+                mse = mean_squared_error(self.y_data, y_pred)
 
-        action_button = Button(scrollable_frame, text="Add Another Feature", command=button_action)
-        action_button.pack(pady=10)
+            results_text.insert("end", f"Mean Squared Error (MSE): {mse:.4f}\n")
+
+        # Add fields for input values for predictions
+        entries = []
+        for i in range(self.NN_PD_DATA_X.shape[1]):
+            label = Label(scrollable_frame, text=f"{self.NN_PD_DATA_X.columns[i]}:")
+            label.pack(pady=5)
+            entry = Entry(scrollable_frame)
+            entry.pack(pady=5)
+            entries.append(entry)
+
+        def on_nn_predict():
+            input_values = []
+            for entry in entries:
+                try:
+                    value = float(entry.get())  # Convert to float
+                    input_values.append(value)
+                except ValueError:
+                    messagebox.showerror("Invalid Input", "Please enter valid numeric values.")
+                    return
+
+            # Prepare the input array
+            X_new = np.array(input_values).reshape(1, -1)
+            if scaler is not None:
+                X_new = scaler.transform(X_new)
+
+            # Get predictions from the model
+            y_pred = model.predict(X_new)
+
+            # Check loss function type
+            loss_name = model.loss.__class__.__name__
+
+            # Handle predictions based on the loss function
+            if loss_name == "CategoricalCrossentropy":
+                predicted_class = np.argmax(y_pred, axis=1)[0]
+                probabilities = y_pred[0]
+                print("This is a multi-class classification model (CategoricalCrossentropy detected).")
+                result_label.config(
+                    text=f"Predicted Class: {predicted_class}\nProbabilities: {probabilities}")
+
+            elif loss_name == "SparseCategoricalCrossentropy":
+                predicted_class = np.argmax(y_pred, axis=1)[0]
+                probabilities = y_pred[0]
+                print("This is a sparse multi-class classification model (SparseCategoricalCrossentropy detected).")
+                result_label.config(
+                    text=f"Predicted Class: {predicted_class}\nProbabilities: {probabilities}")
+
+            elif loss_name == "BinaryCrossentropy":
+                predicted_value = y_pred[0][0]
+                print("This is a binary classification model (BinaryCrossentropy detected).")
+                predicted_class = 1 if predicted_value > 0.5 else 0
+                result_label.config(
+                    text=f"Predicted Class: {predicted_class} (Probability: {predicted_value:.4f})")
+
+            elif loss_name == "MeanSquaredError":
+                predicted_value = y_pred[0][0]
+                print("This is a regression model (MeanSquaredError detected).")
+                result_label.config(text=f"Predicted Value: {predicted_value:.4f}")
+
+            else:
+                print(f"Unsupported loss function: {loss_name}")
+                result_label.config(text=f"Unsupported loss function: {loss_name}")
+
+        # Button for predictions
+        predict_button = Button(scrollable_frame, text="Predict with NN", command=on_nn_predict)
+        predict_button.pack(pady=10)
+
+        # Label to display prediction results
+        result_label = Label(scrollable_frame, text="Enter inputs to predict.", fg="white")
+        result_label.pack(pady=10)
 
 
 
