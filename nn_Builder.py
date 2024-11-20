@@ -49,8 +49,15 @@ class TrainingStatusCallback(Callback):
 
 
 class NeuralNetworkArchitectureBuilder:
-    def __init__(self, master, X_data=None, y_data=None, NN_PD_DATA_X = None, NN_PD_DATA_Y = None, train_test_split_var=None):
+    def __init__(self, master, X_data=None, y_data=None, NN_PD_DATA_X=None, NN_PD_DATA_Y=None, train_test_split_var=None):
         self.master = master
+        self.X_data = X_data
+        self.y_data = y_data
+        self.NN_PD_DATA_X = NN_PD_DATA_X
+        self.NN_PD_DATA_Y = NN_PD_DATA_Y
+        self.train_test_split_var = train_test_split_var
+
+        # Initialize lists for layers and components
         self.layer_fields = []
         self.layer_types = []
         self.layer_nodes_vars = []
@@ -69,61 +76,94 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_regularizer_widgets = []
         self.layer_regularizer_type = []
         self.layer_regularizer_vars = []
-        self.X_data = X_data
-        self.y_data = y_data
-        self.NN_PD_DATA_X = NN_PD_DATA_X
-        self.NN_PD_DATA_Y = NN_PD_DATA_Y
-        self.train_test_split_var = train_test_split_var
 
     def configure_nn_popup(self):
         self.master.title("Neural Network Architecture Builder")
 
-        # Frame for layer configuration
-        self.layers_frame = tk.Frame(self.master)
-        self.layers_frame.pack(pady=10, fill="x")
+        # Create notebook with modern styling
+        self.notebook = ttk.Notebook(self.master)
+        self.notebook.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+
+        self.tab1 = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab1, text="Neural Network Builder")
+
+        self.tab2 = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab2, text="Neural Network Results")
+
+        # Create custom style for modern design
+        style = ttk.Style()
+        style.configure("TButton", padding=6, relief="flat", background="#4CAF50", foreground="white")
+        style.configure("TLabel", font=("Arial", 10), background="#f4f4f4")
+        style.configure("TCombobox", fieldbackground="white", background="#f4f4f4", relief="flat")
+
+        # Frame for training parameters
+        self.params_frame = ttk.Frame(self.tab1)
+        self.params_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+
+        # Store variables for retrieving input later
+        self.epochs_var = tk.StringVar(value="10")
+        self.batch_var = tk.StringVar(value="32")
+        self.loss_var = tk.StringVar(value="Binary Cross-Entropy")
+        self.optimizer_var = tk.StringVar(value="Adam")
+        self.learning_rate_var = tk.StringVar(value="0.001")
+        self.validation_split_var = tk.StringVar(value="0.2")
+
+        # Add parameters to the frame
+        # Row 1: Epochs and Batch Size
+        self.epochs_label = ttk.Label(self.params_frame, text="Number of Epochs:")
+        self.epochs_label.grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.epochs_entry = ttk.Entry(self.params_frame, textvariable=self.epochs_var)
+        self.epochs_entry.grid(row=0, column=1, sticky="w", padx=5, pady=5)
+
+        self.batch_label = ttk.Label(self.params_frame, text="Batch Size:")
+        self.batch_label.grid(row=0, column=2, sticky="w", padx=5, pady=5)
+        self.batch_entry = ttk.Entry(self.params_frame, textvariable=self.batch_var)
+        self.batch_entry.grid(row=0, column=3, sticky="w", padx=5, pady=5)
+
+        # Row 2: Loss Function and Optimizer
+        self.loss_label = ttk.Label(self.params_frame, text="Loss Function:")
+        self.loss_label.grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        self.loss_dropdown = ttk.Combobox(self.params_frame, textvariable=self.loss_var,
+                                          values=["Binary Cross-Entropy", "Categorical Cross-Entropy",
+                                                  "Sparse Categorical Cross-Entropy", "Mean Squared Error"])
+        self.loss_dropdown.grid(row=1, column=1, sticky="w", padx=5, pady=5)
+
+        self.optimizer_label = ttk.Label(self.params_frame, text="Optimizer:")
+        self.optimizer_label.grid(row=1, column=2, sticky="w", padx=5, pady=5)
+        self.optimizer_entry = ttk.Entry(self.params_frame, textvariable=self.optimizer_var)
+        self.optimizer_entry.grid(row=1, column=3, sticky="w", padx=5, pady=5)
+
+        # Row 3: Learning Rate and Validation Split
+        self.learning_rate_label = ttk.Label(self.params_frame, text="Learning Rate:")
+        self.learning_rate_label.grid(row=2, column=0, sticky="w", padx=5, pady=5)
+        self.learning_rate_entry = ttk.Entry(self.params_frame, textvariable=self.learning_rate_var)
+        self.learning_rate_entry.grid(row=2, column=1, sticky="w", padx=5, pady=5)
+
+        self.validation_split_label = ttk.Label(self.params_frame, text="Validation Split:")
+        self.validation_split_label.grid(row=2, column=2, sticky="w", padx=5, pady=5)
+        self.validation_split_entry = ttk.Entry(self.params_frame, textvariable=self.validation_split_var)
+        self.validation_split_entry.grid(row=2, column=3, sticky="w", padx=5, pady=5)
+
+        # Frame for layer configuration (move below the params frame)
+        self.layers_frame = ttk.Frame(self.tab1)
+        self.layers_frame.grid(row=1, column=0, pady=10, padx=10, sticky="nsew")
 
         # Add Layer button
-        add_layer_button = tk.Button(self.master, text="Add Layer", command=self.add_layer_fields)
-        add_layer_button.pack(pady=5)
+        add_layer_button = ttk.Button(self.layers_frame, text="Add Layer", command=self.add_layer_fields)
+        add_layer_button.grid(row=1000, column=0, pady=5, padx=10)
 
         # Frame for visualization
-        self.visualization_frame = tk.Frame(self.master)
-        self.visualization_frame.pack(pady=10, fill="both", expand=True)
+        self.visualization_frame = ttk.Frame(self.tab1)
+        self.visualization_frame.grid(row=2, column=0, pady=10, padx=10, sticky="nsew")
 
         # Start training button
-        start_training_button = tk.Button(self.master, text="Start Training", command=lambda: self.run_training())
-        start_training_button.pack(pady=10)
+        start_training_button = ttk.Button(self.tab1, text="Start Training", command=lambda: self.run_training())
+        start_training_button.grid(row=0, column=1, pady=10, padx=10, sticky="e")
 
-        #input for the number of epochs
-        self.epochs_label = tk.Label(self.master, text="Number of Epochs:")
-        self.epochs_entry = tk.Entry(self.master)
-
-        self.batch_label = tk.Label(self.master, text="Batch Size:")
-        self.batch_entry = tk.Entry(self.master)
-
-        self.loss_label = tk.Label(self.master, text="Loss Function:")
-        self.loss_var = tk.StringVar(value="Binary Cross-Entropy")
-        self.loss_dropdown = ttk.Combobox(self.master, textvariable=self.loss_var, values=["Binary Cross-Entropy", "Categorical Cross-Entropy", "Sparse Categorical Cross-Entropy", "Mean Squared Error"], width=20)
-
-        self.optimizer_label = tk.Label(self.master, text="Optimizer:")
-        self.optimizer_entry = tk.Entry(self.master)
-
-        self.learning_rate_label = tk.Label(self.master, text="Learning Rate:")
-        self.learning_rate_entry = tk.Entry(self.master)
-
-        self.validation_split_label = tk.Label(self.master, text="Validation Split:")
-        self.validation_split_entry = tk.Entry(self.master)
-
-        #set the default values
-        self.epochs_entry.insert(0, "10")
-        self.batch_entry.insert(0, "32")
-        self.optimizer_entry.insert(0, "Adam")
-        self.learning_rate_entry.insert(0, "0.001")
-        self.validation_split_entry.insert(0, "0.2")
-
+        # Handle train/test split if specified
         if self.train_test_split_var is not None:
             self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X_data, self.y_data,
-                                                                                test_size=self.train_test_split_var)
+                                                                                    test_size=self.train_test_split_var)
         else:
             self.X_train = self.X_data
             self.y_train = self.y_data
@@ -165,15 +205,18 @@ class NeuralNetworkArchitectureBuilder:
         """ Adds fields for configuring a new layer with the specified column layout, ensuring consistent alignment. """
         layer_index = len(self.layer_fields)
 
-        # Column 0: Remove Layer button (red "X")
-        remove_button = tk.Button(self.layers_frame, text="X", fg="red",
-                                  command=lambda b=layer_index: (
-                                  print(f"Button clicked for layer {b}"), self.remove_layer_fields(b))) # Use dynamic index
+        style = ttk.Style()
+        style.configure("Red.TButton", foreground="red")
+
+        # Create the remove button using the custom style
+        remove_button = ttk.Button(self.layers_frame, text="X", style="Red.TButton",
+                                   command=lambda b=layer_index: self.remove_layer_fields(b))  # Use dynamic index
+
         remove_button.grid(row=layer_index, column=0, padx=10, pady=5)
         self.layer_remove_buttons.append(remove_button)
 
         # Column 1: Layer Information Label
-        layer_info_label = tk.Label(self.layers_frame, text=f"Layer {layer_index + 1}:")
+        layer_info_label = ttk.Label(self.layers_frame, text=f"Layer {layer_index + 1}:")
         layer_info_label.grid(row=layer_index, column=1, padx=10, pady=5, sticky="w")
         self.layer_info_labels.append(layer_info_label)
 
@@ -188,19 +231,19 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_type_widgets.append(layer_type_dropdown)
 
         # Column 3: Nodes, Kernels, or Dropout Rate Entry
-        nodes_label = tk.Label(self.layers_frame, text="Nodes/Filters/Rate:")
+        nodes_label = ttk.Label(self.layers_frame, text="Nodes/Filters/Rate:")
         nodes_label.grid(row=layer_index, column=3, sticky="e", padx=(5, 2), pady=5)
         self.layer_nodes_labels.append(nodes_label)
 
         nodes_var = tk.DoubleVar(value=10)
-        nodes_entry = tk.Entry(self.layers_frame, textvariable=nodes_var, width=5)
+        nodes_entry = ttk.Entry(self.layers_frame, textvariable=nodes_var, width=5)
         nodes_entry.grid(row=layer_index, column=4, padx=10, pady=5, sticky="w")
         nodes_entry.bind("<FocusOut>", lambda e: self.show_visual_key())  # Trigger visualization update
         self.layer_nodes_vars.append(nodes_var)
         self.layer_node_widgets.append(nodes_entry)
 
         # Column 4: Activation Function Dropdown
-        activation_label = tk.Label(self.layers_frame, text="Activation:")
+        activation_label = ttk.Label(self.layers_frame, text="Activation:")
         activation_label.grid(row=layer_index, column=5, sticky="e", padx=(5, 2), pady=5)
         self.layer_activations_labels.append(activation_label)
 
@@ -220,9 +263,9 @@ class NeuralNetworkArchitectureBuilder:
         # Columns 5 and 6: Kernel Size label and entry (conditionally displayed)
         kernel_size_x_var = tk.IntVar(value=3)
         kernel_size_y_var = tk.IntVar(value=3)
-        kernel_size_label = tk.Label(self.layers_frame, text="Kernel Size:")
-        kernel_size_entry_x = tk.Entry(self.layers_frame, textvariable=kernel_size_x_var, width=5)
-        kernel_size_entry_y = tk.Entry(self.layers_frame, textvariable=kernel_size_y_var, width=5)
+        kernel_size_label = ttk.Label(self.layers_frame, text="Kernel Size:")
+        kernel_size_entry_x = ttk.Entry(self.layers_frame, textvariable=kernel_size_x_var, width=5)
+        kernel_size_entry_y = ttk.Entry(self.layers_frame, textvariable=kernel_size_y_var, width=5)
         kernel_size_entry_x.bind("<FocusOut>", lambda e: self.show_visual_key())  # Trigger visualization update
         kernel_size_entry_y.bind("<FocusOut>", lambda e: self.show_visual_key())  # Trigger visualization update
 
@@ -232,7 +275,7 @@ class NeuralNetworkArchitectureBuilder:
 
         # Regularizer Dropdown (initially hidden unless Dense is selected)
         regularizer_var = tk.StringVar(value="None")
-        regularizer_label = tk.Label(self.layers_frame, text="Regularizer:")
+        regularizer_label = ttk.Label(self.layers_frame, text="Regularizer:")
         regularizer_label.grid(row=layer_index, column=8, sticky="e", padx=(5, 2), pady=5)
         regularizer_dropdown = ttk.Combobox(self.layers_frame, textvariable=regularizer_var, values=["None", "l1", "l2"], width=10)
         regularizer_dropdown.bind("<<ComboboxSelected>>", lambda e: self.show_visual_key())  # Trigger visualization update
@@ -242,7 +285,7 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_regularizer_type.append(regularizer_var)
 
         #regulizer entry
-        regularizer_entry = tk.Entry(self.layers_frame, width=10)
+        regularizer_entry = ttk.Entry(self.layers_frame, width=10)
         regularizer_entry.grid(row=layer_index, column=10, padx=10, pady=5)
         regularizer_entry.insert(0, "0.001")  # Default value
         regularizer_entry.bind("<FocusOut>", lambda e: self.show_visual_key())  # Trigger visualization update
@@ -371,7 +414,8 @@ class NeuralNetworkArchitectureBuilder:
         # Display X_data and y_data shapes at the top of the plot
         x_shape = self.X_train.shape if self.X_train is not None else "N/A"
         y_shape = self.y_train.shape if self.y_train is not None else "N/A"
-        ax.text(0.5, 0.9, f"Train Data Shape (X): {x_shape}    Train Target Shape (y): {y_shape}", ha="center", va="center",
+        ax.text(0.5, 0.9, f"Train Data Shape (X): {x_shape}    Train Target Shape (y): {y_shape}", ha="center",
+                va="center",
                 fontsize=12, weight="bold")
 
         # Define positions for each layer
@@ -440,25 +484,12 @@ class NeuralNetworkArchitectureBuilder:
 
         # Clear previous visualization
         for widget in self.visualization_frame.winfo_children():
-            widget.destroy()
-
-        # Use pack to place the epochs_label and epochs_entry at the bottom left corner, horizontally
-        self.epochs_label.pack(side="left", anchor="sw", padx=5, pady=5)
-        self.epochs_entry.pack(side="left", anchor="sw", padx=5, pady=5)
-        self.batch_label.pack(side="left", anchor="sw", padx=5, pady=5)
-        self.batch_entry.pack(side="left", anchor="sw", padx=5, pady=5)
-        self.loss_label.pack(side="left", anchor="sw", padx=5, pady=5)
-        self.loss_dropdown.pack(side="left", anchor="sw", padx=5, pady=5)
-        self.optimizer_label.pack(side="left", anchor="sw", padx=5, pady=5)
-        self.optimizer_entry.pack(side="left", anchor="sw", padx=5, pady=5)
-        self.learning_rate_label.pack(side="left", anchor="sw", padx=5, pady=5)
-        self.learning_rate_entry.pack(side="left", anchor="sw", padx=5, pady=5)
-        self.validation_split_label.pack(side="left", anchor="sw", padx=5, pady=5)
+            widget.grid_forget()  # Clear the grid (instead of destroy)
 
         # Create a new canvas for the updated visualization
         canvas = FigureCanvasTkAgg(fig, master=self.visualization_frame)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill="both", expand=True)
+        canvas.get_tk_widget().grid(row=6, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
 
     def run_training(self):
         # Give a warning if the last layer nodes are not equal to the number of classes
@@ -623,23 +654,11 @@ class NeuralNetworkArchitectureBuilder:
         self.display_training_results(history, model)
 
     def display_training_results(self, history, model, scaler=None, degree=1):
-        # Create a new window for displaying results
-        results_window = Toplevel(self.master)
-        results_window.title("Training Results")
-
-        # Set the window size to 1/4 of the screen size and center it
-        screen_width = self.master.winfo_screenwidth()
-        screen_height = self.master.winfo_screenheight()
-        window_width = screen_width // 2
-        window_height = screen_height // 2
-        x_position = (screen_width - window_width) // 2
-        y_position = (screen_height - window_height) // 2
-        results_window.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
 
         # Create a canvas and a frame for scrollable content
-        canvas = Canvas(results_window)
+        canvas = Canvas(self.tab2)
         scrollable_frame = Frame(canvas)
-        scrollbar = Scrollbar(results_window, orient="vertical", command=canvas.yview)
+        scrollbar = Scrollbar(self.tab2, orient="vertical", command=canvas.yview)
 
         scrollbar.pack(side="right", fill="y")
         canvas.pack(side="left", fill="both", expand=True)
@@ -736,38 +755,30 @@ class NeuralNetworkArchitectureBuilder:
             # Get predictions from the model
             y_pred = model.predict(X_new)
 
-            # Check loss function type
-            loss_name = model.loss.__class__.__name__
-
             # Handle predictions based on the loss function
             if loss_name == "CategoricalCrossentropy":
                 predicted_class = np.argmax(y_pred, axis=1)[0]
                 probabilities = y_pred[0]
-                print("This is a multi-class classification model (CategoricalCrossentropy detected).")
                 result_label.config(
                     text=f"Predicted Class: {predicted_class}\nProbabilities: {probabilities}")
 
             elif loss_name == "SparseCategoricalCrossentropy":
                 predicted_class = np.argmax(y_pred, axis=1)[0]
                 probabilities = y_pred[0]
-                print("This is a sparse multi-class classification model (SparseCategoricalCrossentropy detected).")
                 result_label.config(
                     text=f"Predicted Class: {predicted_class}\nProbabilities: {probabilities}")
 
             elif loss_name == "BinaryCrossentropy":
                 predicted_value = y_pred[0][0]
-                print("This is a binary classification model (BinaryCrossentropy detected).")
                 predicted_class = 1 if predicted_value > 0.5 else 0
                 result_label.config(
                     text=f"Predicted Class: {predicted_class} (Probability: {predicted_value:.4f})")
 
             elif loss_name == "MeanSquaredError":
                 predicted_value = y_pred[0][0]
-                print("This is a regression model (MeanSquaredError detected).")
                 result_label.config(text=f"Predicted Value: {predicted_value:.4f}")
 
             else:
-                print(f"Unsupported loss function: {loss_name}")
                 result_label.config(text=f"Unsupported loss function: {loss_name}")
 
         # Button for predictions
