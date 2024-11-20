@@ -7,33 +7,35 @@ def r_squared(y_true, y_pred):
     r2 = 1 - (residual_error / total_error)
     return r2
 
-# Dictionary for loss functions, activations, and metrics
+# Dictionary for loss functions, activations, and actual metric functions
 LOSS_METRICS_DICT = {
-    "BinaryCrossEntropy": {
+    "Binary Cross-Entropy": {
         "activation": tf.keras.activations.sigmoid,
         "loss": tf.keras.losses.BinaryCrossentropy(),
-        "metrics": [tf.keras.metrics.BinaryAccuracy(name="accuracy")]
+        "metrics": [tf.keras.metrics.BinaryAccuracy()]  # Using the actual metric class
     },
-    "CategoricalCrossEntropy": {
+    "Categorical Cross-Entropy": {
         "activation": tf.keras.activations.softmax,
         "loss": tf.keras.losses.CategoricalCrossentropy(),
-        "metrics": [tf.keras.metrics.CategoricalAccuracy(name="accuracy")]
+        "metrics": [tf.keras.metrics.CategoricalAccuracy()]  # Using the actual metric class
     },
-    "SparseCategoricalCrossEntropy": {
+    "Sparse Categorical Cross-Entropy": {
         "activation": tf.keras.activations.softmax,
         "loss": tf.keras.losses.SparseCategoricalCrossentropy(),
-        "metrics": [tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy")]
+        "metrics": [tf.keras.metrics.SparseCategoricalAccuracy()]  # Using the actual metric class
     },
-    "MeanSquaredError": {
+    "Mean Squared Error": {
         "activation": tf.keras.activations.linear,
         "loss": tf.keras.losses.MeanSquaredError(),
         "metrics": [
-            tf.keras.metrics.MeanSquaredError(name="mse"),
-            tf.keras.metrics.MeanAbsoluteError(name="mae"),
-            tf.keras.metrics.RootMeanSquaredError(name="rmse"),
-            r_squared
+            tf.keras.metrics.MeanSquaredError(),
+            tf.keras.metrics.MeanAbsoluteError(),
+            tf.keras.metrics.RootMeanSquaredError(),
+            tf.keras.metrics.R2Score()
         ]
     }
 }
+
+
 
 

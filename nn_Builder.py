@@ -103,17 +103,13 @@ class NeuralNetworkArchitectureBuilder:
 
         self.loss_label = tk.Label(self.master, text="Loss Function:")
         self.loss_var = tk.StringVar(value="Binary Cross-Entropy")
-        self.loss_dropdown = ttk.Combobox(self.master, textvariable=self.loss_var, values=["Binary Cross-Entropy", "Categorical Cross-Entropy", "Sparse Categorical Cross-Entropy", "Mean Square Error"], width=20)
-        self.loss_dropdown.bind("<<ComboboxSelected>>", self.update_metrics_based_on_loss)
+        self.loss_dropdown = ttk.Combobox(self.master, textvariable=self.loss_var, values=["Binary Cross-Entropy", "Categorical Cross-Entropy", "Sparse Categorical Cross-Entropy", "Mean Squared Error"], width=20)
 
         self.optimizer_label = tk.Label(self.master, text="Optimizer:")
         self.optimizer_entry = tk.Entry(self.master)
 
         self.learning_rate_label = tk.Label(self.master, text="Learning Rate:")
         self.learning_rate_entry = tk.Entry(self.master)
-
-        self.metrics_label = tk.Label(self.master, text="Metrics:")
-        self.metrics_entry = tk.Entry(self.master)
 
         self.validation_split_label = tk.Label(self.master, text="Validation Split:")
         self.validation_split_entry = tk.Entry(self.master)
@@ -123,7 +119,6 @@ class NeuralNetworkArchitectureBuilder:
         self.batch_entry.insert(0, "32")
         self.optimizer_entry.insert(0, "Adam")
         self.learning_rate_entry.insert(0, "0.001")
-        self.metrics_entry.insert(0, "accuracy")
         self.validation_split_entry.insert(0, "0.2")
 
         if self.train_test_split_var is not None:
@@ -135,31 +130,6 @@ class NeuralNetworkArchitectureBuilder:
 
         # Initialize with a single layer
         self.add_layer_fields()
-
-    def update_metrics_based_on_loss(self, event):
-        loss_function = self.loss_var.get()
-        if loss_function == "Binary Cross-Entropy":
-            metrics = LOSS_METRICS_DICT["BinaryCrossEntropy"]["metrics"]
-            self.metrics_entry.delete(0, tk.END)
-            self.metrics_entry.insert(0, metrics)
-        elif loss_function == "Categorical Cross-Entropy":
-            metrics = LOSS_METRICS_DICT["CategoricalCrossEntropy"]["metrics"]
-            self.metrics_entry.delete(0, tk.END)
-            self.metrics_entry.insert(0, metrics)
-        elif loss_function == "Sparse Categorical Cross-Entropy":
-            metrics = LOSS_METRICS_DICT["SparseCategoricalCrossEntropy"]["metrics"]
-            self.metrics_entry.delete(0, tk.END)
-            self.metrics_entry.insert(0, metrics)
-        elif loss_function == "Mean Square Error":
-            metrics = LOSS_METRICS_DICT["MeanSquareError"]["metrics"]
-            self.metrics_entry.delete(0, tk.END)
-            self.metrics_entry.insert(0, metrics)
-        else:
-            metrics = ["accuracy"]
-            self.metrics_entry.delete(0, tk.END)
-            self.metrics_entry.insert(0, metrics)
-
-        self.show_visual_key()
 
     def on_layer_type_change(self, index):
         """ Handle the layer type change event. """
@@ -483,8 +453,6 @@ class NeuralNetworkArchitectureBuilder:
         self.optimizer_entry.pack(side="left", anchor="sw", padx=5, pady=5)
         self.learning_rate_label.pack(side="left", anchor="sw", padx=5, pady=5)
         self.learning_rate_entry.pack(side="left", anchor="sw", padx=5, pady=5)
-        self.metrics_label.pack(side="left", anchor="sw", padx=5, pady=5)
-        self.metrics_entry.pack(side="left", anchor="sw", padx=5, pady=5)
         self.validation_split_label.pack(side="left", anchor="sw", padx=5, pady=5)
 
         # Create a new canvas for the updated visualization
@@ -511,7 +479,7 @@ class NeuralNetworkArchitectureBuilder:
         loss_function = self.loss_dropdown.get()
         optimizer = self.optimizer_entry.get()
         learning_rate = float(self.learning_rate_entry.get())
-        metrics = self.metrics_entry.get()
+        metrics = LOSS_METRICS_DICT[loss_function]["metrics"]
 
         # Define a class to store layer information
         class Layer:
@@ -613,7 +581,7 @@ class NeuralNetworkArchitectureBuilder:
             else tf.keras.losses.SparseCategoricalCrossentropy() if loss_function == "Sparse Categorical Cross-Entropy"
             else tf.keras.losses.MeanSquaredError(),
             optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate) if optimizer == "Adam" else None,
-            metrics=[metrics]
+            metrics=metrics
         )
 
         # Create a new window to display the training status
