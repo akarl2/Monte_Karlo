@@ -13,7 +13,7 @@ import io
 import subprocess
 import webbrowser
 import datetime
-from tkinter import Toplevel, Text, Scrollbar, Button, Label, Canvas, Frame, Entry, messagebox
+from tkinter import Toplevel, Text, Scrollbar, Button, Label, Canvas, Frame, Entry, messagebox, Checkbutton, BooleanVar
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
@@ -78,6 +78,9 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_regularizer_type = []
         self.layer_regularizer_vars = []
 
+        #Results
+        self.results_tab_count = 0
+
     def configure_nn_popup(self):
         self.master.title("Neural Network Architecture Builder")
 
@@ -91,8 +94,8 @@ class NeuralNetworkArchitectureBuilder:
         self.tab2 = ttk.Frame(self.notebook)
         self.notebook.add(self.tab2, text="Neural Network Builder")
 
-        self.tab3 = ttk.Frame(self.notebook)
-        self.notebook.add(self.tab3, text="Neural Network Results")
+        # Delay creation of results tabs
+        self.results_tabs = {}
 
         # Create custom style for modern design
         style = ttk.Style()
@@ -101,7 +104,7 @@ class NeuralNetworkArchitectureBuilder:
         style.configure("TCombobox", fieldbackground="white", background="#f4f4f4", relief="flat")
 
         # Frame for training parameters
-        self.params_frame = ttk.LabelFrame(self.tab2)
+        self.params_frame = ttk.LabelFrame(self.tab2, text="Training Parameters")
         self.params_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
         # Store variables for retrieving input later
@@ -148,6 +151,13 @@ class NeuralNetworkArchitectureBuilder:
         self.validation_split_entry = ttk.Entry(self.params_frame, textvariable=self.validation_split_var)
         self.validation_split_entry.grid(row=2, column=3, sticky="w", padx=5, pady=5)
 
+        #toggle for displaying training status
+        self.training_status_var = BooleanVar()
+        self.training_status_var.set(False)
+        self.training_status_check = ttk.Checkbutton(self.params_frame, text="Display Training Status", variable=self.training_status_var)
+        self.training_status_check.grid(row=0, column=4, columnspan=2, padx=5, pady=5, sticky="w")
+
+
         # Frame for layer configuration (move below the params frame)
         self.layers_frame = ttk.Frame(self.tab2)
         self.layers_frame.grid(row=1, column=0, pady=10, padx=10, sticky="nsew")
@@ -162,7 +172,7 @@ class NeuralNetworkArchitectureBuilder:
 
         # Start training button
         start_training_button = ttk.Button(self.tab2, text="Start Training", command=lambda: self.run_training())
-        start_training_button.grid(row=0, column=1, pady=10, padx=10, sticky="e")
+        start_training_button.grid(row=3, column=0, pady=10, padx=10, sticky="ew")
 
         # Handle train/test split if specified
         if self.train_test_split_var is not None:
@@ -447,7 +457,7 @@ class NeuralNetworkArchitectureBuilder:
         total_params = 0
 
         # Create a new figure for the visualization
-        fig, ax = plt.subplots(figsize=(12, 6))
+        fig, ax = plt.subplots(figsize=(12, 3))
         ax.axis('off')
 
         # Display X_data and y_data shapes at the top of the plot
@@ -654,50 +664,55 @@ class NeuralNetworkArchitectureBuilder:
             metrics=metrics
         )
 
-        # Create a new window to display the training status
 
-        status_window = Toplevel(self.master)
-        status_window.title("Training Progress")
 
-        # Create Text widget for training progress with scrollbar
-        progress_text = Text(status_window, wrap="word", height=20, width=80)
-        progress_text.pack(fill="both", expand=True)
-        scrollbar = Scrollbar(status_window, command=progress_text.yview)
-        scrollbar.pack(side="right", fill="y")
-        progress_text.config(yscrollcommand=scrollbar.set)
-
-        # Add our custom callback for training status updates
-        training_status_callback = TrainingStatusCallback(progress_text)
 
         # Start TensorBoard logging
         log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
-        # Start training with the callback for real-time progress display
+        # Dynamically determine the callbacks based on training_status_var
+        callbacks = [tensorboard_callback]
+        if self.training_status_var.get():
+            status_window = Toplevel(self.master)
+            status_window.title("Training Progress")
+            progress_text = Text(status_window, wrap="word", height=20, width=80)
+            progress_text.pack(fill="both", expand=True)
+            scrollbar = Scrollbar(status_window, command=progress_text.yview)
+            scrollbar.pack(side="right", fill="y")
+            progress_text.config(yscrollcommand=scrollbar.set)
+            training_status_callback = TrainingStatusCallback(progress_text)
+            callbacks.append(training_status_callback)
+
+        # Start training with the selected callbacks
         history = model.fit(
             self.X_train, self.y_train,
             epochs=epochs,
             batch_size=batch_size,
             verbose=0,  # Disable standard verbose to control output in the custom callback
-            callbacks=[tensorboard_callback, training_status_callback],
+            callbacks=callbacks,
             validation_split=float(self.validation_split_entry.get())
         )
-
-        # Launch TensorBoard in a new subprocess
-        subprocess.Popen(['tensorboard', '--logdir', 'logs/fit'])
-
-        # Open TensorBoard in the default browser
-        webbrowser.open('http://localhost:6006')
 
         # Display the training results
         self.display_training_results(history, model)
 
     def display_training_results(self, history, model, scaler=None, degree=1):
+        # Create a new tab in the notebook for this result
+        self.results_tab_count += 1
+        tab_name = f"Result {self.results_tab_count}"
 
-        # Create a canvas and a frame for scrollable content
-        canvas = Canvas(self.tab3)
+        # Create a new tab for the results
+        new_tab = ttk.Frame(self.notebook)
+        self.notebook.add(new_tab, text=tab_name)
+
+        # Automatically switch to the new results tab
+        self.notebook.select(new_tab)
+
+        # Add results content to the new tab
+        canvas = Canvas(new_tab)
         scrollable_frame = Frame(canvas)
-        scrollbar = Scrollbar(self.tab3, orient="vertical", command=canvas.yview)
+        scrollbar = Scrollbar(new_tab, orient="vertical", command=canvas.yview)
 
         scrollbar.pack(side="right", fill="y")
         canvas.pack(side="left", fill="both", expand=True)
@@ -708,6 +723,13 @@ class NeuralNetworkArchitectureBuilder:
             canvas.configure(scrollregion=canvas.bbox("all"))
 
         scrollable_frame.bind("<Configure>", configure_scroll_region)
+
+        def launch_tensorboard():
+            subprocess.Popen(['tensorboard', '--logdir', 'logs/fit'])
+            webbrowser.open('http://localhost:6006')
+
+        tensorboard_button = ttk.Button(scrollable_frame, text="Launch TensorBoard", command=launch_tensorboard)
+        tensorboard_button.pack(pady=10)
 
         # Display loss and metrics from training history
         if history.history:
@@ -756,8 +778,8 @@ class NeuralNetworkArchitectureBuilder:
             heatmap_label.image = img_tk  # Keep a reference to avoid garbage collection
             heatmap_label.pack(pady=10)
 
+
         elif loss_name == "MeanSquaredError":  # Regression tasks
-            # Evaluate and display regression-specific metrics
             if self.train_test_split_var is not None:
                 y_pred = model.predict(self.X_test)
                 mse = mean_squared_error(self.y_test, y_pred)
@@ -766,6 +788,156 @@ class NeuralNetworkArchitectureBuilder:
                 mse = mean_squared_error(self.y_data, y_pred)
 
             results_text.insert("end", f"Mean Squared Error (MSE): {mse:.4f}\n")
+            x_feature_var = tk.StringVar(value=self.NN_PD_DATA_X.columns[0])
+            x_feature_label = Label(scrollable_frame, text="Select X Feature:")
+            x_feature_label.pack(pady=5)
+            x_feature_dropdown = ttk.Combobox(scrollable_frame, textvariable=x_feature_var, values=list(self.NN_PD_DATA_X.columns))
+            x_feature_dropdown.pack(pady=5)
+
+            if len(self.NN_PD_DATA_X.columns) > 1:
+                y_feature_var = tk.StringVar(value=self.NN_PD_DATA_X.columns[1])
+                y_feature_label = Label(scrollable_frame, text="Select Y Feature:")
+                y_feature_label.pack(pady=5)
+                y_feature_dropdown = ttk.Combobox(scrollable_frame, textvariable=y_feature_var, values=list(self.NN_PD_DATA_X.columns))
+                y_feature_dropdown.pack(pady=5)
+
+            else:
+                y_feature_var = None
+                results_text.insert("end", "Only one feature available. Y feature not required.\n")
+
+            def plot_surface_response():
+                # Get selected features
+                x_feature = x_feature_var.get()
+                y_feature = y_feature_var.get() if len(self.NN_PD_DATA_X.columns) > 1 else None
+                z_feature = self.NN_PD_DATA_Y.columns[0]
+
+                # Check if X and Y features are the same (for invalid selection)
+                if y_feature and x_feature == y_feature:
+                    messagebox.showerror("Invalid Selection", "X and Y features must be different.")
+                    return
+
+                # Generate grid values for the selected feature(s)
+                x_min, x_max = self.NN_PD_DATA_X[x_feature].min(), self.NN_PD_DATA_X[x_feature].max()
+                x_vals = np.linspace(x_min, x_max, 100)
+
+                if y_feature:  # 3D Plot (when two features are selected)
+                    y_min, y_max = self.NN_PD_DATA_X[y_feature].min(), self.NN_PD_DATA_X[y_feature].max()
+                    y_vals = np.linspace(y_min, y_max, 100)
+                    x_grid, y_grid = np.meshgrid(x_vals, y_vals)
+
+                    # Flatten the grid and create input data for the model
+                    grid_data = pd.DataFrame({x_feature: x_grid.ravel(), y_feature: y_grid.ravel()})
+                    for col in self.NN_PD_DATA_X.columns:
+                        if col != x_feature and col != y_feature:
+                            grid_data[col] = self.NN_PD_DATA_X[col].mean()  # Use mean for other features
+
+                    # Scale the grid data if a scaler is provided
+                    if scaler is not None:
+                        grid_data_scaled = scaler.transform(grid_data)
+                    else:
+                        grid_data_scaled = grid_data.values
+
+                    # Predict Z values
+                    z_vals = model.predict(grid_data_scaled).reshape(x_grid.shape)
+
+                    # Create a 3D plot
+                    plot_window = Toplevel(self.tab3)
+                    plot_window.title(f"Surface Response Model (3D): {z_feature}")
+
+                    fig = plt.figure(figsize=(10, 7), num=f"Surface_Response_3D_{x_feature}_{y_feature}_{z_feature}")
+                    ax = fig.add_subplot(111, projection="3d")
+                    ax.plot_surface(x_grid, y_grid, z_vals, cmap="viridis", alpha=0.8)
+
+                    # Labels and title
+                    ax.set_xlabel(x_feature)
+                    ax.set_ylabel(y_feature)
+                    ax.set_zlabel(f"Response (Z): {z_feature}")
+                    ax.set_title(f"Surface Response Model: {z_feature}")
+
+                else:  # 2D Plot (when only one feature is selected)
+                    grid_data = pd.DataFrame({x_feature: x_vals})
+                    for col in self.NN_PD_DATA_X.columns:
+                        if col != x_feature:
+                            grid_data[col] = self.NN_PD_DATA_X[col].mean()  # Use mean for other features
+
+                    # Scale the grid data if a scaler is provided
+                    if scaler is not None:
+                        grid_data_scaled = scaler.transform(grid_data)
+                    else:
+                        grid_data_scaled = grid_data.values
+
+                    # Predict Z values
+                    z_vals = model.predict(grid_data_scaled)
+
+                    # Create a 2D plot
+                    plot_window = Toplevel(self.tab3)
+                    plot_window.title(f"Surface Response Model (2D): {z_feature}")
+
+                    fig = plt.figure(figsize=(10, 7), num=f"Surface_Response_2D_{x_feature}_{z_feature}")
+                    ax = fig.add_subplot(111)
+                    ax.plot(x_vals, z_vals, label=f"Response: {z_feature}", color="blue")
+
+                    # Labels and title
+                    ax.set_xlabel(x_feature)
+                    ax.set_ylabel(f"Response (Z): {z_feature}")
+                    ax.set_title(f"Surface Response Model: {z_feature}")
+                    ax.legend()
+
+                # Initialize scatter points variables
+                scatter_training = None
+
+                # Function to toggle scatter points
+                def toggle_scatter():
+                    nonlocal scatter_training
+
+                    if scatter_training:
+                        scatter_training.set_visible(show_training.get())  # Toggle visibility of training data
+                        canvas.draw()  # Update the plot on the canvas
+
+                # Add Checkbutton for toggling scatter points
+                show_training = BooleanVar(value=False)
+                training_checkbox = Checkbutton(plot_window, text="Show Training Data", variable=show_training,
+                                                command=toggle_scatter)
+                training_checkbox.pack()
+
+                # Plot scatter points (randomly selected training data)
+                if len(self.NN_PD_DATA_X) > 100:
+                    num_points = 100
+                else:
+                    num_points = len(self.NN_PD_DATA_X)
+
+                train_indices = np.random.choice(self.NN_PD_DATA_X.index, size=min(num_points, len(self.NN_PD_DATA_X)),
+                                                 replace=False)
+
+                if y_feature:  # Scatter for 3D plot
+                    scatter_training = ax.scatter(
+                        self.NN_PD_DATA_X.loc[train_indices, x_feature],
+                        self.NN_PD_DATA_X.loc[train_indices, y_feature],
+                        self.NN_PD_DATA_Y.loc[train_indices],
+                        color="blue",
+                        label="Training Data",
+                        visible=False  # Initially hidden, toggled via checkbox
+                    )
+                else:  # Scatter for 2D plot
+                    scatter_training = ax.scatter(
+                        self.NN_PD_DATA_X.loc[train_indices, x_feature],
+                        self.NN_PD_DATA_Y.loc[train_indices],
+                        color="blue",
+                        label="Training Data",
+                        visible=False  # Initially hidden, toggled via checkbox
+                    )
+
+                # Create the canvas for the plot
+                canvas = FigureCanvasTkAgg(fig, master=plot_window)
+                canvas.draw()
+                canvas.get_tk_widget().pack(fill="both", expand=True)
+
+                # Initial scatter display (if checkbox is selected)
+                toggle_scatter()
+
+            # Button to plot the surface response
+            plot_button = Button(scrollable_frame, text="Plot Surface Response", command=plot_surface_response)
+            plot_button.pack(pady=10)
 
         # Add fields for input values for predictions
         entries = []

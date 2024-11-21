@@ -81,8 +81,6 @@ def plot_3d_model(X_train, y_train, model, df, parent):
     canvas.draw()
     canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-
-
 def plot_2d_model(X_train, y_train, model, df, parent):
     coef = model.coef_[0]
     intercept = model.intercept_[0]
