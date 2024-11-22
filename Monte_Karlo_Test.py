@@ -1350,7 +1350,7 @@ if __name__ == "__main__":
     style = ttk.Style(window)
     # Set theme based on the operating system
     if platform.system() == "Darwin":  # macOS
-        style.theme_use('default')  # or another theme that looks good on macOS
+        style.theme_use('clam')  # or another theme that looks good on macOS
     else:  # Assume Windows or Linux
         style.theme_use('clam')  # Choose a different theme for Windows/Linux
     style.configure('TNotebook.Tab', background='#355C7D', foreground='#ffffff')
@@ -1745,10 +1745,15 @@ if __name__ == "__main__":
                                              highlightthickness=0, borderwidth=0, relief="flat")
             self.run_button.pack(side=tkinter.LEFT, padx=5)
 
-            self.show_corr_matrix = tkinter.Button(self.button_frame, text="Calculate Correlation Matrix",
-                                                   command=lambda: calc_corr_matrix(self.table.model.df),
-                                                   background="#355C7D", highlightthickness=0,
-                                                   borderwidth=0, relief="flat")
+            self.show_corr_matrix = tkinter.Button(
+                self.button_frame,
+                text="Calculate Correlation Matrix",
+                command=lambda: calc_corr_matrix(self.table.model.df, self.master),
+                background="#355C7D",
+                highlightthickness=0,
+                borderwidth=0,
+                relief="flat"
+            )
             self.show_corr_matrix.pack(side=tkinter.LEFT, padx=5)
 
             self.neural_network_button = tkinter.Button(self.button_frame, text="Neural Network",
@@ -1990,7 +1995,7 @@ if __name__ == "__main__":
             NN_PD_DATA = self.table.model.df[selected_x_columns + selected_y_columns]
 
             # Clean the data by removing '\xa0' (non-breaking space) and converting to numeric
-            NN_PD_DATA = NN_PD_DATA.applymap(lambda x: str(x).replace('\xa0', '').strip())  # Remove non-breaking space
+            NN_PD_DATA = NN_PD_DATA.map(lambda x: str(x).replace('\xa0', '').strip())  # Remove non-breaking space
             NN_PD_DATA = NN_PD_DATA.apply(pandas.to_numeric, errors='coerce')  # Convert to numeric, invalid values become NaN
 
             # Drop rows with NaN values across any selected column (ensuring alignment)

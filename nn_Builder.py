@@ -375,9 +375,6 @@ class NeuralNetworkArchitectureBuilder:
             self.layer_kernel_widgets[index][1].grid_forget()
 
     def remove_layer_fields(self, index):
-        """ Removes fields for the specified layer and updates the layout. """
-        print(f"Index to delete: {index}, List length: {len(self.layer_fields)}")
-
         # Remove the widgets from the grid
         for widget in self.layers_frame.grid_slaves(row=index):
             widget.grid_forget()
@@ -664,9 +661,6 @@ class NeuralNetworkArchitectureBuilder:
             metrics=metrics
         )
 
-
-
-
         # Start TensorBoard logging
         log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
@@ -805,109 +799,118 @@ class NeuralNetworkArchitectureBuilder:
                 y_feature_var = None
                 results_text.insert("end", "Only one feature available. Y feature not required.\n")
 
+            # Add a new notebook inside the new tab for sub-tabs
+            sub_notebook = ttk.Notebook(scrollable_frame)
+            sub_notebook.pack(fill="both", expand=True, pady=10)
+
+            # Function to plot the surface response inside a sub-tab
             def plot_surface_response():
                 # Get selected features
                 x_feature = x_feature_var.get()
                 y_feature = y_feature_var.get() if len(self.NN_PD_DATA_X.columns) > 1 else None
                 z_feature = self.NN_PD_DATA_Y.columns[0]
 
-                # Check if X and Y features are the same (for invalid selection)
-                if y_feature and x_feature == y_feature:
-                    messagebox.showerror("Invalid Selection", "X and Y features must be different.")
-                    return
+                # Create a new sub-tab for this plot
+                plot_tab_name = f"{x_feature} vs {z_feature}" if not y_feature else f"{x_feature}, {y_feature} vs {z_feature}"
+                plot_tab = ttk.Frame(sub_notebook)
+                sub_notebook.add(plot_tab, text=plot_tab_name)
+                sub_notebook.select(plot_tab)
+
+                # Create left and right frames for layout
+                left_frame = Frame(plot_tab)
+                left_frame.pack(side="left", fill="y", padx=10, pady=10)
+
+                right_frame = Frame(plot_tab)
+                right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+
+                # Add dropdowns and button to the left frame
+                Label(left_frame, text="Select X Feature:").pack(pady=5)
+                x_feature_dropdown = ttk.Combobox(left_frame, textvariable=x_feature_var,
+                                                  values=list(self.NN_PD_DATA_X.columns))
+                x_feature_dropdown.pack(pady=5)
+
+                if len(self.NN_PD_DATA_X.columns) > 1:
+                    Label(left_frame, text="Select Y Feature:").pack(pady=5)
+                    y_feature_dropdown = ttk.Combobox(left_frame, textvariable=y_feature_var,
+                                                      values=list(self.NN_PD_DATA_X.columns))
+                    y_feature_dropdown.pack(pady=5)
+
+                else:
+                    y_feature_var = None
+                    Label(left_frame, text="Only one feature available. Y feature not required.").pack(pady=5)
+
+                # Button to replot
+                Button(left_frame, text="Replot", command=plot_surface_response).pack(pady=10)
+
+                # Add Checkbutton for toggling scatter points
+                show_training = tk.BooleanVar(value=False)
+                training_checkbox = ttk.Checkbutton(left_frame, text="Show Training Data", variable=show_training)
+                training_checkbox.pack(pady=5)
 
                 # Generate grid values for the selected feature(s)
                 x_min, x_max = self.NN_PD_DATA_X[x_feature].min(), self.NN_PD_DATA_X[x_feature].max()
                 x_vals = np.linspace(x_min, x_max, 100)
 
-                if y_feature:  # 3D Plot (when two features are selected)
+                fig, ax = plt.subplots(figsize=(6, 4))  # Make the plot smaller
+
+                if y_feature:  # 3D Plot
                     y_min, y_max = self.NN_PD_DATA_X[y_feature].min(), self.NN_PD_DATA_X[y_feature].max()
                     y_vals = np.linspace(y_min, y_max, 100)
                     x_grid, y_grid = np.meshgrid(x_vals, y_vals)
 
-                    # Flatten the grid and create input data for the model
                     grid_data = pd.DataFrame({x_feature: x_grid.ravel(), y_feature: y_grid.ravel()})
                     for col in self.NN_PD_DATA_X.columns:
                         if col != x_feature and col != y_feature:
-                            grid_data[col] = self.NN_PD_DATA_X[col].mean()  # Use mean for other features
+                            grid_data[col] = self.NN_PD_DATA_X[col].mean()
 
-                    # Scale the grid data if a scaler is provided
                     if scaler is not None:
                         grid_data_scaled = scaler.transform(grid_data)
                     else:
                         grid_data_scaled = grid_data.values
 
-                    # Predict Z values
                     z_vals = model.predict(grid_data_scaled).reshape(x_grid.shape)
-
-                    # Create a 3D plot
-                    plot_window = Toplevel(self.tab3)
-                    plot_window.title(f"Surface Response Model (3D): {z_feature}")
-
-                    fig = plt.figure(figsize=(10, 7), num=f"Surface_Response_3D_{x_feature}_{y_feature}_{z_feature}")
-                    ax = fig.add_subplot(111, projection="3d")
+                    ax = plt.axes(projection="3d")
                     ax.plot_surface(x_grid, y_grid, z_vals, cmap="viridis", alpha=0.8)
 
-                    # Labels and title
                     ax.set_xlabel(x_feature)
                     ax.set_ylabel(y_feature)
                     ax.set_zlabel(f"Response (Z): {z_feature}")
                     ax.set_title(f"Surface Response Model: {z_feature}")
 
-                else:  # 2D Plot (when only one feature is selected)
+                else:  # 2D Plot
                     grid_data = pd.DataFrame({x_feature: x_vals})
                     for col in self.NN_PD_DATA_X.columns:
                         if col != x_feature:
-                            grid_data[col] = self.NN_PD_DATA_X[col].mean()  # Use mean for other features
+                            grid_data[col] = self.NN_PD_DATA_X[col].mean()
 
-                    # Scale the grid data if a scaler is provided
                     if scaler is not None:
                         grid_data_scaled = scaler.transform(grid_data)
                     else:
                         grid_data_scaled = grid_data.values
 
-                    # Predict Z values
                     z_vals = model.predict(grid_data_scaled)
-
-                    # Create a 2D plot
-                    plot_window = Toplevel(self.tab3)
-                    plot_window.title(f"Surface Response Model (2D): {z_feature}")
-
-                    fig = plt.figure(figsize=(10, 7), num=f"Surface_Response_2D_{x_feature}_{z_feature}")
-                    ax = fig.add_subplot(111)
                     ax.plot(x_vals, z_vals, label=f"Response: {z_feature}", color="blue")
 
-                    # Labels and title
                     ax.set_xlabel(x_feature)
                     ax.set_ylabel(f"Response (Z): {z_feature}")
                     ax.set_title(f"Surface Response Model: {z_feature}")
                     ax.legend()
 
-                # Initialize scatter points variables
+                # Initialize scatter points
                 scatter_training = None
 
-                # Function to toggle scatter points
                 def toggle_scatter():
                     nonlocal scatter_training
-
                     if scatter_training:
-                        scatter_training.set_visible(show_training.get())  # Toggle visibility of training data
-                        canvas.draw()  # Update the plot on the canvas
+                        scatter_training.set_visible(show_training.get())
+                        canvas.draw()
 
-                # Add Checkbutton for toggling scatter points
-                show_training = BooleanVar(value=False)
-                training_checkbox = Checkbutton(plot_window, text="Show Training Data", variable=show_training,
-                                                command=toggle_scatter)
-                training_checkbox.pack()
-
-                # Plot scatter points (randomly selected training data)
                 if len(self.NN_PD_DATA_X) > 100:
                     num_points = 100
                 else:
                     num_points = len(self.NN_PD_DATA_X)
 
-                train_indices = np.random.choice(self.NN_PD_DATA_X.index, size=min(num_points, len(self.NN_PD_DATA_X)),
-                                                 replace=False)
+                train_indices = np.random.choice(self.NN_PD_DATA_X.index, size=num_points, replace=False)
 
                 if y_feature:  # Scatter for 3D plot
                     scatter_training = ax.scatter(
@@ -916,7 +919,7 @@ class NeuralNetworkArchitectureBuilder:
                         self.NN_PD_DATA_Y.loc[train_indices],
                         color="blue",
                         label="Training Data",
-                        visible=False  # Initially hidden, toggled via checkbox
+                        visible=False
                     )
                 else:  # Scatter for 2D plot
                     scatter_training = ax.scatter(
@@ -924,16 +927,16 @@ class NeuralNetworkArchitectureBuilder:
                         self.NN_PD_DATA_Y.loc[train_indices],
                         color="blue",
                         label="Training Data",
-                        visible=False  # Initially hidden, toggled via checkbox
+                        visible=False
                     )
 
-                # Create the canvas for the plot
-                canvas = FigureCanvasTkAgg(fig, master=plot_window)
+                # Add the plot to the right frame
+                canvas = FigureCanvasTkAgg(fig, master=right_frame)
                 canvas.draw()
                 canvas.get_tk_widget().pack(fill="both", expand=True)
 
-                # Initial scatter display (if checkbox is selected)
-                toggle_scatter()
+                # Attach toggle functionality
+                training_checkbox.config(command=toggle_scatter)
 
             # Button to plot the surface response
             plot_button = Button(scrollable_frame, text="Plot Surface Response", command=plot_surface_response)
