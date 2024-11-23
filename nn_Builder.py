@@ -10,6 +10,8 @@ from keras.src.utils.module_utils import tensorflow
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import sys
 import io
+import re
+from functools import partial
 import subprocess
 import webbrowser
 import datetime
@@ -112,7 +114,7 @@ class NeuralNetworkArchitectureBuilder:
         self.batch_var = tk.StringVar(value="32")
         self.loss_var = tk.StringVar(value="Binary Cross-Entropy")
         self.optimizer_var = tk.StringVar(value="Adam")
-        self.learning_rate_var = tk.StringVar(value="0.001")
+        self.learning_rate_var = tk.StringVar(value="0.01")
         self.validation_split_var = tk.StringVar(value="0.2")
 
         # Add parameters to the frame
@@ -640,17 +642,6 @@ class NeuralNetworkArchitectureBuilder:
         model = build_model(layers, input_shape)
         model.summary()
 
-        for layer in model.layers:
-            print(f"Layer Type: {layer.__class__.__name__}")
-            print(f"Activation: {layer.activation.__name__ if layer.activation else None}")
-            if hasattr(layer, 'kernel_size'):
-                print(f"Kernel Size: {layer.kernel_size}")
-            if hasattr(layer, 'units'):
-                print(f"Units: {layer.units}")
-            if hasattr(layer, 'filters'):
-                print(f"Filters: {layer.filters}")
-            print("-" * 30)
-
         # Compile the model
         model.compile(
             loss=tf.keras.losses.BinaryCrossentropy() if loss_function == "Binary Cross-Entropy"
@@ -772,7 +763,6 @@ class NeuralNetworkArchitectureBuilder:
             heatmap_label.image = img_tk  # Keep a reference to avoid garbage collection
             heatmap_label.pack(pady=10)
 
-
         elif loss_name == "MeanSquaredError":  # Regression tasks
             if self.train_test_split_var is not None:
                 y_pred = model.predict(self.X_test)
@@ -780,167 +770,183 @@ class NeuralNetworkArchitectureBuilder:
             else:
                 y_pred = model.predict(self.X_train)
                 mse = mean_squared_error(self.y_data, y_pred)
-
             results_text.insert("end", f"Mean Squared Error (MSE): {mse:.4f}\n")
-            x_feature_var = tk.StringVar(value=self.NN_PD_DATA_X.columns[0])
-            x_feature_label = Label(scrollable_frame, text="Select X Feature:")
-            x_feature_label.pack(pady=5)
-            x_feature_dropdown = ttk.Combobox(scrollable_frame, textvariable=x_feature_var, values=list(self.NN_PD_DATA_X.columns))
+
+        x_feature_var = tk.StringVar(value=self.NN_PD_DATA_X.columns[0])
+        x_feature_label = Label(scrollable_frame, text="Select X Feature:")
+        x_feature_label.pack(pady=5)
+        x_feature_dropdown = ttk.Combobox(scrollable_frame, textvariable=x_feature_var, values=list(self.NN_PD_DATA_X.columns))
+        x_feature_dropdown.pack(pady=5)
+
+        if len(self.NN_PD_DATA_X.columns) > 1:
+            y_feature_var = tk.StringVar(value=self.NN_PD_DATA_X.columns[1])
+            y_feature_label = Label(scrollable_frame, text="Select Y Feature:")
+            y_feature_label.pack(pady=5)
+            y_feature_dropdown = ttk.Combobox(scrollable_frame, textvariable=y_feature_var,
+                                              values=list(self.NN_PD_DATA_X.columns))
+            y_feature_dropdown.pack(pady=5)
+        else:
+            y_feature_var = None
+
+        # Add a new notebook inside the new tab for sub-tabs
+        sub_notebook = ttk.Notebook(scrollable_frame)
+        sub_notebook.pack(fill="both", expand=True, pady=10)
+
+        def plot_surface_response():
+            # Get selected features
+            x_feature = x_feature_var.get()
+            y_feature = y_feature_var.get() if y_feature_var is not None else None
+            z_feature = self.NN_PD_DATA_Y.columns[0]
+
+            # Create a new sub-tab for this plot
+            plot_tab_name = f"{x_feature} vs {z_feature}" if not y_feature else f"{x_feature}, {y_feature} vs {z_feature}"
+            plot_tab = ttk.Frame(sub_notebook)
+            sub_notebook.add(plot_tab, text=plot_tab_name)
+            sub_notebook.select(plot_tab)
+
+            # Create left and right frames for layout
+            left_frame = Frame(plot_tab)
+            left_frame.pack(side="left", fill="y", padx=10, pady=10)
+
+            right_frame = Frame(plot_tab)
+            right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+
+            # Add dropdowns and button to the left frame
+            Label(left_frame, text="Select X Feature:").pack(pady=5)
+            x_feature_dropdown = ttk.Combobox(left_frame, textvariable=x_feature_var,
+                                              values=list(self.NN_PD_DATA_X.columns))
             x_feature_dropdown.pack(pady=5)
 
             if len(self.NN_PD_DATA_X.columns) > 1:
-                y_feature_var = tk.StringVar(value=self.NN_PD_DATA_X.columns[1])
-                y_feature_label = Label(scrollable_frame, text="Select Y Feature:")
-                y_feature_label.pack(pady=5)
-                y_feature_dropdown = ttk.Combobox(scrollable_frame, textvariable=y_feature_var, values=list(self.NN_PD_DATA_X.columns))
-                y_feature_dropdown.pack(pady=5)
-
-            else:
-                y_feature_var = None
-                results_text.insert("end", "Only one feature available. Y feature not required.\n")
-
-            # Add a new notebook inside the new tab for sub-tabs
-            sub_notebook = ttk.Notebook(scrollable_frame)
-            sub_notebook.pack(fill="both", expand=True, pady=10)
-
-            # Function to plot the surface response inside a sub-tab
-            def plot_surface_response():
-                # Get selected features
-                x_feature = x_feature_var.get()
-                y_feature = y_feature_var.get() if len(self.NN_PD_DATA_X.columns) > 1 else None
-                z_feature = self.NN_PD_DATA_Y.columns[0]
-
-                # Create a new sub-tab for this plot
-                plot_tab_name = f"{x_feature} vs {z_feature}" if not y_feature else f"{x_feature}, {y_feature} vs {z_feature}"
-                plot_tab = ttk.Frame(sub_notebook)
-                sub_notebook.add(plot_tab, text=plot_tab_name)
-                sub_notebook.select(plot_tab)
-
-                # Create left and right frames for layout
-                left_frame = Frame(plot_tab)
-                left_frame.pack(side="left", fill="y", padx=10, pady=10)
-
-                right_frame = Frame(plot_tab)
-                right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
-
-                # Add dropdowns and button to the left frame
-                Label(left_frame, text="Select X Feature:").pack(pady=5)
-                x_feature_dropdown = ttk.Combobox(left_frame, textvariable=x_feature_var,
+                Label(left_frame, text="Select Y Feature:").pack(pady=5)
+                y_feature_dropdown = ttk.Combobox(left_frame, textvariable=y_feature_var,
                                                   values=list(self.NN_PD_DATA_X.columns))
-                x_feature_dropdown.pack(pady=5)
+                y_feature_dropdown.pack(pady=5)
+            else:
+                Label(left_frame, text="Only one feature available. Y feature not required.").pack(pady=5)
 
-                if len(self.NN_PD_DATA_X.columns) > 1:
-                    Label(left_frame, text="Select Y Feature:").pack(pady=5)
-                    y_feature_dropdown = ttk.Combobox(left_frame, textvariable=y_feature_var,
-                                                      values=list(self.NN_PD_DATA_X.columns))
-                    y_feature_dropdown.pack(pady=5)
+            # Button to replot
+            Button(left_frame, text="Replot", command=plot_surface_response).pack(pady=10)
 
+            # Add Checkbutton for toggling scatter points
+            show_training = tk.BooleanVar(value=False)
+            training_checkbox = ttk.Checkbutton(left_frame, text="Show Training Data", variable=show_training)
+            training_checkbox.pack(pady=5)
+
+            # Generate grid values for the selected feature(s)
+            x_min, x_max = self.NN_PD_DATA_X[x_feature].min(), self.NN_PD_DATA_X[x_feature].max()
+            x_vals = np.linspace(x_min, x_max, 100)
+
+            fig, ax = plt.subplots(figsize=(6, 4))  # Make the plot smaller
+
+            if y_feature:  # 3D Plot
+
+                # Remove all ticks and labels
+                ax.set_xticks([])  # Clear X-axis ticks
+                ax.set_yticks([])  # Clear Y-axis ticks
+
+                # remmove the box around the plot
+                ax.spines['top'].set_visible(False)
+                ax.spines['right'].set_visible(False)
+                ax.spines['bottom'].set_visible(False)
+                ax.spines['left'].set_visible(False)
+
+                y_min, y_max = self.NN_PD_DATA_X[y_feature].min(), self.NN_PD_DATA_X[y_feature].max()
+                y_vals = np.linspace(y_min, y_max, 100)
+                x_grid, y_grid = np.meshgrid(x_vals, y_vals)
+
+                grid_data = pd.DataFrame({x_feature: x_grid.ravel(), y_feature: y_grid.ravel()})
+                for col in self.NN_PD_DATA_X.columns:
+                    if col != x_feature and col != y_feature:
+                        grid_data[col] = self.NN_PD_DATA_X[col].mean()
+
+                if scaler is not None:
+                    grid_data_scaled = scaler.transform(grid_data)
                 else:
-                    y_feature_var = None
-                    Label(left_frame, text="Only one feature available. Y feature not required.").pack(pady=5)
+                    grid_data_scaled = grid_data.values
 
-                # Button to replot
-                Button(left_frame, text="Replot", command=plot_surface_response).pack(pady=10)
-
-                # Add Checkbutton for toggling scatter points
-                show_training = tk.BooleanVar(value=False)
-                training_checkbox = ttk.Checkbutton(left_frame, text="Show Training Data", variable=show_training)
-                training_checkbox.pack(pady=5)
-
-                # Generate grid values for the selected feature(s)
-                x_min, x_max = self.NN_PD_DATA_X[x_feature].min(), self.NN_PD_DATA_X[x_feature].max()
-                x_vals = np.linspace(x_min, x_max, 100)
-
-                fig, ax = plt.subplots(figsize=(6, 4))  # Make the plot smaller
-
-                if y_feature:  # 3D Plot
-                    y_min, y_max = self.NN_PD_DATA_X[y_feature].min(), self.NN_PD_DATA_X[y_feature].max()
-                    y_vals = np.linspace(y_min, y_max, 100)
-                    x_grid, y_grid = np.meshgrid(x_vals, y_vals)
-
-                    grid_data = pd.DataFrame({x_feature: x_grid.ravel(), y_feature: y_grid.ravel()})
-                    for col in self.NN_PD_DATA_X.columns:
-                        if col != x_feature and col != y_feature:
-                            grid_data[col] = self.NN_PD_DATA_X[col].mean()
-
-                    if scaler is not None:
-                        grid_data_scaled = scaler.transform(grid_data)
-                    else:
-                        grid_data_scaled = grid_data.values
-
+                # Predict probabilities or class labels
+                if hasattr(model, "predict_proba"):  # Use probabilities if available
+                    z_vals = model.predict_proba(grid_data_scaled)[:, 1].reshape(x_grid.shape)
+                else:  # Otherwise, use class predictions
                     z_vals = model.predict(grid_data_scaled).reshape(x_grid.shape)
-                    ax = plt.axes(projection="3d")
-                    ax.plot_surface(x_grid, y_grid, z_vals, cmap="viridis", alpha=0.8)
 
-                    ax.set_xlabel(x_feature)
-                    ax.set_ylabel(y_feature)
-                    ax.set_zlabel(f"Response (Z): {z_feature}")
-                    ax.set_title(f"Surface Response Model: {z_feature}")
+                ax = plt.axes(projection="3d")
+                ax.plot_surface(x_grid, y_grid, z_vals, cmap="viridis", alpha=0.8)
 
-                else:  # 2D Plot
-                    grid_data = pd.DataFrame({x_feature: x_vals})
-                    for col in self.NN_PD_DATA_X.columns:
-                        if col != x_feature:
-                            grid_data[col] = self.NN_PD_DATA_X[col].mean()
+                ax.set_xlabel(x_feature)
+                ax.set_ylabel(y_feature)
+                ax.set_zlabel(f"Probability (Z): {z_feature}")
+                ax.set_title(f"Probability Surface: {z_feature}")
 
-                    if scaler is not None:
-                        grid_data_scaled = scaler.transform(grid_data)
-                    else:
-                        grid_data_scaled = grid_data.values
+            else:  # 2D Plot
+                grid_data = pd.DataFrame({x_feature: x_vals})
+                for col in self.NN_PD_DATA_X.columns:
+                    if col != x_feature:
+                        grid_data[col] = self.NN_PD_DATA_X[col].mean()
 
-                    z_vals = model.predict(grid_data_scaled)
-                    ax.plot(x_vals, z_vals, label=f"Response: {z_feature}", color="blue")
-
-                    ax.set_xlabel(x_feature)
-                    ax.set_ylabel(f"Response (Z): {z_feature}")
-                    ax.set_title(f"Surface Response Model: {z_feature}")
-                    ax.legend()
-
-                # Initialize scatter points
-                scatter_training = None
-
-                def toggle_scatter():
-                    nonlocal scatter_training
-                    if scatter_training:
-                        scatter_training.set_visible(show_training.get())
-                        canvas.draw()
-
-                if len(self.NN_PD_DATA_X) > 100:
-                    num_points = 100
+                if scaler is not None:
+                    grid_data_scaled = scaler.transform(grid_data)
                 else:
-                    num_points = len(self.NN_PD_DATA_X)
+                    grid_data_scaled = grid_data.values
 
-                train_indices = np.random.choice(self.NN_PD_DATA_X.index, size=num_points, replace=False)
+                # Predict probabilities or class labels
+                if hasattr(model, "predict_proba"):  # Use probabilities if available
+                    z_vals = model.predict_proba(grid_data_scaled)[:, 1]
+                else:  # Otherwise, use class predictions
+                    z_vals = model.predict(grid_data_scaled)
 
-                if y_feature:  # Scatter for 3D plot
-                    scatter_training = ax.scatter(
-                        self.NN_PD_DATA_X.loc[train_indices, x_feature],
-                        self.NN_PD_DATA_X.loc[train_indices, y_feature],
-                        self.NN_PD_DATA_Y.loc[train_indices],
-                        color="blue",
-                        label="Training Data",
-                        visible=False
-                    )
-                else:  # Scatter for 2D plot
-                    scatter_training = ax.scatter(
-                        self.NN_PD_DATA_X.loc[train_indices, x_feature],
-                        self.NN_PD_DATA_Y.loc[train_indices],
-                        color="blue",
-                        label="Training Data",
-                        visible=False
-                    )
+                ax.plot(x_vals, z_vals, label=f"Probability: {z_feature}", color="blue")
 
-                # Add the plot to the right frame
-                canvas = FigureCanvasTkAgg(fig, master=right_frame)
-                canvas.draw()
-                canvas.get_tk_widget().pack(fill="both", expand=True)
+                ax.set_xlabel(x_feature)
+                ax.set_ylabel(f"Probability (Z): {z_feature}")
+                ax.set_title(f"Probability Curve: {z_feature}")
+                ax.legend()
 
-                # Attach toggle functionality
-                training_checkbox.config(command=toggle_scatter)
+            # Initialize scatter points
+            scatter_training = None
 
-            # Button to plot the surface response
-            plot_button = Button(scrollable_frame, text="Plot Surface Response", command=plot_surface_response)
-            plot_button.pack(pady=10)
+            def toggle_scatter():
+                nonlocal scatter_training
+                if scatter_training:
+                    scatter_training.set_visible(show_training.get())
+                    canvas.draw()
+
+            if len(self.NN_PD_DATA_X) > 100:
+                num_points = 100
+            else:
+                num_points = len(self.NN_PD_DATA_X)
+
+            train_indices = np.random.choice(self.NN_PD_DATA_X.index, size=num_points, replace=False)
+
+            if y_feature:  # Scatter for 3D plot
+                scatter_training = ax.scatter(
+                    self.NN_PD_DATA_X.loc[train_indices, x_feature],
+                    self.NN_PD_DATA_X.loc[train_indices, y_feature],
+                    self.NN_PD_DATA_Y.loc[train_indices].values.flatten(),  # Align with actual class (0 or 1)
+                    color="blue",
+                    label="Training Data",
+                    visible=False
+                )
+            else:  # Scatter for 2D plot
+                scatter_training = ax.scatter(
+                    self.NN_PD_DATA_X.loc[train_indices, x_feature],
+                    self.NN_PD_DATA_Y.loc[train_indices].values.flatten(),  # Align with actual class (0 or 1)
+                    color="blue",
+                    label="Training Data",
+                    visible=False
+                )
+
+            # Add the plot to the right frame
+            canvas = FigureCanvasTkAgg(fig, master=right_frame)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill="both", expand=True)
+
+            # Attach toggle functionality
+            training_checkbox.config(command=toggle_scatter)
+
+        plot_button = Button(scrollable_frame, text="Plot Surface Response", command=plot_surface_response)
+        plot_button.pack(pady=10)
 
         # Add fields for input values for predictions
         entries = []
@@ -1002,6 +1008,97 @@ class NeuralNetworkArchitectureBuilder:
         # Label to display prediction results
         result_label = Label(scrollable_frame, text="Enter inputs to predict.", fg="white")
         result_label.pack(pady=10)
+        sub_notebook2 = ttk.Notebook(scrollable_frame)
+        sub_notebook2.pack(fill="both", expand=True, pady=10)
+
+        def plot_training_history():
+            metric_groups = {}
+
+            # Group the metrics by their base name (e.g., 'loss', 'accuracy')
+            for key in history.history.keys():
+                base_name = key.replace('val_', '')
+                if base_name not in metric_groups:
+                    metric_groups[base_name] = {'train': None, 'val': None}
+                if key.startswith('val_'):
+                    metric_groups[base_name]['val'] = key
+                else:
+                    metric_groups[base_name]['train'] = key
+
+            # Create a tab for each metric group (e.g., loss, accuracy)
+            for base_name, metrics in metric_groups.items():
+                tab_name = f"Epoch vs {base_name.capitalize()}"
+                plot_tab = ttk.Frame(sub_notebook2)
+                sub_notebook2.add(plot_tab, text=tab_name)
+                sub_notebook2.select(plot_tab)
+
+                # Get training and validation data
+                train_data = history.history.get(metrics['train'], [])
+                val_data = history.history.get(metrics['val'], [])
+                epochs = range(1, len(train_data) + 1)
+
+                # Create the plot
+                fig, ax = plt.subplots(figsize=(8, 6))
+
+                # Plot training and validation metrics
+                if train_data:
+                    ax.plot(epochs, train_data, label=f"Train {base_name.capitalize()}", marker='o')
+                if val_data:
+                    ax.plot(epochs, val_data, label=f"Validation {base_name.capitalize()}", marker='o')
+
+                # Set title and labels
+                ax.set_title(f"Model Training History: Epoch vs {base_name.capitalize()}")
+                ax.set_xlabel('Epoch')
+                ax.set_ylabel(base_name.capitalize())
+
+                # Add a legend
+                ax.legend()
+
+                # Add a text box for displaying cursor coordinates
+                text_box = ax.text(0.95, 0.95, "", transform=ax.transAxes, ha="right", va="top", fontsize=10,
+                                   bbox=dict(facecolor='white', alpha=0.7))
+
+                def on_move(event, ax, text_box, train_data, val_data, epochs, base_name):
+                    if event.inaxes != ax:
+                        return# Debugging output
+                    x = event.xdata  # Get x (epoch)
+
+                    if x is None:
+                        return  # Ignore invalid x values
+
+                    closest_epoch = round(x)
+                    if closest_epoch < 1:
+                        closest_epoch = 1
+                    elif closest_epoch > len(epochs):
+                        closest_epoch = len(epochs)
+
+                    train_value = train_data[closest_epoch - 1] if closest_epoch <= len(train_data) else None
+                    val_value = val_data[closest_epoch - 1] if closest_epoch <= len(val_data) else None
+
+                    text_box.set_text(
+                        f"Epoch: {closest_epoch}\n"
+                        f"Train {base_name.capitalize()}: {train_value:.4f}\n"
+                        f"Val {base_name.capitalize()}: {val_value:.4f}" if val_value is not None else ""
+                    )
+                    ax.figure.canvas.draw()
+
+                # For each metric plot
+                fig.canvas.mpl_connect(
+                    'motion_notify_event',
+                    partial(on_move, ax=ax, text_box=text_box, train_data=train_data, val_data=val_data, epochs=epochs,
+                            base_name=base_name)
+                )
+
+                # Embed the plot in Tkinter window
+                canvas = FigureCanvasTkAgg(fig, master=plot_tab)
+                canvas.draw()
+                canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        # Add a button to plot the training history dynamically
+        plot_history_button = Button(scrollable_frame, text="Plot Training History",
+                                     command=plot_training_history)
+        plot_history_button.pack(pady=10)
+
+
 
 
 
