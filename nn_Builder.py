@@ -1,3 +1,4 @@
+import platform
 import tkinter as tk
 from tkinter import ttk, Toplevel
 from tkinter.scrolledtext import ScrolledText
@@ -14,6 +15,7 @@ from sklearn.preprocessing import StandardScaler
 import sys
 import io
 import re
+from sys import platform
 import random
 from functools import partial
 import subprocess
@@ -751,28 +753,41 @@ class NeuralNetworkArchitectureBuilder:
         self.notebook.add(new_tab, text=tab_name)
         self.notebook.select(new_tab)
 
-        # Add results content to the new tab
+        # Create a canvas and scrollbar in the tab
         canvas = Canvas(new_tab)
-        scrollable_frame = Frame(canvas)
         scrollbar = Scrollbar(new_tab, orient="vertical", command=canvas.yview)
-        scrollbar.pack(side="right", fill="y")
-        canvas.pack(side="left", fill="both", expand=True)
-        canvas.configure(yscrollcommand=scrollbar.set)
 
-        #Create a window inside the canvas
+        # Configure canvas and scrollbar resizing
+        canvas.grid(row=0, column=0, sticky="nsew")  # Stretch in all directions
+        scrollbar.grid(row=0, column=1, sticky="ns")  # Stick to the right side of the canvas
+        canvas.configure(yscrollcommand=scrollbar.set)  # Link the scrollbar to the canvas
+
+        # Set grid weights for the tab to enable resizing
+        new_tab.rowconfigure(0, weight=1)
+        new_tab.columnconfigure(0, weight=1)
+
+        # Create a scrollable frame inside the canvas
+        scrollable_frame = Frame(canvas)
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
 
+        # Adjust the scroll region when the scrollable frame changes
         def update_scroll_region(event):
             canvas.configure(scrollregion=canvas.bbox("all"))
 
         scrollable_frame.bind("<Configure>", update_scroll_region)
 
         def on_mouse_wheel(event):
-            if event.delta:
-                canvas.yview_scroll(-1 * int(event.delta / 2), "units")  # Adjust divisor for smooth scrolling
+            system = platform
+            if system.startswith("win"):  # Windows platform
+                canvas.yview_scroll(-1 * int(event.delta / 120), "units")
+            elif system.startswith("darwin"):  # macOS platform
+                canvas.yview_scroll(-1 * int(event.delta), "units")
+            else:  # For Linux or other platforms
+                canvas.yview_scroll(-1 * int(event.delta / 120), "units")
 
-        canvas.bind("<MouseWheel>", on_mouse_wheel)  # For macOS trackpad gesture scrolling
+        canvas.bind("<MouseWheel>", on_mouse_wheel)
 
+        # Add keyboard-based scrolling
         def on_key_scroll(event):
             if event.keysym == "Up":
                 canvas.yview_scroll(-1, "units")
@@ -781,6 +796,7 @@ class NeuralNetworkArchitectureBuilder:
 
         canvas.bind_all("<KeyPress-Up>", on_key_scroll)
         canvas.bind_all("<KeyPress-Down>", on_key_scroll)
+
 
         # Display loss and metrics from training history
         if history.history:
