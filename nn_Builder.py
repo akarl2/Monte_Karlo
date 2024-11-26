@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, Toplevel
+from tkinter.scrolledtext import ScrolledText
+
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -8,9 +10,11 @@ import NN_Optimal_Settings
 import matplotlib.pyplot as plt
 from keras.src.utils.module_utils import tensorflow
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from sklearn.preprocessing import StandardScaler
 import sys
 import io
 import re
+import random
 from functools import partial
 import subprocess
 import webbrowser
@@ -19,28 +23,27 @@ from tkinter import Toplevel, Text, Scrollbar, Button, Label, Canvas, Frame, Ent
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout, InputLayer
+from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout, InputLayer, Conv3D, MaxPooling3D
 from tensorflow.keras.regularizers import l1, l2
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.callbacks import Callback
+from tensorflow.keras.callbacks import Callback, EarlyStopping
 from tensorflow.keras.callbacks import TensorBoard
-from sklearn.metrics import confusion_matrix, classification_report, mean_squared_error
+from sklearn.metrics import confusion_matrix, classification_report, mean_squared_error, r2_score
 from io import BytesIO
 from PIL import Image, ImageTk
 from pandastable import Table
 
 from NN_Optimal_Settings import LOSS_METRICS_DICT
 
-
-# Define a custom callback to update training status in real-time
-class TrainingStatusCallback(Callback):
-    def __init__(self, text_widget):
+class TrainingStatusCallback(tf.keras.callbacks.Callback):
+    def __init__(self, text_widget, model_name="Model"):
         super().__init__()
         self.text_widget = text_widget
+        self.model_name = model_name
 
     def on_epoch_end(self, epoch, logs=None):
-        # Update text widget with current epoch's status
-        status = f"Epoch {epoch + 1}/{self.params['epochs']} - "
+        # Update the text widget with current epoch's status
+        status = f"{self.model_name} - Epoch {epoch + 1}/{self.params['epochs']} - "
         for key, value in logs.items():
             status += f"{key}: {value:.4f}  "
         status += "\n"
@@ -48,7 +51,9 @@ class TrainingStatusCallback(Callback):
         # Insert the status into the text widget and scroll to the end
         self.text_widget.insert(tk.END, status)
         self.text_widget.see(tk.END)
-        self.text_widget.update_idletasks()
+
+        # Update UI to ensure the popup reflects the latest text
+        self.text_widget.update_idletasks()  # Force UI update
 
 
 class NeuralNetworkArchitectureBuilder:
@@ -153,12 +158,19 @@ class NeuralNetworkArchitectureBuilder:
         self.validation_split_entry = ttk.Entry(self.params_frame, textvariable=self.validation_split_var)
         self.validation_split_entry.grid(row=2, column=3, sticky="w", padx=5, pady=5)
 
+        # Dropdown for selecting Random Starts (1 to 100)
+        self.random_starts_label = ttk.Label(self.params_frame, text="Random Starts:")
+        self.random_starts_label.grid(row=0, column=4, sticky="w", padx=5, pady=5)
+        self.random_starts_options = [str(i) for i in range(1, 101)]  # List of values from 1 to 100 as strings
+        self.random_starts_combobox = ttk.Combobox(self.params_frame, values=self.random_starts_options, state="readonly")
+        self.random_starts_combobox.set("1")  # Set the default value to "1"
+        self.random_starts_combobox.grid(row=0, column=5, sticky="w", padx=5, pady=5)
+
         #toggle for displaying training status
         self.training_status_var = BooleanVar()
         self.training_status_var.set(False)
         self.training_status_check = ttk.Checkbutton(self.params_frame, text="Display Training Status", variable=self.training_status_var)
-        self.training_status_check.grid(row=0, column=4, columnspan=2, padx=5, pady=5, sticky="w")
-
+        self.training_status_check.grid(row=1, column=4, columnspan=2, padx=5, pady=5, sticky="w")
 
         # Frame for layer configuration (move below the params frame)
         self.layers_frame = ttk.Frame(self.tab2)
@@ -176,17 +188,27 @@ class NeuralNetworkArchitectureBuilder:
         start_training_button = ttk.Button(self.tab2, text="Start Training", command=lambda: self.run_training())
         start_training_button.grid(row=3, column=0, pady=10, padx=10, sticky="ew")
 
-        # Handle train/test split if specified
         if self.train_test_split_var is not None:
-            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X_data, self.y_data,
-                                                                                    test_size=self.train_test_split_var)
+            self.NN_PD_DATA_X_train, self.NN_PD_DATA_X_test, self.NN_PD_DATA_Y_train, self.NN_PD_DATA_Y_test = train_test_split(self.NN_PD_DATA_X, self.NN_PD_DATA_Y, test_size=self.train_test_split_var)
+            self.X_train = self.NN_PD_DATA_X_train.to_numpy()
+            self.y_train = self.NN_PD_DATA_Y_train.to_numpy()
+            self.X_test = self.NN_PD_DATA_X_test.to_numpy()
+            self.y_test = self.NN_PD_DATA_Y_test.to_numpy()
         else:
-            self.X_train = self.X_data
-            self.y_train = self.y_data
+            self.NN_PD_DATA_X_train = self.NN_PD_DATA_X
+            self.NN_PD_DATA_Y_train = self.NN_PD_DATA_Y
+            self.X_train = self.NN_PD_DATA_X.to_numpy()
+            self.y_train = self.NN_PD_DATA_Y.to_numpy()
+
+        #apply standardscaler to the data
+        self.sc = StandardScaler()
+        self.X_train = self.sc.fit_transform(self.X_train)
+
+        if self.train_test_split_var is not None:
+            self.X_test = self.sc.transform(self.X_test)
 
         # Display the data preview in the first tab
         self.display_data_preview()
-
         self.notebook.select(self.tab2)
 
         # Initialize with a single layer
@@ -194,7 +216,7 @@ class NeuralNetworkArchitectureBuilder:
 
     def display_data_preview(self):
         """Display the NN_PD_DATA_X and NN_PD_DATA_Y as separate tables using pandastable."""
-        if self.NN_PD_DATA_X is not None and self.NN_PD_DATA_Y is not None:
+        if self.NN_PD_DATA_X_train is not None and self.NN_PD_DATA_Y_train is not None:
             # Create a frame for the X data table
             x_table_frame = tk.Frame(self.tab1)
             x_table_frame.place(relx=0.25, rely=0.5, anchor='center', relwidth=0.45, relheight=0.8)
@@ -203,7 +225,7 @@ class NeuralNetworkArchitectureBuilder:
             x_label.place(relx=0.25, rely=0.1, anchor='center')
 
             # Initialize and display the pandastable for X data
-            x_table = Table(x_table_frame, dataframe=self.NN_PD_DATA_X, showtoolbar=False, showstatusbar=False)
+            x_table = Table(x_table_frame, dataframe=self.NN_PD_DATA_X_train, showtoolbar=False, showstatusbar=False)
             x_table.show()
 
             # Create a frame for the Y data table
@@ -214,13 +236,12 @@ class NeuralNetworkArchitectureBuilder:
             y_label.place(relx=0.75, rely=0.1, anchor='center')
 
             # Initialize and display the pandastable for Y data
-            y_table = Table(y_table_frame, dataframe=self.NN_PD_DATA_Y, showtoolbar=False, showstatusbar=False)
+            y_table = Table(y_table_frame, dataframe=self.NN_PD_DATA_Y_train, showtoolbar=False, showstatusbar=False)
             y_table.show()
         else:
             # If no data is available, display a message
             no_data_label = ttk.Label(self.tab1, text="No data available to preview.")
             no_data_label.place(relx=0.5, rely=0.5, anchor='center')
-
 
     def on_layer_type_change(self, index):
         """ Handle the layer type change event. """
@@ -625,6 +646,12 @@ class NeuralNetworkArchitectureBuilder:
                                      else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
                                      else None))
 
+                elif layer.layer_type == "3D Convolutional":
+                    model.add(Conv3D(filters=layer.nodes, kernel_size=layer.kernel_size, activation=layer.activation,
+                                     kernel_regularizer=l1(float(layer.regularizer_value)) if layer.regularizer_type == "l1"
+                                     else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
+                                     else None))
+
                 elif layer.layer_type == "2D Pooling":
                     model.add(MaxPooling2D(pool_size=layer.kernel_size))
 
@@ -636,53 +663,82 @@ class NeuralNetworkArchitectureBuilder:
 
             return model
 
-        # Build and print the model summary
-        input_shape = self.X_data.shape[1:]
+        def create_master_popup():
+            if not hasattr(create_master_popup, "popup"):  # Ensure only one instance exists
+                popup = tk.Toplevel()  # Create an instance of Toplevel
+                popup.title("Training Progress")
+                popup.geometry("1000x400")
+                text_widget = ScrolledText(popup, wrap="word", height=20, width=80)
+                text_widget.pack(fill="both", expand=True)
 
-        model = build_model(layers, input_shape)
-        model.summary()
+                create_master_popup.popup = popup
+                create_master_popup.text_widget = text_widget
 
-        # Compile the model
-        model.compile(
-            loss=tf.keras.losses.BinaryCrossentropy() if loss_function == "Binary Cross-Entropy"
-            else tf.keras.losses.CategoricalCrossentropy() if loss_function == "Categorical Cross-Entropy"
-            else tf.keras.losses.SparseCategoricalCrossentropy() if loss_function == "Sparse Categorical Cross-Entropy"
-            else tf.keras.losses.MeanSquaredError(),
-            optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate) if optimizer == "Adam" else None,
-            metrics=metrics
-        )
+            return create_master_popup.text_widget
 
-        # Start TensorBoard logging
-        log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+        def build_and_train_model(seed):
+            tf.random.set_seed(seed)
+            input_shape = self.X_train.shape[1:]
+            model = build_model(layers, input_shape)
 
-        # Dynamically determine the callbacks based on training_status_var
-        callbacks = [tensorboard_callback]
-        if self.training_status_var.get():
-            status_window = Toplevel(self.master)
-            status_window.title("Training Progress")
-            progress_text = Text(status_window, wrap="word", height=20, width=80)
-            progress_text.pack(fill="both", expand=True)
-            scrollbar = Scrollbar(status_window, command=progress_text.yview)
-            scrollbar.pack(side="right", fill="y")
-            progress_text.config(yscrollcommand=scrollbar.set)
-            training_status_callback = TrainingStatusCallback(progress_text)
-            callbacks.append(training_status_callback)
+            # Compile the model
+            model.compile(
+                loss=tf.keras.losses.BinaryCrossentropy() if loss_function == "Binary Cross-Entropy"
+                else tf.keras.losses.CategoricalCrossentropy() if loss_function == "Categorical Cross-Entropy"
+                else tf.keras.losses.SparseCategoricalCrossentropy() if loss_function == "Sparse Categorical Cross-Entropy"
+                else tf.keras.losses.MeanSquaredError(),
+                optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate) if optimizer == "Adam" else None,
+                metrics=metrics
+            )
 
-        # Start training with the selected callbacks
-        history = model.fit(
-            self.X_train, self.y_train,
-            epochs=epochs,
-            batch_size=batch_size,
-            verbose=0,  # Disable standard verbose to control output in the custom callback
-            callbacks=callbacks,
-            validation_split=float(self.validation_split_entry.get())
-        )
+            # Start TensorBoard logging for the current seed
+            log_dir = f"logs/fit/{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}_seed{seed}"
+            tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
+            # Add training status callback if enabled
+            callbacks = [tensorboard_callback]
+            if self.training_status_var.get():
+                text_widget = create_master_popup()
+                training_status_callback = TrainingStatusCallback(text_widget, model_name=f"Seed {seed}")
+                callbacks.append(training_status_callback)
+
+            early_stopping = EarlyStopping(monitor='val_loss', min_delta=10 ** -4, patience=10, restore_best_weights=True)
+            callbacks.append(early_stopping)
+
+            # Train the model
+            history = model.fit(
+                self.X_train, self.y_train,
+                epochs=epochs,
+                batch_size=batch_size,
+                verbose=0,  # Disable standard verbose to control output in the custom callback
+                callbacks=callbacks,
+                validation_split=float(self.validation_split_entry.get())
+            )
+
+            # Return the model and its final validation loss
+            final_val_loss = min(history.history['val_loss'])
+            return model, final_val_loss, history
+
+        # Run training with randomly selected seeds
+        best_model = None
+        best_val_loss = float('inf')
+        best_history = None
+
+        # get the random starts value
+        random_starts = int(self.random_starts_combobox.get())
+
+        for _ in range(random_starts):  # Run 4 times with different random seeds
+            seed = random.randint(1, 1000)  # Randomly select a seed between 1 and 10,000
+            model, val_loss, history = build_and_train_model(seed)
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                best_model = model
+                best_history = history
 
         # Display the training results
-        self.display_training_results(history, model)
+        self.display_training_results(best_history, best_model, degree=1)
 
-    def display_training_results(self, history, model, scaler=None, degree=1):
+    def display_training_results(self, history, model, degree=1):
         # Create a new tab in the notebook for this result
         self.results_tab_count += 1
         tab_name = f"Result {self.results_tab_count}"
@@ -699,15 +755,44 @@ class NeuralNetworkArchitectureBuilder:
         scrollable_frame = Frame(canvas)
         scrollbar = Scrollbar(new_tab, orient="vertical", command=canvas.yview)
 
+        # Pack the scrollbar and canvas
         scrollbar.pack(side="right", fill="y")
         canvas.pack(side="left", fill="both", expand=True)
+
+        # Create a window inside the canvas
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+
+        # Configure the canvas scrolling
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        def configure_scroll_region(event):
+        # Function to update the scroll region whenever the frame changes
+        def on_frame_configure(event):
+            """Update the scrollable region to match the frame's size."""
             canvas.configure(scrollregion=canvas.bbox("all"))
 
-        scrollable_frame.bind("<Configure>", configure_scroll_region)
+        # Bind the configure event to update the scrollable region
+        scrollable_frame.bind("<Configure>", on_frame_configure)
+
+        # Add mouse wheel binding to the entire canvas for scrolling
+        def on_mouse_wheel(event):
+            """Scroll vertically on macOS or other systems."""
+            # Check the platform to scale the delta accordingly
+            if event.delta:
+                canvas.yview_scroll(-1 * int(event.delta / 2), "units")  # Adjust divisor for smooth scrolling
+
+        # Bind the mouse wheel event to the canvas itself (global scroll region)
+        canvas.bind("<MouseWheel>", on_mouse_wheel)  # For macOS trackpad gesture scrolling
+
+        # Optional: You can also enable scrolling using arrow keys
+        def on_key_scroll(event):
+            """Scroll using arrow keys."""
+            if event.keysym == "Up":
+                canvas.yview_scroll(-1, "units")
+            elif event.keysym == "Down":
+                canvas.yview_scroll(1, "units")
+
+        canvas.bind_all("<KeyPress-Up>", on_key_scroll)  # Bind up arrow key for scrolling
+        canvas.bind_all("<KeyPress-Down>", on_key_scroll)  # Bind down arrow key for scrolling
 
         def launch_tensorboard():
             subprocess.Popen(['tensorboard', '--logdir', 'logs/fit'])
@@ -725,6 +810,19 @@ class NeuralNetworkArchitectureBuilder:
                 results_text.insert("end", f"{key}: {values[-1]:.4f}\n")
             results_text.insert("end", "\n")
 
+        #add results from the test data
+        if self.train_test_split_var is not None:
+            test_results = model.evaluate(self.X_test, self.y_test, verbose=0)
+            results_text.insert("end", "Test Metrics:\n")
+            for i, metric in enumerate(model.metrics_names):
+                results_text.insert("end", f"{metric}: {test_results[i]:.4f}\n")
+            results_text.insert("end", "\n")
+            #calcuate R2 score if regression
+            if "MeanSquaredError" in model.loss.__class__.__name__:
+                r2 = r2_score(self.y_test, model.predict(self.X_test))
+                results_text.insert("end", f"r2_Score: {r2:.4f}\n\n")
+
+
         # Determine the type of model (classification or regression)
         loss_name = model.loss.__class__.__name__
         if "Crossentropy" in loss_name or "Hinge" in loss_name:  # Classification tasks
@@ -734,14 +832,13 @@ class NeuralNetworkArchitectureBuilder:
                 y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
                 cm = confusion_matrix(self.y_test, y_pred_classes)
                 cr = classification_report(self.y_test, y_pred_classes)
+                results_text.insert("end", "Classification Report for test set:\n" + cr + "\n\n")
             else:
                 y_pred = model.predict(self.X_train)
                 y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
                 cm = confusion_matrix(self.y_data, y_pred_classes)
                 cr = classification_report(self.y_data, y_pred_classes)
-
-            # Display classification report
-            results_text.insert("end", "Classification Report:\n" + cr + "\n\n")
+                results_text.insert("end", "Classification Report for train set:\n" + cr + "\n\n")
 
             # Generate and display the confusion matrix heatmap
             plt.figure(figsize=(8, 6))
@@ -772,18 +869,18 @@ class NeuralNetworkArchitectureBuilder:
                 mse = mean_squared_error(self.y_data, y_pred)
             results_text.insert("end", f"Mean Squared Error (MSE): {mse:.4f}\n")
 
-        x_feature_var = tk.StringVar(value=self.NN_PD_DATA_X.columns[0])
+        x_feature_var = tk.StringVar(value=self.NN_PD_DATA_X_train.columns[0])
         x_feature_label = Label(scrollable_frame, text="Select X Feature:")
         x_feature_label.pack(pady=5)
-        x_feature_dropdown = ttk.Combobox(scrollable_frame, textvariable=x_feature_var, values=list(self.NN_PD_DATA_X.columns))
+        x_feature_dropdown = ttk.Combobox(scrollable_frame, textvariable=x_feature_var, values=list(self.NN_PD_DATA_X_train.columns))
         x_feature_dropdown.pack(pady=5)
 
-        if len(self.NN_PD_DATA_X.columns) > 1:
-            y_feature_var = tk.StringVar(value=self.NN_PD_DATA_X.columns[1])
+        if len(self.NN_PD_DATA_X_train.columns) > 1:
+            y_feature_var = tk.StringVar(value=self.NN_PD_DATA_X_train.columns[1])
             y_feature_label = Label(scrollable_frame, text="Select Y Feature:")
             y_feature_label.pack(pady=5)
             y_feature_dropdown = ttk.Combobox(scrollable_frame, textvariable=y_feature_var,
-                                              values=list(self.NN_PD_DATA_X.columns))
+                                              values=list(self.NN_PD_DATA_X_train.columns))
             y_feature_dropdown.pack(pady=5)
         else:
             y_feature_var = None
@@ -796,7 +893,7 @@ class NeuralNetworkArchitectureBuilder:
             # Get selected features
             x_feature = x_feature_var.get()
             y_feature = y_feature_var.get() if y_feature_var is not None else None
-            z_feature = self.NN_PD_DATA_Y.columns[0]
+            z_feature = self.NN_PD_DATA_Y_train.columns[0]
 
             # Create a new sub-tab for this plot
             plot_tab_name = f"{x_feature} vs {z_feature}" if not y_feature else f"{x_feature}, {y_feature} vs {z_feature}"
@@ -814,13 +911,13 @@ class NeuralNetworkArchitectureBuilder:
             # Add dropdowns and button to the left frame
             Label(left_frame, text="Select X Feature:").pack(pady=5)
             x_feature_dropdown = ttk.Combobox(left_frame, textvariable=x_feature_var,
-                                              values=list(self.NN_PD_DATA_X.columns))
+                                              values=list(self.NN_PD_DATA_X_train.columns))
             x_feature_dropdown.pack(pady=5)
 
-            if len(self.NN_PD_DATA_X.columns) > 1:
+            if len(self.NN_PD_DATA_X_train.columns) > 1:
                 Label(left_frame, text="Select Y Feature:").pack(pady=5)
                 y_feature_dropdown = ttk.Combobox(left_frame, textvariable=y_feature_var,
-                                                  values=list(self.NN_PD_DATA_X.columns))
+                                                  values=list(self.NN_PD_DATA_X_train.columns))
                 y_feature_dropdown.pack(pady=5)
             else:
                 Label(left_frame, text="Only one feature available. Y feature not required.").pack(pady=5)
@@ -833,37 +930,39 @@ class NeuralNetworkArchitectureBuilder:
             training_checkbox = ttk.Checkbutton(left_frame, text="Show Training Data", variable=show_training)
             training_checkbox.pack(pady=5)
 
+            if self.train_test_split_var is not None:
+                show_test = tk.BooleanVar(value=False)
+                test_checkbox = ttk.Checkbutton(left_frame, text="Show Test Data", variable=show_test)
+                test_checkbox.pack(pady=5)
+
             # Generate grid values for the selected feature(s)
-            x_min, x_max = self.NN_PD_DATA_X[x_feature].min(), self.NN_PD_DATA_X[x_feature].max()
+            x_min, x_max = self.NN_PD_DATA_X_train[x_feature].min(), self.NN_PD_DATA_X_train[x_feature].max()
             x_vals = np.linspace(x_min, x_max, 100)
 
             fig, ax = plt.subplots(figsize=(6, 4))  # Make the plot smaller
 
             if y_feature:  # 3D Plot
-
                 # Remove all ticks and labels
                 ax.set_xticks([])  # Clear X-axis ticks
                 ax.set_yticks([])  # Clear Y-axis ticks
 
-                # remmove the box around the plot
+                # remove the box around the plot
                 ax.spines['top'].set_visible(False)
                 ax.spines['right'].set_visible(False)
                 ax.spines['bottom'].set_visible(False)
                 ax.spines['left'].set_visible(False)
 
-                y_min, y_max = self.NN_PD_DATA_X[y_feature].min(), self.NN_PD_DATA_X[y_feature].max()
+                y_min, y_max = self.NN_PD_DATA_X_train[y_feature].min(), self.NN_PD_DATA_X_train[y_feature].max()
                 y_vals = np.linspace(y_min, y_max, 100)
                 x_grid, y_grid = np.meshgrid(x_vals, y_vals)
 
                 grid_data = pd.DataFrame({x_feature: x_grid.ravel(), y_feature: y_grid.ravel()})
-                for col in self.NN_PD_DATA_X.columns:
-                    if col != x_feature and col != y_feature:
-                        grid_data[col] = self.NN_PD_DATA_X[col].mean()
 
-                if scaler is not None:
-                    grid_data_scaled = scaler.transform(grid_data)
-                else:
-                    grid_data_scaled = grid_data.values
+                for col in self.NN_PD_DATA_X_train.columns:
+                    if col != x_feature and col != y_feature:
+                        grid_data[col] = self.NN_PD_DATA_X_train[col].mean()
+
+                grid_data_scaled = self.sc.transform(grid_data)
 
                 # Predict probabilities or class labels
                 if hasattr(model, "predict_proba"):  # Use probabilities if available
@@ -874,21 +973,24 @@ class NeuralNetworkArchitectureBuilder:
                 ax = plt.axes(projection="3d")
                 ax.plot_surface(x_grid, y_grid, z_vals, cmap="viridis", alpha=0.8)
 
-                ax.set_xlabel(x_feature)
-                ax.set_ylabel(y_feature)
-                ax.set_zlabel(f"Probability (Z): {z_feature}")
-                ax.set_title(f"Probability Surface: {z_feature}")
+                if "Crossentropy" in loss_name or "Hinge" in loss_name:
+                    ax.set_xlabel(f"X: {x_feature}")
+                    ax.set_ylabel(f"Y: {y_feature}")
+                    ax.set_zlabel(f"Probability, Z: {z_feature}")
+                    ax.set_title(f"Probability Surface: {z_feature}")
+                else:
+                    ax.set_xlabel(f"X: {x_feature}")
+                    ax.set_ylabel(f"Y: {y_feature}")
+                    ax.set_zlabel(f"Value, Z: {z_feature}")
+                    ax.set_title(f"Value Surface: {z_feature}")
 
             else:  # 2D Plot
                 grid_data = pd.DataFrame({x_feature: x_vals})
-                for col in self.NN_PD_DATA_X.columns:
+                for col in self.NN_PD_DATA_X_train.columns:
                     if col != x_feature:
-                        grid_data[col] = self.NN_PD_DATA_X[col].mean()
+                        grid_data[col] = self.NN_PD_DATA_X_train[col].mean()
 
-                if scaler is not None:
-                    grid_data_scaled = scaler.transform(grid_data)
-                else:
-                    grid_data_scaled = grid_data.values
+                grid_data_scaled = self.sc.transform(grid_data)
 
                 # Predict probabilities or class labels
                 if hasattr(model, "predict_proba"):  # Use probabilities if available
@@ -898,44 +1000,81 @@ class NeuralNetworkArchitectureBuilder:
 
                 ax.plot(x_vals, z_vals, label=f"Probability: {z_feature}", color="blue")
 
-                ax.set_xlabel(x_feature)
-                ax.set_ylabel(f"Probability (Z): {z_feature}")
-                ax.set_title(f"Probability Curve: {z_feature}")
-                ax.legend()
+                if "Crossentropy" in loss_name or "Hinge" in loss_name:
+                    ax.ax.set_xlabel(f"X: {x_feature}")
+                    ax.set_ylabel(f"Probability, Z: {z_feature}")
+                    ax.set_title(f"Probability Curve: {z_feature}")
+                    ax.legend()
+                else:
+                    ax.set_xlabel(f"X: {x_feature}")
+                    ax.set_ylabel(f"Value, Z: {z_feature}")
+                    ax.set_title(f"Value Curve: {z_feature}")
+                    ax.legend()
+
 
             # Initialize scatter points
             scatter_training = None
+            scatter_test = None
 
             def toggle_scatter():
                 nonlocal scatter_training
+                nonlocal scatter_test
                 if scatter_training:
                     scatter_training.set_visible(show_training.get())
-                    canvas.draw()
+                if scatter_test:
+                    scatter_test.set_visible(show_test.get())
+                canvas.draw()
 
-            if len(self.NN_PD_DATA_X) > 100:
-                num_points = 100
+
+            if len(self.NN_PD_DATA_X_train) > 100:
+                num_points_train = 100
             else:
-                num_points = len(self.NN_PD_DATA_X)
+                num_points_train = len(self.NN_PD_DATA_X_train)
 
-            train_indices = np.random.choice(self.NN_PD_DATA_X.index, size=num_points, replace=False)
+            train_indices = np.random.choice(self.NN_PD_DATA_X_train.index, size=num_points_train, replace=False)
+
+            if self.train_test_split_var is not None:
+                if len(self.NN_PD_DATA_X_test) > 100:
+                    num_points_test = 100
+                else:
+                    num_points_test = len(self.NN_PD_DATA_X_test)
+
+            if self.train_test_split_var is not None:
+                test_indices = np.random.choice(self.NN_PD_DATA_X_test.index, size=num_points_test, replace=False)
+
 
             if y_feature:  # Scatter for 3D plot
                 scatter_training = ax.scatter(
-                    self.NN_PD_DATA_X.loc[train_indices, x_feature],
-                    self.NN_PD_DATA_X.loc[train_indices, y_feature],
-                    self.NN_PD_DATA_Y.loc[train_indices].values.flatten(),  # Align with actual class (0 or 1)
+                    self.NN_PD_DATA_X_train.loc[train_indices, x_feature],
+                    self.NN_PD_DATA_X_train.loc[train_indices, y_feature],
+                    self.NN_PD_DATA_Y_train.loc[train_indices].values.flatten(),  # Align with actual class (0 or 1)
                     color="blue",
                     label="Training Data",
                     visible=False
                 )
+                if self.train_test_split_var is not None:
+                    scatter_test = ax.scatter(
+                        self.NN_PD_DATA_X_test.loc[test_indices, x_feature],
+                        self.NN_PD_DATA_X_test.loc[test_indices, y_feature],
+                        self.NN_PD_DATA_Y_test.loc[test_indices].values.flatten(),  # Align with actual class (0 or 1)
+                        color="red",
+                        label="Test Data",
+                        visible=False)
             else:  # Scatter for 2D plot
                 scatter_training = ax.scatter(
-                    self.NN_PD_DATA_X.loc[train_indices, x_feature],
-                    self.NN_PD_DATA_Y.loc[train_indices].values.flatten(),  # Align with actual class (0 or 1)
+                    self.NN_PD_DATA_X_train.loc[train_indices, x_feature],
+                    self.NN_PD_DATA_Y_train.loc[train_indices].values.flatten(),  # Align with actual class (0 or 1)
                     color="blue",
                     label="Training Data",
                     visible=False
                 )
+                if self.train_test_split_var is not None:
+                    scatter_test = ax.scatter(
+                        self.NN_PD_DATA_X_test.loc[test_indices, x_feature],
+                        self.NN_PD_DATA_Y_test.loc[test_indices].values.flatten(),  # Align with actual class (0 or 1)
+                        color="red",
+                        label="Test Data",
+                        visible=False)
 
             # Add the plot to the right frame
             canvas = FigureCanvasTkAgg(fig, master=right_frame)
@@ -944,14 +1083,16 @@ class NeuralNetworkArchitectureBuilder:
 
             # Attach toggle functionality
             training_checkbox.config(command=toggle_scatter)
+            if self.train_test_split_var is not None:
+                test_checkbox.config(command=toggle_scatter)
 
         plot_button = Button(scrollable_frame, text="Plot Surface Response", command=plot_surface_response)
         plot_button.pack(pady=10)
 
         # Add fields for input values for predictions
         entries = []
-        for i in range(self.NN_PD_DATA_X.shape[1]):
-            label = Label(scrollable_frame, text=f"{self.NN_PD_DATA_X.columns[i]}:")
+        for i in range(self.NN_PD_DATA_X_train.shape[1]):
+            label = Label(scrollable_frame, text=f"{self.NN_PD_DATA_X_train.columns[i]}:")
             label.pack(pady=5)
             entry = Entry(scrollable_frame)
             entry.pack(pady=5)
@@ -969,8 +1110,8 @@ class NeuralNetworkArchitectureBuilder:
 
             # Prepare the input array
             X_new = np.array(input_values).reshape(1, -1)
-            if scaler is not None:
-                X_new = scaler.transform(X_new)
+
+            X_new = self.sc.transform(X_new)
 
             # Get predictions from the model
             y_pred = model.predict(X_new)
@@ -1013,7 +1154,6 @@ class NeuralNetworkArchitectureBuilder:
 
         def plot_training_history():
             metric_groups = {}
-
             # Group the metrics by their base name (e.g., 'loss', 'accuracy')
             for key in history.history.keys():
                 base_name = key.replace('val_', '')
@@ -1077,16 +1217,13 @@ class NeuralNetworkArchitectureBuilder:
                     text_box.set_text(
                         f"Epoch: {closest_epoch}\n"
                         f"Train {base_name.capitalize()}: {train_value:.4f}\n"
-                        f"Val {base_name.capitalize()}: {val_value:.4f}" if val_value is not None else ""
-                    )
+                        f"Val {base_name.capitalize()}: {val_value:.4f}" if val_value is not None else "")
                     ax.figure.canvas.draw()
 
                 # For each metric plot
-                fig.canvas.mpl_connect(
-                    'motion_notify_event',
+                fig.canvas.mpl_connect('motion_notify_event',
                     partial(on_move, ax=ax, text_box=text_box, train_data=train_data, val_data=val_data, epochs=epochs,
-                            base_name=base_name)
-                )
+                            base_name=base_name))
 
                 # Embed the plot in Tkinter window
                 canvas = FigureCanvasTkAgg(fig, master=plot_tab)
