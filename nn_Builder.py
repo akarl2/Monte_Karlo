@@ -172,6 +172,11 @@ class NeuralNetworkArchitectureBuilder:
         self.training_status_check = ttk.Checkbutton(self.params_frame, text="Display Training Status", variable=self.training_status_var)
         self.training_status_check.grid(row=1, column=4, columnspan=2, padx=5, pady=5, sticky="w")
 
+        self.early_stop_var = BooleanVar()
+        self.early_stop_var.set(True)
+        self.early_stop_check = ttk.Checkbutton(self.params_frame, text="Early Stopping", variable=self.early_stop_var)
+        self.early_stop_check.grid(row=2, column=4, columnspan=2, padx=5, pady=5, sticky="w")
+
         # Frame for layer configuration (move below the params frame)
         self.layers_frame = ttk.Frame(self.tab2)
         self.layers_frame.grid(row=1, column=0, pady=10, padx=10, sticky="nsew")
@@ -702,8 +707,9 @@ class NeuralNetworkArchitectureBuilder:
                 training_status_callback = TrainingStatusCallback(text_widget, model_name=f"Seed {seed}")
                 callbacks.append(training_status_callback)
 
-            early_stopping = EarlyStopping(monitor='val_loss', min_delta=10 ** -4, patience=10, restore_best_weights=True)
-            callbacks.append(early_stopping)
+            if self.early_stop_var.get():
+                early_stopping = EarlyStopping(monitor='val_loss', min_delta=10 ** -4, patience=10, restore_best_weights=True)
+                callbacks.append(early_stopping)
 
             # Train the model
             history = model.fit(
@@ -736,70 +742,45 @@ class NeuralNetworkArchitectureBuilder:
                 best_history = history
 
         # Display the training results
-        self.display_training_results(best_history, best_model, degree=1)
+        self.display_training_results(best_history, best_model)
 
-    def display_training_results(self, history, model, degree=1):
-        # Create a new tab in the notebook for this result
+    def display_training_results(self, history, model):
         self.results_tab_count += 1
         tab_name = f"Result {self.results_tab_count}"
-
-        # Create a new tab for the results
         new_tab = ttk.Frame(self.notebook)
         self.notebook.add(new_tab, text=tab_name)
-
-        # Automatically switch to the new results tab
         self.notebook.select(new_tab)
 
         # Add results content to the new tab
         canvas = Canvas(new_tab)
         scrollable_frame = Frame(canvas)
         scrollbar = Scrollbar(new_tab, orient="vertical", command=canvas.yview)
-
-        # Pack the scrollbar and canvas
         scrollbar.pack(side="right", fill="y")
         canvas.pack(side="left", fill="both", expand=True)
-
-        # Create a window inside the canvas
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-
-        # Configure the canvas scrolling
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        # Function to update the scroll region whenever the frame changes
-        def on_frame_configure(event):
-            """Update the scrollable region to match the frame's size."""
+        #Create a window inside the canvas
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+
+        def update_scroll_region(event):
             canvas.configure(scrollregion=canvas.bbox("all"))
 
-        # Bind the configure event to update the scrollable region
-        scrollable_frame.bind("<Configure>", on_frame_configure)
+        scrollable_frame.bind("<Configure>", update_scroll_region)
 
-        # Add mouse wheel binding to the entire canvas for scrolling
         def on_mouse_wheel(event):
-            """Scroll vertically on macOS or other systems."""
-            # Check the platform to scale the delta accordingly
             if event.delta:
                 canvas.yview_scroll(-1 * int(event.delta / 2), "units")  # Adjust divisor for smooth scrolling
 
-        # Bind the mouse wheel event to the canvas itself (global scroll region)
         canvas.bind("<MouseWheel>", on_mouse_wheel)  # For macOS trackpad gesture scrolling
 
-        # Optional: You can also enable scrolling using arrow keys
         def on_key_scroll(event):
-            """Scroll using arrow keys."""
             if event.keysym == "Up":
                 canvas.yview_scroll(-1, "units")
             elif event.keysym == "Down":
                 canvas.yview_scroll(1, "units")
 
-        canvas.bind_all("<KeyPress-Up>", on_key_scroll)  # Bind up arrow key for scrolling
-        canvas.bind_all("<KeyPress-Down>", on_key_scroll)  # Bind down arrow key for scrolling
-
-        def launch_tensorboard():
-            subprocess.Popen(['tensorboard', '--logdir', 'logs/fit'])
-            webbrowser.open('http://localhost:6006')
-
-        tensorboard_button = ttk.Button(scrollable_frame, text="Launch TensorBoard", command=launch_tensorboard)
-        tensorboard_button.pack(pady=10)
+        canvas.bind_all("<KeyPress-Up>", on_key_scroll)
+        canvas.bind_all("<KeyPress-Down>", on_key_scroll)
 
         # Display loss and metrics from training history
         if history.history:
@@ -910,8 +891,7 @@ class NeuralNetworkArchitectureBuilder:
 
             # Add dropdowns and button to the left frame
             Label(left_frame, text="Select X Feature:").pack(pady=5)
-            x_feature_dropdown = ttk.Combobox(left_frame, textvariable=x_feature_var,
-                                              values=list(self.NN_PD_DATA_X_train.columns))
+            x_feature_dropdown = ttk.Combobox(left_frame, textvariable=x_feature_var, values=list(self.NN_PD_DATA_X_train.columns))
             x_feature_dropdown.pack(pady=5)
 
             if len(self.NN_PD_DATA_X_train.columns) > 1:
