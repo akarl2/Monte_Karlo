@@ -234,7 +234,6 @@ class NeuralNetworkArchitectureBuilder:
         self.add_layer_fields()
 
     def display_data_preview(self):
-        """Display the NN_PD_DATA_X and NN_PD_DATA_Y as separate tables using pandastable."""
         if self.NN_PD_DATA_X_train is not None and self.NN_PD_DATA_Y_train is not None:
             # Create a frame for the X data table
             x_table_frame = tk.Frame(self.tab1)
