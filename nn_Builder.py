@@ -1,7 +1,8 @@
 import tkinter as tk
+from contextlib import redirect_stdout
 from tkinter import ttk, Toplevel
 from tkinter.scrolledtext import ScrolledText
-
+import threading
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -14,6 +15,7 @@ from sklearn.preprocessing import StandardScaler
 import sys
 import io
 import re
+from sys import platform
 import random
 from functools import partial
 import subprocess
@@ -35,26 +37,27 @@ from pandastable import Table
 
 from NN_Optimal_Settings import LOSS_METRICS_DICT
 
-class TrainingStatusCallback(tf.keras.callbacks.Callback):
-    def __init__(self, text_widget, model_name="Model"):
-        super().__init__()
+
+class TextRedirector:
+    def __init__(self, text_widget):
         self.text_widget = text_widget
-        self.model_name = model_name
+
+    def write(self, message):
+        self.text_widget.insert(tk.END, message)
+        self.text_widget.see(tk.END)
+        self.text_widget.update_idletasks()
+
+    def flush(self):
+        pass  # Compatibility with sys.stdout
+
+class TrainingStatusCallback(Callback):
+    def __init__(self, text_redirector):
+        super().__init__()
+        self.text.redirector = text_redirector
 
     def on_epoch_end(self, epoch, logs=None):
-        # Update the text widget with current epoch's status
-        status = f"{self.model_name} - Epoch {epoch + 1}/{self.params['epochs']} - "
-        for key, value in logs.items():
-            status += f"{key}: {value:.4f}  "
-        status += "\n"
-
-        # Insert the status into the text widget and scroll to the end
-        self.text_widget.insert(tk.END, status)
-        self.text_widget.see(tk.END)
-
-        # Update UI to ensure the popup reflects the latest text
-        self.text_widget.update_idletasks()  # Force UI update
-
+        message = f"Epoch {epoch + 1} - " + " - ".join([f"{key}: {value:.4f}" for key, value in logs.items()]) + "\n"
+        self.text_redirector.write(message)
 
 class NeuralNetworkArchitectureBuilder:
     def __init__(self, master, X_data=None, y_data=None, NN_PD_DATA_X=None, NN_PD_DATA_Y=None, train_test_split_var=None):
@@ -91,15 +94,26 @@ class NeuralNetworkArchitectureBuilder:
     def configure_nn_popup(self):
         self.master.title("Neural Network Architecture Builder")
 
+        # Configure the parent window's grid
+        self.master.rowconfigure(0, weight=1)
+        self.master.columnconfigure(0, weight=1)
+
         # Create notebook with modern styling
         self.notebook = ttk.Notebook(self.master)
         self.notebook.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
+        # Create tabs
         self.tab1 = ttk.Frame(self.notebook)
         self.notebook.add(self.tab1, text="Data Preview")
 
         self.tab2 = ttk.Frame(self.notebook)
         self.notebook.add(self.tab2, text="Neural Network Builder")
+
+        # Configure resizing behavior for tabs
+        self.tab1.rowconfigure(0, weight=1)
+        self.tab1.columnconfigure(0, weight=1)
+        self.tab2.rowconfigure(0, weight=1)
+        self.tab2.columnconfigure(0, weight=1)
 
         # Delay creation of results tabs
         self.results_tabs = {}
@@ -115,11 +129,11 @@ class NeuralNetworkArchitectureBuilder:
         self.params_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
         # Store variables for retrieving input later
-        self.epochs_var = tk.StringVar(value="10")
+        self.epochs_var = tk.StringVar(value="50")
         self.batch_var = tk.StringVar(value="32")
         self.loss_var = tk.StringVar(value="Binary Cross-Entropy")
         self.optimizer_var = tk.StringVar(value="Adam")
-        self.learning_rate_var = tk.StringVar(value="0.01")
+        self.learning_rate_var = tk.StringVar(value="0.001")
         self.validation_split_var = tk.StringVar(value="0.2")
 
         # Add parameters to the frame
@@ -628,13 +642,12 @@ class NeuralNetworkArchitectureBuilder:
         # Define a function to build the neural network model
         def build_model(layers, input_shape):
             model = Sequential()
-
             # Loop through the layers
             for i, layer in enumerate(layers):
                 if layer.layer_type == "Dense":
                     if i == 0:  # Add input shape only to the first layer
                         # First layer - explicit input layer
-                        model.add(InputLayer(input_shape=input_shape))
+                        model.add(InputLayer(shape=input_shape))
                         model.add(Dense(units=layer.nodes, activation=layer.activation,
                                         kernel_regularizer=l1(float(layer.regularizer_value)) if layer.regularizer_type == "l1"
                                         else l2(float(layer.regularizer_value)) if layer.regularizer_type == "l2"
@@ -672,8 +685,8 @@ class NeuralNetworkArchitectureBuilder:
             if not hasattr(create_master_popup, "popup"):  # Ensure only one instance exists
                 popup = tk.Toplevel()  # Create an instance of Toplevel
                 popup.title("Training Progress")
-                popup.geometry("1000x400")
-                text_widget = ScrolledText(popup, wrap="word", height=20, width=80)
+                popup.geometry("1200x400")
+                text_widget = ScrolledText(popup, wrap="none", height=20, width=80)
                 text_widget.pack(fill="both", expand=True)
 
                 create_master_popup.popup = popup
@@ -681,7 +694,7 @@ class NeuralNetworkArchitectureBuilder:
 
             return create_master_popup.text_widget
 
-        def build_and_train_model(seed):
+        def build_and_train_model(seed, text_redirector=None):
             tf.random.set_seed(seed)
             input_shape = self.X_train.shape[1:]
             model = build_model(layers, input_shape)
@@ -700,49 +713,75 @@ class NeuralNetworkArchitectureBuilder:
             log_dir = f"logs/fit/{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}_seed{seed}"
             tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
-            # Add training status callback if enabled
+            # Define callbacks
             callbacks = [tensorboard_callback]
-            if self.training_status_var.get():
-                text_widget = create_master_popup()
-                training_status_callback = TrainingStatusCallback(text_widget, model_name=f"Seed {seed}")
-                callbacks.append(training_status_callback)
 
             if self.early_stop_var.get():
-                early_stopping = EarlyStopping(monitor='val_loss', min_delta=10 ** -4, patience=10, restore_best_weights=True)
+                early_stopping = EarlyStopping(
+                    monitor='val_loss',
+                    min_delta=10 ** -4,
+                    patience=10,
+                    restore_best_weights=True
+                )
                 callbacks.append(early_stopping)
 
             # Train the model
-            history = model.fit(
-                self.X_train, self.y_train,
-                epochs=epochs,
-                batch_size=batch_size,
-                verbose=0,  # Disable standard verbose to control output in the custom callback
-                callbacks=callbacks,
-                validation_split=float(self.validation_split_entry.get())
-            )
+            if text_redirector:
+                with redirect_stdout(text_redirector):
+                    history = model.fit(
+                        self.X_train, self.y_train,
+                        epochs=epochs,
+                        batch_size=batch_size,
+                        verbose=1,  # Enable verbose output for progress updates
+                        callbacks=callbacks,
+                        validation_split=float(self.validation_split_entry.get())
+                    )
+            else:
+                history = model.fit(
+                    self.X_train, self.y_train,
+                    epochs=epochs,
+                    batch_size=batch_size,
+                    verbose=1,  # Enable verbose output for progress updates
+                    callbacks=callbacks,
+                    validation_split=float(self.validation_split_entry.get())
+                )
 
             # Return the model and its final validation loss
             final_val_loss = min(history.history['val_loss'])
             return model, final_val_loss, history
 
-        # Run training with randomly selected seeds
-        best_model = None
-        best_val_loss = float('inf')
-        best_history = None
+        def run_training_in_thread():
+            def train():
+                # Run training with randomly selected seeds
+                best_model = None
+                best_val_loss = float('inf')
+                best_history = None
 
-        # get the random starts value
-        random_starts = int(self.random_starts_combobox.get())
+                # Get the random starts value
+                random_starts = int(self.random_starts_combobox.get())
 
-        for _ in range(random_starts):  # Run 4 times with different random seeds
-            seed = random.randint(1, 1000)  # Randomly select a seed between 1 and 10,000
-            model, val_loss, history = build_and_train_model(seed)
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
-                best_model = model
-                best_history = history
+                # Conditionally create a text redirector
+                if self.training_status_var:
+                    text_redirector = TextRedirector(create_master_popup())
+                else:
+                    text_redirector = None
 
-        # Display the training results
-        self.display_training_results(best_history, best_model)
+                for _ in range(random_starts):  # Run for the number of specified random starts
+                    seed = random.randint(1, 1000)  # Randomly select a seed
+                    model, val_loss, history = build_and_train_model(seed, text_redirector)
+                    if val_loss < best_val_loss:
+                        best_val_loss = val_loss
+                        best_model = model
+                        best_history = history
+
+                # Once training is done, transfer the results to the main thread using self.after
+                self.master.after(0, self.display_training_results, best_history, best_model)
+
+            # Start the training process in a new thread
+            training_thread = threading.Thread(target=train)
+            training_thread.start()
+
+        run_training_in_thread()
 
     def display_training_results(self, history, model):
         self.results_tab_count += 1
@@ -768,8 +807,11 @@ class NeuralNetworkArchitectureBuilder:
         scrollable_frame.bind("<Configure>", update_scroll_region)
 
         def on_mouse_wheel(event):
-            if event.delta:
-                canvas.yview_scroll(-1 * int(event.delta / 2), "units")  # Adjust divisor for smooth scrolling
+            system = platform
+            if system.startswith("win"):
+                canvas.yview_scroll(-1 * int(event.delta / 120), "units")
+            else:
+                canvas.yview_scroll(-1 * int(event.delta), "units")
 
         canvas.bind("<MouseWheel>", on_mouse_wheel)  # For macOS trackpad gesture scrolling
 
@@ -781,6 +823,13 @@ class NeuralNetworkArchitectureBuilder:
 
         canvas.bind_all("<KeyPress-Up>", on_key_scroll)
         canvas.bind_all("<KeyPress-Down>", on_key_scroll)
+
+        new_tab.columnconfigure(0, weight=1)
+        new_tab.rowconfigure(0, weight=1)
+        canvas.columnconfigure(0, weight=1)
+        canvas.rowconfigure(0, weight=1)
+        scrollable_frame.columnconfigure(0, weight=1)
+        scrollable_frame.rowconfigure(0, weight=1)
 
         # Display loss and metrics from training history
         if history.history:
@@ -802,7 +851,6 @@ class NeuralNetworkArchitectureBuilder:
             if "MeanSquaredError" in model.loss.__class__.__name__:
                 r2 = r2_score(self.y_test, model.predict(self.X_test))
                 results_text.insert("end", f"r2_Score: {r2:.4f}\n\n")
-
 
         # Determine the type of model (classification or regression)
         loss_name = model.loss.__class__.__name__
@@ -888,6 +936,7 @@ class NeuralNetworkArchitectureBuilder:
 
             right_frame = Frame(plot_tab)
             right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+
 
             # Add dropdowns and button to the left frame
             Label(left_frame, text="Select X Feature:").pack(pady=5)
