@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib
+from sklearn.utils.multiclass import unique_labels
+
 import NN_Optimal_Settings
 import matplotlib.pyplot as plt
 from keras.src.utils.module_utils import tensorflow
@@ -61,6 +63,12 @@ class TrainingStatusCallback(Callback):
 
 class NeuralNetworkArchitectureBuilder:
     def __init__(self, master, X_data=None, y_data=None, NN_PD_DATA_X=None, NN_PD_DATA_Y=None, train_test_split_var=None):
+        self.params_frame = None
+        self.epochs_var = None
+        self.results_tabs = None
+        self.tab2 = None
+        self.notebook = None
+        self.tab1 = None
         self.master = master
         self.X_data = X_data
         self.y_data = y_data
@@ -87,6 +95,7 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_regularizer_widgets = []
         self.layer_regularizer_type = []
         self.layer_regularizer_vars = []
+        
 
         #Results
         self.results_tab_count = 0
@@ -131,10 +140,37 @@ class NeuralNetworkArchitectureBuilder:
         # Store variables for retrieving input later
         self.epochs_var = tk.StringVar(value="50")
         self.batch_var = tk.StringVar(value="32")
-        self.loss_var = tk.StringVar(value="Binary Cross-Entropy")
         self.optimizer_var = tk.StringVar(value="Adam")
         self.learning_rate_var = tk.StringVar(value="0.001")
         self.validation_split_var = tk.StringVar(value="0.2")
+
+        from tkinter import messagebox
+
+        # Function to determine loss function dynamically
+        def determine_loss_function(y_data):
+            unique_labels_y = np.unique(y_data)
+
+            try:
+                if np.issubdtype(y_data.dtype, np.number) and len(unique_labels_y) > 10:
+                    return "Mean Squared Error"  # Regression
+                elif len(unique_labels_y) == 2:
+                    return "Binary Cross-Entropy"  # Binary Classification
+                elif len(unique_labels_y) > 2 and y_data.ndim == 1:
+                    return "Sparse Categorical Cross-Entropy"  # Multi-class Classification (integer labels)
+                elif len(unique_labels_y) > 2 and y_data.ndim > 1 and y_data.shape[1] > 1:
+                    return "Categorical Cross-Entropy"  # Multi-class Classification (one-hot labels)
+                else:
+                    raise ValueError
+            except Exception:
+                # If the loss function cannot be determined
+                messagebox.showwarning(
+                    "Loss Function Warning",
+                    "The appropriate loss function could not be determined. Defaulting to 'Binary Cross-Entropy'."
+                )
+                return "Binary Cross-Entropy"
+
+        # Automatically set loss_var based on y_data
+        self.loss_var = tk.StringVar(value=determine_loss_function(self.y_data))
 
         # Add parameters to the frame
         # Row 1: Epochs and Batch Size
@@ -230,8 +266,60 @@ class NeuralNetworkArchitectureBuilder:
         self.display_data_preview()
         self.notebook.select(self.tab2)
 
-        # Initialize with a single layer
-        self.add_layer_fields()
+        # Initialize with layers
+        for i in range(3):
+            self.add_layer_fields()
+
+        def determine_last_layer_properties(y_data):
+            """
+            Determine the activation function and the number of nodes for the last layer based on y_data.
+
+            Args:
+                y_data (np.ndarray): Target data.
+
+            Returns:
+                tuple: (activation_function, number_of_nodes)
+            """
+            unique_labels = np.unique(y_data)
+
+            try:
+                # Check if it's regression
+                if np.issubdtype(y_data.dtype, np.number) and len(unique_labels) > 10:
+                    return "linear", 1  # Regression: Linear activation, 1 output node
+
+                # Check if it's binary classification
+                elif len(unique_labels) == 2:
+                    return "sigmoid", 1  # Binary Classification: Sigmoid activation, 1 output node
+
+                # Check if it's multi-class classification with integer labels
+                elif len(unique_labels) > 2 and y_data.ndim == 1:
+                    return "softmax", len(unique_labels)  # Multi-class: Softmax activation, unique labels as nodes
+
+                # Check if it's multi-class classification with one-hot encoded labels
+                elif len(unique_labels) > 2 and y_data.ndim > 1 and y_data.shape[1] > 1:
+                    return "softmax", y_data.shape[1]  # Multi-class: Softmax activation, output shape determines nodes
+
+                # If none of the conditions match, raise an exception
+                else:
+                    raise ValueError
+            except Exception:
+                # If the properties cannot be determined, fall back to default
+                messagebox.showwarning(
+                    "Last Layer Properties Warning",
+                    "The appropriate activation function and number of nodes could not be determined. Defaulting to 'linear' and 1 node."
+                )
+                return "linear", 1  # Default to regression settings as fallback
+
+        # Get last layer properties
+        last_layer_activation, last_layer_nodes = determine_last_layer_properties(self.y_data)
+
+        # Set the last layer activation function
+        self.layer_activations[-1].set(last_layer_activation)
+
+        # Set the last layer number of nodes
+        self.layer_nodes_vars[-1].set(last_layer_nodes)
+
+        self.show_visual_key()
 
     def display_data_preview(self):
         if self.NN_PD_DATA_X_train is not None and self.NN_PD_DATA_Y_train is not None:
@@ -717,7 +805,7 @@ class NeuralNetworkArchitectureBuilder:
 
             if self.early_stop_var.get():
                 early_stopping = EarlyStopping(
-                    monitor='val_loss',
+                    monitor='val_loss' if float(self.validation_split_entry.get()) > 0 else 'loss',
                     min_delta=10 ** -4,
                     patience=10,
                     restore_best_weights=True
@@ -745,31 +833,35 @@ class NeuralNetworkArchitectureBuilder:
                     validation_split=float(self.validation_split_entry.get())
                 )
 
-            # Return the model and its final validation loss
-            final_val_loss = min(history.history['val_loss'])
-            return model, final_val_loss, history
+            # Determine the final validation or training loss
+            if float(self.validation_split_entry.get()) > 0:
+                final_loss = min(history.history['val_loss'])
+            else:
+                final_loss = min(history.history['loss'])
+
+            return model, final_loss, history
 
         def run_training_in_thread():
             def train():
                 # Run training with randomly selected seeds
                 best_model = None
-                best_val_loss = float('inf')
+                best_loss = float('inf')
                 best_history = None
 
                 # Get the random starts value
                 random_starts = int(self.random_starts_combobox.get())
 
-                # Conditionally create a text redirector
-                if self.training_status_var:
-                    text_redirector = TextRedirector(create_master_popup())
+                if self.training_status_var.get():
+                    popup = create_master_popup()
+                    text_redirector = TextRedirector(popup)
                 else:
                     text_redirector = None
 
                 for _ in range(random_starts):  # Run for the number of specified random starts
                     seed = random.randint(1, 1000)  # Randomly select a seed
-                    model, val_loss, history = build_and_train_model(seed, text_redirector)
-                    if val_loss < best_val_loss:
-                        best_val_loss = val_loss
+                    model, loss, history = build_and_train_model(seed, text_redirector)
+                    if loss < best_loss:
+                        best_loss = loss
                         best_model = model
                         best_history = history
 
@@ -832,8 +924,8 @@ class NeuralNetworkArchitectureBuilder:
 
         # Display loss and metrics from training history
         if history.history:
-            results_text = Text(scrollable_frame, wrap="word", height=15, width=80)
-            results_text.pack(pady=10)
+            results_text = Text(scrollable_frame, wrap="word")
+            results_text.pack(pady=10, padx=10, fill="both", expand=True)
             results_text.insert("end", "Training Metrics:\n")
             for key, values in history.history.items():
                 results_text.insert("end", f"{key}: {values[-1]:.4f}\n")
@@ -869,7 +961,7 @@ class NeuralNetworkArchitectureBuilder:
                 results_text.insert("end", "Classification Report for train set:\n" + cr + "\n\n")
 
             # Generate and display the confusion matrix heatmap
-            plt.figure(figsize=(8, 6))
+            plt.figure(figsize=(10, 6))
             sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
                         xticklabels=np.unique(self.y_test if self.train_test_split_var else self.y_data),
                         yticklabels=np.unique(self.y_test if self.train_test_split_var else self.y_data))
@@ -887,6 +979,7 @@ class NeuralNetworkArchitectureBuilder:
             heatmap_label = Label(scrollable_frame, image=img_tk)
             heatmap_label.image = img_tk  # Keep a reference to avoid garbage collection
             heatmap_label.pack(pady=10)
+
 
         elif loss_name == "MeanSquaredError":  # Regression tasks
             if self.train_test_split_var is not None:
