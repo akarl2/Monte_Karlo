@@ -8,6 +8,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib
 from sklearn.utils.multiclass import unique_labels
+from uri_template import expand
 
 import NN_Optimal_Settings
 import matplotlib.pyplot as plt
@@ -95,7 +96,6 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_regularizer_widgets = []
         self.layer_regularizer_type = []
         self.layer_regularizer_vars = []
-        
 
         #Results
         self.results_tab_count = 0
@@ -875,142 +875,148 @@ class NeuralNetworkArchitectureBuilder:
         run_training_in_thread()
 
     def display_training_results(self, history, model):
-        self.results_tab_count += 1
-        tab_name = f"Result {self.results_tab_count}"
-        new_tab = ttk.Frame(self.notebook)
-        self.notebook.add(new_tab, text=tab_name)
-        self.notebook.select(new_tab)
+        def create_results_tab(self):
+            # Increment tab count and create new tab
+            self.results_tab_count += 1
+            tab_name = f"Result {self.results_tab_count}"
+            new_tab = ttk.Frame(self.notebook)
+            self.notebook.add(new_tab, text=tab_name)
+            self.notebook.select(new_tab)
 
-        # Add results content to the new tab
-        canvas = Canvas(new_tab)
-        scrollable_frame = Frame(canvas)
-        scrollbar = Scrollbar(new_tab, orient="vertical", command=canvas.yview)
-        scrollbar.pack(side="right", fill="y")
-        canvas.pack(side="left", fill="both", expand=True)
-        canvas.configure(yscrollcommand=scrollbar.set)
+            # Add results content to the new tab
+            canvas = Canvas(new_tab)
+            scrollable_frame = Frame(canvas)
 
-        #Create a window inside the canvas
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+            # Setup scrollbar
+            scrollbar = Scrollbar(new_tab, orient="vertical", command=canvas.yview)
+            scrollbar.pack(side="right", fill="y")
+            canvas.pack(side="left", fill="both", expand=True)
+            canvas.configure(yscrollcommand=scrollbar.set)
 
-        def update_scroll_region(event):
-            canvas.configure(scrollregion=canvas.bbox("all"))
+            # Create a window inside the canvas
+            canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
 
-        scrollable_frame.bind("<Configure>", update_scroll_region)
+            return canvas, scrollable_frame, new_tab
+        canvas, scrollable_frame, new_tab = create_results_tab(self)
 
-        def on_mouse_wheel(event):
-            system = platform
-            if system.startswith("win"):
-                canvas.yview_scroll(-1 * int(event.delta / 120), "units")
-            else:
-                canvas.yview_scroll(-1 * int(event.delta), "units")
+        def setup_scroll(canvas, scrollable_frame):
+            def update_scroll_region(event):
+                canvas.configure(scrollregion=canvas.bbox("all"))
 
-        canvas.bind("<MouseWheel>", on_mouse_wheel)  # For macOS trackpad gesture scrolling
+            def on_mouse_wheel(event):
+                system = platform
+                if system.startswith("win"):
+                    canvas.yview_scroll(-1 * int(event.delta / 120), "units")
+                else:
+                    canvas.yview_scroll(-1 * int(event.delta), "units")
 
-        def on_key_scroll(event):
-            if event.keysym == "Up":
-                canvas.yview_scroll(-1, "units")
-            elif event.keysym == "Down":
-                canvas.yview_scroll(1, "units")
+            def on_key_scroll(event):
+                if event.keysym == "Up":
+                    canvas.yview_scroll(-1, "units")
+                elif event.keysym == "Down":
+                    canvas.yview_scroll(1, "units")
 
-        canvas.bind_all("<KeyPress-Up>", on_key_scroll)
-        canvas.bind_all("<KeyPress-Down>", on_key_scroll)
+            # Bindings
+            scrollable_frame.bind("<Configure>", update_scroll_region)
+            canvas.bind("<MouseWheel>", on_mouse_wheel)  # For macOS trackpad gesture scrolling
+            canvas.bind_all("<KeyPress-Up>", on_key_scroll)
+            canvas.bind_all("<KeyPress-Down>", on_key_scroll)
+        setup_scroll(canvas, scrollable_frame)
 
-        new_tab.columnconfigure(0, weight=1)
-        new_tab.rowconfigure(0, weight=1)
-        canvas.columnconfigure(0, weight=1)
-        canvas.rowconfigure(0, weight=1)
-        scrollable_frame.columnconfigure(0, weight=1)
-        scrollable_frame.rowconfigure(0, weight=1)
+        def configure_window():
+            new_tab.columnconfigure(0, weight=1)
+            new_tab.rowconfigure(0, weight=1)
+            canvas.columnconfigure(0, weight=1)
+            canvas.rowconfigure(0, weight=1)
+            scrollable_frame.columnconfigure(0, weight=1)
+            scrollable_frame.rowconfigure(0, weight=1)
+        configure_window()
 
-        # Display loss and metrics from training history
-        if history.history:
+        loss_name = model.loss.__class__.__name__
+
+        def display_model_results():
+            # Create a Text widget to display the results
             results_text = Text(scrollable_frame, wrap="word")
             results_text.pack(pady=10, padx=10, fill="both", expand=True)
-            results_text.insert("end", "Training Metrics:\n")
-            for key, values in history.history.items():
-                results_text.insert("end", f"{key}: {values[-1]:.4f}\n")
-            results_text.insert("end", "\n")
 
-        #add results from the test data
-        if self.train_test_split_var is not None:
-            test_results = model.evaluate(self.X_test, self.y_test, verbose=0)
-            results_text.insert("end", "Test Metrics:\n")
-            for i, metric in enumerate(model.metrics_names):
-                results_text.insert("end", f"{metric}: {test_results[i]:.4f}\n")
-            results_text.insert("end", "\n")
-            #calcuate R2 score if regression
-            if "MeanSquaredError" in model.loss.__class__.__name__:
-                r2 = r2_score(self.y_test, model.predict(self.X_test))
-                results_text.insert("end", f"r2_Score: {r2:.4f}\n\n")
+            # Display training metrics from the history
+            if history.history:
+                results_text.insert("end", "Training Metrics:\n")
+                for key, values in history.history.items():
+                    results_text.insert("end", f"{key}: {values[-1]:.4f}\n")
+                results_text.insert("end", "\n")
 
-        # Determine the type of model (classification or regression)
-        loss_name = model.loss.__class__.__name__
-        if "Crossentropy" in loss_name or "Hinge" in loss_name:  # Classification tasks
-            # Evaluate on the test or train data
+            # Display test metrics if a train-test split is present
             if self.train_test_split_var is not None:
-                y_pred = model.predict(self.X_test)
-                y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
-                cm = confusion_matrix(self.y_test, y_pred_classes)
-                cr = classification_report(self.y_test, y_pred_classes)
-                results_text.insert("end", "Classification Report for test set:\n" + cr + "\n\n")
-            else:
-                y_pred = model.predict(self.X_train)
-                y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
-                cm = confusion_matrix(self.y_data, y_pred_classes)
-                cr = classification_report(self.y_data, y_pred_classes)
-                results_text.insert("end", "Classification Report for train set:\n" + cr + "\n\n")
+                test_results = model.evaluate(self.X_test, self.y_test, verbose=0)
+                results_text.insert("end", "Test Metrics:\n")
+                for i, metric in enumerate(model.metrics_names):
+                    results_text.insert("end", f"{metric}: {test_results[i]:.4f}\n")
+                results_text.insert("end", "\n")
 
-            # Generate and display the confusion matrix heatmap
-            plt.figure(figsize=(10, 6))
-            sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
-                        xticklabels=np.unique(self.y_test if self.train_test_split_var else self.y_data),
-                        yticklabels=np.unique(self.y_test if self.train_test_split_var else self.y_data))
-            plt.xlabel('Predicted')
-            plt.ylabel('Actual')
-            plt.title('Confusion Matrix Heatmap')
+                # Calculate R2 score for regression models
+                if "MeanSquaredError" in model.loss.__class__.__name__:
+                    r2 = r2_score(self.y_test, model.predict(self.X_test))
+                    results_text.insert("end", f"r2_Score: {r2:.4f}\n\n")
 
-            img_buf = BytesIO()
-            plt.savefig(img_buf, format='png')
-            img_buf.seek(0)
-            img = Image.open(img_buf)
-            img_tk = ImageTk.PhotoImage(img)
-            plt.close()
+                    # Calculate Mean Squared Error (MSE)
+                    y_pred = model.predict(self.X_test) if self.train_test_split_var is not None else model.predict(
+                        self.X_train)
+                    mse = mean_squared_error(self.y_test,
+                                             y_pred) if self.train_test_split_var is not None else mean_squared_error(
+                        self.y_data, y_pred)
+                    results_text.insert("end", f"Mean Squared Error (MSE): {mse:.4f}\n")
 
-            heatmap_label = Label(scrollable_frame, image=img_tk)
-            heatmap_label.image = img_tk  # Keep a reference to avoid garbage collection
-            heatmap_label.pack(pady=10)
+            # Handle classification tasks (e.g., Crossentropy, Hinge loss)
+            if "Crossentropy" in loss_name or "Hinge" in loss_name:
+                # Evaluate on test data if available, otherwise on training data
+                if self.train_test_split_var is not None:
+                    y_pred = model.predict(self.X_test)
+                    y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
+                    cm = confusion_matrix(self.y_test, y_pred_classes)
+                    cr = classification_report(self.y_test, y_pred_classes)
+                    results_text.insert("end", "Classification Report for test set:\n" + cr + "\n\n")
+                else:
+                    y_pred = model.predict(self.X_train)
+                    y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
+                    cm = confusion_matrix(self.y_data, y_pred_classes)
+                    cr = classification_report(self.y_data, y_pred_classes)
+                    results_text.insert("end", "Classification Report for train set:\n" + cr + "\n\n")
 
+                # Generate and display the confusion matrix heatmap
+                plt.figure(figsize=(8, 6))
+                sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+                            xticklabels=np.unique(self.y_test if self.train_test_split_var else self.y_data),
+                            yticklabels=np.unique(self.y_test if self.train_test_split_var else self.y_data))
+                plt.xlabel('Predicted')
+                plt.ylabel('Actual')
+                plt.title('Confusion Matrix Heatmap')
 
-        elif loss_name == "MeanSquaredError":  # Regression tasks
-            if self.train_test_split_var is not None:
-                y_pred = model.predict(self.X_test)
-                mse = mean_squared_error(self.y_test, y_pred)
-            else:
-                y_pred = model.predict(self.X_train)
-                mse = mean_squared_error(self.y_data, y_pred)
-            results_text.insert("end", f"Mean Squared Error (MSE): {mse:.4f}\n")
+                # Convert the heatmap to an image and display it
+                img_buf = BytesIO()
+                plt.savefig(img_buf, format='png')
+                img_buf.seek(0)
+                img = Image.open(img_buf)
+                img_tk = ImageTk.PhotoImage(img)
+                plt.close()
+
+                heatmap_label = Label(scrollable_frame)
+                heatmap_label.image = img_tk  # Keep a reference to avoid garbage collection
+                heatmap_label.pack(pady=10, expand=True, fill="both")
+        display_model_results()
 
         x_feature_var = tk.StringVar(value=self.NN_PD_DATA_X_train.columns[0])
-        x_feature_label = Label(scrollable_frame, text="Select X Feature:")
-        x_feature_label.pack(pady=5)
-        x_feature_dropdown = ttk.Combobox(scrollable_frame, textvariable=x_feature_var, values=list(self.NN_PD_DATA_X_train.columns))
-        x_feature_dropdown.pack(pady=5)
 
         if len(self.NN_PD_DATA_X_train.columns) > 1:
             y_feature_var = tk.StringVar(value=self.NN_PD_DATA_X_train.columns[1])
-            y_feature_label = Label(scrollable_frame, text="Select Y Feature:")
-            y_feature_label.pack(pady=5)
-            y_feature_dropdown = ttk.Combobox(scrollable_frame, textvariable=y_feature_var,
-                                              values=list(self.NN_PD_DATA_X_train.columns))
-            y_feature_dropdown.pack(pady=5)
         else:
             y_feature_var = None
 
-        # Add a new notebook inside the new tab for sub-tabs
         sub_notebook = ttk.Notebook(scrollable_frame)
         sub_notebook.pack(fill="both", expand=True, pady=10)
 
         def plot_surface_response():
+
             # Get selected features
             x_feature = x_feature_var.get()
             y_feature = y_feature_var.get() if y_feature_var is not None else None
@@ -1029,7 +1035,6 @@ class NeuralNetworkArchitectureBuilder:
             right_frame = Frame(plot_tab)
             right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
 
-
             # Add dropdowns and button to the left frame
             Label(left_frame, text="Select X Feature:").pack(pady=5)
             x_feature_dropdown = ttk.Combobox(left_frame, textvariable=x_feature_var, values=list(self.NN_PD_DATA_X_train.columns))
@@ -1044,7 +1049,7 @@ class NeuralNetworkArchitectureBuilder:
                 Label(left_frame, text="Only one feature available. Y feature not required.").pack(pady=5)
 
             # Button to replot
-            Button(left_frame, text="Replot", command=plot_surface_response).pack(pady=10)
+            Button(left_frame, text="New Plot", command=plot_surface_response).pack(pady=10)
 
             # Add Checkbutton for toggling scatter points
             show_training = tk.BooleanVar(value=False)
@@ -1060,7 +1065,7 @@ class NeuralNetworkArchitectureBuilder:
             x_min, x_max = self.NN_PD_DATA_X_train[x_feature].min(), self.NN_PD_DATA_X_train[x_feature].max()
             x_vals = np.linspace(x_min, x_max, 100)
 
-            fig, ax = plt.subplots(figsize=(6, 4))  # Make the plot smaller
+            fig, ax = plt.subplots(figsize=(8, 6))  # Make the plot smaller
 
             if y_feature:  # 3D Plot
                 # Remove all ticks and labels
@@ -1132,7 +1137,6 @@ class NeuralNetworkArchitectureBuilder:
                     ax.set_title(f"Value Curve: {z_feature}")
                     ax.legend()
 
-
             # Initialize scatter points
             scatter_training = None
             scatter_test = None
@@ -1145,7 +1149,6 @@ class NeuralNetworkArchitectureBuilder:
                 if scatter_test:
                     scatter_test.set_visible(show_test.get())
                 canvas.draw()
-
 
             if len(self.NN_PD_DATA_X_train) > 100:
                 num_points_train = 100
@@ -1162,7 +1165,6 @@ class NeuralNetworkArchitectureBuilder:
 
             if self.train_test_split_var is not None:
                 test_indices = np.random.choice(self.NN_PD_DATA_X_test.index, size=num_points_test, replace=False)
-
 
             if y_feature:  # Scatter for 3D plot
                 scatter_training = ax.scatter(
@@ -1206,70 +1208,107 @@ class NeuralNetworkArchitectureBuilder:
             training_checkbox.config(command=toggle_scatter)
             if self.train_test_split_var is not None:
                 test_checkbox.config(command=toggle_scatter)
+        plot_surface_response()
 
-        plot_button = Button(scrollable_frame, text="Plot Surface Response", command=plot_surface_response)
-        plot_button.pack(pady=10)
+        def setup_nn_prediction_interface():
+            """
+            Set up the interface for entering inputs and displaying predictions using the trained model.
+            Creates a visually defined layout for the input fields, buttons, and results.
+            """
+            # Create a frame for the input section
+            input_frame = Frame(scrollable_frame, relief="groove", bd=2, padx=10, pady=10)
+            input_frame.pack(side="top", anchor="n", fill="x", padx=10, pady=10)
 
-        # Add fields for input values for predictions
-        entries = []
-        for i in range(self.NN_PD_DATA_X_train.shape[1]):
-            label = Label(scrollable_frame, text=f"{self.NN_PD_DATA_X_train.columns[i]}:")
-            label.pack(pady=5)
-            entry = Entry(scrollable_frame)
-            entry.pack(pady=5)
-            entries.append(entry)
+            # Add a title label for the input section
+            input_title = Label(input_frame, text="Enter Input Values for Prediction", font=("Arial", 12, "bold"))
+            input_title.pack(pady=10)
 
-        def on_nn_predict():
-            input_values = []
-            for entry in entries:
-                try:
-                    value = float(entry.get())  # Convert to float
-                    input_values.append(value)
-                except ValueError:
-                    messagebox.showerror("Invalid Input", "Please enter valid numeric values.")
-                    return
+            # Add fields for input values with defined spacing and alignment
+            entries = []
+            for column_name in self.NN_PD_DATA_X_train.columns:
+                # Container for label and entry
+                entry_container = Frame(input_frame)
+                entry_container.pack(fill="x", pady=5)
 
-            # Prepare the input array
-            X_new = np.array(input_values).reshape(1, -1)
+                # Label for input field
+                label = Label(entry_container, text=f"{column_name}:", font=("Arial", 10), width=20, anchor="w")
+                label.pack(side="left", padx=5)
 
-            X_new = self.sc.transform(X_new)
+                # Entry field
+                entry = Entry(entry_container, font=("Arial", 10), width=20, relief="sunken", bd=2)
+                entry.pack(side="left", padx=5)
+                entries.append(entry)
 
-            # Get predictions from the model
-            y_pred = model.predict(X_new)
+            # Function to handle predictions
+            def on_nn_predict():
+                input_values = []
+                for entry in entries:
+                    try:
+                        value = float(entry.get())  # Convert to float
+                        input_values.append(value)
+                    except ValueError:
+                        messagebox.showerror("Invalid Input", "Please enter valid numeric values.")
+                        return
 
-            # Handle predictions based on the loss function
-            if loss_name == "CategoricalCrossentropy":
-                predicted_class = np.argmax(y_pred, axis=1)[0]
-                probabilities = y_pred[0]
-                result_label.config(
-                    text=f"Predicted Class: {predicted_class}\nProbabilities: {probabilities}")
+                # Prepare the input array
+                X_new = np.array(input_values).reshape(1, -1)
+                X_new = self.sc.transform(X_new)
 
-            elif loss_name == "SparseCategoricalCrossentropy":
-                predicted_class = np.argmax(y_pred, axis=1)[0]
-                probabilities = y_pred[0]
-                result_label.config(
-                    text=f"Predicted Class: {predicted_class}\nProbabilities: {probabilities}")
+                # Get predictions from the model
+                y_pred = model.predict(X_new)
 
-            elif loss_name == "BinaryCrossentropy":
-                predicted_value = y_pred[0][0]
-                predicted_class = 1 if predicted_value > 0.5 else 0
-                result_label.config(
-                    text=f"Predicted Class: {predicted_class} (Probability: {predicted_value:.4f})")
+                # Handle predictions based on the loss function
+                if loss_name == "CategoricalCrossentropy":
+                    predicted_class = np.argmax(y_pred, axis=1)[0]
+                    probabilities = y_pred[0]
+                    result_label.config(
+                        text=f"Predicted Class: {predicted_class}\nProbabilities: {probabilities}")
 
-            elif loss_name == "MeanSquaredError":
-                predicted_value = y_pred[0][0]
-                result_label.config(text=f"Predicted Value: {predicted_value:.4f}")
+                elif loss_name == "SparseCategoricalCrossentropy":
+                    predicted_class = np.argmax(y_pred, axis=1)[0]
+                    probabilities = y_pred[0]
+                    result_label.config(
+                        text=f"Predicted Class: {predicted_class}\nProbabilities: {probabilities}")
 
-            else:
-                result_label.config(text=f"Unsupported loss function: {loss_name}")
+                elif loss_name == "BinaryCrossentropy":
+                    predicted_value = y_pred[0][0]
+                    predicted_class = 1 if predicted_value > 0.5 else 0
+                    result_label.config(
+                        text=f"Predicted Class: {predicted_class} (Probability: {predicted_value:.4f})")
 
-        # Button for predictions
-        predict_button = Button(scrollable_frame, text="Predict with NN", command=on_nn_predict)
-        predict_button.pack(pady=10)
+                elif loss_name == "MeanSquaredError":
+                    predicted_value = y_pred[0][0]
+                    result_label.config(text=f"Predicted Value: {predicted_value:.4f}")
 
-        # Label to display prediction results
-        result_label = Label(scrollable_frame, text="Enter inputs to predict.", fg="white")
-        result_label.pack(pady=10)
+                else:
+                    result_label.config(text=f"Unsupported loss function: {loss_name}")
+
+            predict_button = Button(
+                input_frame,
+                text="Predict with NN",
+                command=on_nn_predict,
+                bg="white",  # White background
+                fg="black",  # Black text
+                font=("Arial", 10, "bold"),  # Optional: Bold text
+                relief="raised",  # Raised button effect
+                bd=2  # Slight border for definition
+            )
+            predict_button.pack(pady=10)
+
+            # Create a frame for result display
+            result_frame = Frame(scrollable_frame, relief="groove", bd=2, padx=10, pady=10)
+            result_frame.pack(side="top", anchor="n", fill="x", padx=10, pady=10)
+
+            prediction_label = Label(result_frame, text="Neural Network Prediction: ", font=("Arial", 12, "bold"), fg="white", bg="black")
+            prediction_label.pack(pady=5, padx=10, fill="both", expand=True)
+
+            # Label to display prediction results
+            result_label = Label(result_frame, text="Enter inputs to predict.", font=("Arial", 10), fg="white", bg="black",
+                                 wraplength=400,
+                                 anchor="center", justify="center")
+            result_label.pack(pady=5, padx=10, fill="both", expand=True)
+        setup_nn_prediction_interface()
+
         sub_notebook2 = ttk.Notebook(scrollable_frame)
         sub_notebook2.pack(fill="both", expand=True, pady=10)
 
@@ -1351,11 +1390,7 @@ class NeuralNetworkArchitectureBuilder:
                 canvas.draw()
                 canvas.get_tk_widget().pack(fill="both", expand=True)
 
-        # Add a button to plot the training history dynamically
-        plot_history_button = Button(scrollable_frame, text="Plot Training History",
-                                     command=plot_training_history)
-        plot_history_button.pack(pady=10)
-
+        plot_training_history()
 
 
 
