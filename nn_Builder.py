@@ -984,6 +984,7 @@ class NeuralNetworkArchitectureBuilder:
                     results_text.insert("end", "Classification Report for train set:\n" + cr + "\n\n")
 
                 # Generate and display the confusion matrix heatmap
+                print("Test")
                 plt.figure(figsize=(8, 6))
                 sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
                             xticklabels=np.unique(self.y_test if self.train_test_split_var else self.y_data),
@@ -1000,7 +1001,7 @@ class NeuralNetworkArchitectureBuilder:
                 img_tk = ImageTk.PhotoImage(img)
                 plt.close()
 
-                heatmap_label = Label(scrollable_frame)
+                heatmap_label = Label(scrollable_frame, image=img_tk)
                 heatmap_label.image = img_tk  # Keep a reference to avoid garbage collection
                 heatmap_label.pack(pady=10, expand=True, fill="both")
         display_model_results()
@@ -1389,8 +1390,112 @@ class NeuralNetworkArchitectureBuilder:
                 canvas = FigureCanvasTkAgg(fig, master=plot_tab)
                 canvas.draw()
                 canvas.get_tk_widget().pack(fill="both", expand=True)
-
         plot_training_history()
+
+        sub_notebook3 = ttk.Notebook(scrollable_frame)
+        sub_notebook3.pack(fill="both", expand=True, pady=10)
+
+        def weight_histogram():
+            # Create a new tab for the weight histogram
+            plot_tab = ttk.Frame(sub_notebook3)
+            sub_notebook3.add(plot_tab, text="Weight Histogram")
+            sub_notebook3.select(plot_tab)
+
+            # Create a figure and axis for the plot
+            fig, ax = plt.subplots(figsize=(8, 6))
+
+            # Get the weights from the model
+            weights = model.get_weights()
+
+            # Create a histogram for each layer
+            for i, layer_weights in enumerate(weights):
+                if len(layer_weights.shape) > 1:
+                    ax.hist(layer_weights.flatten(), bins=50, alpha=0.7, label=f"Layer {i + 1}")
+
+            # Set the title and labels
+            ax.set_title("Weight Histogram")
+            ax.set_xlabel("Weight Value")
+            ax.set_ylabel("Frequency")
+
+            # Add a legend
+            ax.legend()
+
+            # Embed the plot in the Tkinter window
+            canvas = FigureCanvasTkAgg(fig, master=plot_tab)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        weight_histogram()
+
+        def bias_histogram():
+            # Create a new tab for the bias histogram
+            plot_tab = ttk.Frame(sub_notebook3)
+            sub_notebook3.add(plot_tab, text="Bias Histogram")
+            sub_notebook3.select(plot_tab)
+
+            # Create a figure and axis for the plot
+            fig, ax = plt.subplots(figsize=(8, 6))
+
+            # Get the biases from the model and convert them to numpy arrays
+            for i, layer in enumerate(model.layers):
+                if layer.bias is not None:
+                    # Convert the bias variable to a numpy array and flatten it
+                    biases = layer.bias.numpy().flatten()
+                    ax.hist(biases, bins=50, alpha=0.7, label=f"Layer {i + 1}")
+
+            # Set the title and labels
+            ax.set_title("Bias Histogram")
+            ax.set_xlabel("Bias Value")
+            ax.set_ylabel("Frequency")
+
+            # Add a legend
+            ax.legend()
+
+            # Embed the plot in the Tkinter window
+            canvas = FigureCanvasTkAgg(fig, master=plot_tab)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        bias_histogram()
+
+        def activation_histogram():
+            # Create a new tab for the activation histogram
+            plot_tab = ttk.Frame(sub_notebook3)
+            sub_notebook3.add(plot_tab, text="Activation Histogram")
+            sub_notebook3.select(plot_tab)
+
+            # Create a figure and axis for the plot
+            fig, ax = plt.subplots(figsize=(8, 6))
+
+            #convert input to tensor
+            self.X_train = tf.convert_to_tensor(self.X_train)
+
+            # Create a model to extract layer outputs
+            activation_model = tf.keras.Model(
+                inputs=model.inputs,
+                outputs=[layer.output for layer in model.layers]
+            )
+
+            # Get activations for the training data
+            activations = activation_model.predict(self.X_train)
+
+            # Generate histograms for each layer
+            for i, layer_activations in enumerate(activations):
+                if len(layer_activations.shape) > 1:  # Skip scalar activations
+                    ax.hist(layer_activations.flatten(), bins=50, alpha=0.7, label=f"Layer {i + 1}")
+
+            # Configure plot title and labels
+            ax.set_title("Activation Histogram")
+            ax.set_xlabel("Activation Value")
+            ax.set_ylabel("Frequency")
+            ax.legend()
+
+            # Embed the plot in the Tkinter window
+            canvas = FigureCanvasTkAgg(fig, master=plot_tab)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        activation_histogram()
 
 
 
