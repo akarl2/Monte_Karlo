@@ -2091,6 +2091,9 @@ if __name__ == "__main__":
             cluster_popup.title("Cluster Analysis Results")
             cluster_popup.geometry("800x600")
 
+            #get the data in a pandas dataframe with headers
+            cluster_data_PD = pandas.DataFrame(cluster_data, columns=selected_x_columns)
+
             # Create a notebook for cluster results
             notebook = ttk.Notebook(cluster_popup)
             notebook.pack(fill="both", expand=True)
@@ -2102,8 +2105,13 @@ if __name__ == "__main__":
 
                 # Create a ClusterAnalysis instance for each cluster count
                 cluster_analysis = ClusterAnalysis(master=cluster_popup, data=cluster_data, n_clusters=n_clusters,
-                                                   random_starts=random_starts)
-                cluster_analysis.KMeans_Clustering(tab)  # Pass the tab for result display
+                                                   random_starts=random_starts, data_PD = cluster_data_PD)
+                if cluster_method == "KMeans":
+                    cluster_analysis.KMeans_Clustering(tab)
+                elif cluster_method == "DBSCAN":
+                    cluster_analysis.DBSCAN_Clustering(tab)
+
+
 
 
 
