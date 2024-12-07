@@ -6,7 +6,7 @@ import random
 import sys
 import tkinter
 import time
-from Cluster_Analysis import KMeans_Clustering
+from Cluster_Analysis import ClusterAnalysis
 #import sv_ttk
 from tkinter import *
 import mplcursors
@@ -2038,11 +2038,11 @@ if __name__ == "__main__":
             current_data = self.table.model.df
             column_headers = list(current_data.columns)
 
-            #create a new poupup for column selection
+            # Create a new popup for column selection
             self.popup = tkinter.Toplevel(self)
             self.popup.title("Cluster Analysis")
 
-            #X Columns selection (multiple)
+            # X Columns selection (multiple)
             tkinter.Label(self.popup, text="Select X columns:").pack(anchor=tkinter.W, padx=10, pady=5)
             self.x_columns_vars = {}
             for col in column_headers:
@@ -2051,37 +2051,34 @@ if __name__ == "__main__":
                 checkbutton.pack(anchor=tkinter.W, padx=10)
                 self.x_columns_vars[col] = var
 
-            #create a dropdown to select the number of clusters
-            tkinter.Label(self.popup, text="Number of Clusters:").pack(anchor=tkinter.W, padx=10, pady=5)
-            self.cluster_var = tkinter.IntVar(value=3) #default value is 3
-            cluster_combobox = ttk.Combobox(self.popup, textvariable=self.cluster_var, values=[2, 3, 4, 5, 6, 7, 8, 9, 10], state="readonly")
-            cluster_combobox.pack(anchor=tkinter.W, padx=10)
-
-            #create a dropdown to select the clustering method
+            # Create a dropdown to select the clustering method
             tkinter.Label(self.popup, text="Clustering Method:").pack(anchor=tkinter.W, padx=10, pady=5)
-            self.cluster_method_var = tkinter.StringVar(value="KMeans") #default value is KMeans
-            cluster_method_combobox = ttk.Combobox(self.popup, textvariable=self.cluster_method_var, values=["KMeans", "Agglomerative", "DBSCAN"], state="readonly")
+            self.cluster_method_var = tkinter.StringVar(value="KMeans")  # Default value is KMeans
+            cluster_method_combobox = ttk.Combobox(self.popup, textvariable=self.cluster_method_var,
+                                                   values=["KMeans", "Agglomerative", "DBSCAN"], state="readonly")
             cluster_method_combobox.pack(anchor=tkinter.W, padx=10)
 
-            #create a dropdown for the number of random starts
+            # Create a dropdown for the number of random starts
             tkinter.Label(self.popup, text="Number of Random Starts:").pack(anchor=tkinter.W, padx=10, pady=5)
-            self.random_starts_var = tkinter.IntVar(value=10) #default value is 10
-            random_starts_combobox = ttk.Combobox(self.popup, textvariable=self.random_starts_var, values=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], state="readonly")
+            self.random_starts_var = tkinter.IntVar(value=10)  # Default value is 10
+            random_starts_combobox = ttk.Combobox(self.popup, textvariable=self.random_starts_var,
+                                                  values=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], state="readonly")
             random_starts_combobox.pack(anchor=tkinter.W, padx=10)
 
-            #Create a button to send the data to Cluster Analysis
+            # Create a button to send the data to Cluster Analysis
             confirm_button = tkinter.Button(self.popup, text="Run Cluster Analysis",
                                             command=lambda: self.run_cluster_analysis())
-
             confirm_button.pack(pady=10)
 
         def run_cluster_analysis(self):
             # Gather the selected X columns
             selected_x_columns = [col for col, var in self.x_columns_vars.items() if var.get()]
-            cluster_data = self.table.model.df[selected_x_columns]
+            if not selected_x_columns:
+                tkinter.messagebox.showerror("Error", "Please select at least one column for clustering.")
+                return
 
-            # Get the number of clusters
-            n_clusters = self.cluster_var.get()
+            # Extract data for clustering
+            cluster_data = self.table.model.df[selected_x_columns].to_numpy()  # Convert to numpy array
 
             # Get the clustering method
             cluster_method = self.cluster_method_var.get()
@@ -2089,8 +2086,25 @@ if __name__ == "__main__":
             # Get the number of random starts
             random_starts = self.random_starts_var.get()
 
-            # Run the cluster analysis
-            KMeans_Clustering(cluster_data, n_clusters, random_starts)
+            # Create a new popup for cluster tabs
+            cluster_popup = tkinter.Toplevel(self.master)
+            cluster_popup.title("Cluster Analysis Results")
+            cluster_popup.geometry("800x600")
+
+            # Create a notebook for cluster results
+            notebook = ttk.Notebook(cluster_popup)
+            notebook.pack(fill="both", expand=True)
+
+            # Add tabs for cluster counts from 2 to 10
+            for n_clusters in range(2, 11):
+                tab = ttk.Frame(notebook)
+                notebook.add(tab, text=f"{n_clusters} Clusters")
+
+                # Create a ClusterAnalysis instance for each cluster count
+                cluster_analysis = ClusterAnalysis(master=cluster_popup, data=cluster_data, n_clusters=n_clusters,
+                                                   random_starts=random_starts)
+                cluster_analysis.KMeans_Clustering(tab)  # Pass the tab for result display
+
 
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
