@@ -2035,8 +2035,8 @@ if __name__ == "__main__":
             self.pack(fill=tkinter.BOTH, expand=True)
 
             # Dynamically gather column headers from the current DataFrame in the Pandas Table
-            current_data = self.table.model.df
-            column_headers = list(current_data.columns)
+            full_dataset = self.table.model.df
+            column_headers = list(full_dataset.columns)
 
             # Create a new popup for column selection
             self.popup = tkinter.Toplevel(self)
@@ -2088,8 +2088,6 @@ if __name__ == "__main__":
 
             # Create a new popup for cluster tabs
             cluster_popup = tkinter.Toplevel(self.master)
-            cluster_popup.title("Cluster Analysis Results")
-            cluster_popup.geometry("800x600")
 
             #get the data in a pandas dataframe with headers
             cluster_data_PD = pandas.DataFrame(cluster_data, columns=selected_x_columns)
@@ -2105,7 +2103,7 @@ if __name__ == "__main__":
 
                 # Create a ClusterAnalysis instance for each cluster count
                 cluster_analysis = ClusterAnalysis(master=cluster_popup, data=cluster_data, n_clusters=n_clusters,
-                                                   random_starts=random_starts, data_PD = cluster_data_PD)
+                                                   random_starts=random_starts, data_PD = cluster_data_PD, full_dataset = self.table.model.df)
                 if cluster_method == "KMeans":
                     cluster_analysis.KMeans_Clustering(tab)
                 elif cluster_method == "DBSCAN":
