@@ -7,10 +7,10 @@ import sys
 import tkinter
 import time
 from Cluster_Analysis import ClusterAnalysis
-#import sv_ttk
+import sv_ttk
 from tkinter import *
 import mplcursors
-#from scipy.integrate import trapz, simps
+from scipy.integrate import trapz, simps
 from matplotlib.widgets import Cursor, Slider, SpanSelector
 from mpl_toolkits import *
 from matplotlib.backends.backend_tkagg import *
@@ -24,8 +24,6 @@ from tkinter import ttk, messagebox, simpledialog, filedialog
 import pandas
 import concurrent.futures
 import platform
-
-from scipy.integrate import simps
 
 import Correlation_Matrix
 import scipy
