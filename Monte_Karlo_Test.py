@@ -2060,7 +2060,7 @@ if __name__ == "__main__":
             tkinter.Label(self.popup, text="Number of Random Starts:").pack(anchor=tkinter.W, padx=10, pady=5)
             self.random_starts_var = tkinter.IntVar(value=10)  # Default value is 10
             random_starts_combobox = ttk.Combobox(self.popup, textvariable=self.random_starts_var,
-                                                  values=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], state="readonly")
+                                                  values=[str(i) for i in range(1, 101)], state="readonly")
             random_starts_combobox.pack(anchor=tkinter.W, padx=10)
 
             # Create a button to send the data to Cluster Analysis
@@ -2106,10 +2106,6 @@ if __name__ == "__main__":
                     cluster_analysis.KMeans_Clustering(tab)
                 elif cluster_method == "DBSCAN":
                     cluster_analysis.DBSCAN_Clustering(tab)
-
-
-
-
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
 
