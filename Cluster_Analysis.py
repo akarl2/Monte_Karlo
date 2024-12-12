@@ -110,10 +110,10 @@ class ClusterAnalysis:
             axis_selection_frame.pack(fill="x", padx=5, pady=5)
 
             # Initialize tkinter StringVars with the first three features
-            feature_options = self.data_PD.columns.tolist()  # Use headers from the DataFrame
-            self.x_var = tkinter.StringVar(value=feature_options[0])  # Default to the first feature
-            self.y_var = tkinter.StringVar(value=feature_options[1])  # Default to the second feature
-            self.z_var = tkinter.StringVar(value=feature_options[2])  # Default to the third feature
+            feature_options = self.data_PD.columns.tolist()
+            self.x_var = tkinter.StringVar(value=feature_options[0])
+            self.y_var = tkinter.StringVar(value=feature_options[1])
+            self.z_var = tkinter.StringVar(value=feature_options[2])
 
             # Create dropdowns for axis selection
             ttk.Label(axis_selection_frame, text="X Axis:").grid(row=0, column=0, sticky="w", padx=5)
@@ -154,14 +154,10 @@ class ClusterAnalysis:
                 feature_var_y = tkinter.StringVar(value=self.data_PD.columns[1])
                 x_index = self.data_PD.columns.tolist().index(feature_var_x.get())
                 y_index = self.data_PD.columns.tolist().index(feature_var_y.get())
-
-                # Only define z_var if there are more than 2 features
                 if n_features > 2:
                     feature_var_z = tkinter.StringVar(value=self.data_PD.columns[2])
                     z_index = self.data_PD.columns.tolist().index(feature_var_z.get())
-                else:
-                    feature_var_z = None
-                    z_index = None
+
 
             def plot2d():
                 # 2D plot
@@ -184,9 +180,8 @@ class ClusterAnalysis:
                     self.ax.scatter(selected_point[x_index], selected_point[y_index], color="yellow", marker="o", s=150,
                                     label="Selected Point", edgecolors="black", linewidths=1.5)
 
-                self.ax.set_xlabel(self.full_dataset.columns[x_index])
-                self.ax.set_ylabel(self.full_dataset.columns[y_index])
-                self.ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), fancybox=True, shadow=True, ncol=4)
+                self.ax.set_xlabel(self.data_PD.columns[x_index])
+                self.ax.set_ylabel(self.data_PD.columns[y_index])
 
             def plot3d():
                 for i, centroid in enumerate(centroids, start=1):
@@ -206,8 +201,9 @@ class ClusterAnalysis:
                 self.ax.set_xlabel(self.data_PD.columns[x_index])
                 self.ax.set_ylabel(self.data_PD.columns[y_index])
                 self.ax.set_zlabel(self.data_PD.columns[z_index])
-                self.ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), fancybox=True, shadow=True, ncol=4)
 
+
+            self.ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), fancybox=True, shadow=True, ncol=4)
             self.ax.set_title(f"K-Means Clustering with {len(centroids)} Clusters")
             plt.subplots_adjust(bottom=0.25)
 
