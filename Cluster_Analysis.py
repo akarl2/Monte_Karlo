@@ -9,7 +9,9 @@ from matplotlib.patches import Circle
 
 
 class ClusterAnalysis:
-    def __init__(self, master, data, n_clusters, random_starts, data_PD, full_dataset):
+    def __init__(self, master, data, n_clusters, random_starts, data_PD, full_dataset, cluster_method):
+        self.ax = None
+        self.fig = None
         self.z_var = None
         self.y_var = None
         self.x_var = None
@@ -22,10 +24,15 @@ class ClusterAnalysis:
         self.data_PD = data_PD
         self.min_samples = 2
         self.full_dataset = full_dataset
+        self.cluster_method = cluster_method
+        self.wcss = []
+        self.tabs = {}  # Store tabs for each cluster count
+
+        self.Configure_Cluster_Popup()
 
     def Configure_Cluster_Popup(self):
         self.master.title("Cluster Analysis")
-        self.master.geometry("1800x1000")  # Adjust for visualization
+        self.master.geometry("1800x700")  # Adjust for visualization
         self.master.resizable(True, True)
 
         self.master.columnconfigure(0, weight=1)
@@ -35,19 +42,38 @@ class ClusterAnalysis:
         self.notebook = ttk.Notebook(self.master)
         self.notebook.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
+        self.create_tabs()
+
+    def create_tabs(self):
+        # Drop rows with missing values
+        valid_indices = self.data_PD.dropna().index
+        self.data = self.data[valid_indices]
+        self.data_PD = self.data_PD.loc[valid_indices]
+        self.full_dataset = self.full_dataset.loc[valid_indices]
+
+        """Create tabs for cluster counts from 2 to 10."""
+        for n_clusters in range(2, 11):
+            # Create a new tab
+            tab = ttk.Frame(self.notebook)
+            self.notebook.add(tab, text=f"{n_clusters} Clusters")
+            self.tabs[n_clusters] = tab
+
+            # Update the cluster count for this tab
+            self.n_clusters = n_clusters
+
+            # Perform clustering and visualization
+            if self.cluster_method == "KMeans":
+                self.KMeans_Clustering(tab)
+            elif self.cluster_method == "DBSCAN":
+                self.DBSCAN_Clustering(tab)
+
     def DBSCAN_Clustering(self, tab):
         dbscan = DBSCAN(eps=self.eps, min_samples=self.min_samples).fit(self.data)
         self.display_clustering(self.data, dbscan, tab)
 
     def KMeans_Clustering(self, tab):
-        #valid rows
-        valid_rows = ~np.isnan(self.data).any(axis=1)
-        self.data = self.data[valid_rows]
-
-        #remove rows with NA in data_PD
-        self.data_PD = self.data_PD.dropna()
-
         kmeans = KMeans(n_clusters=self.n_clusters, n_init=self.random_starts, random_state=0).fit(self.data)
+        self.wcss.append(kmeans.inertia_)
         self.display_clustering(kmeans, tab)
 
     def display_clustering(self, kmeans, tab):
@@ -133,16 +159,34 @@ class ClusterAnalysis:
             y_dropdown.bind("<<ComboboxSelected>>", lambda _: update_plot())
             z_dropdown.bind("<<ComboboxSelected>>", lambda _: update_plot())
 
+        if n_features == 1 or n_features == 2:
+            self.fig, self.ax = plt.subplots(figsize=(6, 6))
+        else:
+            self.fig = plt.figure(figsize=(6, 6))
+            self.ax = self.fig.add_subplot(111, projection='3d')
+
+        def plot_elbow():
+            """Create the elbow plot."""
+            fig, ax = plt.subplots(figsize=(4, 3))
+            ax.plot(range(2, len(self.wcss) + 2), self.wcss, marker="o", linestyle="-")
+            ax.set_title("Elbow Method")
+            ax.set_xlabel("Number of Clusters")
+            ax.set_ylabel("WCSS (Within-Cluster Sum of Squares)")
+            ax.grid()
+
+            canvas = FigureCanvasTkAgg(fig, master=elbow_frame)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        if hasattr(self, "wcss") and len(self.wcss) >= 9:
+            elbow_tab = ttk.Frame(self.notebook)
+            self.notebook.add(elbow_tab, text="Elbow Method")
+            elbow_frame = ttk.Frame(elbow_tab)
+            elbow_frame.pack(fill="both", expand=True)
+            plot_elbow()
+
         # Function to update the plot
         def update_plot(selected_row=None):
-
-            if not hasattr(self, "fig") or not hasattr(self, "ax"):
-                if n_features == 1 or n_features == 2:
-                    self.fig, self.ax = plt.subplots(figsize=(6, 6))
-                else:
-                    self.fig = plt.figure(figsize=(6, 6))
-                    self.ax = self.fig.add_subplot(111, projection='3d')
-
             self.ax.clear()
 
             if self.use_dropdowns:
@@ -157,7 +201,6 @@ class ClusterAnalysis:
                 if n_features > 2:
                     feature_var_z = tkinter.StringVar(value=self.data_PD.columns[2])
                     z_index = self.data_PD.columns.tolist().index(feature_var_z.get())
-
 
             def plot2d():
                 # 2D plot
@@ -182,6 +225,7 @@ class ClusterAnalysis:
 
                 self.ax.set_xlabel(self.data_PD.columns[x_index])
                 self.ax.set_ylabel(self.data_PD.columns[y_index])
+                self.ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), fancybox=True, shadow=True, ncol=4)
 
             def plot3d():
                 for i, centroid in enumerate(centroids, start=1):
@@ -201,9 +245,8 @@ class ClusterAnalysis:
                 self.ax.set_xlabel(self.data_PD.columns[x_index])
                 self.ax.set_ylabel(self.data_PD.columns[y_index])
                 self.ax.set_zlabel(self.data_PD.columns[z_index])
+                self.ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), fancybox=True, shadow=True, ncol=4)
 
-
-            self.ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), fancybox=True, shadow=True, ncol=4)
             self.ax.set_title(f"K-Means Clustering with {len(centroids)} Clusters")
             plt.subplots_adjust(bottom=0.25)
 

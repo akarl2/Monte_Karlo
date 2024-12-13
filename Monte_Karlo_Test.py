@@ -2033,8 +2033,8 @@ if __name__ == "__main__":
             self.pack(fill=tkinter.BOTH, expand=True)
 
             # Dynamically gather column headers from the current DataFrame in the Pandas Table
-            full_dataset = self.table.model.df
-            column_headers = list(full_dataset.columns)
+            self.full_dataset = self.table.model.df
+            column_headers = list(self.full_dataset.columns)
 
             # Create a new popup for column selection
             self.popup = tkinter.Toplevel(self)
@@ -2090,22 +2090,19 @@ if __name__ == "__main__":
             #get the data in a pandas dataframe with headers
             cluster_data_PD = pandas.DataFrame(cluster_data, columns=selected_x_columns)
 
-            # Create a notebook for cluster results
-            notebook = ttk.Notebook(cluster_popup)
-            notebook.pack(fill="both", expand=True)
+            cluster_popup.title("Cluster Analysis")
 
-            # Add tabs for cluster counts from 2 to 10
-            for n_clusters in range(2, 11):
-                tab = ttk.Frame(notebook)
-                notebook.add(tab, text=f"{n_clusters} Clusters")
+            # Create the ClusterAnalysis instance
+            cluster_analysis = ClusterAnalysis(
+                master=cluster_popup,
+                data=cluster_data,
+                n_clusters=2,  # Start with 2 clusters
+                random_starts=random_starts,
+                data_PD=cluster_data_PD,
+                full_dataset=self.full_dataset,  # Assuming `cluster_data` is your full dataset
+                cluster_method=cluster_method
+            )
 
-                # Create a ClusterAnalysis instance for each cluster count
-                cluster_analysis = ClusterAnalysis(master=cluster_popup, data=cluster_data, n_clusters=n_clusters,
-                                                   random_starts=random_starts, data_PD = cluster_data_PD, full_dataset = self.table.model.df)
-                if cluster_method == "KMeans":
-                    cluster_analysis.KMeans_Clustering(tab)
-                elif cluster_method == "DBSCAN":
-                    cluster_analysis.DBSCAN_Clustering(tab)
 
     global RXN_Type, RXN_Samples, RXN_EOR, RXN_EM, RXN_EM_Value, NUM_OF_SIM
 
@@ -2251,7 +2248,8 @@ if __name__ == "__main__":
                 "PDI (Dispersity Index) =",
                 "Mz =",
                 "Mz + 1 =",
-                "Xn DOP ="]
+                "Xn DOP ="
+            ]
 
             for i, label_text in enumerate(labels):
                 self.entries[i].delete(0, tkinter.END)
