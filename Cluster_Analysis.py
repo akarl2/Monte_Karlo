@@ -42,7 +42,37 @@ class ClusterAnalysis:
         self.notebook = ttk.Notebook(self.master)
         self.notebook.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
+        self.create_master_dropdown()
+
         self.create_tabs()
+
+    def create_master_dropdown(self):
+        """Create master dropdowns for feature selection."""
+        self.master_dropdown_frame = ttk.Frame(self.master)
+        self.master_dropdown_frame.grid(row=1, column=0, sticky="ew", padx=10, pady=10)
+
+        feature_options = self.data_PD.columns.tolist()
+        self.x_var = tkinter.StringVar(value=feature_options[0])
+        self.y_var = tkinter.StringVar(value=feature_options[1])
+        self.z_var = tkinter.StringVar(value=feature_options[2] if len(feature_options) > 2 else None)
+
+        # X Axis dropdown
+        ttk.Label(self.master_dropdown_frame, text="X Axis:").grid(row=0, column=0, sticky="w", padx=5)
+        x_dropdown = ttk.Combobox(self.master_dropdown_frame, textvariable=self.x_var, values=feature_options)
+        x_dropdown.grid(row=0, column=1, sticky="ew", padx=5)
+        x_dropdown.bind("<<ComboboxSelected>>", lambda event: self.display_clustering())
+
+        # Y Axis dropdown
+        ttk.Label(self.master_dropdown_frame, text="Y Axis:").grid(row=0, column=2, sticky="w", padx=5)
+        y_dropdown = ttk.Combobox(self.master_dropdown_frame, textvariable=self.y_var, values=feature_options)
+        y_dropdown.grid(row=0, column=3, sticky="ew", padx=5)
+
+        # Z Axis dropdown (if 3D plotting is available)
+        if len(feature_options) > 2:
+            ttk.Label(self.master_dropdown_frame, text="Z Axis:").grid(row=0, column=4, sticky="w", padx=5)
+            z_dropdown = ttk.Combobox(self.master_dropdown_frame, textvariable=self.z_var, values=feature_options)
+            z_dropdown.grid(row=0, column=5, sticky="ew", padx=5)
+
 
     def create_tabs(self):
         # Drop rows with missing values
@@ -126,39 +156,6 @@ class ClusterAnalysis:
         for _, row in sorted_dataset.iterrows():
             tree.insert("", "end", values=row.tolist())
 
-        self.use_dropdowns = False
-
-        # Dropdown creation logic, only run once
-        if n_features > 3:
-            self.use_dropdowns = True
-            # Add dropdowns for feature selection
-            axis_selection_frame = ttk.Frame(control_frame)
-            axis_selection_frame.pack(fill="x", padx=5, pady=5)
-
-            # Initialize tkinter StringVars with the first three features
-            feature_options = self.data_PD.columns.tolist()
-            self.x_var = tkinter.StringVar(value=feature_options[0])
-            self.y_var = tkinter.StringVar(value=feature_options[1])
-            self.z_var = tkinter.StringVar(value=feature_options[2])
-
-            # Create dropdowns for axis selection
-            ttk.Label(axis_selection_frame, text="X Axis:").grid(row=0, column=0, sticky="w", padx=5)
-            x_dropdown = ttk.Combobox(axis_selection_frame, textvariable=self.x_var, values=feature_options)
-            x_dropdown.grid(row=0, column=1, sticky="ew", padx=5)
-
-            ttk.Label(axis_selection_frame, text="Y Axis:").grid(row=1, column=0, sticky="w", padx=5)
-            y_dropdown = ttk.Combobox(axis_selection_frame, textvariable=self.y_var, values=feature_options)
-            y_dropdown.grid(row=1, column=1, sticky="ew", padx=5)
-
-            ttk.Label(axis_selection_frame, text="Z Axis:").grid(row=2, column=0, sticky="w", padx=5)
-            z_dropdown = ttk.Combobox(axis_selection_frame, textvariable=self.z_var, values=feature_options)
-            z_dropdown.grid(row=2, column=1, sticky="ew", padx=5)
-
-            # Bind the dropdown changes to update the plot
-            x_dropdown.bind("<<ComboboxSelected>>", lambda _: update_plot())
-            y_dropdown.bind("<<ComboboxSelected>>", lambda _: update_plot())
-            z_dropdown.bind("<<ComboboxSelected>>", lambda _: update_plot())
-
         if n_features == 1 or n_features == 2:
             self.fig, self.ax = plt.subplots(figsize=(6, 6))
         else:
@@ -190,9 +187,9 @@ class ClusterAnalysis:
             self.ax.clear()
 
             if self.use_dropdowns:
-                x_index = self.data_PD.columns.tolist().index(self.x_var.get())
-                y_index = self.data_PD.columns.tolist().index(self.y_var.get())
-                z_index = self.data_PD.columns.tolist().index(self.z_var.get())
+                x_index = self.x_var.get()
+                y_index = self.y_var.get()
+                z_index = self.z_var.get()
             else:
                 feature_var_x = tkinter.StringVar(value=self.data_PD.columns[0])
                 feature_var_y = tkinter.StringVar(value=self.data_PD.columns[1])
@@ -276,6 +273,9 @@ class ClusterAnalysis:
 
         # Initial plot
         update_plot()
+
+
+
 
 
 
