@@ -259,8 +259,8 @@ class ClusterAnalysis:
                 ax.add_artist(circle)
 
             if selected_row_data is not None:
-                ax.scatter(selected_row_data[0], selected_row_data[1], color="yellow", marker="o",
-                                s=150, label="Selected Point", edgecolors="black", linewidths=1.5)
+                ax.scatter(selected_row_data[0], selected_row_data[1], facecolor="none", marker="o",
+                                s=150, label="Selected Point", edgecolors="red", linewidths=1.5)
 
             ax.set_xlabel(self.data_PD.columns[x_index])
             ax.set_ylabel(self.data_PD.columns[y_index])
@@ -276,8 +276,8 @@ class ClusterAnalysis:
                                 s=100, label=f'Centroid {i}')
 
             if selected_row_data is not None:
-                ax.scatter(selected_row_data[0], selected_row_data[1], selected_row_data[2],
-                                color="yellow", marker="o", s=150, label="Selected Point", edgecolors="black",
+                ax.scatter(selected_row_data[0], selected_row_data[1], selected_row_data[2], facecolor='none',
+                                marker="o", s=150, label="Selected Point", edgecolors="red",
                                 linewidths=1.5)
 
             ax.set_xlabel(self.data_PD.columns[x_index])
@@ -303,7 +303,6 @@ class ClusterAnalysis:
 
     def on_table_select(self, event, treeview):
         selected_item = treeview.selection()
-        #get current selected cluster
         current_tab = self.notebook.index(self.notebook.select()) + 2
         sorted_dataset = self.plots[current_tab]["sorted_dataset"]
 
@@ -315,7 +314,7 @@ class ClusterAnalysis:
             z_value = sorted_dataset.iloc[treeview_index][self.z_var.get()] if self.z_var else None
 
             selected_row_data = [x_value, y_value, z_value] if self.z_var else [x_value, y_value]
-            print(selected_row_data)
+
             self.update_plot(selected_row_data)
 
 
