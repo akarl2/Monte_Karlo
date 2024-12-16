@@ -7,6 +7,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from scipy.cluster.hierarchy import centroid
 from sklearn.cluster import KMeans, DBSCAN
 from matplotlib.patches import Circle
+from sklearn.metrics import silhouette_score
 
 
 class ClusterAnalysis:
@@ -42,6 +43,7 @@ class ClusterAnalysis:
         self.feature_options = self.data_PD.columns.tolist()
         self.use_dropdowns = False
         self.n_features = self.data.shape[1]
+        self.silo_score = []
 
         if self.n_features > 3:
             self.use_dropdowns = True
@@ -125,7 +127,8 @@ class ClusterAnalysis:
             elif self.cluster_method == "DBSCAN":
                 self.DBSCAN_Clustering(tab)
 
-        self.notebook.select(self.tabs[2])
+        #defult to select the last tab in the notebook by -1
+        self.notebook.select(self.notebook.index(self.notebook.tabs()[-1]))
 
     def DBSCAN_Clustering(self, tab):
         dbscan = DBSCAN(eps=self.eps, min_samples=self.min_samples).fit(self.data)
@@ -134,6 +137,7 @@ class ClusterAnalysis:
     def KMeans_Clustering(self, tab):
         kmeans = KMeans(n_clusters=self.n_clusters, n_init=self.random_starts, random_state=0).fit(self.data)
         self.wcss.append(kmeans.inertia_)
+        self.silo_score.append(silhouette_score(self.data, kmeans.labels_))
         self.display_clustering(kmeans, tab)
 
     def display_clustering(self, kmeans, tab):
@@ -187,30 +191,72 @@ class ClusterAnalysis:
 
         # Insert rows into the Treeview
         for _, row in self.sorted_dataset.iterrows():
-            tree.insert("", "end", values=row.tolist())
+            rounded_row = [round(value, 4) if isinstance(value, (int, float)) else value for value in row.tolist()]
+            tree.insert("", "end", values=rounded_row)
 
         # Bind the Treeview selection event to the function
         tree.bind("<<TreeviewSelect>>", lambda event: self.on_table_select(event, tree))
 
-        def plot_elbow():
-            """Create the elbow plot."""
-            fig, ax = plt.subplots(figsize=(4, 3))
-            ax.plot(range(2, len(self.wcss) + 2), self.wcss, marker="o", linestyle="-")
-            ax.set_title("Elbow Method")
-            ax.set_xlabel("Number of Clusters")
-            ax.set_ylabel("WCSS (Within-Cluster Sum of Squares)")
-            ax.grid()
+        def display_cluster_metrics():
+            """Display elbow and silhouette plots side by side on a single tab."""
 
-            canvas = FigureCanvasTkAgg(fig, master=elbow_frame)
-            canvas.draw()
-            canvas.get_tk_widget().pack(fill="both", expand=True)
+            # Create a single tab for both plots
+            metrics_tab = ttk.Frame(self.notebook)
+            self.notebook.add(metrics_tab, text="Cluster Metrics")
+
+            # Create a PanedWindow to organize the two plots horizontally
+            paned_window = ttk.PanedWindow(metrics_tab, orient="horizontal")
+            paned_window.pack(fill="both", expand=True)
+
+            # Create frames for each plot
+            elbow_frame = ttk.Frame(paned_window, width=300, height=300)
+            silhouette_frame = ttk.Frame(paned_window, width=300, height=300)
+            paned_window.add(elbow_frame, weight=1)
+            paned_window.add(silhouette_frame, weight=1)
+
+            # Elbow Plot
+            def plot_elbow():
+                """Create the elbow plot."""
+                fig, ax = plt.subplots(figsize=(3, 2))
+                ax.plot(range(2, len(self.wcss) + 2), self.wcss, marker="o", linestyle="-")
+                ax.set_title("Elbow Method")
+                ax.set_xlabel("Number of Clusters")
+                ax.set_ylabel("WCSS (Within-Cluster Sum of Squares)")
+                ax.grid()
+
+                canvas = FigureCanvasTkAgg(fig, master=elbow_frame)
+                canvas.draw()
+                canvas.get_tk_widget().pack(fill="both", expand=True)
+
+            # Silhouette Score Plot
+            def plot_silhouette():
+                """Create the silhouette score plot."""
+                fig, ax = plt.subplots(figsize=(3, 2))
+                ax.plot(range(2, len(self.silo_score) + 2), self.silo_score, marker="o", linestyle="-")
+                ax.set_title("Silhouette Score")
+                ax.set_xlabel("Number of Clusters")
+                ax.set_ylabel("Silhouette Score")
+                ax.grid()
+
+                # Add labels indicating silhouette score thresholds
+                ax.axhline(y=0.70, color='r', linestyle='--', label='Excellent Silhouette Score')
+                ax.axhline(y=0.5, color='y', linestyle='--', label='Good Silhouette Score')
+                ax.axhline(y=0.25, color='g', linestyle='--', label='Weak Silhouette Score')
+                ax.legend()
+
+                canvas = FigureCanvasTkAgg(fig, master=silhouette_frame)
+                canvas.draw()
+                canvas.get_tk_widget().pack(fill="both", expand=True)
+
+            # Generate the plots
+            plot_elbow()
+            plot_silhouette()
+
 
         if hasattr(self, "wcss") and len(self.wcss) >= 9:
-            elbow_tab = ttk.Frame(self.notebook)
-            self.notebook.add(elbow_tab, text="Elbow Method")
-            elbow_frame = ttk.Frame(elbow_tab)
-            elbow_frame.pack(fill="both", expand=True)
-            plot_elbow()
+            display_cluster_metrics()
+
+
 
         self.update_plot()
 
