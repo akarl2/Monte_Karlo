@@ -2063,6 +2063,13 @@ if __name__ == "__main__":
                                                   values=[str(i) for i in range(1, 101)], state="readonly")
             random_starts_combobox.pack(anchor=tkinter.W, padx=10)
 
+            #checkbox with label to find the optimal number of clusters and features
+            self.optimal_cluster_var = tkinter.BooleanVar(value=False)
+            optimal_cluster_checkbutton = tkinter.Checkbutton(self.popup, text="Find Optimal Features/Clusters?",
+                                                               variable=self.optimal_cluster_var)
+            optimal_cluster_checkbutton.pack(anchor=tkinter.W, pady=10, padx=10)
+
+
             # Create a button to send the data to Cluster Analysis
             confirm_button = tkinter.Button(self.popup, text="Run Cluster Analysis",
                                             command=lambda: self.run_cluster_analysis())
@@ -2084,13 +2091,19 @@ if __name__ == "__main__":
             # Get the number of random starts
             random_starts = self.random_starts_var.get()
 
+            #get the optimal cluster and features
+            optimal_cluster = self.optimal_cluster_var.get()
+
             # Create a new popup for cluster tabs
-            cluster_popup = tkinter.Toplevel(self.master)
+            if optimal_cluster is False:
+                cluster_popup = tkinter.Toplevel(self.master)
+                cluster_popup.title("Cluster Analysis")
+            else:
+                cluster_popup = None
 
             #get the data in a pandas dataframe with headers
             cluster_data_PD = pandas.DataFrame(cluster_data, columns=selected_x_columns)
 
-            cluster_popup.title("Cluster Analysis")
 
             # Create the ClusterAnalysis instance
             cluster_analysis = ClusterAnalysis(
@@ -2100,7 +2113,8 @@ if __name__ == "__main__":
                 random_starts=random_starts,
                 data_PD=cluster_data_PD,
                 full_dataset=self.full_dataset,  # Assuming `cluster_data` is your full dataset
-                cluster_method=cluster_method
+                cluster_method=cluster_method,
+                optimal_cluster=optimal_cluster
             )
 
 

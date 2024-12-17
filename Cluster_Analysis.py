@@ -1,5 +1,7 @@
 import tkinter
-from tkinter import ttk, Frame
+from itertools import combinations
+from pyexpat import features
+from tkinter import ttk, Frame, messagebox
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,7 +13,7 @@ from sklearn.metrics import silhouette_score
 
 
 class ClusterAnalysis:
-    def __init__(self, master, data, n_clusters, random_starts, data_PD, full_dataset, cluster_method):
+    def __init__(self, master, data, n_clusters, random_starts, data_PD, full_dataset, cluster_method, optimal_cluster):
         self.creating_plots = False
         self.plot_frames = None
         self.sorted_dataset = None
@@ -52,7 +54,16 @@ class ClusterAnalysis:
         self.y_var = tkinter.StringVar(value=self.feature_options[1])
         self.z_var = tkinter.StringVar(value=self.feature_options[2]) if len(self.feature_options) > 2 else None
 
-        self.configure_cluster_popup()
+        if optimal_cluster:
+            self.find_best_features_and_clusters(self.data_PD)
+            #run find_best_features_and_clusters function
+            best_result = self.find_best_features_and_clusters(self.data_PD)
+            messagebox.showinfo("Best Features and Clusters",
+                                f"Best Features: \n{', '.join(best_result['feature_names'])}\n\n"
+                                f"Best Clusters: {best_result['n_clusters']}\n\n"
+                                f"Silhouette Score: {best_result['silhouette_score']}")
+        else:
+            self.configure_cluster_popup()
 
 
     def configure_cluster_popup(self):
@@ -96,6 +107,49 @@ class ClusterAnalysis:
             z_dropdown.grid(row=0, column=5, sticky="ew", padx=5)
             z_dropdown.bind("<<ComboboxSelected>>", lambda event: self.update_plot())
 
+    def find_best_features_and_clusters(self, data, cluster_range=(2, 10)):
+        """
+        Find the best subset of features and cluster count that maximizes the silhouette score.
+
+        Args:
+            data (np.ndarray): The dataset as a NumPy array (samples x features).
+            cluster_range (tuple): Range of cluster numbers to test (default: 2 to 10).
+
+        Returns:
+            dict: Best result with feature indices, cluster count, and silhouette score.
+        """
+        n_samples, n_features = self.data.shape
+        best_result = {'feature_names': None, 'n_clusters': None, 'silhouette_score': -1}
+
+        # Iterate through all subsets of features (1 to all features)
+        for n_sub_features in range(2, n_features + 1):
+            for feature_indices in combinations(range(n_features), n_sub_features):
+                feature_data = self.data[:, feature_indices]  # Select subset of features
+
+                # Test clustering for different cluster counts
+                for n_clusters in range(cluster_range[0], cluster_range[1] + 1):
+                    try:
+                        # Perform K-Means clustering
+                        kmeans = KMeans(n_clusters=n_clusters, random_state=0, n_init=10).fit(feature_data)
+                        labels = kmeans.labels_
+
+                        # Compute silhouette score
+                        score = silhouette_score(feature_data, labels)
+
+                        # Check if this result is the best so far
+                        if score > best_result['silhouette_score']:
+                            best_result['feature_indices'] = feature_indices
+                            best_result['feature_names'] = [self.data_PD.columns[i].replace('\xa0', ' ') for i in
+                                                            feature_indices]
+                            best_result['n_clusters'] = n_clusters
+                            best_result['silhouette_score'] = score
+                    except Exception as e:
+                        # Handle exceptions (e.g., cluster number too high for the number of samples)
+                        print(f"Error with features {feature_indices} and {n_clusters} clusters: {e}")
+
+        return best_result
+
+
     def create_tabs(self):
         # Drop rows with missing values
         valid_indices = self.data_PD.dropna().index
@@ -126,6 +180,13 @@ class ClusterAnalysis:
                 self.KMeans_Clustering(tab)
             elif self.cluster_method == "DBSCAN":
                 self.DBSCAN_Clustering(tab)
+
+
+
+
+
+
+
 
         #defult to select the last tab in the notebook by -1
         self.notebook.select(self.notebook.index(self.notebook.tabs()[-1]))
@@ -255,8 +316,6 @@ class ClusterAnalysis:
 
         if hasattr(self, "wcss") and len(self.wcss) >= 9:
             display_cluster_metrics()
-
-
 
         self.update_plot()
 
