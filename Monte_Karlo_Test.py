@@ -1372,7 +1372,7 @@ if __name__ == "__main__":
     tab_control.add(tab3, text='1° In-Situ Results')
     tab_control.add(tab4, text='2° Reaction Results')
     tab_control.add(tab5, text='2° In-Situ Results')
-    tab_control.add(tab6, text='Machine Learning')
+    tab_control.add(tab6, text='Data Analysis')
     tkinter.Grid.rowconfigure(window, 0, weight=1)
     tkinter.Grid.columnconfigure(window, 0, weight=1)
     tab_control.grid(row=0, column=0, sticky=tkinter.E + tkinter.W + tkinter.N + tkinter.S)
@@ -1382,7 +1382,7 @@ if __name__ == "__main__":
     screen_height = window.winfo_screenheight()
 
     # Set the window size to a percentage of the screen size
-    screen_size = 0.8  # 80% of the screen
+    screen_size = .6
     window_width = int(screen_width * screen_size)
     window_height = int(screen_height * screen_size)
     window.geometry(f"{window_width}x{window_height}+0+0")  # "+0+0" positions the window in the top-left corner

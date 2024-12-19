@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib
+from matplotlib.figure import Figure
 from sklearn.utils.multiclass import unique_labels
 from uri_template import expand
 
@@ -37,7 +38,6 @@ from sklearn.metrics import confusion_matrix, classification_report, mean_square
 from io import BytesIO
 from PIL import Image, ImageTk
 from pandastable import Table
-
 from NN_Optimal_Settings import LOSS_METRICS_DICT
 
 
@@ -64,6 +64,7 @@ class TrainingStatusCallback(Callback):
 
 class NeuralNetworkArchitectureBuilder:
     def __init__(self, master, X_data=None, y_data=None, NN_PD_DATA_X=None, NN_PD_DATA_Y=None, train_test_split_var=None):
+        self.results_fig_size = None
         self.params_frame = None
         self.epochs_var = None
         self.results_tabs = None
@@ -97,11 +98,26 @@ class NeuralNetworkArchitectureBuilder:
         self.layer_regularizer_type = []
         self.layer_regularizer_vars = []
 
+        # Get logical screen dimensions
+        self.screen_width = self.master.winfo_screenwidth()
+        self.screen_height = self.master.winfo_screenheight()
+        self.screen_fraction = 0.7  # Fraction of screen to use for the main window
+
+        #figure out if mac or windows
+        self.dpi = self.master.winfo_fpixels('1i')
+        if platform == "darwin":
+            self.os = "mac"
+            self.scaling_factor = 2
+        else:
+            self.os = "windows"
+            self.scaling_factor = 1
+
         #Results
         self.results_tab_count = 0
 
     def configure_nn_popup(self):
         self.master.title("Neural Network Architecture Builder")
+        self.master.geometry(f"{int(self.screen_width * self.screen_fraction)}x{int(self.screen_height * self.screen_fraction)}")
 
         # Configure the parent window's grid
         self.master.rowconfigure(0, weight=1)
@@ -123,6 +139,12 @@ class NeuralNetworkArchitectureBuilder:
         self.tab1.columnconfigure(0, weight=1)
         self.tab2.rowconfigure(0, weight=1)
         self.tab2.columnconfigure(0, weight=1)
+
+        #get the width of self.master in inches
+        self.master.update_idletasks()
+        screen_width_in = (self.master.winfo_width() / self.dpi / self.scaling_factor)
+        screen_height_in = (self.master.winfo_height() / self.dpi / self.scaling_factor)
+        self.results_fig_size = (screen_width_in, screen_height_in)
 
         # Delay creation of results tabs
         self.results_tabs = {}
@@ -875,7 +897,7 @@ class NeuralNetworkArchitectureBuilder:
         run_training_in_thread()
 
     def display_training_results(self, history, model):
-        def create_results_tab(self):
+        def create_results_tab():
             # Increment tab count and create new tab
             self.results_tab_count += 1
             tab_name = f"Result {self.results_tab_count}"
@@ -884,55 +906,67 @@ class NeuralNetworkArchitectureBuilder:
             self.notebook.select(new_tab)
 
             # Add results content to the new tab
-            canvas = Canvas(new_tab)
-            scrollable_frame = Frame(canvas)
+            master_canvas = Canvas(new_tab)
+            scrollable_frame = Frame(master_canvas)
 
             # Setup scrollbar
-            scrollbar = Scrollbar(new_tab, orient="vertical", command=canvas.yview)
+            scrollbar = Scrollbar(new_tab, orient="vertical", command=master_canvas.yview)
             scrollbar.pack(side="right", fill="y")
-            canvas.pack(side="left", fill="both", expand=True)
-            canvas.configure(yscrollcommand=scrollbar.set)
+            master_canvas.pack(side="left", fill="both", expand=True)
+            master_canvas.configure(yscrollcommand=scrollbar.set)
 
             # Create a window inside the canvas
-            canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+            master_canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
 
-            return canvas, scrollable_frame, new_tab
-        canvas, scrollable_frame, new_tab = create_results_tab(self)
-
-        def setup_scroll(canvas, scrollable_frame):
-            def update_scroll_region(event):
-                canvas.configure(scrollregion=canvas.bbox("all"))
+            # Bind resizing of scrollable_frame to update scroll region
+            scrollable_frame.bind("<Configure>", lambda e: master_canvas.configure(scrollregion=master_canvas.bbox("all")))
 
             def on_mouse_wheel(event):
-                system = platform
-                if system.startswith("win"):
-                    canvas.yview_scroll(-1 * int(event.delta / 120), "units")
+                if self.os == "mac":
+                    master_canvas.yview_scroll(-1 * int(event.delta* 0.5), "units")
                 else:
-                    canvas.yview_scroll(-1 * int(event.delta), "units")
+                    master_canvas.yview_scroll(-1 * int(event.delta / 120), "units")
 
             def on_key_scroll(event):
                 if event.keysym == "Up":
-                    canvas.yview_scroll(-1, "units")
+                    master_canvas.yview_scroll(-1, "units")
                 elif event.keysym == "Down":
-                    canvas.yview_scroll(1, "units")
+                    master_canvas.yview_scroll(1, "units")
 
             # Bindings
-            scrollable_frame.bind("<Configure>", update_scroll_region)
-            canvas.bind("<MouseWheel>", on_mouse_wheel)  # For macOS trackpad gesture scrolling
-            canvas.bind_all("<KeyPress-Up>", on_key_scroll)
-            canvas.bind_all("<KeyPress-Down>", on_key_scroll)
-        setup_scroll(canvas, scrollable_frame)
+            master_canvas.bind("<MouseWheel>", on_mouse_wheel)  # For macOS trackpad gesture scrolling
+            master_canvas.bind_all("<KeyPress-Up>", on_key_scroll)
+            master_canvas.bind_all("<KeyPress-Down>", on_key_scroll)
 
-        def configure_window():
+            scrollable_frame.bind("<MouseWheel>", on_mouse_wheel)  # For macOS trackpad gesture scrolling
+            new_tab.bind("<MouseWheel>", on_mouse_wheel)  # For macOS trackpad gesture scrolling
+
             new_tab.columnconfigure(0, weight=1)
             new_tab.rowconfigure(0, weight=1)
-            canvas.columnconfigure(0, weight=1)
-            canvas.rowconfigure(0, weight=1)
+            master_canvas.columnconfigure(0, weight=1)
+            master_canvas.rowconfigure(0, weight=1)
             scrollable_frame.columnconfigure(0, weight=1)
             scrollable_frame.rowconfigure(0, weight=1)
-        configure_window()
+
+            return master_canvas, scrollable_frame, new_tab
+
+        master_canvas, scrollable_frame, new_tab = create_results_tab()
 
         loss_name = model.loss.__class__.__name__
+
+        sub_notebook = ttk.Notebook(scrollable_frame)
+        sub_notebook.pack(fill="both", expand=True, pady=10)
+        sub_notebook2 = ttk.Notebook(scrollable_frame)
+        sub_notebook2.pack(fill="both", expand=True, pady=10)
+        sub_notebook3 = ttk.Notebook(scrollable_frame)
+        sub_notebook3.pack(fill="both", expand=True, pady=10)
+
+        sub_notebook.rowconfigure(0, weight=1)
+        sub_notebook.columnconfigure(0, weight=1)
+        sub_notebook2.rowconfigure(0, weight=1)
+        sub_notebook2.columnconfigure(0, weight=1)
+        sub_notebook3.rowconfigure(0, weight=1)
+        sub_notebook3.columnconfigure(0, weight=1)
 
         def display_model_results():
             # Create a Text widget to display the results
@@ -960,15 +994,15 @@ class NeuralNetworkArchitectureBuilder:
                     results_text.insert("end", f"r2_Score: {r2:.4f}\n\n")
 
                     # Calculate Mean Squared Error (MSE)
-                    y_pred = model.predict(self.X_test) if self.train_test_split_var is not None else model.predict(
+                    y_pred = model.predict(
+                        self.X_test) if self.train_test_split_var is not None else model.predict(
                         self.X_train)
-                    mse = mean_squared_error(self.y_test,
-                                             y_pred) if self.train_test_split_var is not None else mean_squared_error(
+                    mse = mean_squared_error(self.y_test, y_pred) if self.train_test_split_var is not None else mean_squared_error(
                         self.y_data, y_pred)
                     results_text.insert("end", f"Mean Squared Error (MSE): {mse:.4f}\n")
 
             # Handle classification tasks (e.g., Crossentropy, Hinge loss)
-            if "Crossentropy" in loss_name or "Hinge" in loss_name:
+            if "Crossentropy" in model.loss.__class__.__name__ or "Hinge" in model.loss.__class__.__name__:
                 # Evaluate on test data if available, otherwise on training data
                 if self.train_test_split_var is not None:
                     y_pred = model.predict(self.X_test)
@@ -983,27 +1017,21 @@ class NeuralNetworkArchitectureBuilder:
                     cr = classification_report(self.y_data, y_pred_classes)
                     results_text.insert("end", "Classification Report for train set:\n" + cr + "\n\n")
 
-                # Generate and display the confusion matrix heatmap
-                print("Test")
-                plt.figure(figsize=(8, 6))
+                # Generate and display the confusion matrix using FigureCanvasTkAgg
+                self.model_fig = Figure()  # Create a Matplotlib figure
+                ax = self.model_fig.add_subplot(111)
                 sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
                             xticklabels=np.unique(self.y_test if self.train_test_split_var else self.y_data),
-                            yticklabels=np.unique(self.y_test if self.train_test_split_var else self.y_data))
-                plt.xlabel('Predicted')
-                plt.ylabel('Actual')
-                plt.title('Confusion Matrix Heatmap')
+                            yticklabels=np.unique(self.y_test if self.train_test_split_var else self.y_data), ax=ax)
+                ax.set_xlabel("Predicted")
+                ax.set_ylabel("Actual")
+                ax.set_title("Confusion Matrix Heatmap")
 
-                # Convert the heatmap to an image and display it
-                img_buf = BytesIO()
-                plt.savefig(img_buf, format='png')
-                img_buf.seek(0)
-                img = Image.open(img_buf)
-                img_tk = ImageTk.PhotoImage(img)
-                plt.close()
+                # Embed the figure in Tkinter
+                self.model_can = FigureCanvasTkAgg(self.model_fig, master=scrollable_frame)
+                self.model_can.draw()
+                self.model_can.get_tk_widget().pack(pady=10, fill="both", expand=True)
 
-                heatmap_label = Label(scrollable_frame, image=img_tk)
-                heatmap_label.image = img_tk  # Keep a reference to avoid garbage collection
-                heatmap_label.pack(pady=10, expand=True, fill="both")
         display_model_results()
 
         x_feature_var = tk.StringVar(value=self.NN_PD_DATA_X_train.columns[0])
@@ -1013,11 +1041,7 @@ class NeuralNetworkArchitectureBuilder:
         else:
             y_feature_var = None
 
-        sub_notebook = ttk.Notebook(scrollable_frame)
-        sub_notebook.pack(fill="both", expand=True, pady=10)
-
         def plot_surface_response():
-
             # Get selected features
             x_feature = x_feature_var.get()
             y_feature = y_feature_var.get() if y_feature_var is not None else None
@@ -1066,7 +1090,7 @@ class NeuralNetworkArchitectureBuilder:
             x_min, x_max = self.NN_PD_DATA_X_train[x_feature].min(), self.NN_PD_DATA_X_train[x_feature].max()
             x_vals = np.linspace(x_min, x_max, 100)
 
-            fig, ax = plt.subplots(figsize=(8, 6))  # Make the plot smaller
+            self.SR_fig, ax = plt.subplots()  # Make the plot smaller
 
             if y_feature:  # 3D Plot
                 # Remove all ticks and labels
@@ -1149,10 +1173,12 @@ class NeuralNetworkArchitectureBuilder:
                     scatter_training.set_visible(show_training.get())
                 if scatter_test:
                     scatter_test.set_visible(show_test.get())
-                canvas.draw()
+                self.SR_can.draw()
 
             if len(self.NN_PD_DATA_X_train) > 100:
                 num_points_train = 100
+                if self.train_test_split_var is not None:
+                    num_points_test = 100
             else:
                 num_points_train = len(self.NN_PD_DATA_X_train)
 
@@ -1201,14 +1227,15 @@ class NeuralNetworkArchitectureBuilder:
                         visible=False)
 
             # Add the plot to the right frame
-            canvas = FigureCanvasTkAgg(fig, master=right_frame)
-            canvas.draw()
-            canvas.get_tk_widget().pack(fill="both", expand=True)
+            self.SR_can = FigureCanvasTkAgg(self.SR_fig, master=right_frame)
+            self.SR_can.draw()
+            self.SR_can.get_tk_widget().pack(fill="both", expand=True)
 
             # Attach toggle functionality
             training_checkbox.config(command=toggle_scatter)
             if self.train_test_split_var is not None:
                 test_checkbox.config(command=toggle_scatter)
+
         plot_surface_response()
 
         def setup_nn_prediction_interface():
@@ -1219,6 +1246,9 @@ class NeuralNetworkArchitectureBuilder:
             # Create a frame for the input section
             input_frame = Frame(scrollable_frame, relief="groove", bd=2, padx=10, pady=10)
             input_frame.pack(side="top", anchor="n", fill="x", padx=10, pady=10)
+
+            input_frame.columnconfigure(0, weight=1)
+            input_frame.rowconfigure(0, weight=1)
 
             # Add a title label for the input section
             input_title = Label(input_frame, text="Enter Input Values for Prediction", font=("Arial", 12, "bold"))
@@ -1300,6 +1330,9 @@ class NeuralNetworkArchitectureBuilder:
             result_frame = Frame(scrollable_frame, relief="groove", bd=2, padx=10, pady=10)
             result_frame.pack(side="top", anchor="n", fill="x", padx=10, pady=10)
 
+            result_frame.columnconfigure(0, weight=1)
+            result_frame.rowconfigure(0, weight=1)
+
             prediction_label = Label(result_frame, text="Neural Network Prediction: ", font=("Arial", 12, "bold"), fg="white", bg="black")
             prediction_label.pack(pady=5, padx=10, fill="both", expand=True)
 
@@ -1308,10 +1341,9 @@ class NeuralNetworkArchitectureBuilder:
                                  wraplength=400,
                                  anchor="center", justify="center")
             result_label.pack(pady=5, padx=10, fill="both", expand=True)
+
         setup_nn_prediction_interface()
 
-        sub_notebook2 = ttk.Notebook(scrollable_frame)
-        sub_notebook2.pack(fill="both", expand=True, pady=10)
 
         def plot_training_history():
             metric_groups = {}
@@ -1338,7 +1370,7 @@ class NeuralNetworkArchitectureBuilder:
                 epochs = range(1, len(train_data) + 1)
 
                 # Create the plot
-                fig, ax = plt.subplots(figsize=(8, 6))
+                self.TH_fig, ax = plt.subplots()
 
                 # Plot training and validation metrics
                 if train_data:
@@ -1382,18 +1414,15 @@ class NeuralNetworkArchitectureBuilder:
                     ax.figure.canvas.draw()
 
                 # For each metric plot
-                fig.canvas.mpl_connect('motion_notify_event',
+                self.TH_fig.canvas.mpl_connect('motion_notify_event',
                     partial(on_move, ax=ax, text_box=text_box, train_data=train_data, val_data=val_data, epochs=epochs,
                             base_name=base_name))
 
                 # Embed the plot in Tkinter window
-                canvas = FigureCanvasTkAgg(fig, master=plot_tab)
-                canvas.draw()
-                canvas.get_tk_widget().pack(fill="both", expand=True)
+                self.TH_can = FigureCanvasTkAgg(self.TH_fig, master=plot_tab)
+                self.TH_can.draw()
+                self.TH_can.get_tk_widget().pack(fill="both", expand=True)
         plot_training_history()
-
-        sub_notebook3 = ttk.Notebook(scrollable_frame)
-        sub_notebook3.pack(fill="both", expand=True, pady=10)
 
         def weight_histogram():
             # Create a new tab for the weight histogram
@@ -1402,7 +1431,7 @@ class NeuralNetworkArchitectureBuilder:
             sub_notebook3.select(plot_tab)
 
             # Create a figure and axis for the plot
-            fig, ax = plt.subplots(figsize=(8, 6))
+            self.WH_fig, ax = plt.subplots()
 
             # Get the weights from the model
             weights = model.get_weights()
@@ -1421,9 +1450,9 @@ class NeuralNetworkArchitectureBuilder:
             ax.legend()
 
             # Embed the plot in the Tkinter window
-            canvas = FigureCanvasTkAgg(fig, master=plot_tab)
-            canvas.draw()
-            canvas.get_tk_widget().pack(fill="both", expand=True)
+            self.WH_can = FigureCanvasTkAgg(self.WH_fig, master=plot_tab)
+            self.WH_can.draw()
+            self.WH_can.get_tk_widget().pack(fill="both", expand=True)
 
         weight_histogram()
 
@@ -1434,7 +1463,7 @@ class NeuralNetworkArchitectureBuilder:
             sub_notebook3.select(plot_tab)
 
             # Create a figure and axis for the plot
-            fig, ax = plt.subplots(figsize=(8, 6))
+            self.BH_fig, ax = plt.subplots()
 
             # Get the biases from the model and convert them to numpy arrays
             for i, layer in enumerate(model.layers):
@@ -1452,9 +1481,9 @@ class NeuralNetworkArchitectureBuilder:
             ax.legend()
 
             # Embed the plot in the Tkinter window
-            canvas = FigureCanvasTkAgg(fig, master=plot_tab)
-            canvas.draw()
-            canvas.get_tk_widget().pack(fill="both", expand=True)
+            self.BH_can = FigureCanvasTkAgg(self.BH_fig, master=plot_tab)
+            self.BH_can.draw()
+            self.BH_can.get_tk_widget().pack(fill="both", expand=True)
 
         bias_histogram()
 
@@ -1465,7 +1494,7 @@ class NeuralNetworkArchitectureBuilder:
             sub_notebook3.select(plot_tab)
 
             # Create a figure and axis for the plot
-            fig, ax = plt.subplots(figsize=(8, 6))
+            self.AH_fig, ax = plt.subplots()
 
             #convert input to tensor
             self.X_train = tf.convert_to_tensor(self.X_train)
@@ -1491,11 +1520,50 @@ class NeuralNetworkArchitectureBuilder:
             ax.legend()
 
             # Embed the plot in the Tkinter window
-            canvas = FigureCanvasTkAgg(fig, master=plot_tab)
-            canvas.draw()
-            canvas.get_tk_widget().pack(fill="both", expand=True)
+            self.AH_can = FigureCanvasTkAgg(self.AH_fig, master=plot_tab)
+            self.AH_can.draw()
+            self.AH_can.get_tk_widget().pack(fill="both", expand=True)
 
         activation_histogram()
+
+        # Variable to store the debounce timer
+        resize_timer = None
+
+        def get_results_fig_size(event):
+            nonlocal resize_timer
+
+            # Cancel any existing timer
+            if resize_timer is not None:
+                resize_timer.cancel()
+
+            # Start a new timer to delay execution
+            def delayed_resize():
+                # Calculate new figure size
+                fig_width = event.width / self.dpi / self.scaling_factor
+                fig_height = event.height / self.dpi / self.scaling_factor
+                self.results_fig_size = (fig_width, fig_height)
+
+                # Update the sizes of all figures
+                for fig, canvas in [
+                    (self.model_fig, self.model_can),
+                    (self.SR_fig, self.SR_can),
+                    (self.TH_fig, self.TH_can),
+                    (self.WH_fig, self.WH_can),
+                    (self.BH_fig, self.BH_can),
+                    (self.AH_fig, self.AH_can)
+                ]:
+                    if fig and canvas:
+                        fig.set_size_inches((self.results_fig_size[0] * 0.7, self.results_fig_size[1] * 0.5))
+                        canvas.draw()  # Trigger redraw of the canvas
+                        canvas.get_tk_widget().config(width=event.width - 250, height=event.height*.6)
+
+            # Set a debounce delay (e.g., 200 milliseconds)
+            resize_timer = threading.Timer(0.2, delayed_resize)
+            resize_timer.start()
+
+        # Bind the function to the resize event
+        master_canvas.bind("<Configure>", get_results_fig_size)
+
 
 
 

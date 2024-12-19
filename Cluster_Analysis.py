@@ -121,7 +121,7 @@ class ClusterAnalysis:
         n_samples, n_features = self.data.shape
         best_result = {'feature_names': None, 'n_clusters': None, 'silhouette_score': -1}
 
-        # Iterate through all subsets of features (1 to all features)
+         # Iterate through all subsets of features (1 to all features)
         for n_sub_features in range(2, n_features + 1):
             for feature_indices in combinations(range(n_features), n_sub_features):
                 feature_data = self.data[:, feature_indices]  # Select subset of features
@@ -180,13 +180,6 @@ class ClusterAnalysis:
                 self.KMeans_Clustering(tab)
             elif self.cluster_method == "DBSCAN":
                 self.DBSCAN_Clustering(tab)
-
-
-
-
-
-
-
 
         #defult to select the last tab in the notebook by -1
         self.notebook.select(self.notebook.index(self.notebook.tabs()[-1]))
@@ -274,6 +267,7 @@ class ClusterAnalysis:
             silhouette_frame = ttk.Frame(paned_window, width=300, height=300)
             paned_window.add(elbow_frame, weight=1)
             paned_window.add(silhouette_frame, weight=1)
+
 
             # Elbow Plot
             def plot_elbow():

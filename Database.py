@@ -1969,6 +1969,27 @@ class BPADGE:
         self.ctrgk = 0
         self.dist = [[self.prgID], [self.prgID]]
 
+class Acetic_Anhydride():
+    def __init__(self):
+        self.name = "Acetic Anhydride"
+        self.sn = "Ac2O"
+        self.formula = "C4H6O3"
+        self.mw = 102.09
+        self.density = 1.08
+        self.prgID = "OCOCO"
+        self.prgk = 2
+        self.cprgID = None
+        self.cprgk = 1
+        self.srgID = None
+        self.srgk = 1
+        self.csrgID = None
+        self.csrgk = 1
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID], [self.prgID]]
+
 quick_add_dict = {
     "Dimer acid 1017": [["C18", .02], ["Dimer", .78], ["Trimer", .2]],
     "Dimer acid 1006": [["Dimer", .97], ["Trimer", .03]],
