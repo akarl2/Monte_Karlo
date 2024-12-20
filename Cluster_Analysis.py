@@ -64,10 +64,14 @@ class ClusterAnalysis:
         if optimal_cluster:
             #run find_best_features_and_clusters function
             best_result = self.find_best_features_and_clusters(self.data_PD)
-            messagebox.showinfo("Best Features and Clusters",
-                                f"Best Features: \n{', '.join(best_result['feature_names'])}\n\n"
-                                f"Best Clusters: {best_result['n_clusters']}\n\n"
-                                f"Silhouette Score: {best_result['silhouette_score']}")
+            if best_result != "Canceled":
+                messagebox.showinfo("Best Features and Clusters",
+                                    f"Best Features: \n{', '.join(best_result['feature_names'])}\n\n"
+                                    f"Best Clusters: {best_result['n_clusters']}\n\n"
+                                    f"Silhouette Score: {best_result['silhouette_score']}")
+            else:
+                messagebox.showinfo("Canceled", "The process has been canceled")
+
         else:
             self.configure_cluster_popup()
 
@@ -122,7 +126,8 @@ class ClusterAnalysis:
             cluster_range (tuple): Range of cluster numbers to test (default: 2 to 10).
 
         Returns:
-            dict: Best result with feature indices, cluster count, and silhouette score.
+            dict or str: Best result with feature indices, cluster count, and silhouette score,
+                         or "Canceled" if the process is interrupted.
         """
         n_samples, n_features = self.data.shape
         best_result = {'feature_names': None, 'n_clusters': None, 'silhouette_score': -1}
@@ -136,7 +141,7 @@ class ClusterAnalysis:
         # Create the Tkinter popup window
         popup = tkinter.Tk()
         popup.title("Progress")
-        popup.geometry("300x150")
+        popup.geometry("400x225")
         label = tkinter.Label(popup, text="Optimizing features and clusters...")
         label.pack(pady=10)
         progress = ttk.Progressbar(popup, orient="horizontal", length=250, mode="determinate")
@@ -144,16 +149,42 @@ class ClusterAnalysis:
         percent_label = tkinter.Label(popup, text="0.00% Complete")
         percent_label.pack(pady=10)
         progress["maximum"] = total_combinations
+
+        cancel_flag = tkinter.BooleanVar(value=False)
+
+        def cancel():
+            cancel_flag.set(True)
+            try:
+                popup.destroy()
+            except tkinter.TclError:
+                pass  # Ignore errors if the window is already destroyed
+
+        cancel_button = ttk.Button(popup, text="Cancel", command=cancel)
+        cancel_button.pack(pady=10)
         popup.update()
 
-         # Iterate through all subsets of features (1 to all features)
+        # Iterate through all subsets of features (2 to all features)
         current_combination = 0
         for n_sub_features in range(2, n_features + 1):
             for feature_indices in combinations(range(n_features), n_sub_features):
+                if cancel_flag.get():  # Check if cancel was pressed
+                    try:
+                        popup.destroy()
+                    except tkinter.TclError:
+                        pass  # Ignore errors if the window is already destroyed
+                    return "Canceled"  # Exit and indicate cancellation
+
                 feature_data = self.data[:, feature_indices]  # Select subset of features
 
                 # Test clustering for different cluster counts
                 for n_clusters in range(cluster_range[0], cluster_range[1] + 1):
+                    if cancel_flag.get():  # Check if cancel was pressed
+                        try:
+                            popup.destroy()
+                        except tkinter.TclError:
+                            pass  # Ignore errors if the window is already destroyed
+                        return "Canceled"  # Exit and indicate cancellation
+
                     try:
                         # Perform K-Means clustering
                         kmeans = KMeans(n_clusters=n_clusters, random_state=0, n_init=10).fit(feature_data)
@@ -179,7 +210,11 @@ class ClusterAnalysis:
                         progress["value"] = current_combination
                         popup.update()
 
-        popup.destroy()
+        try:
+            popup.destroy()
+        except tkinter.TclError:
+            pass  # Ignore errors if the window is already destroyed
+
         return best_result
 
 
