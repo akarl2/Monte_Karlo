@@ -955,11 +955,11 @@ class NeuralNetworkArchitectureBuilder:
         loss_name = model.loss.__class__.__name__
 
         sub_notebook = ttk.Notebook(scrollable_frame)
-        sub_notebook.pack(fill="both", expand=True, pady=10)
+        sub_notebook.grid(row=5, column=0, sticky="nsew", padx=10, pady=10)
         sub_notebook2 = ttk.Notebook(scrollable_frame)
-        sub_notebook2.pack(fill="both", expand=True, pady=10)
+        sub_notebook2.grid(row=6, column=0, sticky="nsew", padx=10, pady=10)
         sub_notebook3 = ttk.Notebook(scrollable_frame)
-        sub_notebook3.pack(fill="both", expand=True, pady=10)
+        sub_notebook3.grid(row=7, column=0, sticky="nsew", padx=10, pady=10)
 
         sub_notebook.rowconfigure(0, weight=1)
         sub_notebook.columnconfigure(0, weight=1)
@@ -971,8 +971,9 @@ class NeuralNetworkArchitectureBuilder:
         def display_model_results():
             # Create a Text widget to display the results
             results_text = Text(scrollable_frame, wrap="word")
-            results_text.pack(pady=10, padx=10, fill="both", expand=True)
+            results_text.grid(row=1, column=0, sticky="ew", padx=10, pady=10)
 
+            # Display the model summary
             # Display training metrics from the history
             if history.history:
                 results_text.insert("end", "Training Metrics:\n")
@@ -1030,7 +1031,7 @@ class NeuralNetworkArchitectureBuilder:
                 # Embed the figure in Tkinter
                 self.model_can = FigureCanvasTkAgg(self.model_fig, master=scrollable_frame)
                 self.model_can.draw()
-                self.model_can.get_tk_widget().pack(pady=10, fill="both", expand=True)
+                self.model_can.get_tk_widget().grid(row=2, column=0, sticky="nsew", padx=10, pady=10)
 
         display_model_results()
 
@@ -1239,13 +1240,8 @@ class NeuralNetworkArchitectureBuilder:
         plot_surface_response()
 
         def setup_nn_prediction_interface():
-            """
-            Set up the interface for entering inputs and displaying predictions using the trained model.
-            Creates a visually defined layout for the input fields, buttons, and results.
-            """
-            # Create a frame for the input section
             input_frame = Frame(scrollable_frame, relief="groove", bd=2, padx=10, pady=10)
-            input_frame.pack(side="top", anchor="n", fill="x", padx=10, pady=10)
+            input_frame.grid(row=3, column=0, sticky="nsew", padx=10, pady=10)
 
             input_frame.columnconfigure(0, weight=1)
             input_frame.rowconfigure(0, weight=1)
@@ -1328,7 +1324,7 @@ class NeuralNetworkArchitectureBuilder:
 
             # Create a frame for result display
             result_frame = Frame(scrollable_frame, relief="groove", bd=2, padx=10, pady=10)
-            result_frame.pack(side="top", anchor="n", fill="x", padx=10, pady=10)
+            result_frame.grid(row=4, column=0, sticky="nsew", padx=10, pady=10)
 
             result_frame.columnconfigure(0, weight=1)
             result_frame.rowconfigure(0, weight=1)
@@ -1555,7 +1551,7 @@ class NeuralNetworkArchitectureBuilder:
                     if fig and canvas:
                         fig.set_size_inches((self.results_fig_size[0] * 0.7, self.results_fig_size[1] * 0.5))
                         canvas.draw()  # Trigger redraw of the canvas
-                        canvas.get_tk_widget().config(width=event.width - 250, height=event.height*.6)
+                        canvas.get_tk_widget().config(width=event.width - 270, height=event.height*.6)
 
             # Set a debounce delay (e.g., 200 milliseconds)
             resize_timer = threading.Timer(0.2, delayed_resize)

@@ -10,6 +10,7 @@ from scipy.cluster.hierarchy import centroid
 from sklearn.cluster import KMeans, DBSCAN
 from matplotlib.patches import Circle
 from sklearn.metrics import silhouette_score
+from tqdm import tqdm
 
 
 class ClusterAnalysis:
@@ -54,8 +55,13 @@ class ClusterAnalysis:
         self.y_var = tkinter.StringVar(value=self.feature_options[1])
         self.z_var = tkinter.StringVar(value=self.feature_options[2]) if len(self.feature_options) > 2 else None
 
+        # Drop rows with missing values
+        valid_indices = self.data_PD.dropna().index
+        self.data = self.data[valid_indices]
+        self.data_PD = self.data_PD.loc[valid_indices]
+        self.full_dataset = self.full_dataset.loc[valid_indices]
+
         if optimal_cluster:
-            self.find_best_features_and_clusters(self.data_PD)
             #run find_best_features_and_clusters function
             best_result = self.find_best_features_and_clusters(self.data_PD)
             messagebox.showinfo("Best Features and Clusters",
@@ -121,7 +127,27 @@ class ClusterAnalysis:
         n_samples, n_features = self.data.shape
         best_result = {'feature_names': None, 'n_clusters': None, 'silhouette_score': -1}
 
+        total_combinations = sum(
+            len(range(cluster_range[0], cluster_range[1] + 1)) * len(
+                list(combinations(range(n_features), n_sub_features)))
+            for n_sub_features in range(2, n_features + 1)
+        )
+
+        # Create the Tkinter popup window
+        popup = tkinter.Tk()
+        popup.title("Progress")
+        popup.geometry("300x150")
+        label = tkinter.Label(popup, text="Optimizing features and clusters...")
+        label.pack(pady=10)
+        progress = ttk.Progressbar(popup, orient="horizontal", length=250, mode="determinate")
+        progress.pack(pady=10)
+        percent_label = tkinter.Label(popup, text="0.00% Complete")
+        percent_label.pack(pady=10)
+        progress["maximum"] = total_combinations
+        popup.update()
+
          # Iterate through all subsets of features (1 to all features)
+        current_combination = 0
         for n_sub_features in range(2, n_features + 1):
             for feature_indices in combinations(range(n_features), n_sub_features):
                 feature_data = self.data[:, feature_indices]  # Select subset of features
@@ -146,16 +172,18 @@ class ClusterAnalysis:
                     except Exception as e:
                         # Handle exceptions (e.g., cluster number too high for the number of samples)
                         print(f"Error with features {feature_indices} and {n_clusters} clusters: {e}")
+                    finally:
+                        current_combination += 1
+                        percent_complete = current_combination / total_combinations * 100
+                        percent_label.config(text=f"{percent_complete:.2f}% Complete")
+                        progress["value"] = current_combination
+                        popup.update()
 
+        popup.destroy()
         return best_result
 
 
     def create_tabs(self):
-        # Drop rows with missing values
-        valid_indices = self.data_PD.dropna().index
-        self.data = self.data[valid_indices]
-        self.data_PD = self.data_PD.loc[valid_indices]
-        self.full_dataset = self.full_dataset.loc[valid_indices]
 
         """Create tabs for cluster counts from 2 to 10."""
         for n_clusters in range(2, 11):
