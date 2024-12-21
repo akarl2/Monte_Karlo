@@ -322,8 +322,7 @@ class NeuralNetworkArchitectureBuilder:
                 elif y_data.ndim > 1 and y_data.shape[1] > 1:
                     # Multi-output problem
                     is_numeric = np.array(
-                        [np.issubdtype(y_data[:, i].dtype, np.number) for i in range(y_data.shape[1])]
-                    )
+                        [np.issubdtype(y_data[:, i].dtype, np.number) for i in range(y_data.shape[1])])
                     unique_labels = [np.unique(y_data[:, i]) for i in range(y_data.shape[1])]
 
                     output_types = []
@@ -331,9 +330,9 @@ class NeuralNetworkArchitectureBuilder:
                     for i in range(y_data.shape[1]):
                         if is_numeric[i] and len(unique_labels[i]) > 10:
                             output_types.append("linear")  # Regression
-                        elif not is_numeric[i] and len(unique_labels[i]) == 2:
+                        elif is_numeric[i] and len(unique_labels[i]) == 2:
                             output_types.append("sigmoid")  # Binary classification
-                        elif not is_numeric[i] and len(unique_labels[i]) > 2:
+                        elif is_numeric[i] and len(unique_labels[i]) > 2:
                             output_types.append("softmax")  # Multi-class classification
                         else:
                             output_types.append("unknown")
@@ -723,7 +722,7 @@ class NeuralNetworkArchitectureBuilder:
                             arrowprops=dict(arrowstyle="->", lw=1.5, color='black'))
 
         # Display total parameters at the bottom
-        ax.text(0.5, 0.1, f"Total Parameters: {total_params}", ha="center", va="center",
+        ax.text(0.5, 0.1, f"Trainable Parameters: {total_params}", ha="center", va="center",
                 fontsize=12, weight="bold")
 
         # Clear previous visualization
@@ -1021,64 +1020,69 @@ class NeuralNetworkArchitectureBuilder:
             results_text.grid(row=1, column=0, sticky="ew", padx=10, pady=10)
 
             # Display the model summary
-            # Display training metrics from the history
             if history.history:
                 results_text.insert("end", "Training Metrics:\n")
+
+                # Loop through the keys in history
                 for key, values in history.history.items():
-                    results_text.insert("end", f"{key}: {values[-1]:.4f}\n")
+                    if key.startswith("output"):  # Metrics for specific outputs
+                        # Extract the output index and metric name
+                        output_index = key.split("_")[0]  # E.g., "output1"
+                        metric_name = "_".join(key.split("_")[1:])  # E.g., "loss", "accuracy"
+                        results_text.insert("end", f"{output_index} {metric_name}: {values[-1]:.4f}\n")
+                    else:
+                        # General metrics (e.g., total loss)
+                        results_text.insert("end", f"Combined {key}: {values[-1]:.4f}\n")
+
                 results_text.insert("end", "\n")
 
-            # Display test metrics if a train-test split is present
-            if self.train_test_split_var is not None:
-                test_results = model.evaluate(self.X_test, self.y_test, verbose=0)
-                results_text.insert("end", "Test Metrics:\n")
-                for i, metric in enumerate(model.metrics_names):
-                    results_text.insert("end", f"{metric}: {test_results[i]:.4f}\n")
-                results_text.insert("end", "\n")
-
-                # Calculate R2 score for regression models
-                if "MeanSquaredError" in model.loss.__class__.__name__:
-                    r2 = r2_score(self.y_test, model.predict(self.X_test))
-                    results_text.insert("end", f"r2_Score: {r2:.4f}\n\n")
-
-                    # Calculate Mean Squared Error (MSE)
-                    y_pred = model.predict(
-                        self.X_test) if self.train_test_split_var is not None else model.predict(
-                        self.X_train)
-                    mse = mean_squared_error(self.y_test, y_pred) if self.train_test_split_var is not None else mean_squared_error(
-                        self.y_data, y_pred)
-                    results_text.insert("end", f"Mean Squared Error (MSE): {mse:.4f}\n")
+            # Handle regression tasks
+            if "MeanSquaredError" in model.loss.__class__.__name__:
+                y_pred = model.predict(self.X_test if self.train_test_split_var else self.X_train)
+                for i, (y_true, y_pred_i) in enumerate(zip((self.y_test.T if self.train_test_split_var else self.y_data.T), y_pred.T)):
+                    r2 = r2_score(y_true, y_pred_i)
+                    mse = mean_squared_error(y_true, y_pred_i)
+                    results_text.insert("end", f"Output {i + 1}:\n")
+                    results_text.insert("end", f"  r2_Score: {r2:.4f}\n")
+                    results_text.insert("end", f"  Mean Squared Error (MSE): {mse:.4f}\n\n")
 
             # Handle classification tasks (e.g., Crossentropy, Hinge loss)
             if "Crossentropy" in model.loss.__class__.__name__ or "Hinge" in model.loss.__class__.__name__:
-                # Evaluate on test data if available, otherwise on training data
-                if self.train_test_split_var is not None:
-                    y_pred = model.predict(self.X_test)
-                    y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
-                    cm = confusion_matrix(self.y_test, y_pred_classes)
-                    cr = classification_report(self.y_test, y_pred_classes)
-                    results_text.insert("end", "Classification Report for test set:\n" + cr + "\n\n")
-                else:
-                    y_pred = model.predict(self.X_train)
-                    y_pred_classes = np.argmax(y_pred, axis=1) if y_pred.shape[1] > 1 else (y_pred > 0.5).astype(int)
-                    cm = confusion_matrix(self.y_data, y_pred_classes)
-                    cr = classification_report(self.y_data, y_pred_classes)
-                    results_text.insert("end", "Classification Report for train set:\n" + cr + "\n\n")
+                y_pred = model.predict(self.X_test if self.train_test_split_var else self.X_train)
+                # Assuming your model has multiple outputs, process each output separately
+                y_pred_classes = []
+                for i in range(y_pred.shape[1]):
+                    y_pred_i = y_pred[:, i]  # Get predictions for the i-th output node
+                    if y_pred_i.ndim > 1:  # Multi-class classification
+                        y_pred_class_i = np.argmax(y_pred_i, axis=1)
+                    else:  # Binary classification for this output
+                        y_pred_class_i = (y_pred_i > 0.5).astype(int)
+                    y_pred_classes.append(y_pred_class_i)
+                y_true = self.y_test if self.train_test_split_var else self.y_data
 
-                # Generate and display the confusion matrix using FigureCanvasTkAgg
-                self.model_fig = Figure()  # Create a Matplotlib figure
-                ax = self.model_fig.add_subplot(111)
-                sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
-                            xticklabels=np.unique(self.y_test if self.train_test_split_var else self.y_data),
-                            yticklabels=np.unique(self.y_test if self.train_test_split_var else self.y_data), ax=ax)
-                ax.set_xlabel("Predicted")
-                ax.set_ylabel("Actual")
-                ax.set_title("Confusion Matrix Heatmap")
 
-                # Embed the figure in Tkinter
-                self.model_can = FigureCanvasTkAgg(self.model_fig, master=scrollable_frame)
-                self.model_can.draw()
-                self.model_can.get_tk_widget().grid(row=2, column=0, sticky="nsew", padx=10, pady=10)
+                for i, (y_true_i, y_pred_i) in enumerate(zip(y_true.T, y_pred_classes)):
+                    cm = confusion_matrix(y_true_i, y_pred_i)
+                    cr = classification_report(y_true_i, y_pred_i)
+                    print(f"Output {i + 1}:\n{cr}\n")
+                    results_text.insert("end", f"Output {i + 1}:\n")
+                    results_text.insert("end", "Classification Report:\n" + cr + "\n\n")
+
+                    # Generate and display the confusion matrix heatmap
+                    self.model_fig = Figure()
+                    ax = self.model_fig.add_subplot(111)
+                    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+                                xticklabels=np.unique(y_true_i),
+                                yticklabels=np.unique(y_true_i), ax=ax)
+                    ax.set_xlabel("Predicted")
+                    ax.set_ylabel("Actual")
+                    ax.set_title(f"Confusion Matrix Heatmap (Output {i + 1})")
+
+                    # Embed the figure in Tkinter
+                    self.model_can = FigureCanvasTkAgg(self.model_fig, master=scrollable_frame)
+                    self.model_can.draw()
+                    self.model_can.get_tk_widget().grid(row=2, column=0+i, sticky="nsew", padx=10, pady=10)
+
 
         display_model_results()
 

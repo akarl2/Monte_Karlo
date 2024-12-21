@@ -1756,7 +1756,7 @@ if __name__ == "__main__":
             self.show_corr_matrix.pack(side=tkinter.LEFT, padx=5)
 
             self.neural_network_button = tkinter.Button(self.button_frame, text="Neural Network",
-                                                        command=self.machine_learning, background="#355C7D",
+                                                        command=self.neural_network, background="#355C7D",
                                                         highlightthickness=0, borderwidth=0, relief="flat")
             self.neural_network_button.pack(side=tkinter.LEFT, padx=5)
 
@@ -1812,7 +1812,6 @@ if __name__ == "__main__":
 
             # Close the popup
             popup.destroy()
-
 
         def prompt_for_columns(self):
             # Dynamically gather the column headers from the current DataFrame in the Pandas Table
@@ -1929,7 +1928,7 @@ if __name__ == "__main__":
                 # Run without splitting the data
                 run_regression(selected_data, alpha=alpha, max_iter=max_iter, loss=loss_method, penalty=penalty_method, degree=degree_var, to_scale=to_scale)
 
-        def machine_learning(self):
+        def neural_network(self):
             self.pack(fill=tkinter.BOTH, expand=True)
 
             # Clear the list of Y column variables to avoid duplication
@@ -1960,30 +1959,21 @@ if __name__ == "__main__":
             self.add_y_column_selection(column_headers)
 
             # Add button for additional Y features
-            add_y_button = tkinter.Button(
-                self.popup, text="Add Another Y Feature",
-                command=lambda: self.add_y_column_selection(column_headers)
-            )
+            add_y_button = tkinter.Button(self.popup, text="Add Another Y Feature", command=lambda: self.add_y_column_selection(column_headers))
             add_y_button.pack(padx=10, pady=5, anchor=tkinter.CENTER)
 
             # Confirm button to proceed to the next step for configuring NN layers
-            confirm_button = tkinter.Button(
-                self.popup, text="Confirm Selection",
-                command=lambda: self.confirm_nn_selection(column_headers)
-            )
+            confirm_button = tkinter.Button(self.popup, text="Confirm Selection", command=lambda: self.confirm_nn_selection(column_headers))
             confirm_button.pack(pady=10, anchor=tkinter.CENTER, side=tkinter.BOTTOM)
 
             # Train/Test Split Checkbox
             tkinter.Label(self.popup, text="Train/Test Split:", font=("Arial", 12, "bold"),fg="red").pack(anchor=tkinter.CENTER, padx=10, pady=5)
             self.train_test_split_var_nn = tkinter.BooleanVar(value=False)
-            train_test_split_checkbutton_nn = tkinter.Checkbutton(
-                self.popup, text="Apply Train/Test Split",
-                variable=self.train_test_split_var_nn
-            )
+            train_test_split_checkbutton_nn = tkinter.Checkbutton(self.popup, text="Apply Train/Test Split", variable=self.train_test_split_var_nn)
             train_test_split_checkbutton_nn.pack(anchor=tkinter.W, padx=10)
 
             # Train/Test Split Fraction input
-            tkinter.Label(self.popup, text="Test Fraction (0.0 - 1.0):", font=("Arial", 12, "bold"),fg="red").pack(anchor=tkinter.CENTER, padx=10, pady=5)
+            tkinter.Label(self.popup, text="Test Fraction (0.0 - 1.0):").pack(anchor=tkinter.W, padx=10, pady=5)
             self.test_fraction_var_nn = tkinter.DoubleVar(value=0.2)  # Default test size as 20%
             test_fraction_entry_nn = tkinter.Entry(self.popup, textvariable=self.test_fraction_var_nn)
             test_fraction_entry_nn.pack(anchor=tkinter.W, padx=10)
@@ -1999,7 +1989,7 @@ if __name__ == "__main__":
 
             # Create a dropdown for the new Y column
             y_dropdown = ttk.Combobox(self.y_dropdown_frame, textvariable=y_var, values=column_headers)
-            y_dropdown.pack(anchor=tkinter.W, padx=10)
+            y_dropdown.pack(anchor=tkinter.W, padx=10, pady=5)
 
             # Ensure the layout adjusts
             self.y_dropdown_frame.pack()
