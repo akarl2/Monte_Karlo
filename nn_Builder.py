@@ -302,35 +302,82 @@ class NeuralNetworkArchitectureBuilder:
             Returns:
                 tuple: (activation_function, number_of_nodes)
             """
-            unique_labels = np.unique(y_data)
-
             try:
-                # Check if it's regression
-                if np.issubdtype(y_data.dtype, np.number) and len(unique_labels) > 10:
-                    return "linear", 1  # Regression: Linear activation, 1 output node
+                if y_data.ndim == 1 or y_data.shape[1] == 1:
+                    # Single-output problem
+                    unique_labels = np.unique(y_data)
 
-                # Check if it's binary classification
-                elif len(unique_labels) == 2:
-                    return "sigmoid", 1  # Binary Classification: Sigmoid activation, 1 output node
+                    # Regression
+                    if np.issubdtype(y_data.dtype, np.number) and len(unique_labels) > 10:
+                        return "linear", 1
 
-                # Check if it's multi-class classification with integer labels
-                elif len(unique_labels) > 2 and y_data.ndim == 1:
-                    return "softmax", len(unique_labels)  # Multi-class: Softmax activation, unique labels as nodes
+                    # Binary classification
+                    elif len(unique_labels) == 2:
+                        return "sigmoid", 1
 
-                # Check if it's multi-class classification with one-hot encoded labels
-                elif len(unique_labels) > 2 and y_data.ndim > 1 and y_data.shape[1] > 1:
-                    return "softmax", y_data.shape[1]  # Multi-class: Softmax activation, output shape determines nodes
+                    # Multi-class classification
+                    elif len(unique_labels) > 2:
+                        return "softmax", len(unique_labels)
 
-                # If none of the conditions match, raise an exception
+                elif y_data.ndim > 1 and y_data.shape[1] > 1:
+                    # Multi-output problem
+                    is_numeric = np.array(
+                        [np.issubdtype(y_data[:, i].dtype, np.number) for i in range(y_data.shape[1])]
+                    )
+                    unique_labels = [np.unique(y_data[:, i]) for i in range(y_data.shape[1])]
+
+                    output_types = []
+
+                    for i in range(y_data.shape[1]):
+                        if is_numeric[i] and len(unique_labels[i]) > 10:
+                            output_types.append("linear")  # Regression
+                        elif not is_numeric[i] and len(unique_labels[i]) == 2:
+                            output_types.append("sigmoid")  # Binary classification
+                        elif not is_numeric[i] and len(unique_labels[i]) > 2:
+                            output_types.append("softmax")  # Multi-class classification
+                        else:
+                            output_types.append("unknown")
+
+                    # Check for consistency in output types
+                    if len(set(output_types)) > 1:
+                        messagebox.showerror(
+                            "Output Type Mismatch",
+                            "The y_data contains mixed output types (e.g., regression and classification). "
+                            "The application will close. Please ensure all outputs are of the same type."
+                        )
+                        if hasattr(self, "master"):
+                            self.master.destroy()  # Close the master window
+                        raise ValueError("Mixed output types detected in y_data.")  # Prevent further execution
+
+                    # All outputs are regression
+                    if all(t == "linear" for t in output_types):
+                        return "linear", y_data.shape[1]
+
+                    # All outputs are binary classification
+                    elif all(t == "sigmoid" for t in output_types):
+                        return "sigmoid", y_data.shape[1]
+
+                    # All outputs are multi-class classification
+                    elif all(t == "softmax" for t in output_types):
+                        return "softmax", y_data.shape[1]
+
+                    # If there's any "unknown" type, fallback to default
+                    else:
+                        raise ValueError
+
                 else:
                     raise ValueError
-            except Exception:
-                # If the properties cannot be determined, fall back to default
+
+            except ValueError as e:
+                # Specific error for mixed types; already handled, so re-raise without additional warnings
+                raise e
+            except Exception as e:
+                # General fallback for unexpected errors
                 messagebox.showwarning(
                     "Last Layer Properties Warning",
-                    "The appropriate activation function and number of nodes could not be determined. Defaulting to 'linear' and 1 node."
+                    f"An error occurred while determining the last layer properties. Details: {str(e)}"
                 )
-                return "linear", 1  # Default to regression settings as fallback
+                return "linear", 1
 
         # Get last layer properties
         last_layer_activation, last_layer_nodes = determine_last_layer_properties(self.y_data)

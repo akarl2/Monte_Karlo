@@ -1774,7 +1774,6 @@ if __name__ == "__main__":
             self.cluster_button.pack(side=tkinter.LEFT, padx=5)
 
 
-
         def one_hot_encode_columns(self):
             # Get current DataFrame
             current_data = self.table.model.df
@@ -1893,7 +1892,7 @@ if __name__ == "__main__":
             # Add button to confirm selection and run logistic regression
             confirm_button = tkinter.Button(popup, text="Run Logistic Regression",
                                             command=lambda: self.run_logistic_regression())
-            confirm_button.pack(pady=10)
+            confirm_button.pack(pady=10, side=tkinter.BOTTOM)
 
         def run_logistic_regression(self):
             # Gather the selected X and Y columns
@@ -1933,6 +1932,9 @@ if __name__ == "__main__":
         def machine_learning(self):
             self.pack(fill=tkinter.BOTH, expand=True)
 
+            # Clear the list of Y column variables to avoid duplication
+            self.y_columns_vars = []
+
             # Dynamically gather column headers from the current DataFrame in the Pandas Table
             current_data = self.table.model.df  # Access DataFrame directly from the table's model
             column_headers = list(current_data.columns)
@@ -1942,7 +1944,7 @@ if __name__ == "__main__":
             self.popup.title("Build Neural Network")
 
             # X Columns selection (multiple)
-            tkinter.Label(self.popup, text="Select X columns:").pack(anchor=tkinter.W, padx=10, pady=5)
+            tkinter.Label(self.popup, text="Select X columns:", font=("Arial", 12, "bold"),fg="red").pack(anchor=tkinter.CENTER, padx=10, pady=5)
             self.x_columns_vars = {}
             for col in column_headers:
                 var = tkinter.BooleanVar()
@@ -1950,41 +1952,57 @@ if __name__ == "__main__":
                 checkbutton.pack(anchor=tkinter.W, padx=10)
                 self.x_columns_vars[col] = var
 
-            # Button to add another Y column
-            add_y_button = tkinter.Button(self.popup, text="Add Another Y Column",
-                                     command=lambda: self.add_y_column_selection(column_headers))
-            add_y_button.pack(padx=10, pady=5, anchor=tkinter.W)
+            tkinter.Label(self.popup, text="Select Y column(s):", font=("Arial", 12, "bold"),fg="red").pack(anchor=tkinter.CENTER, padx=10, pady=5)
 
-            # Y Column selection (multiple)
-            tkinter.Label(self.popup, text="Select Y column(s):").pack(anchor=tkinter.W, padx=10, pady=10)
-            self.y_columns_vars = []
+            # Frame to hold Y dropdowns
+            self.y_dropdown_frame = tkinter.Frame(self.popup)
+            self.y_dropdown_frame.pack(anchor=tkinter.W, padx=10, pady=10)
             self.add_y_column_selection(column_headers)
 
+            # Add button for additional Y features
+            add_y_button = tkinter.Button(
+                self.popup, text="Add Another Y Feature",
+                command=lambda: self.add_y_column_selection(column_headers)
+            )
+            add_y_button.pack(padx=10, pady=5, anchor=tkinter.CENTER)
+
+            # Confirm button to proceed to the next step for configuring NN layers
+            confirm_button = tkinter.Button(
+                self.popup, text="Confirm Selection",
+                command=lambda: self.confirm_nn_selection(column_headers)
+            )
+            confirm_button.pack(pady=10, anchor=tkinter.CENTER, side=tkinter.BOTTOM)
+
             # Train/Test Split Checkbox
-            tkinter.Label(self.popup, text="Train/Test Split:").pack(anchor=tkinter.W, padx=10, pady=5)
+            tkinter.Label(self.popup, text="Train/Test Split:", font=("Arial", 12, "bold"),fg="red").pack(anchor=tkinter.CENTER, padx=10, pady=5)
             self.train_test_split_var_nn = tkinter.BooleanVar(value=False)
-            train_test_split_checkbutton_nn = tkinter.Checkbutton(self.popup, text="Apply Train/Test Split",
-                                                               variable=self.train_test_split_var_nn)
+            train_test_split_checkbutton_nn = tkinter.Checkbutton(
+                self.popup, text="Apply Train/Test Split",
+                variable=self.train_test_split_var_nn
+            )
             train_test_split_checkbutton_nn.pack(anchor=tkinter.W, padx=10)
 
             # Train/Test Split Fraction input
-            tkinter.Label(self.popup, text="Test Fraction (0.0 - 1.0):").pack(anchor=tkinter.W, padx=10, pady=5)
+            tkinter.Label(self.popup, text="Test Fraction (0.0 - 1.0):", font=("Arial", 12, "bold"),fg="red").pack(anchor=tkinter.CENTER, padx=10, pady=5)
             self.test_fraction_var_nn = tkinter.DoubleVar(value=0.2)  # Default test size as 20%
             test_fraction_entry_nn = tkinter.Entry(self.popup, textvariable=self.test_fraction_var_nn)
             test_fraction_entry_nn.pack(anchor=tkinter.W, padx=10)
 
         def add_y_column_selection(self, column_headers):
+            # Set default to the second-to-last column, or the last if only one column is left
+            default_col_index =  -1
+            default_col = column_headers[default_col_index]
+
             y_var = tkinter.StringVar()
-            y_var.set(column_headers[-1])  # Default to last column
+            y_var.set(default_col)  # Default to the second-to-last column
             self.y_columns_vars.append(y_var)
 
-            y_dropdown = ttk.Combobox(self.popup, textvariable=y_var, values=column_headers)
+            # Create a dropdown for the new Y column
+            y_dropdown = ttk.Combobox(self.y_dropdown_frame, textvariable=y_var, values=column_headers)
             y_dropdown.pack(anchor=tkinter.W, padx=10)
 
-            # Confirm button to proceed to the next step for configuring NN layers
-            confirm_button = tkinter.Button(self.popup, text="Confirm Selection",
-                                       command=lambda: self.confirm_nn_selection(column_headers))
-            confirm_button.pack(pady=10, anchor=tkinter.W, side=tkinter.BOTTOM)
+            # Ensure the layout adjusts
+            self.y_dropdown_frame.pack()
 
         def confirm_nn_selection(self, column_headers):
             # Gather selected X and Y columns
