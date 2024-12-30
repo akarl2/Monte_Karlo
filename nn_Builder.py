@@ -64,6 +64,7 @@ class TrainingStatusCallback(Callback):
 
 class NeuralNetworkArchitectureBuilder:
     def __init__(self, master, X_data=None, y_data=None, NN_PD_DATA_X=None, NN_PD_DATA_Y=None, train_test_split_var=None):
+        self.initialized_surface_response = None
         self.results_fig_size = None
         self.params_frame = None
         self.epochs_var = None
@@ -339,13 +340,13 @@ class NeuralNetworkArchitectureBuilder:
 
                     # Check for consistency in output types
                     if len(set(output_types)) > 1:
+                        if hasattr(self, "master"):
+                            self.master.destroy()  # Close the master window
                         messagebox.showerror(
                             "Output Type Mismatch",
                             "The y_data contains mixed output types (e.g., regression and classification). "
-                            "The application will close. Please ensure all outputs are of the same type."
+                            " Please ensure all outputs are of the same type."
                         )
-                        if hasattr(self, "master"):
-                            self.master.destroy()  # Close the master window
                         raise ValueError("Mixed output types detected in y_data.")  # Prevent further execution
 
                     # All outputs are regression
@@ -893,14 +894,13 @@ class NeuralNetworkArchitectureBuilder:
                     )
             else:
                 history = model.fit(
-                    self.X_train, self.y_train,
+                    self.X_train,
+                    self.y_train,
                     epochs=epochs,
                     batch_size=batch_size,
-                    verbose=1,  # Enable verbose output for progress updates
+                    validation_split=float(self.validation_split_entry.get()),
                     callbacks=callbacks,
-                    validation_split=float(self.validation_split_entry.get())
                 )
-
             # Determine the final validation or training loss
             if float(self.validation_split_entry.get()) > 0:
                 final_loss = min(history.history['val_loss'])
@@ -943,6 +943,7 @@ class NeuralNetworkArchitectureBuilder:
         run_training_in_thread()
 
     def display_training_results(self, history, model):
+        self.initialized_surface_response = False  # Reset the surface response flag
         def create_results_tab():
             # Increment tab count and create new tab
             self.results_tab_count += 1
@@ -1000,19 +1001,15 @@ class NeuralNetworkArchitectureBuilder:
 
         loss_name = model.loss.__class__.__name__
 
-        sub_notebook = ttk.Notebook(scrollable_frame)
-        sub_notebook.grid(row=5, column=0, sticky="nsew", padx=10, pady=10)
-        sub_notebook2 = ttk.Notebook(scrollable_frame)
-        sub_notebook2.grid(row=6, column=0, sticky="nsew", padx=10, pady=10)
-        sub_notebook3 = ttk.Notebook(scrollable_frame)
-        sub_notebook3.grid(row=7, column=0, sticky="nsew", padx=10, pady=10)
+        training_history_notebook = ttk.Notebook(scrollable_frame)
+        training_history_notebook.grid(row=6, column=0, sticky="nsew", padx=10, pady=10)
+        histogram_notebook = ttk.Notebook(scrollable_frame)
+        histogram_notebook.grid(row=7, column=0, sticky="nsew", padx=10, pady=10)
 
-        sub_notebook.rowconfigure(0, weight=1)
-        sub_notebook.columnconfigure(0, weight=1)
-        sub_notebook2.rowconfigure(0, weight=1)
-        sub_notebook2.columnconfigure(0, weight=1)
-        sub_notebook3.rowconfigure(0, weight=1)
-        sub_notebook3.columnconfigure(0, weight=1)
+        training_history_notebook.rowconfigure(0, weight=1)
+        training_history_notebook.columnconfigure(0, weight=1)
+        histogram_notebook.rowconfigure(0, weight=1)
+        histogram_notebook.columnconfigure(0, weight=1)
 
         def display_model_results():
             # Create a Text widget to display the results
@@ -1060,15 +1057,17 @@ class NeuralNetworkArchitectureBuilder:
                     y_pred_classes.append(y_pred_class_i)
                 y_true = self.y_test if self.train_test_split_var else self.y_data
 
+                # Create a ttk.Notebook for heatmaps
+                heatmap_notebook = ttk.Notebook(scrollable_frame)
+                heatmap_notebook.grid(row=2, column=0, sticky="nsew", padx=10, pady=10)
 
                 for i, (y_true_i, y_pred_i) in enumerate(zip(y_true.T, y_pred_classes)):
                     cm = confusion_matrix(y_true_i, y_pred_i)
                     cr = classification_report(y_true_i, y_pred_i)
-                    print(f"Output {i + 1}:\n{cr}\n")
                     results_text.insert("end", f"Output {i + 1}:\n")
                     results_text.insert("end", "Classification Report:\n" + cr + "\n\n")
 
-                    # Generate and display the confusion matrix heatmap
+                    # Generate the confusion matrix heatmap
                     self.model_fig = Figure()
                     ax = self.model_fig.add_subplot(111)
                     sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
@@ -1078,12 +1077,12 @@ class NeuralNetworkArchitectureBuilder:
                     ax.set_ylabel("Actual")
                     ax.set_title(f"Confusion Matrix Heatmap (Output {i + 1})")
 
-                    # Embed the figure in Tkinter
-                    self.model_can = FigureCanvasTkAgg(self.model_fig, master=scrollable_frame)
-                    self.model_can.draw()
-                    self.model_can.get_tk_widget().grid(row=2, column=0+i, sticky="nsew", padx=10, pady=10)
-
-
+                    # Embed the heatmap figure in Tkinter
+                    tab_frame = Frame(heatmap_notebook)
+                    heatmap_notebook.add(tab_frame, text=f"Output {i + 1}")
+                    canvas = FigureCanvasTkAgg(self.model_fig, master=tab_frame)
+                    canvas.draw()
+                    canvas.get_tk_widget().pack(fill="both", expand=True)
         display_model_results()
 
         x_feature_var = tk.StringVar(value=self.NN_PD_DATA_X_train.columns[0])
@@ -1094,199 +1093,225 @@ class NeuralNetworkArchitectureBuilder:
             y_feature_var = None
 
         def plot_surface_response():
-            # Get selected features
-            x_feature = x_feature_var.get()
-            y_feature = y_feature_var.get() if y_feature_var is not None else None
-            z_feature = self.NN_PD_DATA_Y_train.columns[0]
+            if self.initialized_surface_response is False:
+                # Initialization code only runs once
+                output_notebook = ttk.Notebook(scrollable_frame)
+                output_notebook.grid(row=5, column=0, sticky="nsew", padx=10, pady=10)
 
-            # Create a new sub-tab for this plot
-            plot_tab_name = f"{x_feature} vs {z_feature}" if not y_feature else f"{x_feature}, {y_feature} vs {z_feature}"
-            plot_tab = ttk.Frame(sub_notebook)
-            sub_notebook.add(plot_tab, text=plot_tab_name)
-            sub_notebook.select(plot_tab)
+                # Create surface response notebook in each output tab
+                self.surface_response_notebook_dict = {}
+                self.toggle_dict = {}
 
-            # Create left and right frames for layout
-            left_frame = Frame(plot_tab)
-            left_frame.pack(side="left", fill="y", padx=10, pady=10)
+                for output_index, z_features in enumerate(self.NN_PD_DATA_Y_train.columns):
+                    output_tab = ttk.Frame(output_notebook)
+                    output_notebook.add(output_tab, text=f"{self.NN_PD_DATA_Y_train.columns[output_index]}")
+                    output_notebook.select(output_tab)
 
-            right_frame = Frame(plot_tab)
-            right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+                    # Create a surface response notebook for each output
+                    surface_response_notebook = ttk.Notebook(output_tab)
+                    surface_response_notebook.pack(fill="both", expand=True, padx=10, pady=10)
 
-            # Add dropdowns and button to the left frame
-            Label(left_frame, text="Select X Feature:").pack(pady=5)
-            x_feature_dropdown = ttk.Combobox(left_frame, textvariable=x_feature_var, values=list(self.NN_PD_DATA_X_train.columns))
-            x_feature_dropdown.pack(pady=5)
+                    # Store each surface response notebook in the dictionary for later use
+                    self.surface_response_notebook_dict[output_index] = surface_response_notebook
 
-            if len(self.NN_PD_DATA_X_train.columns) > 1:
-                Label(left_frame, text="Select Y Feature:").pack(pady=5)
-                y_feature_dropdown = ttk.Combobox(left_frame, textvariable=y_feature_var,
-                                                  values=list(self.NN_PD_DATA_X_train.columns))
-                y_feature_dropdown.pack(pady=5)
-            else:
-                Label(left_frame, text="Only one feature available. Y feature not required.").pack(pady=5)
+                # Mark the surface response as initialized
+                self.initialized_surface_response = True
 
-            # Button to replot
-            Button(left_frame, text="New Plot", command=plot_surface_response).pack(pady=10)
+            for output_index, z_features in enumerate(self.NN_PD_DATA_Y_train.columns):
 
-            # Add Checkbutton for toggling scatter points
-            show_training = tk.BooleanVar(value=False)
-            training_checkbox = ttk.Checkbutton(left_frame, text="Show Training Data", variable=show_training)
-            training_checkbox.pack(pady=5)
+                # Get selected features
+                x_feature = x_feature_var.get()
+                y_feature = y_feature_var.get() if y_feature_var is not None else None
+                z_feature = self.NN_PD_DATA_Y_train.columns[output_index]
 
-            if self.train_test_split_var is not None:
-                show_test = tk.BooleanVar(value=False)
-                test_checkbox = ttk.Checkbutton(left_frame, text="Show Test Data", variable=show_test)
-                test_checkbox.pack(pady=5)
+                # Retrieve the correct surface response notebook for this output
+                surface_response_notebook = self.surface_response_notebook_dict[output_index]
 
-            # Generate grid values for the selected feature(s)
-            x_min, x_max = self.NN_PD_DATA_X_train[x_feature].min(), self.NN_PD_DATA_X_train[x_feature].max()
-            x_vals = np.linspace(x_min, x_max, 100)
+                # Create a new sub-tab for this plot
+                plot_tab_name = f"{x_feature} vs {z_feature}" if not y_feature else f"{x_feature}, {y_feature}"
+                plot_tab = ttk.Frame(surface_response_notebook)
+                surface_response_notebook.add(plot_tab, text=plot_tab_name)
+                surface_response_notebook.select(plot_tab)
 
-            self.SR_fig, ax = plt.subplots()  # Make the plot smaller
+                # Create left and right frames for layout
+                left_frame, right_frame = Frame(plot_tab), Frame(plot_tab)
+                left_frame.pack(side="left", fill="y", padx=10, pady=10)
+                right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
 
-            if y_feature:  # 3D Plot
-                # Remove all ticks and labels
-                ax.set_xticks([])  # Clear X-axis ticks
-                ax.set_yticks([])  # Clear Y-axis ticks
+                # Add dropdowns and button to the left frame
+                Label(left_frame, text="Select X Feature:").pack(pady=5)
+                x_feature_dropdown = ttk.Combobox(left_frame, textvariable=x_feature_var, values=list(self.NN_PD_DATA_X_train.columns))
+                x_feature_dropdown.pack(pady=5)
 
-                # remove the box around the plot
-                ax.spines['top'].set_visible(False)
-                ax.spines['right'].set_visible(False)
-                ax.spines['bottom'].set_visible(False)
-                ax.spines['left'].set_visible(False)
-
-                y_min, y_max = self.NN_PD_DATA_X_train[y_feature].min(), self.NN_PD_DATA_X_train[y_feature].max()
-                y_vals = np.linspace(y_min, y_max, 100)
-                x_grid, y_grid = np.meshgrid(x_vals, y_vals)
-
-                grid_data = pd.DataFrame({x_feature: x_grid.ravel(), y_feature: y_grid.ravel()})
-
-                for col in self.NN_PD_DATA_X_train.columns:
-                    if col != x_feature and col != y_feature:
-                        grid_data[col] = self.NN_PD_DATA_X_train[col].mean()
-
-                grid_data_scaled = self.sc.transform(grid_data)
-
-                # Predict probabilities or class labels
-                if hasattr(model, "predict_proba"):  # Use probabilities if available
-                    z_vals = model.predict_proba(grid_data_scaled)[:, 1].reshape(x_grid.shape)
-                else:  # Otherwise, use class predictions
-                    z_vals = model.predict(grid_data_scaled).reshape(x_grid.shape)
-
-                ax = plt.axes(projection="3d")
-                ax.plot_surface(x_grid, y_grid, z_vals, cmap="viridis", alpha=0.8)
-
-                if "Crossentropy" in loss_name or "Hinge" in loss_name:
-                    ax.set_xlabel(f"X: {x_feature}")
-                    ax.set_ylabel(f"Y: {y_feature}")
-                    ax.set_zlabel(f"Probability, Z: {z_feature}")
-                    ax.set_title(f"Probability Surface: {z_feature}")
+                if len(self.NN_PD_DATA_X_train.columns) > 1:
+                    Label(left_frame, text="Select Y Feature:").pack(pady=5)
+                    y_feature_dropdown = ttk.Combobox(left_frame, textvariable=y_feature_var,
+                                                      values=list(self.NN_PD_DATA_X_train.columns))
+                    y_feature_dropdown.pack(pady=5)
                 else:
-                    ax.set_xlabel(f"X: {x_feature}")
-                    ax.set_ylabel(f"Y: {y_feature}")
-                    ax.set_zlabel(f"Value, Z: {z_feature}")
-                    ax.set_title(f"Value Surface: {z_feature}")
+                    Label(left_frame, text="Only one feature available. Y feature not required.").pack(pady=5)
 
-            else:  # 2D Plot
-                grid_data = pd.DataFrame({x_feature: x_vals})
-                for col in self.NN_PD_DATA_X_train.columns:
-                    if col != x_feature:
-                        grid_data[col] = self.NN_PD_DATA_X_train[col].mean()
+                # Button to replot
+                Button(left_frame, text="New Plot", command=plot_surface_response).pack(pady=10)
 
-                grid_data_scaled = self.sc.transform(grid_data)
+                # Add Checkbutton for toggling scatter points
+                show_training = tk.BooleanVar(value=False)
+                training_checkbox = ttk.Checkbutton(left_frame, text="Show Training Data", variable=show_training)
+                training_checkbox.pack(pady=5)
 
-                # Predict probabilities or class labels
-                if hasattr(model, "predict_proba"):  # Use probabilities if available
-                    z_vals = model.predict_proba(grid_data_scaled)[:, 1]
-                else:  # Otherwise, use class predictions
-                    z_vals = model.predict(grid_data_scaled)
-
-                ax.plot(x_vals, z_vals, label=f"Probability: {z_feature}", color="blue")
-
-                if "Crossentropy" in loss_name or "Hinge" in loss_name:
-                    ax.ax.set_xlabel(f"X: {x_feature}")
-                    ax.set_ylabel(f"Probability, Z: {z_feature}")
-                    ax.set_title(f"Probability Curve: {z_feature}")
-                    ax.legend()
-                else:
-                    ax.set_xlabel(f"X: {x_feature}")
-                    ax.set_ylabel(f"Value, Z: {z_feature}")
-                    ax.set_title(f"Value Curve: {z_feature}")
-                    ax.legend()
-
-            # Initialize scatter points
-            scatter_training = None
-            scatter_test = None
-
-            def toggle_scatter():
-                nonlocal scatter_training
-                nonlocal scatter_test
-                if scatter_training:
-                    scatter_training.set_visible(show_training.get())
-                if scatter_test:
-                    scatter_test.set_visible(show_test.get())
-                self.SR_can.draw()
-
-            if len(self.NN_PD_DATA_X_train) > 100:
-                num_points_train = 100
                 if self.train_test_split_var is not None:
-                    num_points_test = 100
-            else:
-                num_points_train = len(self.NN_PD_DATA_X_train)
+                    show_test = tk.BooleanVar(value=False)
+                    test_checkbox = ttk.Checkbutton(left_frame, text="Show Test Data", variable=show_test)
+                    test_checkbox.pack(pady=5)
 
-            train_indices = np.random.choice(self.NN_PD_DATA_X_train.index, size=num_points_train, replace=False)
+                # Generate grid values for the selected feature(s)
+                x_min, x_max = self.NN_PD_DATA_X_train[x_feature].min(), self.NN_PD_DATA_X_train[x_feature].max()
+                x_vals = np.linspace(x_min, x_max, 100)
 
-            if self.train_test_split_var is not None:
-                if len(self.NN_PD_DATA_X_test) > 100:
-                    num_points_test = 100
-                else:
-                    num_points_test = len(self.NN_PD_DATA_X_test)
+                SR_fig, ax = plt.subplots()
 
-            if self.train_test_split_var is not None:
-                test_indices = np.random.choice(self.NN_PD_DATA_X_test.index, size=num_points_test, replace=False)
+                if y_feature:  # 3D Plot
+                    # Remove all ticks and labels
+                    ax.set_xticks([])  # Clear X-axis ticks
+                    ax.set_yticks([])  # Clear Y-axis ticks
 
-            if y_feature:  # Scatter for 3D plot
-                scatter_training = ax.scatter(
-                    self.NN_PD_DATA_X_train.loc[train_indices, x_feature],
-                    self.NN_PD_DATA_X_train.loc[train_indices, y_feature],
-                    self.NN_PD_DATA_Y_train.loc[train_indices].values.flatten(),  # Align with actual class (0 or 1)
-                    color="blue",
-                    label="Training Data",
-                    visible=False
-                )
+                    # remove the box around the plot
+                    [ax.spines[spine].set_visible(False) for spine in ax.spines]
+
+                    y_min, y_max = self.NN_PD_DATA_X_train[y_feature].min(), self.NN_PD_DATA_X_train[y_feature].max()
+                    y_vals = np.linspace(y_min, y_max, 100)
+                    x_grid, y_grid = np.meshgrid(x_vals, y_vals)
+
+                    grid_data = pd.DataFrame({x_feature: x_grid.ravel(), y_feature: y_grid.ravel()})
+
+                    for col in self.NN_PD_DATA_X_train.columns:
+                        if col != x_feature and col != y_feature:
+                            grid_data[col] = self.NN_PD_DATA_X_train[col].mean()
+
+                    grid_data_scaled = self.sc.transform(grid_data)
+
+                    # Predict probabilities or class labels
+                    if hasattr(model, "predict_proba"):  # Use probabilities if available
+                        z_vals = model.predict_proba(grid_data_scaled)[:, output_index].reshape(x_grid.shape)
+                    else:  # Otherwise, use predictions
+                        # Select predictions for the current output node (output_index)
+                        predictions = model.predict(grid_data_scaled)
+                        # Handle cases where predictions have more dimensions
+                        if predictions.ndim > 1:  # Multiple output nodes
+                            z_vals = predictions[:, output_index].reshape(x_grid.shape)
+                        elif predictions.ndim == 1:  # Single output node
+                            z_vals = predictions.reshape(x_grid.shape)
+                        else:
+                            raise ValueError(f"Unexpected shape of predictions: {predictions.shape}")
+
+                    ax = plt.axes(projection="3d")
+                    ax.plot_surface(x_grid, y_grid, z_vals, cmap="viridis", alpha=0.8)
+
+                    if "Crossentropy" in loss_name or "Hinge" in loss_name:
+                        ax.set_xlabel(f"X: {x_feature}")
+                        ax.set_ylabel(f"Y: {y_feature}")
+                        ax.set_zlabel(f"Probability, Z: {z_feature}")
+                        ax.set_title(f"Probability Surface: {z_feature}")
+                    else:
+                        ax.set_xlabel(f"X: {x_feature}")
+                        ax.set_ylabel(f"Y: {y_feature}")
+                        ax.set_zlabel(f"Value, Z: {z_feature}")
+                        ax.set_title(f"Value Surface: {z_feature}")
+
+                else:  # 2D Plot
+                    grid_data = pd.DataFrame({x_feature: x_vals})
+                    for col in self.NN_PD_DATA_X_train.columns:
+                        if col != x_feature:
+                            grid_data[col] = self.NN_PD_DATA_X_train[col].mean()
+
+                    grid_data_scaled = self.sc.transform(grid_data)
+
+                    # Predict probabilities or class labels
+                    if hasattr(model, "predict_proba"):  # Use probabilities if available
+                        z_vals = model.predict_proba(grid_data_scaled)[:, 1]
+                    else:  # Otherwise, use class predictions
+                        z_vals = model.predict(grid_data_scaled)
+
+                    ax.plot(x_vals, z_vals, label=f"Probability: {z_feature}", color="blue")
+
+                    if "Crossentropy" in loss_name or "Hinge" in loss_name:
+                        ax.ax.set_xlabel(f"X: {x_feature}")
+                        ax.set_ylabel(f"Probability, Z: {z_feature}")
+                        ax.set_title(f"Probability Curve: {z_feature}")
+                        ax.legend()
+                    else:
+                        ax.set_xlabel(f"X: {x_feature}")
+                        ax.set_ylabel(f"Value, Z: {z_feature}")
+                        ax.set_title(f"Value Curve: {z_feature}")
+                        ax.legend()
+
+                # Initialize scatter points
+                scatter_training = None
+                scatter_test = None
+
+                def toggle_scatter():
+                    active_index = output_notebook.index(output_notebook.select())
+                    nonlocal scatter_training
+                    nonlocal scatter_test
+                    if scatter_training:
+                        self.toggle_dict[active_index][3].set_visible(self.toggle_dict[active_index][5].get())
+                    if scatter_test:
+                        self.toggle_dict[active_index][4].set_visible(self.toggle_dict[active_index][6].get())
+                    self.toggle_dict[active_index][2].draw()
+
+                num_points_train = min(len(self.NN_PD_DATA_X_train), 100)
+                train_indices = np.random.choice(self.NN_PD_DATA_X_train.index, size=num_points_train, replace=False)
+
                 if self.train_test_split_var is not None:
-                    scatter_test = ax.scatter(
-                        self.NN_PD_DATA_X_test.loc[test_indices, x_feature],
-                        self.NN_PD_DATA_X_test.loc[test_indices, y_feature],
-                        self.NN_PD_DATA_Y_test.loc[test_indices].values.flatten(),  # Align with actual class (0 or 1)
-                        color="red",
-                        label="Test Data",
-                        visible=False)
-            else:  # Scatter for 2D plot
-                scatter_training = ax.scatter(
-                    self.NN_PD_DATA_X_train.loc[train_indices, x_feature],
-                    self.NN_PD_DATA_Y_train.loc[train_indices].values.flatten(),  # Align with actual class (0 or 1)
-                    color="blue",
-                    label="Training Data",
-                    visible=False
-                )
+                    num_points_test = min(len(self.NN_PD_DATA_X_test), 100)
+                    test_indices = np.random.choice(self.NN_PD_DATA_X_test.index, size=num_points_test, replace=False)
+
+                if y_feature:  # Scatter for 3D plot
+                    scatter_training = ax.scatter(
+                        self.NN_PD_DATA_X_train.loc[train_indices, x_feature],
+                        self.NN_PD_DATA_X_train.loc[train_indices, y_feature],
+                        self.NN_PD_DATA_Y_train.loc[train_indices, z_feature],  # Use selected output node (z_feature)
+                        color="blue",
+                        label="Training Data",
+                        visible=False
+                    )
+                    if self.train_test_split_var is not None:
+                        scatter_test = ax.scatter(
+                            self.NN_PD_DATA_X_test.loc[test_indices, x_feature],
+                            self.NN_PD_DATA_X_test.loc[test_indices, y_feature],
+                            self.NN_PD_DATA_Y_test.loc[test_indices, z_feature],  # Use selected output node (z_feature)
+                            color="red",
+                            label="Test Data",
+                            visible=False
+                        )
+                else:  # Scatter for 2D plot
+                    scatter_training = ax.scatter(
+                        self.NN_PD_DATA_X_train.loc[train_indices, x_feature],
+                        self.NN_PD_DATA_Y_train.loc[train_indices, z_feature],  # Use selected output node (z_feature)
+                        color="blue",
+                        label="Training Data",
+                        visible=False
+                    )
+                    if self.train_test_split_var is not None:
+                        scatter_test = ax.scatter(
+                            self.NN_PD_DATA_X_test.loc[test_indices, x_feature],
+                            self.NN_PD_DATA_Y_test.loc[test_indices, z_feature],  # Use selected output node (z_feature)
+                            color="red",
+                            label="Test Data",
+                            visible=False
+                        )
+
+                # Add the plot to the right frame
+                SR_can = FigureCanvasTkAgg(SR_fig, master=right_frame)
+                SR_can.draw()
+                SR_can.get_tk_widget().pack(fill="both", expand=True)
+                self.toggle_dict[output_index] = [SR_fig, ax, SR_can, scatter_training, scatter_test, show_training]
+
+                # Attach toggle functionality
+                training_checkbox.config(command=toggle_scatter)
                 if self.train_test_split_var is not None:
-                    scatter_test = ax.scatter(
-                        self.NN_PD_DATA_X_test.loc[test_indices, x_feature],
-                        self.NN_PD_DATA_Y_test.loc[test_indices].values.flatten(),  # Align with actual class (0 or 1)
-                        color="red",
-                        label="Test Data",
-                        visible=False)
-
-            # Add the plot to the right frame
-            self.SR_can = FigureCanvasTkAgg(self.SR_fig, master=right_frame)
-            self.SR_can.draw()
-            self.SR_can.get_tk_widget().pack(fill="both", expand=True)
-
-            # Attach toggle functionality
-            training_checkbox.config(command=toggle_scatter)
-            if self.train_test_split_var is not None:
-                test_checkbox.config(command=toggle_scatter)
+                    test_checkbox.config(command=toggle_scatter)
+                    self.toggle_dict[output_index].append(show_test)
 
         plot_surface_response()
 
@@ -1388,9 +1413,7 @@ class NeuralNetworkArchitectureBuilder:
                                  wraplength=400,
                                  anchor="center", justify="center")
             result_label.pack(pady=5, padx=10, fill="both", expand=True)
-
         setup_nn_prediction_interface()
-
 
         def plot_training_history():
             metric_groups = {}
@@ -1407,9 +1430,9 @@ class NeuralNetworkArchitectureBuilder:
             # Create a tab for each metric group (e.g., loss, accuracy)
             for base_name, metrics in metric_groups.items():
                 tab_name = f"Epoch vs {base_name.capitalize()}"
-                plot_tab = ttk.Frame(sub_notebook2)
-                sub_notebook2.add(plot_tab, text=tab_name)
-                sub_notebook2.select(plot_tab)
+                plot_tab = ttk.Frame(training_history_notebook)
+                training_history_notebook.add(plot_tab, text=tab_name)
+                training_history_notebook.select(plot_tab)
 
                 # Get training and validation data
                 train_data = history.history.get(metrics['train'], [])
@@ -1473,9 +1496,9 @@ class NeuralNetworkArchitectureBuilder:
 
         def weight_histogram():
             # Create a new tab for the weight histogram
-            plot_tab = ttk.Frame(sub_notebook3)
-            sub_notebook3.add(plot_tab, text="Weight Histogram")
-            sub_notebook3.select(plot_tab)
+            plot_tab = ttk.Frame(histogram_notebook)
+            histogram_notebook.add(plot_tab, text="Weight Histogram")
+            histogram_notebook.select(plot_tab)
 
             # Create a figure and axis for the plot
             self.WH_fig, ax = plt.subplots()
@@ -1500,14 +1523,13 @@ class NeuralNetworkArchitectureBuilder:
             self.WH_can = FigureCanvasTkAgg(self.WH_fig, master=plot_tab)
             self.WH_can.draw()
             self.WH_can.get_tk_widget().pack(fill="both", expand=True)
-
         weight_histogram()
 
         def bias_histogram():
             # Create a new tab for the bias histogram
-            plot_tab = ttk.Frame(sub_notebook3)
-            sub_notebook3.add(plot_tab, text="Bias Histogram")
-            sub_notebook3.select(plot_tab)
+            plot_tab = ttk.Frame(histogram_notebook)
+            histogram_notebook.add(plot_tab, text="Bias Histogram")
+            histogram_notebook.select(plot_tab)
 
             # Create a figure and axis for the plot
             self.BH_fig, ax = plt.subplots()
@@ -1531,14 +1553,13 @@ class NeuralNetworkArchitectureBuilder:
             self.BH_can = FigureCanvasTkAgg(self.BH_fig, master=plot_tab)
             self.BH_can.draw()
             self.BH_can.get_tk_widget().pack(fill="both", expand=True)
-
         bias_histogram()
 
         def activation_histogram():
             # Create a new tab for the activation histogram
-            plot_tab = ttk.Frame(sub_notebook3)
-            sub_notebook3.add(plot_tab, text="Activation Histogram")
-            sub_notebook3.select(plot_tab)
+            plot_tab = ttk.Frame(histogram_notebook)
+            histogram_notebook.add(plot_tab, text="Activation Histogram")
+            histogram_notebook.select(plot_tab)
 
             # Create a figure and axis for the plot
             self.AH_fig, ax = plt.subplots()
@@ -1570,46 +1591,45 @@ class NeuralNetworkArchitectureBuilder:
             self.AH_can = FigureCanvasTkAgg(self.AH_fig, master=plot_tab)
             self.AH_can.draw()
             self.AH_can.get_tk_widget().pack(fill="both", expand=True)
-
         activation_histogram()
 
-        # Variable to store the debounce timer
-        resize_timer = None
-
-        def get_results_fig_size(event):
-            nonlocal resize_timer
-
-            # Cancel any existing timer
-            if resize_timer is not None:
-                resize_timer.cancel()
-
-            # Start a new timer to delay execution
-            def delayed_resize():
-                # Calculate new figure size
-                fig_width = event.width / self.dpi / self.scaling_factor
-                fig_height = event.height / self.dpi / self.scaling_factor
-                self.results_fig_size = (fig_width, fig_height)
-
-                # Update the sizes of all figures
-                for fig, canvas in [
-                    (self.model_fig, self.model_can),
-                    (self.SR_fig, self.SR_can),
-                    (self.TH_fig, self.TH_can),
-                    (self.WH_fig, self.WH_can),
-                    (self.BH_fig, self.BH_can),
-                    (self.AH_fig, self.AH_can)
-                ]:
-                    if fig and canvas:
-                        fig.set_size_inches((self.results_fig_size[0] * 0.7, self.results_fig_size[1] * 0.5))
-                        canvas.draw()  # Trigger redraw of the canvas
-                        canvas.get_tk_widget().config(width=event.width - 270, height=event.height*.6)
-
-            # Set a debounce delay (e.g., 200 milliseconds)
-            resize_timer = threading.Timer(0.2, delayed_resize)
-            resize_timer.start()
-
-        # Bind the function to the resize event
-        master_canvas.bind("<Configure>", get_results_fig_size)
+        # # Variable to store the debounce timer
+        # resize_timer = None
+        #
+        # def get_results_fig_size(event):
+        #     nonlocal resize_timer
+        #
+        #     # Cancel any existing timer
+        #     if resize_timer is not None:
+        #         resize_timer.cancel()
+        #
+        #     # Start a new timer to delay execution
+        #     def delayed_resize():
+        #         # Calculate new figure size
+        #         fig_width = event.width / self.dpi / self.scaling_factor
+        #         fig_height = event.height / self.dpi / self.scaling_factor
+        #         self.results_fig_size = (fig_width, fig_height)
+        #
+        #         # Update the sizes of all figures
+        #         for fig, canvas in [
+        #             (self.model_fig, self.model_can),
+        #             (self.SR_fig, self.SR_can),
+        #             (self.TH_fig, self.TH_can),
+        #             (self.WH_fig, self.WH_can),
+        #             (self.BH_fig, self.BH_can),
+        #             (self.AH_fig, self.AH_can)
+        #         ]:
+        #             if fig and canvas:
+        #                 fig.set_size_inches((self.results_fig_size[0] * 0.7, self.results_fig_size[1] * 0.5))
+        #                 canvas.draw()  # Trigger redraw of the canvas
+        #                 canvas.get_tk_widget().config(width=event.width - 270, height=event.height*.6)
+        #
+        #     # Set a debounce delay (e.g., 200 milliseconds)
+        #     resize_timer = threading.Timer(0.2, delayed_resize)
+        #     resize_timer.start()
+        #
+        # # Bind the function to the resize event
+        # master_canvas.bind("<Configure>", get_results_fig_size)
 
 
 
