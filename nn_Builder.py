@@ -1095,17 +1095,17 @@ class NeuralNetworkArchitectureBuilder:
         def plot_surface_response():
             if self.initialized_surface_response is False:
                 # Initialization code only runs once
-                output_notebook = ttk.Notebook(scrollable_frame)
-                output_notebook.grid(row=5, column=0, sticky="nsew", padx=10, pady=10)
+                self.output_notebook = ttk.Notebook(scrollable_frame)
+                self.output_notebook.grid(row=5, column=0, sticky="nsew", padx=10, pady=10)
 
                 # Create surface response notebook in each output tab
                 self.surface_response_notebook_dict = {}
                 self.toggle_dict = {}
 
                 for output_index, z_features in enumerate(self.NN_PD_DATA_Y_train.columns):
-                    output_tab = ttk.Frame(output_notebook)
-                    output_notebook.add(output_tab, text=f"{self.NN_PD_DATA_Y_train.columns[output_index]}")
-                    output_notebook.select(output_tab)
+                    output_tab = ttk.Frame(self.output_notebook)
+                    self.output_notebook.add(output_tab, text=f"{self.NN_PD_DATA_Y_train.columns[output_index]}")
+                    self.output_notebook.select(output_tab)
 
                     # Create a surface response notebook for each output
                     surface_response_notebook = ttk.Notebook(output_tab)
@@ -1116,6 +1116,13 @@ class NeuralNetworkArchitectureBuilder:
 
                 # Mark the surface response as initialized
                 self.initialized_surface_response = True
+
+            def toggle_scatter():
+                active_index = self.output_notebook.index(self.output_notebook.select())
+                self.toggle_dict[active_index][3].set_visible(self.toggle_dict[active_index][4].get())
+                if self.toggle_dict[active_index][5] is not None:
+                    self.toggle_dict[active_index][5].set_visible(self.toggle_dict[active_index][6].get())
+                self.toggle_dict[active_index][2].draw()
 
             for output_index, z_features in enumerate(self.NN_PD_DATA_Y_train.columns):
 
@@ -1145,8 +1152,7 @@ class NeuralNetworkArchitectureBuilder:
 
                 if len(self.NN_PD_DATA_X_train.columns) > 1:
                     Label(left_frame, text="Select Y Feature:").pack(pady=5)
-                    y_feature_dropdown = ttk.Combobox(left_frame, textvariable=y_feature_var,
-                                                      values=list(self.NN_PD_DATA_X_train.columns))
+                    y_feature_dropdown = ttk.Combobox(left_frame, textvariable=y_feature_var, values=list(self.NN_PD_DATA_X_train.columns))
                     y_feature_dropdown.pack(pady=5)
                 else:
                     Label(left_frame, text="Only one feature available. Y feature not required.").pack(pady=5)
@@ -1158,11 +1164,6 @@ class NeuralNetworkArchitectureBuilder:
                 show_training = tk.BooleanVar(value=False)
                 training_checkbox = ttk.Checkbutton(left_frame, text="Show Training Data", variable=show_training)
                 training_checkbox.pack(pady=5)
-
-                if self.train_test_split_var is not None:
-                    show_test = tk.BooleanVar(value=False)
-                    test_checkbox = ttk.Checkbutton(left_frame, text="Show Test Data", variable=show_test)
-                    test_checkbox.pack(pady=5)
 
                 # Generate grid values for the selected feature(s)
                 x_min, x_max = self.NN_PD_DATA_X_train[x_feature].min(), self.NN_PD_DATA_X_train[x_feature].max()
@@ -1245,20 +1246,6 @@ class NeuralNetworkArchitectureBuilder:
                         ax.set_title(f"Value Curve: {z_feature}")
                         ax.legend()
 
-                # Initialize scatter points
-                scatter_training = None
-                scatter_test = None
-
-                def toggle_scatter():
-                    active_index = output_notebook.index(output_notebook.select())
-                    nonlocal scatter_training
-                    nonlocal scatter_test
-                    if scatter_training:
-                        self.toggle_dict[active_index][3].set_visible(self.toggle_dict[active_index][5].get())
-                    if scatter_test:
-                        self.toggle_dict[active_index][4].set_visible(self.toggle_dict[active_index][6].get())
-                    self.toggle_dict[active_index][2].draw()
-
                 num_points_train = min(len(self.NN_PD_DATA_X_train), 100)
                 train_indices = np.random.choice(self.NN_PD_DATA_X_train.index, size=num_points_train, replace=False)
 
@@ -1301,17 +1288,25 @@ class NeuralNetworkArchitectureBuilder:
                             visible=False
                         )
 
+
                 # Add the plot to the right frame
                 SR_can = FigureCanvasTkAgg(SR_fig, master=right_frame)
                 SR_can.draw()
                 SR_can.get_tk_widget().pack(fill="both", expand=True)
-                self.toggle_dict[output_index] = [SR_fig, ax, SR_can, scatter_training, scatter_test, show_training]
+                self.toggle_dict[output_index] = [SR_fig, ax, SR_can, scatter_training, show_training]
 
                 # Attach toggle functionality
                 training_checkbox.config(command=toggle_scatter)
                 if self.train_test_split_var is not None:
+                    show_test = tk.BooleanVar(value=False)
+                    test_checkbox = ttk.Checkbutton(left_frame, text="Show Test Data", variable=show_test)
+                    test_checkbox.pack(pady=5)
                     test_checkbox.config(command=toggle_scatter)
+                    self.toggle_dict[output_index].append(scatter_test)
                     self.toggle_dict[output_index].append(show_test)
+                else:
+                    self.toggle_dict[output_index].append(None)
+                    self.toggle_dict[output_index].append(None)
 
         plot_surface_response()
 

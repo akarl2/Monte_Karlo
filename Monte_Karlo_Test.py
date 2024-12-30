@@ -2008,6 +2008,13 @@ if __name__ == "__main__":
                 messagebox.showwarning("No Y Columns Selected", "Please select at least one Y column.")
                 return
 
+            # Ensure that the selected Y columns are not also selected as X columns
+            for y_col in selected_y_columns:
+                if y_col in selected_x_columns:
+                    messagebox.showwarning("Column Selection Error", "Y columns cannot also be selected as X columns.")
+                    return
+
+
             # Combine selected X and Y data
             NN_PD_DATA = self.table.model.df[selected_x_columns + selected_y_columns]
 
@@ -2335,7 +2342,6 @@ if __name__ == "__main__":
             self.grid_columnconfigure(0, weight=1)
             for i in range(4):
                 self.grid_rowconfigure(i, weight=1)
-
 
     class SimStatus(tkinter.Frame):
         def __init__(self, master=tab1):
