@@ -1068,8 +1068,8 @@ class NeuralNetworkArchitectureBuilder:
                     results_text.insert("end", "Classification Report:\n" + cr + "\n\n")
 
                     # Generate the confusion matrix heatmap
-                    self.model_fig = Figure()
-                    ax = self.model_fig.add_subplot(111)
+                    model_fig = Figure()
+                    ax = model_fig.add_subplot(111)
                     sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
                                 xticklabels=np.unique(y_true_i),
                                 yticklabels=np.unique(y_true_i), ax=ax)
@@ -1080,7 +1080,7 @@ class NeuralNetworkArchitectureBuilder:
                     # Embed the heatmap figure in Tkinter
                     tab_frame = Frame(heatmap_notebook)
                     heatmap_notebook.add(tab_frame, text=f"Output {i + 1}")
-                    canvas = FigureCanvasTkAgg(self.model_fig, master=tab_frame)
+                    canvas = FigureCanvasTkAgg(model_fig, master=tab_frame)
                     canvas.draw()
                     canvas.get_tk_widget().pack(fill="both", expand=True)
         display_model_results()
@@ -1118,11 +1118,20 @@ class NeuralNetworkArchitectureBuilder:
                 self.initialized_surface_response = True
 
             def toggle_scatter():
+                # Get the active output index and sub-tab index
                 active_index = self.output_notebook.index(self.output_notebook.select())
-                self.toggle_dict[active_index][3].set_visible(self.toggle_dict[active_index][4].get())
-                if self.toggle_dict[active_index][5] is not None:
-                    self.toggle_dict[active_index][5].set_visible(self.toggle_dict[active_index][6].get())
-                self.toggle_dict[active_index][2].draw()
+                active_tab = self.surface_response_notebook_dict[active_index].index(self.surface_response_notebook_dict[active_index].select())
+
+                # Access the corresponding plot data from the toggle_dict
+                toggle_data = self.toggle_dict[active_index][active_tab]
+
+                # Toggle visibility of scatter points
+                toggle_data[3].set_visible(toggle_data[4].get())  # Training data visibility
+                if toggle_data[5] is not None:  # Test data visibility
+                    toggle_data[5].set_visible(toggle_data[6].get())
+
+                # Redraw the canvas
+                toggle_data[2].draw()
 
             for output_index, z_features in enumerate(self.NN_PD_DATA_Y_train.columns):
 
@@ -1288,12 +1297,15 @@ class NeuralNetworkArchitectureBuilder:
                             visible=False
                         )
 
-
                 # Add the plot to the right frame
                 SR_can = FigureCanvasTkAgg(SR_fig, master=right_frame)
                 SR_can.draw()
                 SR_can.get_tk_widget().pack(fill="both", expand=True)
-                self.toggle_dict[output_index] = [SR_fig, ax, SR_can, scatter_training, show_training]
+
+                active_sub_tab = surface_response_notebook.index(surface_response_notebook.select())
+                if output_index not in self.toggle_dict:
+                    self.toggle_dict[output_index] = {}
+                self.toggle_dict[output_index][active_sub_tab] = [SR_fig, ax, SR_can, scatter_training, show_training]
 
                 # Attach toggle functionality
                 training_checkbox.config(command=toggle_scatter)
@@ -1302,11 +1314,11 @@ class NeuralNetworkArchitectureBuilder:
                     test_checkbox = ttk.Checkbutton(left_frame, text="Show Test Data", variable=show_test)
                     test_checkbox.pack(pady=5)
                     test_checkbox.config(command=toggle_scatter)
-                    self.toggle_dict[output_index].append(scatter_test)
-                    self.toggle_dict[output_index].append(show_test)
+                    self.toggle_dict[output_index][active_sub_tab].append(scatter_test)
+                    self.toggle_dict[output_index][active_sub_tab].append(show_test)
                 else:
-                    self.toggle_dict[output_index].append(None)
-                    self.toggle_dict[output_index].append(None)
+                    self.toggle_dict[output_index][active_sub_tab].append(None)
+                    self.toggle_dict[output_index][active_sub_tab].append(None)
 
         plot_surface_response()
 
@@ -1588,43 +1600,50 @@ class NeuralNetworkArchitectureBuilder:
             self.AH_can.get_tk_widget().pack(fill="both", expand=True)
         activation_histogram()
 
-        # # Variable to store the debounce timer
-        # resize_timer = None
-        #
-        # def get_results_fig_size(event):
-        #     nonlocal resize_timer
-        #
-        #     # Cancel any existing timer
-        #     if resize_timer is not None:
-        #         resize_timer.cancel()
-        #
-        #     # Start a new timer to delay execution
-        #     def delayed_resize():
-        #         # Calculate new figure size
-        #         fig_width = event.width / self.dpi / self.scaling_factor
-        #         fig_height = event.height / self.dpi / self.scaling_factor
-        #         self.results_fig_size = (fig_width, fig_height)
-        #
-        #         # Update the sizes of all figures
-        #         for fig, canvas in [
-        #             (self.model_fig, self.model_can),
-        #             (self.SR_fig, self.SR_can),
-        #             (self.TH_fig, self.TH_can),
-        #             (self.WH_fig, self.WH_can),
-        #             (self.BH_fig, self.BH_can),
-        #             (self.AH_fig, self.AH_can)
-        #         ]:
-        #             if fig and canvas:
-        #                 fig.set_size_inches((self.results_fig_size[0] * 0.7, self.results_fig_size[1] * 0.5))
-        #                 canvas.draw()  # Trigger redraw of the canvas
-        #                 canvas.get_tk_widget().config(width=event.width - 270, height=event.height*.6)
-        #
-        #     # Set a debounce delay (e.g., 200 milliseconds)
-        #     resize_timer = threading.Timer(0.2, delayed_resize)
-        #     resize_timer.start()
-        #
-        # # Bind the function to the resize event
-        # master_canvas.bind("<Configure>", get_results_fig_size)
+        # Variable to store the debounce timer
+        resize_timer = None
+
+        def get_results_fig_size(event):
+            nonlocal resize_timer
+
+            # Cancel any existing timer
+            if resize_timer is not None:
+                resize_timer.cancel()
+
+            # Start a new timer to delay execution
+            def delayed_resize():
+                # Calculate new figure size
+                fig_width = event.width / self.dpi / self.scaling_factor
+                fig_height = event.height / self.dpi / self.scaling_factor
+                self.results_fig_size = (fig_width, fig_height)
+
+                # Update the sizes of all figures
+                for fig, canvas in [
+                    (self.TH_fig, self.TH_can),
+                    (self.WH_fig, self.WH_can),
+                    (self.BH_fig, self.BH_can),
+                    (self.AH_fig, self.AH_can)
+                ]:
+                    if fig and canvas:
+                        fig.set_size_inches((self.results_fig_size[0] * 0.7, self.results_fig_size[1] * 0.5))
+                        canvas.draw()  # Trigger redraw of the canvas
+                        canvas.get_tk_widget().config(width=event.width - 290, height=event.height*.6)
+
+                for output_index, sub_tabs in self.toggle_dict.items():
+                    for sub_tab, toggle_data in sub_tabs.items():
+                        SR_fig, ax, SR_can, *_ = toggle_data
+
+                        SR_fig.set_size_inches((self.results_fig_size[0] * 0.7, self.results_fig_size[1] * 0.5))
+                        SR_can.draw()
+                        SR_can.get_tk_widget().config(width=event.width - 290, height=event.height*.6)
+
+
+            # Set a debounce delay (e.g., 200 milliseconds)
+            resize_timer = threading.Timer(0.2, delayed_resize)
+            resize_timer.start()
+
+        # Bind the function to the resize event
+        master_canvas.bind("<Configure>", get_results_fig_size)
 
 
 

@@ -1933,6 +1933,7 @@ if __name__ == "__main__":
 
             # Clear the list of Y column variables to avoid duplication
             self.y_columns_vars = []
+            self.y_dropdown_widgets = []
 
             # Dynamically gather column headers from the current DataFrame in the Pandas Table
             current_data = self.table.model.df  # Access DataFrame directly from the table's model
@@ -1980,19 +1981,39 @@ if __name__ == "__main__":
 
         def add_y_column_selection(self, column_headers):
             # Set default to the second-to-last column, or the last if only one column is left
-            default_col_index =  -1
+            default_col_index = -1
             default_col = column_headers[default_col_index]
 
+            # Create a StringVar for the Y column and set the default
             y_var = tkinter.StringVar()
             y_var.set(default_col)  # Default to the second-to-last column
             self.y_columns_vars.append(y_var)
 
-            # Create a dropdown for the new Y column
-            y_dropdown = ttk.Combobox(self.y_dropdown_frame, textvariable=y_var, values=column_headers)
-            y_dropdown.pack(anchor=tkinter.W, padx=10, pady=5)
+            # Create a row to hold both the "X" button and the dropdown
+            row_frame = tkinter.Frame(self.y_dropdown_frame)
+            row_frame.pack(anchor=tkinter.W, padx=2, pady=5)
 
-            # Ensure the layout adjusts
-            self.y_dropdown_frame.pack()
+            # Create the red "X" button to remove this Y column
+            remove_button = tkinter.Button(row_frame, text="X", command=lambda: self.remove_y_column(y_var, row_frame), fg="red")
+            remove_button.pack(side=tkinter.LEFT, padx=5)
+
+            # Create a dropdown for the new Y column
+            y_dropdown = ttk.Combobox(row_frame, textvariable=y_var, values=column_headers)
+            y_dropdown.pack(side=tkinter.LEFT)
+
+            # Store the widgets so they can be removed later
+            self.y_dropdown_widgets.append((y_dropdown, remove_button))
+
+        def remove_y_column(self, y_var, row_frame):
+            # Remove the row (dropdown and button) from the frame
+            row_frame.destroy()
+
+            # Remove from the list of Y columns
+            self.y_columns_vars.remove(y_var)
+
+            # Optionally, also remove the entry from self.y_dropdown_widgets if you plan to use it later
+            self.y_dropdown_widgets = [(dropdown, button) for dropdown, button in self.y_dropdown_widgets if
+                                       dropdown != y_var]
 
         def confirm_nn_selection(self, column_headers):
             # Gather selected X and Y columns
@@ -2014,6 +2035,10 @@ if __name__ == "__main__":
                     messagebox.showwarning("Column Selection Error", "Y columns cannot also be selected as X columns.")
                     return
 
+            #ensure no 2 y columns are the same
+            if len(selected_y_columns) != len(set(selected_y_columns)):
+                messagebox.showwarning("Column Selection Error", "Y columns cannot be the same.")
+                return
 
             # Combine selected X and Y data
             NN_PD_DATA = self.table.model.df[selected_x_columns + selected_y_columns]
@@ -2063,6 +2088,7 @@ if __name__ == "__main__":
                 checkbutton = tkinter.Checkbutton(self.popup, text=col, variable=var)
                 checkbutton.pack(anchor=tkinter.W, padx=10)
                 self.x_columns_vars[col] = var
+
 
             # Create a dropdown to select the clustering method
             tkinter.Label(self.popup, text="Clustering Method:").pack(anchor=tkinter.W, padx=10, pady=5)
