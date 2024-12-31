@@ -1064,7 +1064,12 @@ class NeuralNetworkArchitectureBuilder:
                 for i, (y_true_i, y_pred_i) in enumerate(zip(y_true.T, y_pred_classes)):
                     cm = confusion_matrix(y_true_i, y_pred_i)
                     cr = classification_report(y_true_i, y_pred_i)
-                    results_text.insert("end", f"Output {i + 1}:\n")
+
+                    if self.train_test_split_var:
+                        results_text.insert("end", f"Output {i + 1} (Test Data):\n")
+                    else:
+                        results_text.insert("end", f"Output {i + 1} (Train Data):\n")
+
                     results_text.insert("end", "Classification Report:\n" + cr + "\n\n")
 
                     # Generate the confusion matrix heatmap
