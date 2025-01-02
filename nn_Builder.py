@@ -135,11 +135,27 @@ class NeuralNetworkArchitectureBuilder:
         self.tab2 = ttk.Frame(self.notebook)
         self.notebook.add(self.tab2, text="Neural Network Builder")
 
-        # Configure resizing behavior for tabs
-        self.tab1.rowconfigure(0, weight=1)
-        self.tab1.columnconfigure(0, weight=1)
-        self.tab2.rowconfigure(0, weight=1)
-        self.tab2.columnconfigure(0, weight=1)
+        tab_2_color = "#dbe1e2"
+
+        tab2_canvas = Canvas(self.tab2, bg = tab_2_color)
+        scrollbar = Scrollbar(self.tab2, orient="vertical", command=tab2_canvas.yview)
+        tab2_canvas.configure(yscrollcommand=scrollbar.set)
+
+        tab2_canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        tab2_content = Frame(tab2_canvas, bg= tab_2_color)
+        tab2_canvas.create_window((0, 0), window=tab2_content, anchor="nw")
+
+        tab2_content.rowconfigure("all", weight=1)
+        tab2_content.columnconfigure("all", weight=1)
+
+        # Bind canvas resize to update its scroll region
+        def update_scroll_region(event):
+            tab2_canvas.configure(scrollregion=tab2_canvas.bbox("all"))
+
+        tab2_content.bind("<Configure>", update_scroll_region)
+
 
         #get the width of self.master in inches
         self.master.update_idletasks()
@@ -153,15 +169,22 @@ class NeuralNetworkArchitectureBuilder:
         # Create custom style for modern design
         style = ttk.Style()
         style.configure("TButton", padding=6, relief="flat", background="#4CAF50", foreground="white")
-        style.configure("TLabel", font=("Arial", 10), background="#f4f4f4")
-        style.configure("TCombobox", fieldbackground="white", background="#f4f4f4", relief="flat")
+        style.configure("TLabelframe", background=tab_2_color)
+        style.configure("TLabelframe.Label", background=tab_2_color)
+        style.configure("TCheckbutton", background=tab_2_color)
+        style.configure("TCombobox", background=tab_2_color)
+        style.configure("TEntry", background=tab_2_color)
+        style.configure("TLabel", background=tab_2_color)
 
         # Frame for training parameters
-        self.params_frame = ttk.LabelFrame(self.tab2, text="Training Parameters")
-        self.params_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self.params_frame = ttk.LabelFrame(tab2_content, text="Training Parameters:")
+        self.params_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
+
+        # Configure weights for the params_frame
+        self.params_frame.rowconfigure('all', weight=1)
 
         # Store variables for retrieving input later
-        self.epochs_var = tk.StringVar(value="50")
+        self.epochs_var = tk.StringVar(value="250")
         self.batch_var = tk.StringVar(value="32")
         self.optimizer_var = tk.StringVar(value="Adam")
         self.learning_rate_var = tk.StringVar(value="0.001")
@@ -235,36 +258,44 @@ class NeuralNetworkArchitectureBuilder:
         self.random_starts_label = ttk.Label(self.params_frame, text="Random Starts:")
         self.random_starts_label.grid(row=0, column=4, sticky="w", padx=5, pady=5)
         self.random_starts_options = [str(i) for i in range(1, 101)]  # List of values from 1 to 100 as strings
-        self.random_starts_combobox = ttk.Combobox(self.params_frame, values=self.random_starts_options, state="readonly")
+        self.random_starts_combobox = ttk.Combobox(self.params_frame, values=self.random_starts_options, state="readonly", width=10)
         self.random_starts_combobox.set("1")  # Set the default value to "1"
         self.random_starts_combobox.grid(row=0, column=5, sticky="w", padx=5, pady=5)
+
+        self.early_stop_var = BooleanVar()
+        self.early_stop_var.set(True)
+        self.early_stop_check = ttk.Checkbutton(self.params_frame, text="Early Stopping", variable=self.early_stop_var)
+        self.early_stop_check.grid(row=1, column=4, columnspan=1, padx=5, pady=5, sticky="w")
+
+        self.early_stop_type_var = tk.StringVar(value="val_loss")
+        self.early_stop_type_dropdown = ttk.Combobox(self.params_frame, textvariable=self.early_stop_type_var,
+                                                        values=["val_loss", "val_accuracy", "loss", "accuracy"], width=10)
+        self.early_stop_type_dropdown.grid(row=1, column=5, padx=5, pady=5, sticky="w")
 
         #toggle for displaying training status
         self.training_status_var = BooleanVar()
         self.training_status_var.set(False)
         self.training_status_check = ttk.Checkbutton(self.params_frame, text="Display Training Status", variable=self.training_status_var)
-        self.training_status_check.grid(row=1, column=4, columnspan=2, padx=5, pady=5, sticky="w")
-
-        self.early_stop_var = BooleanVar()
-        self.early_stop_var.set(True)
-        self.early_stop_check = ttk.Checkbutton(self.params_frame, text="Early Stopping", variable=self.early_stop_var)
-        self.early_stop_check.grid(row=2, column=4, columnspan=2, padx=5, pady=5, sticky="w")
+        self.training_status_check.grid(row=2, column=4, columnspan=2, padx=5, pady=5, sticky="w")
 
         # Frame for layer configuration (move below the params frame)
-        self.layers_frame = ttk.Frame(self.tab2)
-        self.layers_frame.grid(row=1, column=0, pady=10, padx=10, sticky="nsew")
+        self.layers_frame = ttk.LabelFrame(tab2_content, text="Layer Configuration:")
+        self.layers_frame.grid(row=1, column=0, pady=5, padx=10, sticky="nsew")
+
+        self.layers_frame.rowconfigure('all', weight=1)
 
         # Add Layer button
         add_layer_button = ttk.Button(self.layers_frame, text="Add Layer", command=self.add_layer_fields)
         add_layer_button.grid(row=1000, column=0, pady=5, padx=10)
+        self.layers_frame.grid_rowconfigure(1000, weight=1)
 
         # Frame for visualization
-        self.visualization_frame = ttk.Frame(self.tab2)
+        self.visualization_frame = ttk.Frame(tab2_content)
         self.visualization_frame.grid(row=2, column=0, pady=10, padx=10, sticky="nsew")
 
         # Start training button
-        start_training_button = ttk.Button(self.tab2, text="Start Training", command=lambda: self.run_training())
-        start_training_button.grid(row=3, column=0, pady=10, padx=10, sticky="ew")
+        start_training_button = ttk.Button(tab2_content, text="Start Training", command=lambda: self.run_training())
+        start_training_button.grid(row=3, column=0, pady=5, padx=10, sticky="ew")
 
         if self.train_test_split_var is not None:
             self.NN_PD_DATA_X_train, self.NN_PD_DATA_X_test, self.NN_PD_DATA_Y_train, self.NN_PD_DATA_Y_test = train_test_split(self.NN_PD_DATA_X, self.NN_PD_DATA_Y, test_size=self.train_test_split_var)
@@ -873,8 +904,14 @@ class NeuralNetworkArchitectureBuilder:
             callbacks = [tensorboard_callback]
 
             if self.early_stop_var.get():
+                selected_monitor = self.early_stop_type_var.get()  # Get the selected monitor type
+                validation_split = float(self.validation_split_entry.get())  # Get the validation split value
+
+                # Adjust the monitor based on validation split
+                monitor = selected_monitor if validation_split > 0 else selected_monitor.replace("val_", "")
+
                 early_stopping = EarlyStopping(
-                    monitor='val_loss' if float(self.validation_split_entry.get()) > 0 else 'loss',
+                    monitor=monitor,
                     min_delta=10 ** -4,
                     patience=10,
                     restore_best_weights=True
@@ -1039,7 +1076,10 @@ class NeuralNetworkArchitectureBuilder:
                 for i, (y_true, y_pred_i) in enumerate(zip((self.y_test.T if self.train_test_split_var else self.y_data.T), y_pred.T)):
                     r2 = r2_score(y_true, y_pred_i)
                     mse = mean_squared_error(y_true, y_pred_i)
-                    results_text.insert("end", f"Output {i + 1}:\n")
+                    if self.train_test_split_var:
+                        results_text.insert("end", f"Output {i + 1} (Test Data):\n")
+                    else:
+                        results_text.insert("end", f"Output {i + 1} (Train Data):\n")
                     results_text.insert("end", f"  r2_Score: {r2:.4f}\n")
                     results_text.insert("end", f"  Mean Squared Error (MSE): {mse:.4f}\n\n")
 
@@ -1099,6 +1139,7 @@ class NeuralNetworkArchitectureBuilder:
 
         def plot_surface_response():
             if self.initialized_surface_response is False:
+
                 # Initialization code only runs once
                 self.output_notebook = ttk.Notebook(scrollable_frame)
                 self.output_notebook.grid(row=5, column=0, sticky="nsew", padx=10, pady=10)
