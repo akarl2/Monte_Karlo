@@ -25,7 +25,7 @@ from functools import partial
 import subprocess
 import webbrowser
 import datetime
-from tkinter import Toplevel, Text, Scrollbar, Button, Label, Canvas, Frame, Entry, messagebox, Checkbutton, BooleanVar
+from tkinter import Toplevel, Text, Scrollbar, Button, Label, Canvas, Frame, Entry, messagebox, Checkbutton, BooleanVar, messagebox
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
@@ -102,7 +102,7 @@ class NeuralNetworkArchitectureBuilder:
         # Get logical screen dimensions
         self.screen_width = self.master.winfo_screenwidth()
         self.screen_height = self.master.winfo_screenheight()
-        self.screen_fraction = 0.7  # Fraction of screen to use for the main window
+        self.screen_fraction = 0.75  # Fraction of screen to use for the main window
 
         #figure out if mac or windows
         self.dpi = self.master.winfo_fpixels('1i')
@@ -137,25 +137,26 @@ class NeuralNetworkArchitectureBuilder:
 
         tab_2_color = "#dbe1e2"
 
-        tab2_canvas = Canvas(self.tab2, bg = tab_2_color)
-        scrollbar = Scrollbar(self.tab2, orient="vertical", command=tab2_canvas.yview)
-        tab2_canvas.configure(yscrollcommand=scrollbar.set)
+        self.tab2_canvas = Canvas(self.tab2, bg = tab_2_color)
+        scrollbar = Scrollbar(self.tab2, orient="vertical", command=self.tab2_canvas.yview)
+        self.tab2_canvas.configure(yscrollcommand=scrollbar.set)
 
-        tab2_canvas.pack(side="left", fill="both", expand=True)
+        self.tab2_canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        tab2_content = Frame(tab2_canvas, bg= tab_2_color)
-        tab2_canvas.create_window((0, 0), window=tab2_content, anchor="nw")
+        tab2_content = Frame(self.tab2_canvas, bg= tab_2_color)
+        self.master.update_idletasks()
+        self.tab2_canvas.create_window((0, 0), window=tab2_content, anchor="nw", width=self.master.winfo_width()-40)
 
-        tab2_content.rowconfigure("all", weight=1)
-        tab2_content.columnconfigure("all", weight=1)
+
+        tab2_content.rowconfigure(0, weight=1)
+        tab2_content.columnconfigure(0, weight=1)
 
         # Bind canvas resize to update its scroll region
         def update_scroll_region(event):
-            tab2_canvas.configure(scrollregion=tab2_canvas.bbox("all"))
+            self.tab2_canvas.configure(scrollregion=self.tab2_canvas.bbox("all"))
 
         tab2_content.bind("<Configure>", update_scroll_region)
-
 
         #get the width of self.master in inches
         self.master.update_idletasks()
@@ -189,8 +190,6 @@ class NeuralNetworkArchitectureBuilder:
         self.optimizer_var = tk.StringVar(value="Adam")
         self.learning_rate_var = tk.StringVar(value="0.001")
         self.validation_split_var = tk.StringVar(value="0.2")
-
-        from tkinter import messagebox
 
         # Function to determine loss function dynamically
         def determine_loss_function(y_data):
@@ -287,7 +286,7 @@ class NeuralNetworkArchitectureBuilder:
         # Add Layer button
         add_layer_button = ttk.Button(self.layers_frame, text="Add Layer", command=self.add_layer_fields)
         add_layer_button.grid(row=1000, column=0, pady=5, padx=10)
-        self.layers_frame.grid_rowconfigure(1000, weight=1)
+        self.layers_frame.rowconfigure(1000, weight=1)
 
         # Frame for visualization
         self.visualization_frame = ttk.Frame(tab2_content)
@@ -295,7 +294,7 @@ class NeuralNetworkArchitectureBuilder:
 
         # Start training button
         start_training_button = ttk.Button(tab2_content, text="Start Training", command=lambda: self.run_training())
-        start_training_button.grid(row=3, column=0, pady=5, padx=10, sticky="ew")
+        start_training_button.grid(row=3, column=0, pady=5, padx=10, sticky="nsew")
 
         if self.train_test_split_var is not None:
             self.NN_PD_DATA_X_train, self.NN_PD_DATA_X_test, self.NN_PD_DATA_Y_train, self.NN_PD_DATA_Y_test = train_test_split(self.NN_PD_DATA_X, self.NN_PD_DATA_Y, test_size=self.train_test_split_var)
@@ -495,13 +494,13 @@ class NeuralNetworkArchitectureBuilder:
 
         # Column 1: Layer Information Label
         layer_info_label = ttk.Label(self.layers_frame, text=f"Layer {layer_index + 1}:")
-        layer_info_label.grid(row=layer_index, column=1, padx=10, pady=5, sticky="w")
+        layer_info_label.grid(row=layer_index, column=1, padx=5, pady=5, sticky="w")
         self.layer_info_labels.append(layer_info_label)
 
         # Column 2: Layer Type Dropdown
         layer_type_var = tk.StringVar(value="Dense")
         layer_type_dropdown = ttk.Combobox(self.layers_frame, textvariable=layer_type_var,
-                                           values=["Dense", "2D Convolutional", "3D Convolutional", "2D Pooling", "3D Pooling", "Flatten", "Dropout"], width=20)
+                                           values=["Dense", "2D Convolutional", "3D Convolutional", "2D Pooling", "3D Pooling", "Flatten", "Dropout"], width=15)
         layer_type_dropdown.grid(row=layer_index, column=2, padx=10, pady=5, sticky="w")
         layer_type_dropdown.bind("<<ComboboxSelected>>", lambda e: self.on_layer_type_change(layer_index))
 
@@ -683,7 +682,7 @@ class NeuralNetworkArchitectureBuilder:
         total_params = 0
 
         # Create a new figure for the visualization
-        fig, ax = plt.subplots(figsize=(12, 3))
+        fig, ax = plt.subplots()
         ax.axis('off')
 
         # Display X_data and y_data shapes at the top of the plot
@@ -764,7 +763,37 @@ class NeuralNetworkArchitectureBuilder:
         # Create a new canvas for the updated visualization
         canvas = FigureCanvasTkAgg(fig, master=self.visualization_frame)
         canvas.draw()
-        canvas.get_tk_widget().grid(row=6, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
+        canvas_widget = canvas.get_tk_widget()
+        canvas_widget.grid(row=6, column=0, columnspan=4, padx=5, pady=5, sticky="nsew")
+
+        def update_fig_size(event=None):
+
+            # Get the current width and height of the visualization frame
+            width = self.tab2_canvas.winfo_width()
+
+            # Adjust for macOS scaling factor (apply scaling factor to width only)
+            width_in_inches = width / self.dpi / self.scaling_factor
+
+            # Set the figure size in inches based on the canvas size
+            self.visualization_frame.configure(width=width)  # Ensure frame is same size as canvas
+            self.visualization_frame.update_idletasks()
+            print(f"Frame width: {self.visualization_frame.winfo_width()}")
+            print(f"Canvas width: {self.tab2_canvas.winfo_width()}")
+            fig.set_size_inches(width_in_inches, 3, forward=True)
+
+            # Update canvas size to match visualization frame size
+            canvas_widget.config(width=width)  # Ensure canvas is same size as frame
+
+            # Redraw the canvas with the updated figure size
+            canvas.draw()
+
+        # Bind resizing events to dynamically update the figure size
+        self.tab2_canvas.bind("<Configure>", update_fig_size)
+
+        # Force initial size update
+        self.visualization_frame.update_idletasks()
+        update_fig_size()
+
 
     def run_training(self):
         # Give a warning if the last layer nodes are not equal to the number of classes
