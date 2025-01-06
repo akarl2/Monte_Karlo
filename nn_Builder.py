@@ -120,6 +120,9 @@ class NeuralNetworkArchitectureBuilder:
         self.master.title("Neural Network Architecture Builder")
         self.master.geometry(f"{int(self.screen_width * self.screen_fraction)}x{int(self.screen_height * self.screen_fraction)}")
 
+        # Set minimum window size
+        self.master.wm_minsize(width=1170, height=600)
+
         # Configure the parent window's grid
         self.master.rowconfigure(0, weight=1)
         self.master.columnconfigure(0, weight=1)
@@ -138,25 +141,33 @@ class NeuralNetworkArchitectureBuilder:
         tab_2_color = "#dbe1e2"
 
         self.tab2_canvas = Canvas(self.tab2, bg = tab_2_color)
-        scrollbar = Scrollbar(self.tab2, orient="vertical", command=self.tab2_canvas.yview)
-        self.tab2_canvas.configure(yscrollcommand=scrollbar.set)
-
         self.tab2_canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
 
-        tab2_content = Frame(self.tab2_canvas, bg= tab_2_color)
-        self.master.update_idletasks()
-        self.tab2_canvas.create_window((0, 0), window=tab2_content, anchor="nw", width=self.master.winfo_width()-40)
+        vertical_scrollbar = Scrollbar(self.tab2, orient="vertical", command=self.tab2_canvas.yview)
 
+        self.tab2_canvas.configure(yscrollcommand=vertical_scrollbar.set)
 
-        tab2_content.rowconfigure(0, weight=1)
-        tab2_content.columnconfigure(0, weight=1)
+        vertical_scrollbar.pack(side="right", fill="y")
+
+        self.tab2_content = Frame(self.tab2_canvas, bg= tab_2_color)
+        self.tab2_content_id = self.tab2_canvas.create_window((0, 0), window=self.tab2_content, anchor="nw")
+
+        self.tab2_content.rowconfigure(0, weight=1)
+        self.tab2_content.columnconfigure(0, weight=1)
 
         # Bind canvas resize to update its scroll region
         def update_scroll_region(event):
             self.tab2_canvas.configure(scrollregion=self.tab2_canvas.bbox("all"))
 
-        tab2_content.bind("<Configure>", update_scroll_region)
+        self.tab2_content.bind("<Configure>", update_scroll_region)
+
+        #function to adjust content size and canvas size with window resize
+        def adjust_canvas_size(event):
+            canvas_width = self.tab2_canvas.winfo_width()
+            self.tab2_canvas.itemconfig(self.tab2_content_id, width=canvas_width)
+            self.tab2_canvas.configure(scrollregion=self.tab2_canvas.bbox("all"))
+
+        self.master.bind("<Configure>", adjust_canvas_size)
 
         #get the width of self.master in inches
         self.master.update_idletasks()
@@ -178,7 +189,7 @@ class NeuralNetworkArchitectureBuilder:
         style.configure("TLabel", background=tab_2_color)
 
         # Frame for training parameters
-        self.params_frame = ttk.LabelFrame(tab2_content, text="Training Parameters:")
+        self.params_frame = ttk.LabelFrame(self.tab2_content, text="Training Parameters:")
         self.params_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
 
         # Configure weights for the params_frame
@@ -226,7 +237,7 @@ class NeuralNetworkArchitectureBuilder:
 
         self.batch_label = ttk.Label(self.params_frame, text="Batch Size:")
         self.batch_label.grid(row=0, column=2, sticky="w", padx=5, pady=5)
-        self.batch_entry = ttk.Entry(self.params_frame, textvariable=self.batch_var)
+        self.batch_entry = ttk.Entry(self.params_frame, textvariable=self.batch_var, width=10)
         self.batch_entry.grid(row=0, column=3, sticky="w", padx=5, pady=5)
 
         # Row 2: Loss Function and Optimizer
@@ -239,7 +250,7 @@ class NeuralNetworkArchitectureBuilder:
 
         self.optimizer_label = ttk.Label(self.params_frame, text="Optimizer:")
         self.optimizer_label.grid(row=1, column=2, sticky="w", padx=5, pady=5)
-        self.optimizer_entry = ttk.Entry(self.params_frame, textvariable=self.optimizer_var)
+        self.optimizer_entry = ttk.Entry(self.params_frame, textvariable=self.optimizer_var, width=10)
         self.optimizer_entry.grid(row=1, column=3, sticky="w", padx=5, pady=5)
 
         # Row 3: Learning Rate and Validation Split
@@ -250,7 +261,7 @@ class NeuralNetworkArchitectureBuilder:
 
         self.validation_split_label = ttk.Label(self.params_frame, text="Validation Split:")
         self.validation_split_label.grid(row=2, column=2, sticky="w", padx=5, pady=5)
-        self.validation_split_entry = ttk.Entry(self.params_frame, textvariable=self.validation_split_var)
+        self.validation_split_entry = ttk.Entry(self.params_frame, textvariable=self.validation_split_var, width=10)
         self.validation_split_entry.grid(row=2, column=3, sticky="w", padx=5, pady=5)
 
         # Dropdown for selecting Random Starts (1 to 100)
@@ -278,7 +289,7 @@ class NeuralNetworkArchitectureBuilder:
         self.training_status_check.grid(row=2, column=4, columnspan=2, padx=5, pady=5, sticky="w")
 
         # Frame for layer configuration (move below the params frame)
-        self.layers_frame = ttk.LabelFrame(tab2_content, text="Layer Configuration:")
+        self.layers_frame = ttk.LabelFrame(self.tab2_content, text="Layer Configuration:")
         self.layers_frame.grid(row=1, column=0, pady=5, padx=10, sticky="nsew")
 
         self.layers_frame.rowconfigure('all', weight=1)
@@ -289,11 +300,11 @@ class NeuralNetworkArchitectureBuilder:
         self.layers_frame.rowconfigure(1000, weight=1)
 
         # Frame for visualization
-        self.visualization_frame = ttk.Frame(tab2_content)
+        self.visualization_frame = ttk.LabelFrame(self.tab2_content, text='Neural Network Visualization:')
         self.visualization_frame.grid(row=2, column=0, pady=10, padx=10, sticky="nsew")
 
         # Start training button
-        start_training_button = ttk.Button(tab2_content, text="Start Training", command=lambda: self.run_training())
+        start_training_button = ttk.Button(self.tab2_content, text="Start Training", command=lambda: self.run_training())
         start_training_button.grid(row=3, column=0, pady=5, padx=10, sticky="nsew")
 
         if self.train_test_split_var is not None:
@@ -679,121 +690,92 @@ class NeuralNetworkArchitectureBuilder:
         regularizer_types = [regularizer.get() for regularizer in self.layer_regularizer_type]
         regularizer_values = [regularizer.get() for regularizer in self.layer_regularizer_vars]
         num_layers = len(layer_val_entry)
-        total_params = 0
 
         # Create a new figure for the visualization
         fig, ax = plt.subplots()
         ax.axis('off')
 
-        # Display X_data and y_data shapes at the top of the plot
-        x_shape = self.X_train.shape if self.X_train is not None else "N/A"
-        y_shape = self.y_train.shape if self.y_train is not None else "N/A"
-        ax.text(0.5, 0.9, f"Train Data Shape (X): {x_shape}    Train Target Shape (y): {y_shape}", ha="center",
-                va="center",
-                fontsize=12, weight="bold")
+        def draw_network():
+            total_params = 0
+            ax.clear()
+            ax.axis('off')
 
-        # Define positions for each layer
-        x_positions = np.linspace(0.1, 0.9, num_layers)
-        y_offset = 0.5
+            # Display X_data and y_data shapes at the top of the plot
+            x_shape = self.X_train.shape if self.X_train is not None else "N/A"
+            y_shape = self.y_train.shape if self.y_train is not None else "N/A"
+            ax.text(0.5, 0.9, f"Train Data Shape (X): {x_shape}    Train Target Shape (y): {y_shape}", ha="center",
+                    va="center", fontsize=12, weight="bold")
 
-        for i, (x, layer_val, layer_type, activation, kernel_size, regularizer_type, regularizer_value) in enumerate(
-                zip(x_positions, layer_val_entry, layer_types, activations, kernel_sizes, regularizer_types,
-                    regularizer_values)):
-            # Start with basic layer text
-            layer_text = f"Layer {i + 1}: {layer_type}\n"
 
-            # Calculate the number of parameters based on layer type
-            layer_params = 0
+            # Define positions for each layer
+            x_positions = np.linspace(0.1, 0.9, num_layers)
+            y_offset = 0.5
 
-            # Find the previous valid node count for Dense layers, ignoring Dropout and Flatten layers
-            if layer_type == "Dense":
-                prev_nodes = None
-                for j in range(i - 1, -1, -1):  # Traverse backward to find the previous valid node count
-                    if isinstance(layer_val_entry[j], int):  # Check if it's a valid integer node count
-                        prev_nodes = layer_val_entry[j]
-                        break
-                if prev_nodes is None:  # Default to input shape if no previous valid layer was found
-                    prev_nodes = x_shape[1]
+            for i, (x, layer_val, layer_type, activation, kernel_size, regularizer_type, regularizer_value) in enumerate(
+                    zip(x_positions, layer_val_entry, layer_types, activations, kernel_sizes, regularizer_types,
+                        regularizer_values)):
+                # Start with basic layer text
+                layer_text = f"Layer {i + 1}: {layer_type}\n"
+                layer_params = 0
 
-                layer_params = int(layer_val) * (int(prev_nodes) + 1)  # Including bias term
-                layer_text += f" Nodes: {layer_val}\n"
-            elif layer_type == "2D Convolutional":
-                filters = int(layer_val)
-                kernel_height, kernel_width = int(kernel_size[0]), int(kernel_size[1])
-                layer_params = filters * (kernel_height * kernel_width + 1)  # +1 for bias
-                layer_text += f" Filters: {filters}\nKernel Size: {kernel_height} x {kernel_width}\n"
-            elif layer_type == "2D Pooling":
-                kernel_height, kernel_width = int(kernel_size[0]), int(kernel_size[1])
-                layer_text += f"Kernel Size: {kernel_height} x {kernel_width}\n"
-            elif layer_type == "Dropout":
-                dropout_rate = float(layer_val)
-                layer_text += f"Dropout Rate: {dropout_rate}\n"
-            elif layer_type == "Flatten":
-                layer_text += "Flatten layer\n"
+                if layer_type == "Dense":
+                    prev_nodes = next(
+                        (layer_val_entry[j] for j in range(i - 1, -1, -1) if isinstance(layer_val_entry[j], int)),
+                        x_shape[1])
+                    layer_params = int(layer_val) * (int(prev_nodes) + 1)
+                    layer_text += f" Nodes: {layer_val}\n"
+                elif layer_type == "2D Convolutional":
+                    filters = int(layer_val)
+                    kernel_height, kernel_width = int(kernel_size[0]), int(kernel_size[1])
+                    layer_params = filters * (kernel_height * kernel_width + 1)
+                    layer_text += f" Filters: {filters}\nKernel Size: {kernel_height} x {kernel_width}\n"
+                elif layer_type == "2D Pooling":
+                    kernel_height, kernel_width = int(kernel_size[0]), int(kernel_size[1])
+                    layer_text += f"Kernel Size: {kernel_height} x {kernel_width}\n"
+                elif layer_type == "Dropout":
+                    dropout_rate = float(layer_val)
+                    layer_text += f"Dropout Rate: {dropout_rate}\n"
+                elif layer_type == "Flatten":
+                    layer_text += "Flatten layer\n"
 
-            # Add activation, excluding certain layer types
-            if layer_type not in ["Dropout", "Flatten", "2D Pooling", "3D Pooling"]:
-                layer_text += f"Activation: {activation}\n"
+                if layer_type not in ["Dropout", "Flatten", "2D Pooling", "3D Pooling"]:
+                    layer_text += f"Activation: {activation}\n"
 
-            # Add regularizer if defined
-            if regularizer_type and regularizer_value:  # If both regularizer type and value are defined
-                layer_text += f"Regularizer: {regularizer_type} ({regularizer_value})\n"
+                if regularizer_type and regularizer_value:
+                    layer_text += f"Regularizer: {regularizer_type} ({regularizer_value})\n"
 
-            # Add the number of parameters to the text
-            total_params += layer_params
-            layer_text += f"Parameters: {layer_params}\n"
+                total_params += layer_params
+                layer_text += f"Parameters: {layer_params}\n"
 
-            # Add the layer text to the plot
-            ax.text(x, y_offset, layer_text, ha="center", va="center", fontsize=10,
-                    bbox=dict(boxstyle="square,pad=0.5", edgecolor="black", facecolor="lightblue"))
+                # Adjust text and box size dynamically
+                ax.text(x, y_offset, layer_text, ha="center", va="center", fontsize=10,
+                        bbox=dict(boxstyle="round,pad=0.5", edgecolor="black", facecolor="lightblue"))
 
-            # Add arrows between layers (except the last layer)
-            if i < num_layers - 1:
-                ax.annotate("", xy=(x + 0.15, y_offset), xytext=(x + 0.1, y_offset),
-                            arrowprops=dict(arrowstyle="->", lw=1.5, color='black'))
-
-        # Display total parameters at the bottom
-        ax.text(0.5, 0.1, f"Trainable Parameters: {total_params}", ha="center", va="center",
-                fontsize=12, weight="bold")
+            ax.text(0.5, 0.1, f"Trainable Parameters: {total_params}", ha="center", va="center",
+                    fontsize=12, weight="bold")
+        draw_network()
 
         # Clear previous visualization
         for widget in self.visualization_frame.winfo_children():
-            widget.grid_forget()  # Clear the grid (instead of destroy)
+            widget.grid_forget()
 
         # Create a new canvas for the updated visualization
         canvas = FigureCanvasTkAgg(fig, master=self.visualization_frame)
         canvas.draw()
         canvas_widget = canvas.get_tk_widget()
-        canvas_widget.grid(row=6, column=0, columnspan=4, padx=5, pady=5, sticky="nsew")
+        canvas_widget.grid(row=6, column=0, padx=5, pady=10, sticky="nsew")
 
         def update_fig_size(event=None):
-
-            # Get the current width and height of the visualization frame
-            width = self.tab2_canvas.winfo_width()
-
-            # Adjust for macOS scaling factor (apply scaling factor to width only)
-            width_in_inches = width / self.dpi / self.scaling_factor
-
-            # Set the figure size in inches based on the canvas size
-            self.visualization_frame.configure(width=width)  # Ensure frame is same size as canvas
-            self.visualization_frame.update_idletasks()
-            print(f"Frame width: {self.visualization_frame.winfo_width()}")
-            print(f"Canvas width: {self.tab2_canvas.winfo_width()}")
+            canvas_width = self.tab2_canvas.winfo_width()
+            width_in_inches = canvas_width / self.dpi / self.scaling_factor
             fig.set_size_inches(width_in_inches, 3, forward=True)
-
-            # Update canvas size to match visualization frame size
-            canvas_widget.config(width=width)  # Ensure canvas is same size as frame
-
-            # Redraw the canvas with the updated figure size
+            canvas_widget.config(width=canvas_width-35, height=300)  # Adjust canvas size
+            draw_network()  # Redraw the network with the updated scaling
             canvas.draw()
 
         # Bind resizing events to dynamically update the figure size
         self.tab2_canvas.bind("<Configure>", update_fig_size)
-
-        # Force initial size update
-        self.visualization_frame.update_idletasks()
         update_fig_size()
-
 
     def run_training(self):
         # Give a warning if the last layer nodes are not equal to the number of classes
