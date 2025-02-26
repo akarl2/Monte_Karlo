@@ -1,16 +1,22 @@
+import os
 import tkinter
 from itertools import combinations
 from pyexpat import features
 from tkinter import ttk, Frame, messagebox
 
+import joblib
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+from joblib import delayed, Parallel
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from scipy.cluster.hierarchy import centroid
-from sklearn.cluster import KMeans, DBSCAN
+from sklearn.cluster import KMeans, DBSCAN, MiniBatchKMeans
 from matplotlib.patches import Circle
+from sklearn.feature_selection import SelectKBest, mutual_info_classif
 from sklearn.metrics import silhouette_score
 from tqdm import tqdm
+from multiprocessing import shared_memory
 
 
 class ClusterAnalysis:
@@ -62,15 +68,41 @@ class ClusterAnalysis:
         self.full_dataset = self.full_dataset.loc[valid_indices]
 
         if optimal_cluster:
-            #run find_best_features_and_clusters function
-            best_result = self.find_best_features_and_clusters(self.data_PD)
-            if best_result != "Canceled":
-                messagebox.showinfo("Best Features and Clusters",
-                                    f"Best Features: \n{', '.join(best_result['feature_names'])}\n\n"
-                                    f"Best Clusters: {best_result['n_clusters']}\n\n"
-                                    f"Silhouette Score: {best_result['silhouette_score']}")
+            # Run find_best_features_and_clusters function
+            top_results_df = self.find_best_features_and_clusters(self.data_PD)
+
+            if top_results_df.empty:
+                messagebox.showinfo("No Results", "No results were found.")
             else:
-                messagebox.showinfo("Canceled", "The process has been canceled")
+                # Create a new Tkinter window to display results in a table
+                result_window = tkinter.Toplevel()
+                result_window.title("Top Feature and Cluster Results")
+
+                # Create a Treeview widget for displaying the table
+                tree = ttk.Treeview(result_window, columns=["Feature Names", "Number of Clusters", "Silhouette Score"],
+                                    show="headings")
+
+                # Define the column headings
+                tree.heading("Feature Names", text="Feature Names")
+                tree.heading("Number of Clusters", text="Number of Clusters")
+                tree.heading("Silhouette Score", text="Silhouette Score")
+
+                # Set the column widths
+                tree.column("Feature Names", width=200, anchor="w")
+                tree.column("Number of Clusters", width=150, anchor="center")
+                tree.column("Silhouette Score", width=150, anchor="center")
+
+                # Insert the top results into the Treeview
+                for _, row in top_results_df.iterrows():
+                    tree.insert("", "end",
+                                values=(', '.join(row["feature_names"]), row["n_clusters"], row["silhouette_score"]))
+
+                # Add a scrollbar to the Treeview
+                scrollbar = ttk.Scrollbar(result_window, orient="vertical", command=tree.yview)
+                tree.configure(yscrollcommand=scrollbar.set)
+                scrollbar.pack(side="right", fill="y")
+
+                tree.pack(pady=10, padx=10)
 
         else:
             self.configure_cluster_popup()
@@ -120,17 +152,42 @@ class ClusterAnalysis:
     def find_best_features_and_clusters(self, data, cluster_range=(2, 10)):
         """
         Find the best subset of features and cluster count that maximizes the silhouette score.
+        Optimized with parallel processing, feature selection, and MiniBatchKMeans.
 
         Args:
             data (np.ndarray): The dataset as a NumPy array (samples x features).
             cluster_range (tuple): Range of cluster numbers to test (default: 2 to 10).
 
         Returns:
-            dict or str: Best result with feature indices, cluster count, and silhouette score,
-                         or "Canceled" if the process is interrupted.
+            pd.DataFrame: Top 10 results with feature indices, feature names, cluster count, and silhouette scores.
         """
-        n_samples, n_features = self.data.shape
-        best_result = {'feature_names': None, 'n_clusters': None, 'silhouette_score': -1}
+        n_samples, n_features = data.shape
+        best_results_list = []
+
+        def evaluate_combination(feature_indices):
+            feature_data = data.iloc[:, list(feature_indices)]  # Use .iloc for Pandas indexing
+            best_local_result = {'feature_indices': feature_indices, 'feature_names': None, 'n_clusters': None,
+                                 'silhouette_score': -1}
+
+            current_pid = os.getpid()  # or use threading.get_ident() for thread ID
+            print(f"Process {current_pid} is evaluating combination: {feature_indices}")
+            for n_clusters in range(cluster_range[0], cluster_range[1] + 1):
+
+                try:
+                    kmeans = KMeans(n_clusters=n_clusters, random_state=0, n_init=self.random_starts).fit(feature_data)
+                    labels = kmeans.labels_
+                    score = silhouette_score(feature_data, labels)
+
+                    if score > best_local_result['silhouette_score']:
+                        best_local_result['feature_names'] = [self.data_PD.columns[i].replace('\xa0', ' ') for i in
+                                                              feature_indices]
+                        best_local_result['n_clusters'] = n_clusters
+                        best_local_result['silhouette_score'] = score
+
+                except Exception as e:
+                    print(f"Error with features {feature_indices} and {n_clusters} clusters: {e}")
+
+            return best_local_result
 
         total_combinations = sum(
             len(range(cluster_range[0], cluster_range[1] + 1)) * len(
@@ -138,7 +195,7 @@ class ClusterAnalysis:
             for n_sub_features in range(2, n_features + 1)
         )
 
-        # Create the Tkinter popup window
+        # Tkinter Progress Window
         popup = tkinter.Tk()
         popup.title("Progress")
         popup.geometry("400x225")
@@ -163,101 +220,74 @@ class ClusterAnalysis:
         cancel_button.pack(pady=10)
         popup.update()
 
-        # Iterate through all subsets of features (2 to all features)
-        current_combination = 0
-        for n_sub_features in range(2, n_features + 1):
-            for feature_indices in combinations(range(n_features), n_sub_features):
-                if cancel_flag.get():  # Check if cancel was pressed
-                    try:
-                        popup.destroy()
-                    except tkinter.TclError:
-                        pass  # Ignore errors if the window is already destroyed
-                    return "Canceled"  # Exit and indicate cancellation
+        # Parallel Processing for Feature Subset Evaluation
+        from joblib import Parallel, delayed
+        n_jobs = max(joblib.cpu_count() - 1, 1)
+        best_results = Parallel(n_jobs=n_jobs, prefer="threads")(
+            delayed(evaluate_combination)(feature_indices)
+            for n_sub_features in range(2, n_features + 1)
+            for feature_indices in combinations(range(n_features), n_sub_features)
+        )
 
-                feature_data = self.data[:, feature_indices]  # Select subset of features
+        # Store results in a list
+        for result in best_results:
+            best_results_list.append(result)
 
-                # Test clustering for different cluster counts
-                for n_clusters in range(cluster_range[0], cluster_range[1] + 1):
-                    if cancel_flag.get():  # Check if cancel was pressed
-                        try:
-                            popup.destroy()
-                        except tkinter.TclError:
-                            pass  # Ignore errors if the window is already destroyed
-                        return "Canceled"  # Exit and indicate cancellation
+        # Sort results by silhouette score in descending order and take the top 10
+        top_results = sorted(best_results_list, key=lambda x: x['silhouette_score'], reverse=True)[:10]
 
-                    try:
-                        # Perform K-Means clustering
-                        kmeans = KMeans(n_clusters=n_clusters, random_state=0, n_init=10).fit(feature_data)
-                        labels = kmeans.labels_
-
-                        # Compute silhouette score
-                        score = silhouette_score(feature_data, labels)
-
-                        # Check if this result is the best so far
-                        if score > best_result['silhouette_score']:
-                            best_result['feature_indices'] = feature_indices
-                            best_result['feature_names'] = [self.data_PD.columns[i].replace('\xa0', ' ') for i in
-                                                            feature_indices]
-                            best_result['n_clusters'] = n_clusters
-                            best_result['silhouette_score'] = score
-                    except Exception as e:
-                        # Handle exceptions (e.g., cluster number too high for the number of samples)
-                        print(f"Error with features {feature_indices} and {n_clusters} clusters: {e}")
-                    finally:
-                        current_combination += 1
-                        percent_complete = current_combination / total_combinations * 100
-                        percent_label.config(text=f"{percent_complete:.2f}% Complete")
-                        progress["value"] = current_combination
-                        popup.update()
+        # Create a DataFrame to display the top results
+        top_results_df = pd.DataFrame(top_results,
+                                      columns=['feature_indices', 'feature_names', 'n_clusters', 'silhouette_score'])
 
         try:
             popup.destroy()
         except tkinter.TclError:
             pass  # Ignore errors if the window is already destroyed
 
-        return best_result
+        return top_results_df
 
 
     def create_tabs(self):
 
         """Create tabs for cluster counts from 2 to 10."""
-        for n_clusters in range(2, 11):
-            # Create a new tab
-            tab = ttk.Frame(self.notebook)
-            self.notebook.add(tab, text=f"{n_clusters} Clusters")
-            self.notebook.select(tab)
-            self.tabs[n_clusters] = tab
+        if self.cluster_method == "KMeans":
+            for n_clusters in range(2, 11):
+                # Create a new tab
+                tab = ttk.Frame(self.notebook)
+                self.notebook.add(tab, text=f"{n_clusters} Clusters")
+                self.notebook.select(tab)
+                self.tabs[n_clusters] = tab
 
-            if self.n_features == 1 or self.n_features == 2:
-                fig, ax = plt.subplots(figsize=(6, 6))
-            else:
-                fig = plt.figure(figsize=(6, 6))
-                ax = fig.add_subplot(111, projection='3d')
+                if self.n_features == 1 or self.n_features == 2:
+                    fig, ax = plt.subplots(figsize=(6, 6))
+                else:
+                    fig = plt.figure(figsize=(6, 6))
+                    ax = fig.add_subplot(111, projection='3d')
 
-            self.plots[n_clusters] = {"fig": fig, "ax": ax}
+                self.plots[n_clusters] = {"fig": fig, "ax": ax}
 
-            self.n_clusters = n_clusters
+                self.n_clusters = n_clusters
 
-            # Perform clustering and visualization
-            if self.cluster_method == "KMeans":
+                # Perform clustering and visualization
+
                 self.KMeans_Clustering(tab)
-            elif self.cluster_method == "DBSCAN":
-                self.DBSCAN_Clustering(tab)
+            #defult to select the last tab in the notebook by -1
+            self.notebook.select(self.notebook.index(self.notebook.tabs()[-1]))
+        elif self.cluster_method == "DBSCAN":
+             self.DBSCAN_Clustering()
 
-        #defult to select the last tab in the notebook by -1
-        self.notebook.select(self.notebook.index(self.notebook.tabs()[-1]))
-
-    def DBSCAN_Clustering(self, tab):
-        dbscan = DBSCAN(eps=self.eps, min_samples=self.min_samples).fit(self.data)
-        self.display_clustering(self.data, dbscan, tab)
+    def DBSCAN_Clustering(self):
+        dbscan = DBSCAN(eps=0.5, min_samples=2).fit(self.data)
+        self.display_DB_clustering(self.data, dbscan)
 
     def KMeans_Clustering(self, tab):
         kmeans = KMeans(n_clusters=self.n_clusters, n_init=self.random_starts, random_state=0).fit(self.data)
         self.wcss.append(kmeans.inertia_)
         self.silo_score.append(silhouette_score(self.data, kmeans.labels_))
-        self.display_clustering(kmeans, tab)
+        self.display_KM_clustering(kmeans, tab)
 
-    def display_clustering(self, kmeans, tab):
+    def display_KM_clustering(self, kmeans, tab):
         labels = kmeans.labels_
         self.centroids = kmeans.cluster_centers_
         self.cmap = plt.cm.get_cmap('viridis', len(self.centroids))
@@ -370,7 +400,6 @@ class ClusterAnalysis:
             plot_elbow()
             plot_silhouette()
 
-
         if hasattr(self, "wcss") and len(self.wcss) >= 9:
             display_cluster_metrics()
 
@@ -462,7 +491,6 @@ class ClusterAnalysis:
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
-
     def on_table_select(self, event, treeview):
         selected_item = treeview.selection()
         current_tab = self.notebook.index(self.notebook.select()) + 2
@@ -478,6 +506,67 @@ class ClusterAnalysis:
             selected_row_data = [x_value, y_value, z_value] if self.z_var else [x_value, y_value]
 
             self.update_plot(selected_row_data)
+
+    def display_DB_clustering(self, data, dbscan):
+        plot_frame = ttk.Frame(self.notebook)
+        self.notebook.add(plot_frame, text="DBSCAN Clustering")
+
+        fig, ax = plt.subplots(figsize=(6, 6))
+        ax.set_title("DBSCAN Clustering")
+        ax.set_xlabel(self.x_var.get())
+        ax.set_ylabel(self.y_var.get())
+
+        # Get unique cluster labels
+        unique_labels = np.unique(dbscan.labels_)
+
+        from matplotlib import cm as colormaps
+
+        # Use 'tab10' colormap for distinct colors
+        colors = colormaps.get_cmap('tab10', len(unique_labels))
+
+        # Plot clusters with distinct colors
+        for label in unique_labels:
+            mask = dbscan.labels_ == label
+            if label == -1:
+                color = 'black'  # Noise points in black
+                marker = 'x'
+                label_name = "Noise"
+            else:
+                color = colors(label)
+                marker = 'o'
+                label_name = f"Cluster {label}"
+
+            if self.n_features == 3:
+                ax.scatter(data[mask, 0], data[mask, 1], data[mask, 2],
+                           color=color, marker=marker, edgecolors='k', label=label_name, alpha=0.75)
+                ax.set_zlabel(self.z_var.get())
+            else:
+                ax.scatter(data[mask, 0], data[mask, 1],
+                           color=color, marker=marker, edgecolors='k', label=label_name, alpha=0.75)
+
+        # Add legend
+        ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), fancybox=True, shadow=True, ncol=4)
+
+        # Add canvas to Tkinter frame
+        canvas = FigureCanvasTkAgg(fig, master=plot_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

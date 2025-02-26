@@ -1179,6 +1179,8 @@ class NeuralNetworkArchitectureBuilder:
                 active_index = self.output_notebook.index(self.output_notebook.select())
                 active_tab = self.surface_response_notebook_dict[active_index].index(self.surface_response_notebook_dict[active_index].select())
 
+                print(active_index, active_tab)
+
                 # Access the corresponding plot data from the toggle_dict
                 toggle_data = self.toggle_dict[active_index][active_tab]
 
@@ -1376,7 +1378,6 @@ class NeuralNetworkArchitectureBuilder:
                 else:
                     self.toggle_dict[output_index][active_sub_tab].append(None)
                     self.toggle_dict[output_index][active_sub_tab].append(None)
-
         plot_surface_response()
 
         def setup_nn_prediction_interface():
@@ -1558,37 +1559,6 @@ class NeuralNetworkArchitectureBuilder:
                 self.TH_can.get_tk_widget().pack(fill="both", expand=True)
         plot_training_history()
 
-        def weight_histogram():
-            # Create a new tab for the weight histogram
-            plot_tab = ttk.Frame(histogram_notebook)
-            histogram_notebook.add(plot_tab, text="Weight Histogram")
-            histogram_notebook.select(plot_tab)
-
-            # Create a figure and axis for the plot
-            self.WH_fig, ax = plt.subplots()
-
-            # Get the weights from the model
-            weights = model.get_weights()
-
-            # Create a histogram for each layer
-            for i, layer_weights in enumerate(weights):
-                if len(layer_weights.shape) > 1:
-                    ax.hist(layer_weights.flatten(), bins=50, alpha=0.7, label=f"Layer {i + 1}")
-
-            # Set the title and labels
-            ax.set_title("Weight Histogram")
-            ax.set_xlabel("Weight Value")
-            ax.set_ylabel("Frequency")
-
-            # Add a legend
-            ax.legend()
-
-            # Embed the plot in the Tkinter window
-            self.WH_can = FigureCanvasTkAgg(self.WH_fig, master=plot_tab)
-            self.WH_can.draw()
-            self.WH_can.get_tk_widget().pack(fill="both", expand=True)
-        weight_histogram()
-
         def bias_histogram():
             # Create a new tab for the bias histogram
             plot_tab = ttk.Frame(histogram_notebook)
@@ -1656,6 +1626,38 @@ class NeuralNetworkArchitectureBuilder:
             self.AH_can.draw()
             self.AH_can.get_tk_widget().pack(fill="both", expand=True)
         activation_histogram()
+
+        def weight_histogram():
+            # Create a new tab for the weight histogram
+            plot_tab = ttk.Frame(histogram_notebook)
+            histogram_notebook.add(plot_tab, text="Weight Histogram")
+            histogram_notebook.select(plot_tab)
+
+            # Create a figure and axis for the plot
+            self.WH_fig, ax = plt.subplots()
+
+            # Get the weights from the model
+            weights = model.get_weights()
+
+            # Create a histogram for each layer
+            for i, layer_weights in enumerate(weights):
+                if len(layer_weights.shape) > 1:
+                    ax.hist(layer_weights.flatten(), bins=50, alpha=0.7, label=f"Layer {i + 1}")
+
+            # Set the title and labels
+            ax.set_title("Weight Histogram")
+            ax.set_xlabel("Weight Value")
+            ax.set_ylabel("Frequency")
+
+            # Add a legend
+            ax.legend()
+
+            # Embed the plot in the Tkinter window
+            self.WH_can = FigureCanvasTkAgg(self.WH_fig, master=plot_tab)
+            self.WH_can.draw()
+            self.WH_can.get_tk_widget().pack(fill="both", expand=True)
+
+        weight_histogram()
 
         # Variable to store the debounce timer
         resize_timer = None

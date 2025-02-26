@@ -2060,7 +2060,7 @@ if __name__ == "__main__":
             # Open a new popup for configuring the neural network
             nn_popup = tkinter.Toplevel(self)
 
-            #include train_test_split if selecte
+            #include train_test_split if select
             if self.train_test_split_var_nn.get():
                 test_size = self.test_fraction_var_nn.get()
                 nn_builder = NeuralNetworkArchitectureBuilder(nn_popup, X_data, y_data, NN_PD_DATA_X, NN_PD_DATA_Y, train_test_split_var=test_size)
@@ -2094,7 +2094,7 @@ if __name__ == "__main__":
             tkinter.Label(self.popup, text="Clustering Method:").pack(anchor=tkinter.W, padx=10, pady=5)
             self.cluster_method_var = tkinter.StringVar(value="KMeans")  # Default value is KMeans
             cluster_method_combobox = ttk.Combobox(self.popup, textvariable=self.cluster_method_var,
-                                                   values=["KMeans", "Agglomerative", "DBSCAN"], state="readonly")
+                                                   values=["KMeans", "Hierarchical", "DBSCAN"], state="readonly")
             cluster_method_combobox.pack(anchor=tkinter.W, padx=10)
 
             # Create a dropdown for the number of random starts
@@ -2131,6 +2131,7 @@ if __name__ == "__main__":
 
             # Get the number of random starts
             random_starts = self.random_starts_var.get()
+
 
             #get the optimal cluster and features
             optimal_cluster = self.optimal_cluster_var.get()
