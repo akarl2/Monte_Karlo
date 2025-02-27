@@ -1,5 +1,10 @@
+import concurrent
+import logging
+import multiprocessing
 import os
+import threading
 import tkinter
+from concurrent.futures.process import ProcessPoolExecutor
 from itertools import combinations
 from pyexpat import features
 from tkinter import ttk, Frame, messagebox
@@ -17,6 +22,30 @@ from sklearn.feature_selection import SelectKBest, mutual_info_classif
 from sklearn.metrics import silhouette_score
 from tqdm import tqdm
 from multiprocessing import shared_memory
+from joblib import Parallel, delayed
+
+
+def evaluate_combination(feature_indices, data, random_starts):
+    # Extract feature data using NumPy indexing (data is a NumPy array now)
+    feature_data = data[:, list(feature_indices)]
+
+    best_local_result = {'feature_indices': feature_indices, 'feature_names': None, 'n_clusters': None, 'silhouette_score': -1}
+
+    for n_clusters in range(2, 11):
+        try:
+            kmeans = KMeans(n_clusters=n_clusters, random_state=0, n_init=random_starts).fit(feature_data)
+            labels = kmeans.labels_
+            score = silhouette_score(feature_data, labels)
+
+            if score > best_local_result['silhouette_score']:
+                best_local_result['feature_names'] = [f"Feature_{i}" for i in feature_indices]
+                best_local_result['n_clusters'] = n_clusters
+                best_local_result['silhouette_score'] = score
+
+        except Exception as e:
+            logging.error(f"Error with features {feature_indices} and {n_clusters} clusters: {e}")
+
+    return best_local_result
 
 
 class ClusterAnalysis:
@@ -69,7 +98,7 @@ class ClusterAnalysis:
 
         if optimal_cluster:
             # Run find_best_features_and_clusters function
-            top_results_df = self.find_best_features_and_clusters(self.data_PD)
+            top_results_df = self.find_best_features_and_clusters()
 
             if top_results_df.empty:
                 messagebox.showinfo("No Results", "No results were found.")
@@ -79,8 +108,8 @@ class ClusterAnalysis:
                 result_window.title("Top Feature and Cluster Results")
 
                 # Create a Treeview widget for displaying the table
-                tree = ttk.Treeview(result_window, columns=["Feature Names", "Number of Clusters", "Silhouette Score"],
-                                    show="headings")
+                tree = ttk.Treeview(result_window, columns=["Feature Names", "Number of Clusters", "Silhouette Score"], show="headings")
+
 
                 # Define the column headings
                 tree.heading("Feature Names", text="Feature Names")
@@ -92,10 +121,18 @@ class ClusterAnalysis:
                 tree.column("Number of Clusters", width=150, anchor="center")
                 tree.column("Silhouette Score", width=150, anchor="center")
 
+                # Add the 'feature_names' column
+                top_results_df['feature_names'] = top_results_df['feature_indices'].apply(
+                    lambda feature_indices: [data_PD.columns[i] for i in feature_indices])
+
+                # Reorder the columns so 'feature_names' becomes the first column
+                top_results_df = top_results_df[
+                    ['feature_names'] + [col for col in top_results_df.columns if col != 'feature_names']]
+
                 # Insert the top results into the Treeview
                 for _, row in top_results_df.iterrows():
-                    tree.insert("", "end",
-                                values=(', '.join(row["feature_names"]), row["n_clusters"], row["silhouette_score"]))
+                    tree.insert("", "end", values=(', '.join(row["feature_names"]), row["n_clusters"], row["silhouette_score"]))
+
 
                 # Add a scrollbar to the Treeview
                 scrollbar = ttk.Scrollbar(result_window, orient="vertical", command=tree.yview)
@@ -149,103 +186,85 @@ class ClusterAnalysis:
             z_dropdown.grid(row=0, column=5, sticky="ew", padx=5)
             z_dropdown.bind("<<ComboboxSelected>>", lambda event: self.update_plot())
 
-    def find_best_features_and_clusters(self, data, cluster_range=(2, 10)):
-        """
-        Find the best subset of features and cluster count that maximizes the silhouette score.
-        Optimized with parallel processing, feature selection, and MiniBatchKMeans.
+    def find_best_features_and_clusters(self):
+        n_samples, n_features = self.data.shape
+        cancel_flag = multiprocessing.Event()
 
-        Args:
-            data (np.ndarray): The dataset as a NumPy array (samples x features).
-            cluster_range (tuple): Range of cluster numbers to test (default: 2 to 10).
-
-        Returns:
-            pd.DataFrame: Top 10 results with feature indices, feature names, cluster count, and silhouette scores.
-        """
-        n_samples, n_features = data.shape
-        best_results_list = []
-
-        def evaluate_combination(feature_indices):
-            feature_data = data.iloc[:, list(feature_indices)]  # Use .iloc for Pandas indexing
-            best_local_result = {'feature_indices': feature_indices, 'feature_names': None, 'n_clusters': None,
-                                 'silhouette_score': -1}
-
-            current_pid = os.getpid()  # or use threading.get_ident() for thread ID
-            print(f"Process {current_pid} is evaluating combination: {feature_indices}")
-            for n_clusters in range(cluster_range[0], cluster_range[1] + 1):
-
-                try:
-                    kmeans = KMeans(n_clusters=n_clusters, random_state=0, n_init=self.random_starts).fit(feature_data)
-                    labels = kmeans.labels_
-                    score = silhouette_score(feature_data, labels)
-
-                    if score > best_local_result['silhouette_score']:
-                        best_local_result['feature_names'] = [self.data_PD.columns[i].replace('\xa0', ' ') for i in
-                                                              feature_indices]
-                        best_local_result['n_clusters'] = n_clusters
-                        best_local_result['silhouette_score'] = score
-
-                except Exception as e:
-                    print(f"Error with features {feature_indices} and {n_clusters} clusters: {e}")
-
-            return best_local_result
-
-        total_combinations = sum(
-            len(range(cluster_range[0], cluster_range[1] + 1)) * len(
-                list(combinations(range(n_features), n_sub_features)))
-            for n_sub_features in range(2, n_features + 1)
-        )
-
-        # Tkinter Progress Window
-        popup = tkinter.Tk()
+        # Popup Window
+        popup = tkinter.Toplevel()
         popup.title("Progress")
         popup.geometry("400x225")
+        popup.resizable(False, False)
+
         label = tkinter.Label(popup, text="Optimizing features and clusters...")
         label.pack(pady=10)
+
         progress = ttk.Progressbar(popup, orient="horizontal", length=250, mode="determinate")
         progress.pack(pady=10)
         percent_label = tkinter.Label(popup, text="0.00% Complete")
         percent_label.pack(pady=10)
-        progress["maximum"] = total_combinations
-
-        cancel_flag = tkinter.BooleanVar(value=False)
 
         def cancel():
-            cancel_flag.set(True)
-            try:
-                popup.destroy()
-            except tkinter.TclError:
-                pass  # Ignore errors if the window is already destroyed
+            cancel_flag.set()
+            popup.destroy()
 
         cancel_button = ttk.Button(popup, text="Cancel", command=cancel)
         cancel_button.pack(pady=10)
-        popup.update()
 
-        # Parallel Processing for Feature Subset Evaluation
-        from joblib import Parallel, delayed
-        n_jobs = max(joblib.cpu_count() - 1, 1)
-        best_results = Parallel(n_jobs=n_jobs, prefer="threads")(
-            delayed(evaluate_combination)(feature_indices)
+        all_combinations = [
+            feature_indices
             for n_sub_features in range(2, n_features + 1)
-            for feature_indices in combinations(range(n_features), n_sub_features)
-        )
+            for feature_indices in combinations(range(n_features), n_sub_features)]
 
-        # Store results in a list
-        for result in best_results:
-            best_results_list.append(result)
+        progress["maximum"] = len(all_combinations)
 
-        # Sort results by silhouette score in descending order and take the top 10
-        top_results = sorted(best_results_list, key=lambda x: x['silhouette_score'], reverse=True)[:10]
+        results = []
 
-        # Create a DataFrame to display the top results
-        top_results_df = pd.DataFrame(top_results,
-                                      columns=['feature_indices', 'feature_names', 'n_clusters', 'silhouette_score'])
+        # === Parallel Execution with Real-Time Progress Updates ===
+        logging.basicConfig(level=logging.DEBUG)
 
-        try:
-            popup.destroy()
-        except tkinter.TclError:
-            pass  # Ignore errors if the window is already destroyed
+        def update_progress(i):
+            progress["value"] = i + 1
+            percent_label.config(text=f"{(i + 1) / progress['maximum'] * 100:.2f}% Complete")
+            popup.update_idletasks()
 
-        return top_results_df
+        def run_parallel():
+            nonlocal results
+
+            with ProcessPoolExecutor(max_workers=6) as executor:
+                future_results = {executor.submit(evaluate_combination, feature_indices, self.data, self.random_starts): feature_indices for feature_indices in all_combinations}
+
+                for i, future in enumerate(concurrent.futures.as_completed(future_results)):
+                    if cancel_flag.is_set():
+                        break
+                    try:
+                        result = future.result()
+                        if result:
+                            results.append(result)
+                    except Exception as e:
+                        logging.error(f"Error processing combination {future_results[future]}: {e}")
+
+                    update_progress(i)
+
+            try:
+                popup.destroy()
+            except tkinter.TclError:
+                pass
+
+        def start_parallel():
+            threading.Thread(target=run_parallel, daemon=True).start()
+            popup.wait_window()
+
+        start_parallel()
+
+        # Filter out None results
+        results = [r for r in results if r]
+
+        # Sort and Return Top 10 Results
+        top_results = sorted(results, key=lambda x: x['silhouette_score'], reverse=True)[:10]
+        self.top_results_df = pd.DataFrame(top_results, columns=['feature_indices', 'feature_names', 'n_clusters', 'silhouette_score'])
+
+        return self.top_results_df
 
 
     def create_tabs(self):
