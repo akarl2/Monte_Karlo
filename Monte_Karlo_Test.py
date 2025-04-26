@@ -2089,6 +2089,16 @@ if __name__ == "__main__":
                 checkbutton.pack(anchor=tkinter.W, padx=10)
                 self.x_columns_vars[col] = var
 
+            # Toggle Select/Deselect All button
+            self.toggle_select = tkinter.BooleanVar(value=False)
+
+            def toggle_all():
+                self.toggle_select.set(not self.toggle_select.get())
+                for var in self.x_columns_vars.values():
+                    var.set(self.toggle_select.get())
+
+            toggle_button = tkinter.Button(self.popup, text="Select/Deselect All", command=toggle_all)
+            toggle_button.pack(pady=5, padx=10)
 
             # Create a dropdown to select the clustering method
             tkinter.Label(self.popup, text="Clustering Method:").pack(anchor=tkinter.W, padx=10, pady=5)
@@ -2104,12 +2114,17 @@ if __name__ == "__main__":
                                                   values=[str(i) for i in range(1, 101)], state="readonly")
             random_starts_combobox.pack(anchor=tkinter.W, padx=10)
 
-            #checkbox with label to find the optimal number of clusters and features
+            tkinter.Label(self.popup, text="Maximum Clusters:").pack(anchor=tkinter.W, padx=10, pady=5)
+            self.max_clusters_var = tkinter.IntVar(value=10)
+            max_clusters_combobox = ttk.Combobox(self.popup, textvariable=self.max_clusters_var,
+                                                 values=[str(i) for i in range(2, 11)], state="readonly")
+            max_clusters_combobox.pack(anchor=tkinter.W, padx=10)
+
+            # Checkbox to find the optimal number of clusters and features
             self.optimal_cluster_var = tkinter.BooleanVar(value=False)
             optimal_cluster_checkbutton = tkinter.Checkbutton(self.popup, text="Find Optimal Features/Clusters?",
-                                                               variable=self.optimal_cluster_var)
+                                                              variable=self.optimal_cluster_var)
             optimal_cluster_checkbutton.pack(anchor=tkinter.W, pady=10, padx=10)
-
 
             # Create a button to send the data to Cluster Analysis
             confirm_button = tkinter.Button(self.popup, text="Run Cluster Analysis",
@@ -2132,6 +2147,8 @@ if __name__ == "__main__":
             # Get the number of random starts
             random_starts = self.random_starts_var.get()
 
+            # Maximum number of clusters
+            maximum_clusters = self.max_clusters_var.get()
 
             #get the optimal cluster and features
             optimal_cluster = self.optimal_cluster_var.get()
@@ -2156,7 +2173,8 @@ if __name__ == "__main__":
                 data_PD=cluster_data_PD,
                 full_dataset=self.full_dataset,  # Assuming `cluster_data` is your full dataset
                 cluster_method=cluster_method,
-                optimal_cluster=optimal_cluster
+                optimal_cluster=optimal_cluster,
+                maximum_clusters=maximum_clusters
             )
 
 

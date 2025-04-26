@@ -25,31 +25,29 @@ from multiprocessing import shared_memory
 from joblib import Parallel, delayed
 
 
-def evaluate_combination(feature_indices, data, random_starts):
+def evaluate_combination(feature_indices, data, random_starts, max_clusters):
     # Extract feature data using NumPy indexing (data is a NumPy array now)
     feature_data = data[:, list(feature_indices)]
+    n_unique_points = np.unique(feature_data, axis=0).shape[0]  # Calculate number of unique points
+    local_results = []
 
-    best_local_result = {'feature_indices': feature_indices, 'feature_names': None, 'n_clusters': None, 'silhouette_score': -1}
-
-    for n_clusters in range(2, 11):
+    for n_clusters in range(2, max_clusters + 1):
+        if n_clusters > n_unique_points:
+            continue  # Skip combinations where n_clusters > n_unique_points
         try:
             kmeans = KMeans(n_clusters=n_clusters, random_state=0, n_init=random_starts).fit(feature_data)
             labels = kmeans.labels_
             score = silhouette_score(feature_data, labels)
-
-            if score > best_local_result['silhouette_score']:
-                best_local_result['feature_names'] = [f"Feature_{i}" for i in feature_indices]
-                best_local_result['n_clusters'] = n_clusters
-                best_local_result['silhouette_score'] = score
+            local_results.append({'feature_indices': feature_indices, 'n_clusters': n_clusters, 'silhouette_score': score})
 
         except Exception as e:
             logging.error(f"Error with features {feature_indices} and {n_clusters} clusters: {e}")
 
-    return best_local_result
+    return local_results
 
 
 class ClusterAnalysis:
-    def __init__(self, master, data, n_clusters, random_starts, data_PD, full_dataset, cluster_method, optimal_cluster):
+    def __init__(self, master, data, n_clusters, random_starts, data_PD, full_dataset, cluster_method, optimal_cluster, maximum_clusters):
         self.creating_plots = False
         self.plot_frames = None
         self.sorted_dataset = None
@@ -73,6 +71,7 @@ class ClusterAnalysis:
         self.min_samples = 2
         self.full_dataset = full_dataset
         self.cluster_method = cluster_method
+        self.maximum_clusters = maximum_clusters
         self.wcss = []
         self.plot_frames = {}
         self.tabs = {}  # Store tabs for each cluster count
@@ -201,12 +200,12 @@ class ClusterAnalysis:
 
         progress = ttk.Progressbar(popup, orient="horizontal", length=250, mode="determinate")
         progress.pack(pady=10)
-        percent_label = tkinter.Label(popup, text="0.00% Complete")
+        percent_label = tkinter.Label(popup, text="Initializing...")
         percent_label.pack(pady=10)
 
         def cancel():
+            nonlocal cancel_flag
             cancel_flag.set()
-            popup.destroy()
 
         cancel_button = ttk.Button(popup, text="Cancel", command=cancel)
         cancel_button.pack(pady=10)
@@ -220,32 +219,32 @@ class ClusterAnalysis:
 
         results = []
 
-        # === Parallel Execution with Real-Time Progress Updates ===
-        logging.basicConfig(level=logging.DEBUG)
-
         def update_progress(i):
             progress["value"] = i + 1
-            percent_label.config(text=f"{(i + 1) / progress['maximum'] * 100:.2f}% Complete")
+            percent_label.config(text=f"{(i + 1) / progress['maximum'] * 100:.1f}% Complete")
             popup.update_idletasks()
 
         def run_parallel():
+            max_cpu = multiprocessing.cpu_count()
+            workers = max(1, max_cpu - 2)
             nonlocal results
-
-            with ProcessPoolExecutor(max_workers=6) as executor:
-                future_results = {executor.submit(evaluate_combination, feature_indices, self.data, self.random_starts): feature_indices for feature_indices in all_combinations}
+            with ProcessPoolExecutor(max_workers=workers) as executor:
+                future_results = {executor.submit(evaluate_combination, feature_indices, self.data, self.random_starts, self.maximum_clusters): feature_indices for feature_indices in
+                                  all_combinations}
 
                 for i, future in enumerate(concurrent.futures.as_completed(future_results)):
                     if cancel_flag.is_set():
+                        for future in future_results:
+                            future.cancel()
                         break
                     try:
                         result = future.result()
                         if result:
-                            results.append(result)
+                            results.extend(result)  # Append all local top 10 results
                     except Exception as e:
                         logging.error(f"Error processing combination {future_results[future]}: {e}")
 
                     update_progress(i)
-
             try:
                 popup.destroy()
             except tkinter.TclError:
@@ -260,9 +259,9 @@ class ClusterAnalysis:
         # Filter out None results
         results = [r for r in results if r]
 
-        # Sort and Return Top 10 Results
-        top_results = sorted(results, key=lambda x: x['silhouette_score'], reverse=True)[:10]
-        self.top_results_df = pd.DataFrame(top_results, columns=['feature_indices', 'feature_names', 'n_clusters', 'silhouette_score'])
+        # Sort and Return Top 10 Results Across All Processes
+        top_results = sorted(results, key=lambda x: x['silhouette_score'], reverse=True)[:100]
+        self.top_results_df = pd.DataFrame(top_results, columns=['feature_indices', 'n_clusters', 'silhouette_score'])
 
         return self.top_results_df
 
@@ -271,7 +270,7 @@ class ClusterAnalysis:
 
         """Create tabs for cluster counts from 2 to 10."""
         if self.cluster_method == "KMeans":
-            for n_clusters in range(2, 11):
+            for n_clusters in range(2, self.maximum_clusters + 1):
                 # Create a new tab
                 tab = ttk.Frame(self.notebook)
                 self.notebook.add(tab, text=f"{n_clusters} Clusters")
@@ -419,7 +418,7 @@ class ClusterAnalysis:
             plot_elbow()
             plot_silhouette()
 
-        if hasattr(self, "wcss") and len(self.wcss) >= 9:
+        if hasattr(self, "wcss") and len(self.wcss) >= self.maximum_clusters - 1:
             display_cluster_metrics()
 
         self.update_plot()
