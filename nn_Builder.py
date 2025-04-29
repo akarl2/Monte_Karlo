@@ -147,6 +147,11 @@ class NeuralNetworkArchitectureBuilder:
 
         self.tab2_canvas.configure(yscrollcommand=vertical_scrollbar.set)
 
+        #code to count from 1 to 10
+
+
+
+
         vertical_scrollbar.pack(side="right", fill="y")
 
         self.tab2_content = Frame(self.tab2_canvas, bg= tab_2_color)
