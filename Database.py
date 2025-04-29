@@ -188,6 +188,75 @@ class C18_OH:
         self.dist = [[self.prgID]]
 
 
+class C20_OH:
+    def __init__(self):
+        self.name = "C20_OH"
+        self.sn = "C20_OH"
+        self.formula = "C20H42O"
+        self.mw = 298.50
+        self.density = 0.83
+        self.mass = self.mw
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+
+class C22_OH:
+    def __init__(self):
+        self.name = "C22_OH"
+        self.sn = "C22_OH"
+        self.formula = "C22H46O"
+        self.mw = 326.56
+        self.density = 0.83
+        self.mass = self.mw
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+
+class C24_OH:
+    def __init__(self):
+        self.name = "C24_OH"
+        self.sn = "C24_OH"
+        self.formula = "C24H50O"
+        self.mw = 354.62
+        self.density = 0.83
+        self.mass = self.mw
+        self.prgID = "POH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+
 class Neopentyl_glycol:
     def __init__(self):
         self.name = "Neopentyl_glycol"
@@ -2015,16 +2084,3 @@ Reactants = [x for x in dir(Database) if isclass(getattr(Database, x))]
 quick_adds = []
 for key in quick_add_dict:
     quick_adds.append(key)
-
-
-
-
-
-
-
-
-
-
-
-
-
