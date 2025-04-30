@@ -1446,6 +1446,52 @@ class C20:
         self.ctrgk = 0
         self.dist = [[self.prgID]]
 
+
+class C22:
+    def __init__(self):
+        self.name = "C22"
+        self.sn = "C22"
+        self.formula = "C22H44O2"
+        self.mw = 340.592
+        self.density = 0.824
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
+
+class C24:
+    def __init__(self):
+        self.name = "C24"
+        self.sn = "C24"
+        self.formula = "C24H48O2"
+        self.mw = 368.646
+        self.density = 0.824
+        self.mass = self.mw
+        self.prgID = "COOH"
+        self.prgk = 1
+        self.cprgID = None
+        self.cprgk = 0
+        self.srgID = None
+        self.srgk = 0
+        self.csrgID = None
+        self.csrgk = 0
+        self.trgID = None
+        self.trgk = 0
+        self.ctrgID = None
+        self.ctrgk = 0
+        self.dist = [[self.prgID]]
+
 class Dimer:
     def __init__(self):
         self.name = "Dimer"
@@ -2072,7 +2118,9 @@ quick_add_dict = {
     'Emerox 1110': [['Pelargonic_acid', 0.02], ['Pimelic_acid', 0.07], ['Azelaic_acid', 0.7900], ['Undecanedioic_acid', 0.1200]],
     'Emerox 1144': [['Pelargonic_acid', 0.0004], ['Pimelic_acid', 0.0300], ['Azelaic_acid', 0.8896], ['Undecanedioic_acid', 0.0800]],
     'Emerox 2195': [['Pelargonic_acid', 0.0005], ['Pimelic_acid', 0.0150], ['Azelaic_acid', 0.9595], ['Undecanedioic_acid', 0.0250]],
-    'CM67': [['BDO_MGE', 0.1185], ['BDO_DGE', 0.4275], ['BDO_MGE_2', 0.0372], ['BDO_DGE_3', 0.2968], ['BDO_DGE_4', 0.0941], ['BDO_DGE_5', 0.0218], ['BDO_DGE_6', 0.0037], ['BDO_DGE_7', 0.0003], ['BDO_DGE_8', 0.0001]]
+    'CM67': [['BDO_MGE', 0.1185], ['BDO_DGE', 0.4275], ['BDO_MGE_2', 0.0372], ['BDO_DGE_3', 0.2968], ['BDO_DGE_4', 0.0941], ['BDO_DGE_5', 0.0218], ['BDO_DGE_6', 0.0037], ['BDO_DGE_7', 0.0003], ['BDO_DGE_8', 0.0001]],
+    'Hydro Jojoba Alcohols': [["C16_OH", 0.001], ["C18_OH", 0.013], ["C20_OH", 0.438], ["C22_OH", 0.459], ["C24_OH", 0.089]],
+    'Hydro Jojoba Acids': [["C16", 0.0152], ["C18", 0.1147], ["C20", 0.7183 ], ["C22", 0.1387], ["C24", 0.0131]],
 }
 
 class Clear:

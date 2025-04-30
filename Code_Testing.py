@@ -96,9 +96,6 @@ def hover(event):
 
 
 fig.canvas.mpl_connect("motion_notify_event", hover)
-# Display the plot in a window
-plt.ioff()  # Turn off interactive mode
-plt.show(block=True)  # Keep the window open until manually closed
 
 # Calculate K_eq at the end of the simulation
 ester1_final = ester1_conc[-1]
@@ -129,10 +126,6 @@ keq_lower = (alcohol1_final * ester1_final)
 
 print(keq_upper, keq_lower)
 
-
-
-
-
-
-
-
+# Display the plot in a window and keep it open
+plt.ioff()  # Turn off interactive mode
+plt.show(block=True)  # Keep the window open until manually closed
