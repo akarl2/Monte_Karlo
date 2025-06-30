@@ -81,7 +81,6 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
     except ValueError:
         messagebox.showerror("Error", "Please enter a value for the end metric(s).")
         return
-
     for compound in starting_materials:
         for i in range(compound[3][0]):
             inner_result = []
@@ -295,6 +294,8 @@ def simulate(starting_materials, starting_materials_sec, end_metric_value, end_m
         start = time.time()
         conditions_met = False
         outer_weights = [len(groups[0]) for groups in composition]
+        print(outer_weights)
+        exit
         while conditions_met is False:
             a_index, b_index = random.choices(range(len(composition)), weights=outer_weights)[0], random.choices(range(len(composition)), weights=outer_weights)[0]
             a_i_index, b_i_index = random.randint(0, len(composition[a_index][0]) - 1), random.randint(0, len(composition[b_index][0]) - 1)

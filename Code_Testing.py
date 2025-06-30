@@ -14,7 +14,7 @@ print(f"Equilibrium constant (keq): {keq:.4f}")
 
 # Initial concentrations (mol/L)
 # [Ester1, Alcohol2, Ester2, Alcohol1]
-initial_conc = [1, 5, 0.0,0.0 ]  # Example: 1M ester and 2M alcohol to start
+initial_conc = [1, 2, 0.0,0.0 ]  # Example: 1M ester and 2M alcohol to start
 
 # Time parameters
 t_start = 0
