@@ -57,11 +57,11 @@ ALCOHOL_MW = {
 }
 
 ACID_MW = {
-    'C16_OH': MW_C16_ACID,
-    'C18_OH': MW_C18_ACID,
-    'C20_OH': MW_C20_ACID,
-    'C22_OH': MW_C22_ACID,
-    'C24_OH': MW_C24_ACID
+    'C16_COOH': MW_C16_ACID,
+    'C18_COOH': MW_C18_ACID,
+    'C20_COOH': MW_C20_ACID,
+    'C22_COOH': MW_C22_ACID,
+    'C24_COOH': MW_C24_ACID
 }
 
 Cetearyl_Alcohol = {
@@ -100,9 +100,9 @@ jojoba_oil = {
     'C24_OH_C24_COOH_ESTER': 0.00,
 }
 
-GRAMS_CETEARYL_ALCOHOL = 100
+GRAMS_CETEARYL_ALCOHOL = 178
 DENSITY_CETEARYL_ALCOHOL = 0.811
-GRAMS_JOJOBA_OIL = 20
+GRAMS_JOJOBA_OIL = 22
 DENSITY_JOJOBA_OIL = 0.789
 
 Total_Volume_ML = GRAMS_CETEARYL_ALCOHOL / DENSITY_CETEARYL_ALCOHOL + GRAMS_JOJOBA_OIL / DENSITY_JOJOBA_OIL
@@ -119,14 +119,17 @@ Cetearly_Moles = GRAMS_CETEARYL_ALCOHOL / Initial_Average_Alcohol_MW
 
 Cetearyl_Concentration = Cetearly_Moles / Total_Volume_L
 
-for alcohol in Cetearyl_Alcohol:
-    Cetearyl_Alcohol[alcohol] = Cetearyl_Alcohol[alcohol] * Cetearyl_Concentration
+# Convert mass fraction directly to mol/L using original gram weights
+for alc in Cetearyl_Alcohol:
+    grams = Cetearyl_Alcohol[alc] * GRAMS_CETEARYL_ALCOHOL
+    mols = grams / ALCOHOL_MW[alc]
+    Cetearyl_Alcohol[alc] = mols / Total_Volume_L
 
 # Define kinetics parameters for each alcohol
 base_Ea = 68000  # J/mol (activation energy)
 base_A = 1.2e7  # Pre-exponential factor
 alcohol_kinetics = {}
-for alcohol in Cetearyl_Alcohol:
+for alcohol in ALCOHOL_MW:
     alcohol_kinetics[alcohol] = {
         'Ea_forward': base_Ea,  # J/mol (activation energy)
         'A_forward': base_A,  # Pre-exponential factor
@@ -145,19 +148,13 @@ Jojoba_Concentration = Jojoba_Moles / Total_Volume_L
 for ester in jojoba_oil:
     jojoba_oil[ester] = jojoba_oil[ester] * Jojoba_Concentration / 100
 
-print(jojoba_oil)
-
-print(Initial_Average_Oil_MW)
-
-
 Rxn_conditions = {
     'Jojoba_Oil': jojoba_oil,
     'Cetearly_Alcohol': Cetearyl_Alcohol,
     'Alcohol_Kinetics': alcohol_kinetics,
-    'temp': 298.15,
-    'pressure': 101325,
+    'temp': 318.15,
     'catalyst_conc' : 0.001,
-    'Rxn_Time_MIN' : 1000,
+    'Rxn_Time_MIN' : 500,
 }
 
 # Simulate simple forward transesterification: alcohol from ester is released, new ester is formed
@@ -166,18 +163,18 @@ import pandas as pd
 
 R = 8.314  # J/mol·K
 T = Rxn_conditions['temp']
-time_steps = 500
-dt = Rxn_conditions['Rxn_Time_MIN'] * 60 / time_steps  # seconds per step
+dt = 1  # seconds per step
+total_time_sec = Rxn_conditions['Rxn_Time_MIN'] * 60  # total time in seconds
+time_steps = total_time_sec
 
-time_array = np.linspace(0, Rxn_conditions['Rxn_Time_MIN'] * 60, time_steps)
+
+time_array = np.arange(0, total_time_sec + 1, dt)
 alcohol_profile = {alc: [] for alc in Cetearyl_Alcohol}
 ester_profile = {ester: [] for ester in jojoba_oil}
-released_alcohols = {alc: [] for alc in ALCOHOL_MW}
 
-# Copy concentrations to avoid mutation
-current_alc_conc = Cetearyl_Alcohol.copy()
+# Initialize alcohol concentrations with all possible alcohols
+current_alc_conc = {alc: Cetearyl_Alcohol.get(alc, 0.0) for alc in ALCOHOL_MW}
 current_jojoba = jojoba_oil.copy()
-released_conc = {alc: 0.0 for alc in ALCOHOL_MW}
 
 for t in time_array:
     # Store profiles
@@ -185,35 +182,54 @@ for t in time_array:
         alcohol_profile[alc].append(current_alc_conc[alc])
     for ester in current_jojoba:
         ester_profile[ester].append(current_jojoba[ester])
-    for alc in released_conc:
-        released_alcohols[alc].append(released_conc[alc])
 
-    # Kinetic step
-    delta_conc = {}
-    for alc in current_alc_conc:
-        A = alcohol_kinetics[alc]['A_forward']
-        Ea = alcohol_kinetics[alc]['Ea_forward']
-        k = A * np.exp(-Ea / (R * T))
-        delta = k * current_alc_conc[alc] * dt
-        delta_conc[alc] = delta
+    # Kinetic step: For each ester, allow all alcohols to attack and form new esters
+    for ester in list(current_jojoba.keys()):
+        try:
+            parts = ester.split("_")
+            donor_core = parts[0]
+            donor_alc = donor_core + "_OH"
+            acid_part = "_".join(parts[2:-1])
+        except ValueError:
+            print(f"Skipping malformed ester: {ester}")
+            continue
 
-    # Apply concentration changes
-    for ester in current_jojoba:
-        est_parts = ester.split("_")
-        formed_alc = est_parts[0] + "_OH"
-        used_alc = est_parts[2] + "_OH"
-        if used_alc in delta_conc:
-            delta = delta_conc[used_alc]
-            current_jojoba[ester] += delta
-            current_alc_conc[used_alc] -= delta
-            released_conc[formed_alc] += delta
+        if ester not in ester_profile:
+            ester_profile[ester] = []
+
+        for attacking_alc in list(current_alc_conc.keys()):
+            if not attacking_alc.endswith("_OH") or attacking_alc not in alcohol_kinetics:
+                continue
+            if attacking_alc == donor_alc:
+                continue  # Skip self-swap
+
+            A = alcohol_kinetics[attacking_alc]['A_forward']
+            Ea = alcohol_kinetics[attacking_alc]['Ea_forward']
+            k = A * np.exp(-Ea / (R * T))
+            delta = k * current_alc_conc[attacking_alc] * dt
+
+            if current_jojoba[ester] >= delta and current_alc_conc[attacking_alc] >= delta:
+                # consume current ester and attacking alcohol
+                current_jojoba[ester] -= delta
+                current_alc_conc[attacking_alc] -= delta
+
+                # release the displaced alcohol
+                current_alc_conc[donor_alc] += delta
+
+                # form the new ester
+                attacker = attacking_alc.replace("_OH", "")
+                new_ester = f"{attacker}_OH_{acid_part}_ESTER"
+                if new_ester not in current_jojoba:
+                    current_jojoba[new_ester] = 0.0
+                current_jojoba[new_ester] += delta
+
+                if new_ester not in ester_profile:
+                    ester_profile[new_ester] = []
 
 # Plot both alcohol and ester concentrations (no legend to reduce clutter)
 plt.figure(figsize=(12, 6))
 for alc in alcohol_profile:
     plt.plot(time_array / 60, alcohol_profile[alc])
-for alc in released_alcohols:
-    plt.plot(time_array / 60, released_alcohols[alc], '--')
 for ester in ester_profile:
     plt.plot(time_array / 60, ester_profile[ester], ':')
 plt.xlabel("Time (min)")
@@ -226,7 +242,7 @@ plt.show()
 # Create combined final concentration table
 final_conc = {}
 for alc in alcohol_profile:
-    final_conc[alc] = alcohol_profile[alc][-1] + released_alcohols[alc][-1]
+    final_conc[alc] = alcohol_profile[alc][-1]
 for ester in ester_profile:
     final_conc[ester] = ester_profile[ester][-1]
 
@@ -234,6 +250,7 @@ for ester in ester_profile:
 final_df = pd.DataFrame.from_dict(final_conc, orient='index', columns=['Final Concentration (mol/L)'])
 final_df.index.name = 'Species'
 final_df = final_df.sort_values(by='Final Concentration (mol/L)', ascending=False)
+
 
 # Create initial concentration table
 initial_conc = {}
@@ -249,7 +266,7 @@ initial_df = initial_df.sort_values(by='Initial Concentration (mol/L)', ascendin
 # Display initial concentrations in a table
 fig, ax = plt.subplots(figsize=(10, min(25, 0.4 * len(initial_df))))
 ax.axis('off')
-table = ax.table(cellText=initial_df.values,
+table = ax.table(cellText=np.round(initial_df.values, decimals=4),
                  rowLabels=initial_df.index,
                  colLabels=initial_df.columns,
                  loc='center',
@@ -262,7 +279,7 @@ plt.show()
 # Display final concentrations in a table
 fig, ax = plt.subplots(figsize=(10, min(25, 0.4 * len(final_df))))
 ax.axis('off')
-table = ax.table(cellText=final_df.values,
+table = ax.table(cellText=np.round(final_df.values, decimals=4),
                  rowLabels=final_df.index,
                  colLabels=final_df.columns,
                  loc='center',
@@ -273,7 +290,57 @@ plt.tight_layout()
 plt.show()
 
 
+# Calculate molecular weights for all species
+species_mw = {**ALCOHOL_MW, **ester_mw}
 
+# Convert concentrations to grams
+initial_weight = {spec: initial_conc[spec] * species_mw[spec] for spec in initial_conc if spec in species_mw}
+final_weight = {spec: final_conc[spec] * species_mw[spec] for spec in final_conc if spec in species_mw}
 
+total_initial_weight = sum(initial_weight.values())
+total_final_weight = sum(final_weight.values())
 
+initial_wt_percent = {spec: (wt / total_initial_weight) * 100 for spec, wt in initial_weight.items()}
+final_wt_percent = {spec: (wt / total_final_weight) * 100 for spec, wt in final_weight.items()}
 
+# Create DataFrames for weight percentages
+initial_wt_df = pd.DataFrame.from_dict(initial_wt_percent, orient='index', columns=['Initial Weight %'])
+initial_wt_df.index.name = 'Species'
+initial_wt_df = initial_wt_df.sort_values(by='Initial Weight %', ascending=False)
+
+final_wt_df = pd.DataFrame.from_dict(final_wt_percent, orient='index', columns=['Final Weight %'])
+final_wt_df.index.name = 'Species'
+final_wt_df = final_wt_df.sort_values(by='Final Weight %', ascending=False)
+
+# Display initial weight percentages
+fig, ax = plt.subplots(figsize=(10, min(25, 0.4 * len(initial_wt_df))))
+ax.axis('off')
+table = ax.table(cellText=np.round(initial_wt_df.values, decimals=4),
+                 rowLabels=initial_wt_df.index,
+                 colLabels=initial_wt_df.columns,
+                 loc='center',
+                 cellLoc='center')
+table.scale(1, 1.5)
+plt.title("Initial Species Weight Percentages")
+plt.tight_layout()
+plt.show()
+
+# Display final weight percentages
+fig, ax = plt.subplots(figsize=(10, min(25, 0.4 * len(final_wt_df))))
+ax.axis('off')
+table = ax.table(cellText=np.round(final_wt_df.values, decimals=4),
+                 rowLabels=final_wt_df.index,
+                 colLabels=final_wt_df.columns,
+                 loc='center',
+                 cellLoc='center')
+table.scale(1, 1.5)
+plt.title("Final Species Weight Percentages")
+plt.tight_layout()
+plt.show()
+
+# Summarize alcohol and ester weight % totals
+final_alcohol_wt_pct = sum([final_wt_percent[spec] for spec in final_wt_percent if spec in ALCOHOL_MW])
+final_ester_wt_pct = sum([final_wt_percent[spec] for spec in final_wt_percent if spec in ester_mw])
+
+print(f"\nFinal Total Alcohol Weight %: {final_alcohol_wt_pct:.2f}%")
+print(f"Final Total Ester Weight %: {final_ester_wt_pct:.2f}%")

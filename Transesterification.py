@@ -97,9 +97,9 @@ jojoba_oil = {
     'C24_OH_C24_COOH_ESTER': 0.00,
 }
 
-GRAMS_CETEARYL_ALCOHOL = 100
+GRAMS_CETEARYL_ALCOHOL = 356
 DENSITY_CETEARYL_ALCOHOL = 0.811
-GRAMS_JOJOBA_OIL = 20
+GRAMS_JOJOBA_OIL = 44
 DENSITY_JOJOBA_OIL = 0.789
 
 
@@ -182,28 +182,40 @@ def simulate_transesterification(
 
     # Handle both single ester and ester distribution
     if initial_ester_distribution is not None:
-        # Initialize ester concentrations as a dictionary
-        ester_concs = {ester: [conc] for ester, conc in initial_ester_distribution.items()}
         # For backward compatibility in calculations
         total_ester_conc = sum(initial_ester_distribution.values())
         ester_conc = [total_ester_conc]
+
+        # Initialize all esters in a single dictionary (big pool approach)
+        all_esters = {ester: [conc] for ester, conc in initial_ester_distribution.items()}
     else:
         # For backward compatibility
         ester_conc = [initial_ester_conc]
-        ester_concs = {'C16-C18': [initial_ester_conc]}  # Use a default name
+        all_esters = {'C16-C18': [initial_ester_conc]}  # Use a default name
 
-    # Initialize product ester concentrations (one for each alcohol)
-    product_ester_conc = {ester: [conc] for ester, conc in initial_product_ester_conc.items()}
+    # Add product esters to the big pool of esters
+    for ester, conc in initial_product_ester_conc.items():
+        if ester in all_esters:
+            all_esters[ester][0] += conc
+        else:
+            all_esters[ester] = [conc]
 
-    # Initialize product alcohol concentrations
+    # Initialize all alcohols in a single dictionary (big pool approach)
+    all_alcohols = {alcohol: [conc] for alcohol, conc in alcohol_distribution.items()}
+
+    # Add product alcohols to the big pool of alcohols
     if isinstance(initial_product_alcohol_conc, dict):
-        product_alcohol_conc = {alcohol: [conc] for alcohol, conc in initial_product_alcohol_conc.items()}
+        for alcohol, conc in initial_product_alcohol_conc.items():
+            if alcohol in all_alcohols:
+                all_alcohols[alcohol][0] += conc
+            else:
+                all_alcohols[alcohol] = [conc]
     else:
-        # For backward compatibility, initialize with a default product alcohol
-        product_alcohol_conc = {'C18_OH': [initial_product_alcohol_conc]}
-
-    # Initialize alcohol concentrations
-    alcohol_concs = {alcohol: [conc] for alcohol, conc in alcohol_distribution.items()}
+        # For backward compatibility, add default product alcohol
+        if 'C18_OH' in all_alcohols:
+            all_alcohols['C18_OH'][0] += initial_product_alcohol_conc
+        else:
+            all_alcohols['C18_OH'] = [initial_product_alcohol_conc]
 
     # Calculate reaction rate constants for each alcohol using Arrhenius equation
     R = 8.314  # Gas constant
@@ -227,13 +239,13 @@ def simulate_transesterification(
         individual_rates = {}
         total_net_rate = 0
 
-        # For each ester in the distribution
-        for ester_name, ester_concentration in {k: v[-1] for k, v in ester_concs.items()}.items():
+        # For each ester in the big pool
+        for ester_name, ester_concentration in {k: v[-1] for k, v in all_esters.items()}.items():
             individual_rates[ester_name] = {}
 
             for alcohol in alcohol_distribution:
                 # Calculate forward rate for this alcohol and ester
-                forward_rate = k_forwards[alcohol] * ester_concentration * alcohol_concs[alcohol][-1] * catalyst_conc
+                forward_rate = k_forwards[alcohol] * ester_concentration * all_alcohols[alcohol][-1] * catalyst_conc
 
                 # For reverse rate, we use the forward rates of other alcohols
                 # This implements the concept that "one alcohol's reverse is another alcohol's forward"
@@ -241,7 +253,7 @@ def simulate_transesterification(
                 for other_alcohol in alcohol_distribution:
                     if other_alcohol != alcohol:
                         # Each other alcohol's forward reaction contributes to this alcohol's reverse reaction
-                        other_forward = k_forwards[other_alcohol] * ester_concentration * alcohol_concs[other_alcohol][-1] * catalyst_conc
+                        other_forward = k_forwards[other_alcohol] * ester_concentration * all_alcohols[other_alcohol][-1] * catalyst_conc
                         reverse_contribution += other_forward / (len(alcohol_distribution) - 1)
 
                 # Calculate net rate for this alcohol and ester
@@ -253,32 +265,46 @@ def simulate_transesterification(
         new_ester_concs = {}
         for ester_name, ester_rates in individual_rates.items():
             ester_net_rate = sum(ester_rates.values())
-            new_ester_concs[ester_name] = max(0, ester_concs[ester_name][-1] - ester_net_rate)
+            new_ester_concs[ester_name] = max(0, all_esters[ester_name][-1] - ester_net_rate)
 
         # Update total ester concentration for backward compatibility
         new_ester = max(0, ester_conc[-1] - total_net_rate)
 
-        # Update product alcohol concentrations
-        new_product_alcohol_concs = {}
+        # Update alcohol concentrations based on reactions
+        new_alcohol_concs = {}
+
+        # First, copy current concentrations
+        for alcohol in all_alcohols:
+            new_alcohol_concs[alcohol] = all_alcohols[alcohol][-1]
+
+        # Then update based on reactions
         for ester_name, ester_rates in individual_rates.items():
-            # Extract the alcohol part of the ester name (e.g., 'C18' from 'C16-C18')
+            # Extract the alcohol parts of the ester name (e.g., 'C18' from 'C16-C18')
             ester_parts = ester_name.split('-')
             if len(ester_parts) == 2:
-                product_alcohol_name = f"{ester_parts[1]}_OH"
+                # The alcohol released from the ester
+                released_alcohol = f"{ester_parts[1]}_OH"
 
                 # Sum the rates for this ester across all alcohols
                 ester_total_rate = sum(ester_rates.values())
 
-                # Initialize if this product alcohol doesn't exist yet
-                if product_alcohol_name not in product_alcohol_conc:
-                    product_alcohol_conc[product_alcohol_name] = [0.0]
+                # Add the released alcohol
+                if released_alcohol in new_alcohol_concs:
+                    new_alcohol_concs[released_alcohol] += ester_total_rate
+                else:
+                    new_alcohol_concs[released_alcohol] = ester_total_rate
 
-                # Update this product alcohol's concentration
-                current_conc = product_alcohol_conc[product_alcohol_name][-1]
-                new_product_alcohol_concs[product_alcohol_name] = current_conc + ester_total_rate
+        # Subtract consumed alcohols
+        for alcohol in alcohol_distribution:
+            # Sum the rates for this alcohol across all esters
+            alcohol_total_rate = sum(ester_rates[alcohol] for ester_rates in individual_rates.values())
+            new_alcohol_concs[alcohol] -= alcohol_total_rate
 
-        # Update product ester concentrations based on individual rates
-        new_product_ester_concs = {}
+        # Apply non-negative constraint to all alcohols
+        for alcohol_name in new_alcohol_concs:
+            new_alcohol_concs[alcohol_name] = max(0, new_alcohol_concs[alcohol_name])
+
+        # Update ester concentrations based on reactions
         for alcohol in alcohol_distribution:
             # Get the corresponding product ester name
             alcohol_prefix = alcohol[0:3]  # e.g., 'C16'
@@ -287,52 +313,30 @@ def simulate_transesterification(
             # Sum the rates for this alcohol across all esters
             alcohol_total_rate = sum(ester_rates[alcohol] for ester_rates in individual_rates.values())
 
-            # Update this product ester's concentration
-            new_conc = product_ester_conc[product_ester_name][-1] + alcohol_total_rate
-            new_product_ester_concs[product_ester_name] = max(0, new_conc)
-
-        # Update alcohol concentrations based on their individual rates
-        new_alcohol_concs = {}
-        for alcohol in alcohol_distribution:
-            # Sum the rates for this alcohol across all esters
-            alcohol_total_rate = sum(ester_rates[alcohol] for ester_rates in individual_rates.values())
-            new_alcohol_concs[alcohol] = max(0, alcohol_concs[alcohol][-1] - alcohol_total_rate)
-
-        # Apply non-negative constraint to product alcohols
-        for alcohol_name in new_product_alcohol_concs:
-            new_product_alcohol_concs[alcohol_name] = max(0, new_product_alcohol_concs[alcohol_name])
+            # Add the formed ester
+            if product_ester_name in new_ester_concs:
+                new_ester_concs[product_ester_name] += alcohol_total_rate
+            else:
+                new_ester_concs[product_ester_name] = alcohol_total_rate
 
         # Check for equilibrium if requested
         if check_equilibrium and t > 0:
-            # Calculate relative changes in concentrations
+            # Calculate relative changes in concentrations for all esters
             ester_changes = []
             for ester_name, new_conc in new_ester_concs.items():
-                change = abs(new_conc - ester_concs[ester_name][-1]) / max(ester_concs[ester_name][-1], 1e-10)
-                ester_changes.append(change)
-
-            # Calculate changes for each product alcohol
-            product_alcohol_changes = []
-            for alcohol_name, new_conc in new_product_alcohol_concs.items():
-                if alcohol_name in product_alcohol_conc:
-                    change = abs(new_conc - product_alcohol_conc[alcohol_name][-1]) / max(product_alcohol_conc[alcohol_name][-1], 1e-10)
-                    product_alcohol_changes.append(change)
-
-            # Calculate changes for each product ester
-            product_ester_changes = []
-            for ester_name, new_conc in new_product_ester_concs.items():
-                change = abs(new_conc - product_ester_conc[ester_name][-1]) / max(product_ester_conc[ester_name][-1], 1e-10)
-                product_ester_changes.append(change)
+                if ester_name in all_esters:
+                    change = abs(new_conc - all_esters[ester_name][-1]) / max(all_esters[ester_name][-1], 1e-10)
+                    ester_changes.append(change)
 
             # Calculate changes for each alcohol
             alcohol_changes = []
-            for alcohol in alcohol_distribution:
-                change = abs(new_alcohol_concs[alcohol] - alcohol_concs[alcohol][-1]) / max(alcohol_concs[alcohol][-1], 1e-10)
-                alcohol_changes.append(change)
+            for alcohol_name, new_conc in new_alcohol_concs.items():
+                if alcohol_name in all_alcohols:
+                    change = abs(new_conc - all_alcohols[alcohol_name][-1]) / max(all_alcohols[alcohol_name][-1], 1e-10)
+                    alcohol_changes.append(change)
 
             # Check if all changes are below tolerance
             if (all(change < equilibrium_tolerance for change in ester_changes) and
-                all(change < equilibrium_tolerance for change in product_alcohol_changes) and
-                all(change < equilibrium_tolerance for change in product_ester_changes) and
                 all(change < equilibrium_tolerance for change in alcohol_changes)):
 
                 equilibrium_reached = True
@@ -341,66 +345,92 @@ def simulate_transesterification(
 
         # Append new concentrations
         ester_conc.append(new_ester)  # For backward compatibility
-        for ester_name, new_conc in new_ester_concs.items():
-            ester_concs[ester_name].append(new_conc)
 
-        # Append new product alcohol concentrations
-        for alcohol_name, new_conc in new_product_alcohol_concs.items():
-            if alcohol_name in product_alcohol_conc:
-                product_alcohol_conc[alcohol_name].append(new_conc)
+        # Append new ester concentrations to the big pool
+        for ester_name, new_conc in new_ester_concs.items():
+            if ester_name in all_esters:
+                all_esters[ester_name].append(new_conc)
             else:
                 # Initialize with zeros for previous time steps and add current value
-                product_alcohol_conc[alcohol_name] = [0.0] * len(ester_conc[:-1]) + [new_conc]
+                all_esters[ester_name] = [0.0] * len(ester_conc[:-1]) + [new_conc]
 
-        # Append new product ester concentrations
-        for ester_name, new_conc in new_product_ester_concs.items():
-            product_ester_conc[ester_name].append(new_conc)
-
-        # Append new alcohol concentrations
-        for alcohol in alcohol_distribution:
-            alcohol_concs[alcohol].append(new_alcohol_concs[alcohol])
+        # Append new alcohol concentrations to the big pool
+        for alcohol_name, new_conc in new_alcohol_concs.items():
+            if alcohol_name in all_alcohols:
+                all_alcohols[alcohol_name].append(new_conc)
+            else:
+                # Initialize with zeros for previous time steps and add current value
+                all_alcohols[alcohol_name] = [0.0] * len(ester_conc[:-1]) + [new_conc]
 
     # Return appropriate values based on check_equilibrium flag
     if check_equilibrium:
         # Return final equilibrium concentrations and time to equilibrium
         equilibrium_time_minutes = equilibrium_time / 60.0  # Convert seconds to minutes
 
-        # Get final alcohol concentrations
-        final_alcohol_concs = {alcohol: concs[-1] for alcohol, concs in alcohol_concs.items()}
+        # Get final alcohol concentrations (all alcohols in the big pool)
+        final_alcohol_concs = {alcohol: concs[-1] for alcohol, concs in all_alcohols.items()}
 
-        # Get final product ester concentrations
-        final_product_ester_concs = {ester: concs[-1] for ester, concs in product_ester_conc.items()}
+        # Get final ester concentrations (all esters in the big pool)
+        final_ester_concs = {ester: concs[-1] for ester, concs in all_esters.items()}
 
-        # Get final product alcohol concentrations
-        final_product_alcohol_concs = {alcohol: concs[-1] for alcohol, concs in product_alcohol_conc.items()}
+        # For backward compatibility, separate alcohols into initial and product
+        # Initial alcohols are those in the original alcohol_distribution
+        initial_alcohol_concs = {alcohol: final_alcohol_concs[alcohol] 
+                                for alcohol in alcohol_distribution if alcohol in final_alcohol_concs}
 
-        # Get final ester concentrations
-        final_ester_concs = {ester: concs[-1] for ester, concs in ester_concs.items()}
+        # Product alcohols are those not in the original alcohol_distribution
+        product_alcohol_concs = {alcohol: conc for alcohol, conc in final_alcohol_concs.items() 
+                                if alcohol not in alcohol_distribution}
+
+        # For backward compatibility, separate esters into initial and product
+        # Product esters are those with the same alcohol prefix for both parts (e.g., 'C16-C16')
+        product_ester_concs = {}
+        for ester_name, conc in final_ester_concs.items():
+            ester_parts = ester_name.split('-')
+            if len(ester_parts) == 2 and ester_parts[0] == ester_parts[1]:
+                product_ester_concs[ester_name] = conc
 
         # For backward compatibility, use the first product alcohol or 0.0 if none exist
-        backward_compat_product_alcohol = next(iter(final_product_alcohol_concs.values())) if final_product_alcohol_concs else 0.0
+        backward_compat_product_alcohol = next(iter(product_alcohol_concs.values())) if product_alcohol_concs else 0.0
 
         return (
             ester_conc[-1],  # For backward compatibility
-            final_alcohol_concs,
-            final_product_ester_concs,
+            initial_alcohol_concs,  # For backward compatibility
+            product_ester_concs,  # For backward compatibility
             backward_compat_product_alcohol,  # For backward compatibility
             equilibrium_time_minutes,
             equilibrium_reached,
-            final_ester_concs,  # New return value with all ester concentrations
-            final_product_alcohol_concs  # New return value with all product alcohol concentrations
+            final_ester_concs,  # All esters in the big pool
+            product_alcohol_concs  # For backward compatibility
         )
     else:
         # Return full concentration profiles over time
         time_points = np.arange(len(ester_conc))
 
-        # Ensure all product alcohol concentration lists have the same length as time_points
-        for alcohol_name, concs in list(product_alcohol_conc.items()):
+        # Ensure all alcohol concentration lists have the same length as time_points
+        for alcohol_name, concs in list(all_alcohols.items()):
             if len(concs) < len(time_points):
                 # Pad with zeros at the beginning
-                product_alcohol_conc[alcohol_name] = [0.0] * (len(time_points) - len(concs)) + concs
+                all_alcohols[alcohol_name] = [0.0] * (len(time_points) - len(concs)) + concs
 
-        return time_points, ester_conc, alcohol_concs, product_ester_conc, product_alcohol_conc, ester_concs
+        # For backward compatibility, separate alcohols into initial and product
+        # Initial alcohols are those in the original alcohol_distribution
+        initial_alcohol_concs = {alcohol: all_alcohols[alcohol] 
+                                for alcohol in alcohol_distribution if alcohol in all_alcohols}
+
+        # Product alcohols are those not in the original alcohol_distribution
+        product_alcohol_concs = {alcohol: concs for alcohol, concs in all_alcohols.items() 
+                                if alcohol not in alcohol_distribution}
+
+        # For backward compatibility, separate esters into initial and product
+        # Product esters are those with the same alcohol prefix for both parts (e.g., 'C16-C16')
+        product_ester_concs = {}
+        for ester_name, concs in all_esters.items():
+            ester_parts = ester_name.split('-')
+            if len(ester_parts) == 2 and ester_parts[0] == ester_parts[1]:
+                product_ester_concs[ester_name] = concs
+
+        return time_points, ester_conc, initial_alcohol_concs, product_ester_concs, product_alcohol_concs, all_esters
 
 
 def plot_transesterification_results(time_points, ester_conc, alcohol_concs, product_ester_conc, product_alcohol_conc, ester_concs=None):
@@ -433,65 +463,24 @@ def plot_transesterification_results(time_points, ester_conc, alcohol_concs, pro
 
     # Check if we're using the new dictionary format for alcohols
     if isinstance(alcohol_concs, dict):
-        # Calculate weight percentages at each time point
-        weight_percentages = []
-        for i in range(len(time_points)):
-            # Extract concentrations at this time point
-            if ester_concs is not None:
-                # Use all esters from ester_concs
-                esters_at_t = {}
-                for ester_name, concs in ester_concs.items():
-                    esters_at_t[ester_name] = concs[i]
-                # For backward compatibility in weight percentage calculation
-                ester_at_t = ester_conc[i]
-            else:
-                # Backward compatibility
-                ester_at_t = ester_conc[i]
-                esters_at_t = {'C16-C18': ester_at_t}
+        # Plot molar concentrations
+        colors = ['b', 'g', 'm', 'y', 'k', 'orange', 'purple', 'brown', 'pink', 'gray']  # Colors for different species
 
-            # Extract product alcohol concentrations at this time point
-            if isinstance(product_alcohol_conc, dict):
-                product_alcohols_at_t = {}
-                for alcohol_name, concs in product_alcohol_conc.items():
-                    product_alcohols_at_t[alcohol_name] = concs[i]
-            else:
-                # Backward compatibility
-                product_alcohols_at_t = {'C18_OH': product_alcohol_conc[i]}
-
-            # Extract alcohol concentrations at this time point
-            alcohols_at_t = {}
-            for alcohol, concs in alcohol_concs.items():
-                alcohols_at_t[alcohol] = concs[i]
-
-            # Extract product ester concentrations at this time point
-            if isinstance(product_ester_conc, dict):
-                product_esters_at_t = {}
-                for ester_name, concs in product_ester_conc.items():
-                    product_esters_at_t[ester_name] = concs[i]
-            else:
-                # Backward compatibility
-                product_esters_at_t = product_ester_conc[i]
-
-
-        # Plot molar concentrations on top subplot
+        # Plot all esters
         if ester_concs is not None:
-            # Plot each ester concentration
-            colors = ['b', 'g', 'm', 'y', 'k', 'orange', 'purple', 'brown', 'pink', 'gray']  # Colors for different species
             for i, (ester_name, concs) in enumerate(ester_concs.items()):
                 color = colors[i % len(colors)]
                 ax1.plot(time_points_minutes, concs, color=color, linestyle='-', label=f'{ester_name}')
 
+        # Plot all alcohols (both initial and product)
+        all_alcohols = {}
+        all_alcohols.update(alcohol_concs)
+        if isinstance(product_alcohol_conc, dict):
+            all_alcohols.update(product_alcohol_conc)
 
-        # Plot each alcohol concentration
-        for i, (alcohol, concs) in enumerate(alcohol_concs.items()):
+        for i, (alcohol, concs) in enumerate(all_alcohols.items()):
             color = colors[(i + len(ester_concs or {})) % len(colors)]
             ax1.plot(time_points_minutes, concs, color=color, linestyle='-', label=f'{alcohol}')
-
-        # Plot each product alcohol concentration
-        if isinstance(product_alcohol_conc, dict):
-            for i, (alcohol, concs) in enumerate(product_alcohol_conc.items()):
-                color = colors[(i + len(ester_concs or {}) + len(alcohol_concs)) % len(colors)]
-                ax1.plot(time_points_minutes, concs, color=color, linestyle='-', label=f'{alcohol}')
 
 
     # Set labels and titles
@@ -533,8 +522,6 @@ def display_equilibrium_results(ester_conc, alcohol_concs, product_ester_conc, p
     ester_concs : dict, optional
         Dictionary mapping ester names to their final concentrations (mol/L)
     """
-
-
     print("=" * 60)
     print("EQUILIBRIUM RESULTS")
     print("=" * 60)
@@ -549,18 +536,27 @@ def display_equilibrium_results(ester_conc, alcohol_concs, product_ester_conc, p
     print(f"{'Species':<20} {'Concentration (mol/L)':<25} {'Weight %':<15}")
     print("-" * 60)
 
-    # Display product alcohol concentrations
+    # Combine all alcohols for display
+    all_alcohols = {}
+    if isinstance(alcohol_concs, dict):
+        all_alcohols.update(alcohol_concs)
     if product_alcohol_concs:
-        for alcohol_name, conc in product_alcohol_concs.items():
-            # Calculate weight percentage
-            weight_percent = (conc * ALCOHOL_MW.get(alcohol_name, 0)) / (ester_conc * 600 + conc * ALCOHOL_MW.get(alcohol_name, 0)) * 100
-            print(f"{alcohol_name:<20} {conc:<25.6f} {weight_percent:<15.2f}")
+        all_alcohols.update(product_alcohol_concs)
     elif isinstance(product_alcohol_conc, (int, float)):
-        # For backward compatibility
-        weight_percent = (product_alcohol_conc * 270) / (ester_conc * 600 + product_alcohol_conc * 270) * 100
-        print(f"{'C18_OH':<20} {product_alcohol_conc:<25.6f} {weight_percent:<15.2f}")
+        all_alcohols['C18_OH'] = product_alcohol_conc
 
+    # Display all alcohols
+    for alcohol_name, conc in all_alcohols.items():
+        # Calculate weight percentage
+        weight_percent = (conc * ALCOHOL_MW.get(alcohol_name, 0)) / (ester_conc * 600 + conc * ALCOHOL_MW.get(alcohol_name, 0)) * 100
+        print(f"{alcohol_name:<20} {conc:<25.6f} {weight_percent:<15.2f}")
 
+    # Display all esters if available
+    if ester_concs:
+        for ester_name, conc in ester_concs.items():
+            # Calculate weight percentage (simplified)
+            weight_percent = 100 * conc / (ester_conc + sum(all_alcohols.values()))
+            print(f"{ester_name:<20} {conc:<25.6f} {weight_percent:<15.2f}")
 
     # Calculate conversion percentage if initial concentration is provided
     if initial_ester_conc is not None:
