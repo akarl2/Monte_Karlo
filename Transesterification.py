@@ -628,6 +628,8 @@ if __name__ == "__main__":
     normalized_jojoba_oil = {ester: (percentage / total_jojoba_percentage) * jojoba_concentration 
                             for ester, percentage in jojoba_oil.items()}
 
+    print(normalized_jojoba_oil)
+
     # Map jojoba oil esters to the format expected by the simulation
     initial_product_ester_conc = {}
     for alcohol in alcohol_distribution:
