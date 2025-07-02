@@ -1,6 +1,7 @@
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 # Molecular weights (g/mol)
 MW_C16_ALCOHOL = 242.45    # C16 alcohol (hexadecanol
@@ -126,14 +127,32 @@ for alc in Cetearyl_Alcohol:
     Cetearyl_Alcohol[alc] = mols / Total_Volume_L
 
 # Define kinetics parameters for each alcohol
-base_Ea = 68000  # J/mol (activation energy)
+base_Ea = 45000  # J/mol (activation energy)
 base_A = 1.2e7  # Pre-exponential factor
+
+# Individual kinetics parameters for each alcohol (can be customized)
+individual_kinetics = {
+    'C16_OH': {'Ea_forward': 45000, 'A_forward': 1.2e7},
+    'C18_OH': {'Ea_forward': 45000, 'A_forward': 1.2e7},
+    'C20_OH': {'Ea_forward': 45000, 'A_forward': 1.2e7},
+    'C22_OH': {'Ea_forward': 41000, 'A_forward': 1.2e7},
+    'C24_OH': {'Ea_forward': 41000, 'A_forward': 1.2e7},
+}
+
+# Flag to control whether to use individual values or master values
+use_individual_kinetics = True  # Set to True to use individual values, False to use master values
+
 alcohol_kinetics = {}
 for alcohol in ALCOHOL_MW:
-    alcohol_kinetics[alcohol] = {
-        'Ea_forward': base_Ea,  # J/mol (activation energy)
-        'A_forward': base_A,  # Pre-exponential factor
-    }
+    if use_individual_kinetics and alcohol in individual_kinetics:
+        # Use individual values if flag is True and values are provided
+        alcohol_kinetics[alcohol] = individual_kinetics[alcohol].copy()
+    else:
+        # Use master values otherwise
+        alcohol_kinetics[alcohol] = {
+            'Ea_forward': base_Ea,  # J/mol (activation energy)
+            'A_forward': base_A,  # Pre-exponential factor
+        }
 
 #Data for Jojoba_Oil
 Initial_Average_Oil_MW = 0.00
@@ -152,21 +171,25 @@ Rxn_conditions = {
     'Jojoba_Oil': jojoba_oil,
     'Cetearly_Alcohol': Cetearyl_Alcohol,
     'Alcohol_Kinetics': alcohol_kinetics,
-    'temp': 318.15,
-    'catalyst_conc' : 0.001,
-    'Rxn_Time_MIN' : 500,
+    'temp': 338.15,
+    'catalyst_conc' : 0.00004,
+    'Rxn_Time_MIN' : 600,
+    'base_Ea': base_Ea,
+    'base_A': base_A,
+    'individual_kinetics': individual_kinetics,
+    'use_individual_kinetics': use_individual_kinetics,
 }
-
-# Simulate simple forward transesterification: alcohol from ester is released, new ester is formed
-# Assume pseudo-first-order kinetics based on alcohol (limiting reagent) with excess ester
-import pandas as pd
 
 R = 8.314  # J/mol·K
 T = Rxn_conditions['temp']
 dt = 1  # seconds per step
 total_time_sec = Rxn_conditions['Rxn_Time_MIN'] * 60  # total time in seconds
 time_steps = total_time_sec
+catalyst_conc = Rxn_conditions['catalyst_conc']
 
+# Calculate reaction rate constants for each alcohol using Arrhenius equation
+for alcohol, params in alcohol_kinetics.items():
+    params['k_forward'] = params['A_forward'] * math.exp(-params['Ea_forward'] / (R * T))
 
 time_array = np.arange(0, total_time_sec + 1, dt)
 alcohol_profile = {alc: [] for alc in Cetearyl_Alcohol}
@@ -176,55 +199,131 @@ ester_profile = {ester: [] for ester in jojoba_oil}
 current_alc_conc = {alc: Cetearyl_Alcohol.get(alc, 0.0) for alc in ALCOHOL_MW}
 current_jojoba = jojoba_oil.copy()
 
-for t in time_array:
-    # Store profiles
-    for alc in current_alc_conc:
-        alcohol_profile[alc].append(current_alc_conc[alc])
-    for ester in current_jojoba:
-        ester_profile[ester].append(current_jojoba[ester])
+# Store initial profiles
+for alc in current_alc_conc:
+    alcohol_profile[alc].append(current_alc_conc[alc])
+for ester in current_jojoba:
+    ester_profile[ester].append(current_jojoba[ester])
 
-    # Kinetic step: For each ester, allow all alcohols to attack and form new esters
-    for ester in list(current_jojoba.keys()):
+# Simulation loop
+for t in range(total_time_sec):
+    # Calculate individual reaction rates for each alcohol and ester
+    individual_rates = {}
+    total_net_rate = 0
+
+    # For each ester in the pool
+    for ester_name, ester_concentration in current_jojoba.items():
+        individual_rates[ester_name] = {}
+
+        # Extract donor alcohol from ester name
         try:
-            parts = ester.split("_")
+            parts = ester_name.split("_")
+            donor_core = parts[0]
+            donor_alc = donor_core + "_OH"
+            acid_part = "_".join(parts[2:-1])
+
+        except ValueError:
+            print(f"Skipping malformed ester: {ester_name}")
+            continue
+
+        for alcohol in current_alc_conc:
+            if not alcohol.endswith("_OH") or alcohol not in alcohol_kinetics:
+                continue
+            if alcohol == donor_alc:
+                continue  # Skip self-swap
+
+            # Calculate forward rate for this alcohol and ester
+            forward_rate = alcohol_kinetics[alcohol]['k_forward'] * ester_concentration * current_alc_conc[alcohol] * catalyst_conc
+
+            # For reverse rate, we use the forward rates of the ester alcohol, This implements the concept that "one alcohol's reverse is another alcohol's forward"
+            reverse_ester = f"{alcohol.replace('_OH', '')}_OH_{acid_part}_COOH_ESTER"
+            reverse_conc = current_jojoba.get(reverse_ester, 0.0)
+            reverse_rate = alcohol_kinetics[alcohol]['k_forward'] * reverse_conc * current_alc_conc[donor_alc] * catalyst_conc
+
+            # Calculate net rate for this alcohol and ester
+            net_rate = (forward_rate - reverse_rate) * dt
+
+            individual_rates[ester_name][alcohol] = net_rate
+            total_net_rate += net_rate
+
+    # Update ester concentrations based on individual rates
+    new_jojoba = current_jojoba.copy()
+    for ester_name, ester_rates in individual_rates.items():
+        ester_net_rate = sum(ester_rates.values())
+        new_jojoba[ester_name] = max(0, current_jojoba[ester_name] - ester_net_rate)
+
+    # Update alcohol concentrations based on reactions
+    new_alc_conc = current_alc_conc.copy()
+
+    # Process each ester's reactions
+    for ester_name, ester_rates in individual_rates.items():
+        try:
+            parts = ester_name.split("_")
             donor_core = parts[0]
             donor_alc = donor_core + "_OH"
             acid_part = "_".join(parts[2:-1])
         except ValueError:
-            print(f"Skipping malformed ester: {ester}")
             continue
 
-        if ester not in ester_profile:
-            ester_profile[ester] = []
+        # Sum the rates for this ester across all alcohols
+        ester_total_rate = sum(ester_rates.values())
 
-        for attacking_alc in list(current_alc_conc.keys()):
-            if not attacking_alc.endswith("_OH") or attacking_alc not in alcohol_kinetics:
+        # Add the released alcohol
+        if donor_alc in new_alc_conc:
+            new_alc_conc[donor_alc] += ester_total_rate
+        else:
+            new_alc_conc[donor_alc] = ester_total_rate
+
+        # Process each attacking alcohol
+        # Process each attacking alcohol
+        for alcohol, rate in ester_rates.items():
+            # Subtract consumed alcohol
+            new_alc_conc[alcohol] -= rate
+
+            # Parse ester to get acid part for constructing new ester name
+            parts = ester_name.split("_")
+            try:
+                # Validate known pattern: <Donor>_OH_<Acid>_COOH_ESTER
+                if parts[-2:] != ['COOH', 'ESTER']:
+                    print(f"Malformed ester name: {ester_name}")
+                    continue
+                acid_part = parts[-3]  # The acid name, just before "COOH"
+            except IndexError:
+                print(f"Error parsing ester: {ester_name}")
                 continue
-            if attacking_alc == donor_alc:
-                continue  # Skip self-swap
 
-            A = alcohol_kinetics[attacking_alc]['A_forward']
-            Ea = alcohol_kinetics[attacking_alc]['Ea_forward']
-            k = A * np.exp(-Ea / (R * T))
-            delta = k * current_alc_conc[attacking_alc] * dt
+            # Create the new ester from attacking alcohol and the acid
+            new_donor = alcohol.replace('_OH', '')
+            new_ester = f"{new_donor}_OH_{acid_part}_COOH_ESTER"
 
-            if current_jojoba[ester] >= delta and current_alc_conc[attacking_alc] >= delta:
-                # consume current ester and attacking alcohol
-                current_jojoba[ester] -= delta
-                current_alc_conc[attacking_alc] -= delta
+            # Optional: catch malformed new ester names
+            if new_ester.count("COOH") > 1:
+                print(f"Skipping malformed new ester: {new_ester}")
+                continue
+            new_jojoba[new_ester] = new_jojoba.get(new_ester, 0.0) + rate
 
-                # release the displaced alcohol
-                current_alc_conc[donor_alc] += delta
+    # Apply non-negative constraint to all alcohols
+    for alcohol_name in new_alc_conc:
+        new_alc_conc[alcohol_name] = max(0, new_alc_conc[alcohol_name])
 
-                # form the new ester
-                attacker = attacking_alc.replace("_OH", "")
-                new_ester = f"{attacker}_OH_{acid_part}_ESTER"
-                if new_ester not in current_jojoba:
-                    current_jojoba[new_ester] = 0.0
-                current_jojoba[new_ester] += delta
+    # Update current concentrations
+    current_alc_conc = new_alc_conc
+    current_jojoba = new_jojoba
 
-                if new_ester not in ester_profile:
-                    ester_profile[new_ester] = []
+    # Store profiles
+    for alc in current_alc_conc:
+        if alc in alcohol_profile:
+            alcohol_profile[alc].append(current_alc_conc[alc])
+        else:
+            # Initialize with zeros for previous time steps and add current value
+            alcohol_profile[alc] = [0.0] * len(time_array[:t]) + [current_alc_conc[alc]]
+
+    for ester in current_jojoba:
+        if ester in ester_profile:
+            ester_profile[ester].append(current_jojoba[ester])
+        else:
+            # Initialize with zeros for previous time steps and add current value
+            ester_profile[ester] = [0.0] * len(time_array[:t]) + [current_jojoba[ester]]
 
 # Plot both alcohol and ester concentrations (no legend to reduce clutter)
 plt.figure(figsize=(12, 6))
@@ -344,3 +443,41 @@ final_ester_wt_pct = sum([final_wt_percent[spec] for spec in final_wt_percent if
 
 print(f"\nFinal Total Alcohol Weight %: {final_alcohol_wt_pct:.2f}%")
 print(f"Final Total Ester Weight %: {final_ester_wt_pct:.2f}%")
+
+# Calculate summed weight percent for each total chain length
+chain_length_totals = {}
+
+# Process all esters in final weight percentages
+for ester, weight_pct in final_wt_percent.items():
+    # Only process ester species
+    if '_ESTER' in ester:
+        # Extract alcohol and acid chain lengths from ester name
+        parts = ester.split('_')
+        alcohol_length = int(parts[0].replace('C', ''))
+        acid_length = int(parts[2].replace('C', ''))
+
+        # Calculate total chain length
+        total_length = alcohol_length + acid_length
+
+        # Add to the appropriate chain length total
+        chain_key = f"C{total_length}"
+        if chain_key in chain_length_totals:
+            chain_length_totals[chain_key] += weight_pct
+        else:
+            chain_length_totals[chain_key] = weight_pct
+
+# Sort chain lengths numerically
+sorted_chain_lengths = sorted(chain_length_totals.keys(), key=lambda x: int(x.replace('C', '')))
+
+# Display the summed weight percent for each chain length
+print("\nSummed Weight Percent by Total Chain Length:")
+for chain in sorted_chain_lengths:
+    print(f"{chain}: {chain_length_totals[chain]:.2f}%")
+
+# Calculate the ratio of (C36+C38) / (C40+C42)
+numerator = chain_length_totals.get('C36', 0) + chain_length_totals.get('C38', 0)
+denominator = chain_length_totals.get('C40', 0) + chain_length_totals.get('C42', 0)
+
+if denominator > 0:
+    ratio = numerator / denominator
+    print(f"\nRatio of (C36+C38) / (C40+C42): {ratio:.4f}")

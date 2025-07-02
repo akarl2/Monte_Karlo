@@ -116,43 +116,7 @@ def simulate_transesterification(
         check_equilibrium=True,
         alcohol_kinetics=None
 ):
-    """
-    Simulates transesterification reaction between esters and multiple alcohols
 
-    Parameters:
-    -----------
-    initial_ester_conc : float, optional
-        Initial concentration of a single ester (mol/L) - for backward compatibility
-    initial_ester_distribution : dict, optional
-        Dictionary mapping ester names to their initial concentrations (mol/L)
-    alcohol_distribution : dict
-        Dictionary mapping alcohol names (e.g., 'C16_OH') to their initial concentrations (mol/L)
-    initial_product_ester_conc : float or dict, optional
-        Initial concentration of product ester (mol/L) or dictionary mapping product ester names
-        to their initial concentrations
-    initial_product_alcohol_conc : float, optional
-        Initial concentration of product alcohol (C18_OH) (mol/L)
-    catalyst_conc : float
-        Catalyst concentration (mol/L)
-    reaction_time_minutes : int
-        Maximum reaction time in minutes (simulation will stop earlier if equilibrium is reached)
-    temperature : float
-        Reaction temperature in Kelvin
-    equilibrium_tolerance : float, optional
-        Tolerance for determining when equilibrium is reached (default: 1e-7)
-    check_equilibrium : bool, optional
-        Whether to check for equilibrium during simulation (default: True)
-    alcohol_kinetics : dict, optional
-        Dictionary mapping alcohol names to dictionaries containing 'Ea_forward', 'Ea_reverse',
-        'A_forward', and 'A_reverse' values. If not provided, default values will be used.
-
-    Returns:
-    --------
-    tuple
-        If check_equilibrium=True: Final equilibrium concentrations and time to equilibrium
-        If check_equilibrium=False: Lists of concentrations over time for all species
-    """
-    # Ensure required parameters are provided
     if (initial_ester_conc is None and initial_ester_distribution is None) or alcohol_distribution is None or catalyst_conc is None or reaction_time_minutes is None:
         raise ValueError("Initial ester concentration or distribution, alcohol distribution, catalyst concentration, and reaction time must be provided")
 
