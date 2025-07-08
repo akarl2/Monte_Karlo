@@ -2,6 +2,9 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import tkinter as tk
+from tkinter import ttk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # Molecular weights (g/mol)
 MW_C16_ALCOHOL = 242.45    # C16 alcohol (hexadecanol
@@ -81,24 +84,24 @@ jojoba_oil = {
     'C16_OH_C24_COOH_ESTER': 0.56,
     'C18_OH_C16_COOH_ESTER': 0.00,
     'C18_OH_C18_COOH_ESTER': 0.05,
-    'C18_OH_C20_COOH_ESTER': 0.80,
-    'C18_OH_C22_COOH_ESTER': 1.40,
-    'C18_OH_C24_COOH_ESTER': 1.60,
+    'C18_OH_C20_COOH_ESTER': 0.82,
+    'C18_OH_C22_COOH_ESTER': 1.41,
+    'C18_OH_C24_COOH_ESTER': 1.58,
     'C20_OH_C16_COOH_ESTER': 0.92,
-    'C20_OH_C18_COOH_ESTER': 4.31,
-    'C20_OH_C20_COOH_ESTER': 22.67,
-    'C20_OH_C22_COOH_ESTER': 11.20,
-    'C20_OH_C24_COOH_ESTER': 0.95,
+    'C20_OH_C18_COOH_ESTER': 4.45,
+    'C20_OH_C20_COOH_ESTER': 22.77,
+    'C20_OH_C22_COOH_ESTER': 11.05,
+    'C20_OH_C24_COOH_ESTER': 0.96,
     'C22_OH_C16_COOH_ESTER': 0.16,
-    'C22_OH_C18_COOH_ESTER': 3.36,
-    'C22_OH_C20_COOH_ESTER': 39.47,
-    'C22_OH_C22_COOH_ESTER': 2.23,
+    'C22_OH_C18_COOH_ESTER': 3.37,
+    'C22_OH_C20_COOH_ESTER': 38.95,
+    'C22_OH_C22_COOH_ESTER': 2.24,
     'C22_OH_C24_COOH_ESTER': 0.00,
     'C24_OH_C16_COOH_ESTER': 0.28,
-    'C24_OH_C18_COOH_ESTER': 1.07,
-    'C24_OH_C20_COOH_ESTER': 7.42,
-    'C24_OH_C22_COOH_ESTER': 1.39,
-    'C24_OH_C24_COOH_ESTER': 0.00,
+    'C24_OH_C18_COOH_ESTER': 1.05,
+    'C24_OH_C20_COOH_ESTER': 7.46,
+    'C24_OH_C22_COOH_ESTER': 1.30,
+    'C24_OH_C24_COOH_ESTER': 0.19,
 }
 
 GRAMS_CETEARYL_ALCOHOL = 178
@@ -127,16 +130,29 @@ for alc in Cetearyl_Alcohol:
     Cetearyl_Alcohol[alc] = mols / Total_Volume_L
 
 # Define kinetics parameters for each alcohol
-base_Ea = 45000  # J/mol (activation energy)
-base_A = 1.2e7  # Pre-exponential factor
+base_Ea = 67500  # J/mol (activation energy)
+base_A = 1.0e7  # Pre-exponential factor
+
+C16_OH_Ea_Factor = 1.0
+C18_OH_Ea_Factor = 1.01
+C20_OH_Ea_Factor = 1.0125
+C22_OH_Ea_Factor = 1.015
+C24_OH_Ea_Factor = 1.02
+
+C16_OH_A_Factor = 1.0
+C18_OH_A_Factor = 1.0
+C20_OH_A_Factor = 1
+C22_OH_A_Factor = 1
+C24_OH_A_Factor = 1
+
 
 # Individual kinetics parameters for each alcohol (can be customized)
 individual_kinetics = {
-    'C16_OH': {'Ea_forward': 45000, 'A_forward': 1.2e7},
-    'C18_OH': {'Ea_forward': 45000, 'A_forward': 1.2e7},
-    'C20_OH': {'Ea_forward': 45000, 'A_forward': 1.2e7},
-    'C22_OH': {'Ea_forward': 41000, 'A_forward': 1.2e7},
-    'C24_OH': {'Ea_forward': 41000, 'A_forward': 1.2e7},
+    'C16_OH': {'Ea_forward': base_Ea * C16_OH_Ea_Factor, 'A_forward': C16_OH_A_Factor * base_A},
+    'C18_OH': {'Ea_forward': base_Ea * C18_OH_Ea_Factor, 'A_forward': C18_OH_A_Factor * base_A},
+    'C20_OH': {'Ea_forward': base_Ea * C20_OH_Ea_Factor, 'A_forward': C20_OH_A_Factor * base_A},
+    'C22_OH': {'Ea_forward': base_Ea * C22_OH_Ea_Factor, 'A_forward': C22_OH_A_Factor * base_A},
+    'C24_OH': {'Ea_forward': base_Ea * C24_OH_Ea_Factor, 'A_forward': C24_OH_A_Factor * base_A},
 }
 
 # Flag to control whether to use individual values or master values
@@ -172,8 +188,8 @@ Rxn_conditions = {
     'Cetearly_Alcohol': Cetearyl_Alcohol,
     'Alcohol_Kinetics': alcohol_kinetics,
     'temp': 338.15,
-    'catalyst_conc' : 0.00004,
-    'Rxn_Time_MIN' : 600,
+    'catalyst_conc' : 0.09,
+    'Rxn_Time_MIN' : 1440,
     'base_Ea': base_Ea,
     'base_A': base_A,
     'individual_kinetics': individual_kinetics,
@@ -191,7 +207,7 @@ catalyst_conc = Rxn_conditions['catalyst_conc']
 for alcohol, params in alcohol_kinetics.items():
     params['k_forward'] = params['A_forward'] * math.exp(-params['Ea_forward'] / (R * T))
 
-time_array = np.arange(0, total_time_sec + 1, dt)
+time_array = np.arange(0, total_time_sec, dt)
 alcohol_profile = {alc: [] for alc in Cetearyl_Alcohol}
 ester_profile = {ester: [] for ester in jojoba_oil}
 
@@ -325,19 +341,6 @@ for t in range(total_time_sec):
             # Initialize with zeros for previous time steps and add current value
             ester_profile[ester] = [0.0] * len(time_array[:t]) + [current_jojoba[ester]]
 
-# Plot both alcohol and ester concentrations (no legend to reduce clutter)
-plt.figure(figsize=(12, 6))
-for alc in alcohol_profile:
-    plt.plot(time_array / 60, alcohol_profile[alc])
-for ester in ester_profile:
-    plt.plot(time_array / 60, ester_profile[ester], ':')
-plt.xlabel("Time (min)")
-plt.ylabel("Concentration (mol/L)")
-plt.title("Alcohol and Ester Concentration Profiles")
-plt.grid(True)
-plt.tight_layout()
-plt.show()
-
 # Create combined final concentration table
 final_conc = {}
 for alc in alcohol_profile:
@@ -345,11 +348,9 @@ for alc in alcohol_profile:
 for ester in ester_profile:
     final_conc[ester] = ester_profile[ester][-1]
 
-
 final_df = pd.DataFrame.from_dict(final_conc, orient='index', columns=['Final Concentration (mol/L)'])
 final_df.index.name = 'Species'
 final_df = final_df.sort_values(by='Final Concentration (mol/L)', ascending=False)
-
 
 # Create initial concentration table
 initial_conc = {}
@@ -361,33 +362,6 @@ for ester in jojoba_oil:
 initial_df = pd.DataFrame.from_dict(initial_conc, orient='index', columns=['Initial Concentration (mol/L)'])
 initial_df.index.name = 'Species'
 initial_df = initial_df.sort_values(by='Initial Concentration (mol/L)', ascending=False)
-
-# Display initial concentrations in a table
-fig, ax = plt.subplots(figsize=(10, min(25, 0.4 * len(initial_df))))
-ax.axis('off')
-table = ax.table(cellText=np.round(initial_df.values, decimals=4),
-                 rowLabels=initial_df.index,
-                 colLabels=initial_df.columns,
-                 loc='center',
-                 cellLoc='center')
-table.scale(1, 1.5)
-plt.title("Initial Species Concentrations")
-plt.tight_layout()
-plt.show()
-
-# Display final concentrations in a table
-fig, ax = plt.subplots(figsize=(10, min(25, 0.4 * len(final_df))))
-ax.axis('off')
-table = ax.table(cellText=np.round(final_df.values, decimals=4),
-                 rowLabels=final_df.index,
-                 colLabels=final_df.columns,
-                 loc='center',
-                 cellLoc='center')
-table.scale(1, 1.5)
-plt.title("Final Species Concentrations")
-plt.tight_layout()
-plt.show()
-
 
 # Calculate molecular weights for all species
 species_mw = {**ALCOHOL_MW, **ester_mw}
@@ -411,38 +385,9 @@ final_wt_df = pd.DataFrame.from_dict(final_wt_percent, orient='index', columns=[
 final_wt_df.index.name = 'Species'
 final_wt_df = final_wt_df.sort_values(by='Final Weight %', ascending=False)
 
-# Display initial weight percentages
-fig, ax = plt.subplots(figsize=(10, min(25, 0.4 * len(initial_wt_df))))
-ax.axis('off')
-table = ax.table(cellText=np.round(initial_wt_df.values, decimals=4),
-                 rowLabels=initial_wt_df.index,
-                 colLabels=initial_wt_df.columns,
-                 loc='center',
-                 cellLoc='center')
-table.scale(1, 1.5)
-plt.title("Initial Species Weight Percentages")
-plt.tight_layout()
-plt.show()
-
-# Display final weight percentages
-fig, ax = plt.subplots(figsize=(10, min(25, 0.4 * len(final_wt_df))))
-ax.axis('off')
-table = ax.table(cellText=np.round(final_wt_df.values, decimals=4),
-                 rowLabels=final_wt_df.index,
-                 colLabels=final_wt_df.columns,
-                 loc='center',
-                 cellLoc='center')
-table.scale(1, 1.5)
-plt.title("Final Species Weight Percentages")
-plt.tight_layout()
-plt.show()
-
 # Summarize alcohol and ester weight % totals
 final_alcohol_wt_pct = sum([final_wt_percent[spec] for spec in final_wt_percent if spec in ALCOHOL_MW])
 final_ester_wt_pct = sum([final_wt_percent[spec] for spec in final_wt_percent if spec in ester_mw])
-
-print(f"\nFinal Total Alcohol Weight %: {final_alcohol_wt_pct:.2f}%")
-print(f"Final Total Ester Weight %: {final_ester_wt_pct:.2f}%")
 
 # Calculate summed weight percent for each total chain length
 chain_length_totals = {}
@@ -469,15 +414,317 @@ for ester, weight_pct in final_wt_percent.items():
 # Sort chain lengths numerically
 sorted_chain_lengths = sorted(chain_length_totals.keys(), key=lambda x: int(x.replace('C', '')))
 
-# Display the summed weight percent for each chain length
-print("\nSummed Weight Percent by Total Chain Length:")
-for chain in sorted_chain_lengths:
-    print(f"{chain}: {chain_length_totals[chain]:.2f}%")
-
 # Calculate the ratio of (C36+C38) / (C40+C42)
 numerator = chain_length_totals.get('C36', 0) + chain_length_totals.get('C38', 0)
 denominator = chain_length_totals.get('C40', 0) + chain_length_totals.get('C42', 0)
 
 if denominator > 0:
     ratio = numerator / denominator
-    print(f"\nRatio of (C36+C38) / (C40+C42): {ratio:.4f}")
+
+# Create a function to display all data in a tabular notebook
+def display_results():
+    # Trim alcohol and ester profile arrays to match the length of time_array
+    for alc in alcohol_profile:
+        if len(alcohol_profile[alc]) > len(time_array):
+            alcohol_profile[alc] = alcohol_profile[alc][:len(time_array)]
+
+    for ester in ester_profile:
+        if len(ester_profile[ester]) > len(time_array):
+            ester_profile[ester] = ester_profile[ester][:len(time_array)]
+
+    # Create the main window
+    root = tk.Tk()
+    root.title("Transesterification Simulation Results")
+    root.geometry("1200x800")
+
+    # Create the notebook (tabbed interface)
+    notebook = ttk.Notebook(root)
+    notebook.pack(fill='both', expand=True, padx=10, pady=10)
+
+    # Tab 1: Concentration Profiles Plot
+    tab1 = ttk.Frame(notebook)
+    notebook.add(tab1, text="Concentration Profiles")
+
+    # Create the concentration profiles plot
+    fig1 = plt.figure(figsize=(10, 6))
+    ax1 = fig1.add_subplot(111)
+    for alc in alcohol_profile:
+        ax1.plot(time_array / 60, alcohol_profile[alc], label=alc)
+    for ester in ester_profile:
+        ax1.plot(time_array / 60, ester_profile[ester], ':', label=ester)
+    ax1.set_xlabel("Time (min)")
+    ax1.set_ylabel("Concentration (mol/L)")
+    ax1.set_title("Alcohol and Ester Concentration Profiles")
+    ax1.grid(True)
+    fig1.tight_layout()
+
+    # Embed the plot in the tab
+    canvas1 = FigureCanvasTkAgg(fig1, master=tab1)
+    canvas1.draw()
+    canvas1.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    # Tab 2: Initial Concentrations Table
+    tab2 = ttk.Frame(notebook)
+    notebook.add(tab2, text="Initial Concentrations")
+
+    # Create the initial concentrations table
+    fig2 = plt.figure(figsize=(10, min(25, 0.4 * len(initial_df))))
+    ax2 = fig2.add_subplot(111)
+    ax2.axis('off')
+    table2 = ax2.table(cellText=np.round(initial_df.values, decimals=4),
+                     rowLabels=initial_df.index,
+                     colLabels=initial_df.columns,
+                     loc='center',
+                     cellLoc='center')
+    table2.scale(1, 1.5)
+    ax2.set_title("Initial Species Concentrations")
+    fig2.tight_layout()
+
+    # Embed the table in the tab
+    canvas2 = FigureCanvasTkAgg(fig2, master=tab2)
+    canvas2.draw()
+    canvas2.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    # Tab 3: Final Concentrations Table
+    tab3 = ttk.Frame(notebook)
+    notebook.add(tab3, text="Final Concentrations")
+
+    # Create the final concentrations table
+    fig3 = plt.figure(figsize=(10, min(25, 0.4 * len(final_df))))
+    ax3 = fig3.add_subplot(111)
+    ax3.axis('off')
+    table3 = ax3.table(cellText=np.round(final_df.values, decimals=4),
+                     rowLabels=final_df.index,
+                     colLabels=final_df.columns,
+                     loc='center',
+                     cellLoc='center')
+    table3.scale(1, 1.5)
+    ax3.set_title("Final Species Concentrations")
+    fig3.tight_layout()
+
+    # Embed the table in the tab
+    canvas3 = FigureCanvasTkAgg(fig3, master=tab3)
+    canvas3.draw()
+    canvas3.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    # Tab 4: Initial Weight Percentages Table
+    tab4 = ttk.Frame(notebook)
+    notebook.add(tab4, text="Initial Weight %")
+
+    # Create the initial weight percentages table
+    fig4 = plt.figure(figsize=(10, min(25, 0.4 * len(initial_wt_df))))
+    ax4 = fig4.add_subplot(111)
+    ax4.axis('off')
+    table4 = ax4.table(cellText=np.round(initial_wt_df.values, decimals=4),
+                     rowLabels=initial_wt_df.index,
+                     colLabels=initial_wt_df.columns,
+                     loc='center',
+                     cellLoc='center')
+    table4.scale(1, 1.5)
+    ax4.set_title("Initial Species Weight Percentages")
+    fig4.tight_layout()
+
+    # Embed the table in the tab
+    canvas4 = FigureCanvasTkAgg(fig4, master=tab4)
+    canvas4.draw()
+    canvas4.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    # Tab 5: Final Weight Percentages Table
+    tab5 = ttk.Frame(notebook)
+    notebook.add(tab5, text="Final Weight %")
+
+    # Create the final weight percentages table
+    fig5 = plt.figure(figsize=(10, min(25, 0.4 * len(final_wt_df))))
+    ax5 = fig5.add_subplot(111)
+    ax5.axis('off')
+    table5 = ax5.table(cellText=np.round(final_wt_df.values, decimals=4),
+                     rowLabels=final_wt_df.index,
+                     colLabels=final_wt_df.columns,
+                     loc='center',
+                     cellLoc='center')
+    table5.scale(1, 1.5)
+    ax5.set_title("Final Species Weight Percentages")
+    fig5.tight_layout()
+
+    # Embed the table in the tab
+    canvas5 = FigureCanvasTkAgg(fig5, master=tab5)
+    canvas5.draw()
+    canvas5.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    # Tab 6: Ester Weight Percentages Over Time Plot
+    tab6 = ttk.Frame(notebook)
+    notebook.add(tab6, text="Ester Weight % Over Time")
+
+    # Calculate weight percentages for esters at each time step
+    ester_wt_percent_over_time = []
+    # Also calculate chain length distributions at each time step
+    chain_length_over_time = []
+
+    # For each time step
+    for t in range(len(time_array)):
+        # Get concentrations at this time step
+        current_conc = {}
+        for alc in alcohol_profile:
+            if t < len(alcohol_profile[alc]):
+                current_conc[alc] = alcohol_profile[alc][t]
+            else:
+                current_conc[alc] = 0.0
+
+        for ester in ester_profile:
+            if t < len(ester_profile[ester]):
+                current_conc[ester] = ester_profile[ester][t]
+            else:
+                current_conc[ester] = 0.0
+
+        # Convert concentrations to weights
+        current_weight = {spec: current_conc[spec] * species_mw[spec] for spec in current_conc if spec in species_mw}
+        total_weight = sum(current_weight.values())
+
+        # Calculate weight percentages
+        if total_weight > 0:
+            current_wt_percent = {spec: (wt / total_weight) * 100 for spec, wt in current_weight.items()}
+            # Filter to include only esters
+            current_ester_wt_percent = {spec: wt for spec, wt in current_wt_percent.items() if spec in ester_mw}
+            ester_wt_percent_over_time.append(current_ester_wt_percent)
+
+            # Calculate chain length distributions for this time step
+            current_chain_lengths = {}
+
+            # Process all esters in current weight percentages
+            for ester, weight_pct in current_ester_wt_percent.items():
+                # Extract alcohol and acid chain lengths from ester name
+                parts = ester.split('_')
+                alcohol_length = int(parts[0].replace('C', ''))
+                acid_length = int(parts[2].replace('C', ''))
+
+                # Calculate total chain length
+                total_length = alcohol_length + acid_length
+
+                # Add to the appropriate chain length total
+                chain_key = f"C{total_length}"
+                if chain_key in current_chain_lengths:
+                    current_chain_lengths[chain_key] += weight_pct
+                else:
+                    current_chain_lengths[chain_key] = weight_pct
+
+            # Normalize chain length percentages to 100%
+            total_chain_pct = sum(current_chain_lengths.values())
+            if total_chain_pct > 0:
+                normalized_chain_lengths = {chain: (pct / total_chain_pct) * 100 
+                                           for chain, pct in current_chain_lengths.items()}
+                chain_length_over_time.append(normalized_chain_lengths)
+            else:
+                chain_length_over_time.append({})
+        else:
+            ester_wt_percent_over_time.append({})
+            chain_length_over_time.append({})
+
+    # Create the plot
+    fig6 = plt.figure(figsize=(12, 8))
+    ax6 = fig6.add_subplot(111)
+
+    # Get all unique esters that appear in the simulation
+    all_esters = set()
+    for time_point in ester_wt_percent_over_time:
+        all_esters.update(time_point.keys())
+
+    # Plot weight percentage over time for each ester
+    for ester in all_esters:
+        # Extract data for this ester
+        wt_pct_values = [time_point.get(ester, 0) for time_point in ester_wt_percent_over_time]
+        ax6.plot(time_array / 60, wt_pct_values, label=ester)
+
+    # Add labels and title
+    ax6.set_xlabel("Time (min)")
+    ax6.set_ylabel("Weight Percentage (%)")
+    ax6.set_title("Ester Weight Percentages During Transesterification")
+    ax6.grid(True)
+
+    # Add legend (outside the plot to avoid overcrowding)
+    ax6.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='small')
+
+    fig6.tight_layout()
+
+    # Embed the plot in the tab
+    canvas6 = FigureCanvasTkAgg(fig6, master=tab6)
+    canvas6.draw()
+    canvas6.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    # Tab 7: Chain Length Distribution Over Time
+    tab7 = ttk.Frame(notebook)
+    notebook.add(tab7, text="Chain Length % Over Time")
+
+    # Create the plot for chain length distributions
+    fig7 = plt.figure(figsize=(12, 8))
+    ax7 = fig7.add_subplot(111)
+
+    # Get all unique chain lengths that appear in the simulation
+    all_chain_lengths = set()
+    for time_point in chain_length_over_time:
+        all_chain_lengths.update(time_point.keys())
+
+    # Sort chain lengths numerically
+    sorted_all_chain_lengths = sorted(all_chain_lengths, key=lambda x: int(x.replace('C', '')))
+
+    # Plot normalized percentage over time for each chain length
+    for chain in sorted_all_chain_lengths:
+        # Extract data for this chain length
+        chain_pct_values = [time_point.get(chain, 0) for time_point in chain_length_over_time]
+        ax7.plot(time_array / 60, chain_pct_values, label=chain, linewidth=2)
+
+    # Add labels and title
+    ax7.set_xlabel("Time (min)")
+    ax7.set_ylabel("Normalized Percentage (%)")
+    ax7.set_title("Total Chain Length Distribution During Transesterification (Normalized to 100%)")
+    ax7.grid(True)
+
+    # Add legend
+    ax7.legend(loc='best', fontsize='medium')
+
+    # Add a text annotation for cursor position
+    cursor_text = ax7.text(0.02, 0.02, '', transform=ax7.transAxes, 
+                          bbox=dict(facecolor='white', alpha=0.7),
+                          verticalalignment='bottom')
+
+    # Function to update cursor position text
+    def update_cursor_text(event):
+        if event.inaxes == ax7:
+            x, y = event.xdata, event.ydata
+            if x is not None and y is not None:
+                cursor_text.set_text(f'Time: {x:.2f} min, Percentage: {y:.2f}%')
+                fig7.canvas.draw_idle()
+
+    # Connect the motion_notify_event
+    fig7.canvas.mpl_connect('motion_notify_event', update_cursor_text)
+
+    fig7.tight_layout()
+
+    # Embed the plot in the tab
+    canvas7 = FigureCanvasTkAgg(fig7, master=tab7)
+    canvas7.draw()
+    canvas7.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    # Tab 8: Summary Statistics
+    tab8 = ttk.Frame(notebook)
+    notebook.add(tab8, text="Summary Statistics")
+
+    # Create a text widget to display the summary statistics
+    text_widget = tk.Text(tab8, wrap=tk.WORD, font=('Arial', 12))
+    text_widget.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+    # Add the summary statistics to the text widget
+    text_widget.insert(tk.END, f"Final Total Alcohol Weight %: {final_alcohol_wt_pct:.2f}%\n\n")
+    text_widget.insert(tk.END, f"Final Total Ester Weight %: {final_ester_wt_pct:.2f}%\n\n")
+    text_widget.insert(tk.END, "Summed Weight Percent by Total Chain Length:\n")
+    for chain in sorted_chain_lengths:
+        text_widget.insert(tk.END, f"{chain}: {chain_length_totals[chain]:.2f}%\n")
+    text_widget.insert(tk.END, f"\nRatio of (C36+C38) / (C40+C42): {ratio:.4f}")
+
+    # Make the text widget read-only
+    text_widget.configure(state='disabled')
+
+    # Start the main event loop
+    root.mainloop()
+
+# Call the function to display the results
+display_results()
