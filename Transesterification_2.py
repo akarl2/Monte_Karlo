@@ -140,10 +140,10 @@ C22_OH_Ea_Factor = 1.0
 C24_OH_Ea_Factor = 1.0
 
 C16_OH_A_Factor = 1.0
-C18_OH_A_Factor = 1
-C20_OH_A_Factor = 1
-C22_OH_A_Factor = 1
-C24_OH_A_Factor = 1
+C18_OH_A_Factor = 1.0
+C20_OH_A_Factor = 1.0
+C22_OH_A_Factor = 1.0
+C24_OH_A_Factor = 1.0
 
 
 C36_Percent_1000min = 40
@@ -1130,7 +1130,15 @@ def optimize_parameters():
             # Run simulation and get loss with hardcoded base Ea and base A values
             loss = run_simulation(base_Ea_value=base_Ea, base_A_value=base_A, factors=factors, display=False)
 
-            print(f"Testing: C16_OH_Ea_Factor={c16_oh_ea_factor:.4f}, C16_OH_A_Factor={c16_oh_a_factor:.4f}, loss={loss:.4f}",)
+            # print the Ea and A factos being tested
+            print(f"\nTesting factors:")
+            print(f"{'Alcohol':<10} {'Ea Factor':>10} {'A Factor':>10}")
+            print("-" * 32)
+            print(f"C16_OH{c16_oh_ea_factor:>12.4f}{c16_oh_a_factor:>12.4f}")
+            print(f"C18_OH{params[2]:>12.4f}{params[6]:>12.4f}")
+            print(f"C20_OH{params[3]:>12.4f}{params[7]:>12.4f}")
+            print(f"C22_OH{params[4]:>12.4f}{params[8]:>12.4f}")
+            print(f"C24_OH{params[5]:>12.4f}{params[9]:>12.4f}")
 
             return loss
 
